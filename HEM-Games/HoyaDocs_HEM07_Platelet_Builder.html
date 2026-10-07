@@ -1,0 +1,553 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HEM07 Platelet Builder</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,600;8..60,700&family=Public+Sans:wght@400;600;700&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+/* Layout: toolbar + stats on top; structure list | question card | LO mastery map. Stacks to one column on phones. */
+:root{
+  --bg:#f3f5f6; --surface:#ffffff; --ink:#18212b; --muted:#5a6570; --line:#dbe0e5; --chip:#eceff2;
+  --arch:#2c55a0; --face:#a3263f; --eye:#2c55a0; --accent:#a3263f;
+  --ok:#1d7a3e; --ok-bg:#e3f4e8; --bad:#b3261e; --bad-bg:#fbe7e5; --once:#b7791f; --once-bg:#fdf1dc; --mem:#c2621a;
+  --hy-bg:#fff6cc; --hy-line:#c9a227; --hy-ink:#4a3a00;
+  --f-display:"Source Serif 4", Georgia, serif; --f-body:"Public Sans", Arial, sans-serif; --f-mono:"IBM Plex Mono", ui-monospace, monospace;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#11161c; --surface:#19212a; --ink:#e6eaee; --muted:#9aa6b2; --line:#2c3642; --chip:#232c36;
+  --arch:#8fb1f0; --face:#f08a9b; --eye:#8fb1f0; --accent:#f08a9b;
+  --ok:#6fd08f; --ok-bg:#16301f; --bad:#f28b82; --bad-bg:#3a1b19; --once:#f0c070; --once-bg:#3a2e12; --mem:#f0a05c;
+  --hy-bg:#3a3110; --hy-line:#b8952a; --hy-ink:#f5e6a8; color-scheme:dark }}
+:root[data-theme="dark"]{
+  --bg:#11161c; --surface:#19212a; --ink:#e6eaee; --muted:#9aa6b2; --line:#2c3642; --chip:#232c36;
+  --arch:#8fb1f0; --face:#f08a9b; --eye:#8fb1f0; --accent:#f08a9b;
+  --ok:#6fd08f; --ok-bg:#16301f; --bad:#f28b82; --bad-bg:#3a1b19; --once:#f0c070; --once-bg:#3a2e12; --mem:#f0a05c;
+  --hy-bg:#3a3110; --hy-line:#b8952a; --hy-ink:#f5e6a8; color-scheme:dark }
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font:15px/1.5 var(--f-body);margin:0}
+.wrap{max-width:1180px;margin:0 auto;padding-inline:16px;padding-block:22px 48px;display:grid;gap:16px}
+h1,h2,h3{font-family:var(--f-display);margin:0;text-wrap:balance;line-height:1.2}
+.meta{font:500 .74rem var(--f-mono);letter-spacing:.07em;text-transform:uppercase;color:var(--muted);margin:0}
+header{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:end;gap:12px}
+header h1{font-size:1.9rem}
+header p.lede{margin:4px 0 0;color:var(--muted);max-width:62ch}
+.btn{font:600 .85rem var(--f-body);background:var(--chip);color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:7px 12px;cursor:pointer}
+.btn:hover{border-color:var(--ink)}
+.btn:focus-visible,.opt:focus-visible,.seg button:focus-visible,.ent:focus-visible,.lo-tile:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.btn.primary{background:var(--accent);color:var(--surface);border-color:var(--accent)}
+.btn[disabled]{opacity:.45;cursor:default}
+.hdr-actions{display:flex;gap:8px;flex-wrap:wrap}
+.wrap{grid-template-columns:minmax(0,1fr)} .rvw{min-width:0}
+
+.bar{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 12px}
+.seg{display:inline-flex;background:var(--chip);border-radius:10px;padding:3px;gap:2px;flex-wrap:wrap}
+.seg button{font:600 .82rem var(--f-body);border:0;background:transparent;color:var(--ink);padding:6px 11px;border-radius:8px;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--surface);box-shadow:0 1px 2px rgba(0,0,0,.12)}
+.seg .lab{font:500 .7rem var(--f-mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);align-self:center;padding:0 6px}
+.stats{display:flex;gap:18px;flex-wrap:wrap}
+.stat b{display:block;font:700 1.15rem var(--f-body);font-variant-numeric:tabular-nums}
+.stat span{font:500 .68rem var(--f-mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+
+.main{display:grid;grid-template-columns:250px minmax(0,1fr) 270px;gap:16px;align-items:start}
+@media (max-width:1000px){ .main{grid-template-columns:minmax(0,1fr)} .side{order:2} .map{order:3} }
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px;display:grid;gap:8px;min-width:0}
+.panel h2{font-size:1rem}
+.lec-h{font:700 .72rem var(--f-body);letter-spacing:.07em;text-transform:uppercase;margin-top:6px}
+.ent{display:grid;grid-template-columns:1fr auto;gap:2px 8px;text-align:left;width:100%;background:transparent;border:1px solid transparent;border-radius:8px;padding:7px 8px;cursor:pointer;color:var(--ink);font:inherit}
+.ent:hover{background:var(--chip)}
+.ent[aria-current="true"]{border-color:var(--lc);background:var(--chip)}
+.ent .n{font-weight:600;font-size:.9rem}
+.ent .s{grid-column:1;font-size:.75rem;color:var(--muted)}
+.ent .pct{grid-row:1/3;grid-column:2;align-self:center;font:500 .75rem var(--f-mono);color:var(--muted);font-variant-numeric:tabular-nums}
+.ent .mini{grid-column:1/3;height:4px;border-radius:2px;background:var(--line);overflow:hidden}
+.ent .mini i{display:block;height:100%;background:var(--lc)}
+.lF{--lc:var(--arch)} .lD{--lc:var(--face)}
+.tag.rr{background:var(--chip);color:var(--ink);border:1px solid var(--line)}
+
+.card{background:var(--surface);border:1px solid var(--line);border-top:5px solid var(--lc);border-radius:12px;padding:18px;display:grid;gap:14px;min-width:0}
+.card-top{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px;align-items:baseline}
+.card-top h2{font-size:1.35rem}
+.tag{font:500 .7rem var(--f-mono);letter-spacing:.06em;text-transform:uppercase;padding:3px 8px;border-radius:999px;background:var(--chip);color:var(--muted)}
+.tag.lo{color:var(--lc)}
+.tag.hy{background:var(--hy-bg);color:var(--hy-ink);border:1px solid var(--hy-line)}
+.boxes{display:flex;gap:4px;flex-wrap:wrap}
+.boxes i{width:18px;height:6px;border-radius:3px;background:var(--line)}
+.boxes i.done-ok{background:var(--ok)} .boxes i.done-bad{background:var(--bad)} .boxes i.cur{background:var(--lc)}
+.q{font:600 1.08rem/1.45 var(--f-body);margin:0}
+.hint{font-size:.8rem;color:var(--muted);margin:0}
+.opts{display:grid;gap:8px}
+.opt{display:grid;grid-template-columns:auto 1fr;gap:10px;align-items:start;text-align:left;width:100%;font:inherit;color:var(--ink);background:var(--bg);border:1.5px solid var(--line);border-radius:10px;padding:10px 12px;cursor:pointer}
+.opt:hover:not([disabled]){border-color:var(--lc)}
+.opt .k{font:500 .75rem var(--f-mono);color:var(--muted);border:1px solid var(--line);border-radius:5px;padding:1px 6px;margin-top:1px}
+.opt.sel{border-color:var(--lc);background:var(--chip)}
+.opt.right{border-color:var(--ok);background:var(--ok-bg)}
+.opt.wrong{border-color:var(--bad);background:var(--bad-bg)}
+.opt.missed{border-color:var(--ok);border-style:dashed}
+.opt[disabled]{cursor:default}
+.ordered{display:grid;gap:6px;counter-reset:ord;padding:0;margin:0;list-style:none;min-height:44px;border:1.5px dashed var(--line);border-radius:10px;padding:8px}
+.ordered li{counter-increment:ord;display:grid;grid-template-columns:auto 1fr;gap:8px;align-items:center;background:var(--chip);border-radius:8px;padding:7px 10px;cursor:pointer}
+.ordered li::before{content:counter(ord);font:500 .78rem var(--f-mono);color:var(--lc)}
+.ordered li.right{background:var(--ok-bg)} .ordered li.wrong{background:var(--bad-bg)}
+.ordered .empty{color:var(--muted);font-size:.85rem;padding:4px}
+/* ---------- Review ---------- */
+.rvw{margin-top:14px}
+.rvw-bar{position:sticky;top:0;z-index:8;background:var(--bg);border-bottom:1px solid var(--line);padding:10px 0;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.rvw-bar .seg{display:flex;gap:2px;background:var(--chip);border:1px solid var(--line);border-radius:9px;padding:3px}
+.rvw-bar .seg button{background:transparent;border:0;border-radius:7px;padding:6px 12px;font:inherit;font-size:13.5px;color:var(--muted);cursor:pointer}
+.rvw-bar .seg button[aria-pressed="true"]{background:var(--surface);color:var(--ink);font-weight:600;box-shadow:0 1px 2px rgba(0,0,0,.08)}
+#rvwQ{flex:1 1 180px;min-width:140px;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:7px 10px;font:inherit;font-size:14px;color:inherit}
+#rvwCount{font-family:var(--f-mono);font-size:11px;color:var(--muted);white-space:nowrap}
+.rvw-toc{display:flex;flex-wrap:wrap;gap:6px;margin:12px 0 2px}
+.rvw-toc a{font-size:12.5px;text-decoration:none;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:4px 10px}
+.rvw-toc a:hover{color:var(--ink);border-color:var(--muted)}
+.rvw-body{max-width:none}
+.rsec{padding:6px 0 10px;scroll-margin-top:64px}
+.rsec.hide{display:none}
+.rh{font-family:var(--f-display);font-size:1.5rem;font-weight:650;margin:26px 0 4px;padding-bottom:6px;border-bottom:2px solid var(--acc)}
+.rsh{font-family:var(--f-display);font-size:1.12rem;font-weight:650;margin:18px 0 4px}
+.rvw-body p{margin:8px 0;line-height:1.62}
+ul.rlist{margin:8px 0;padding-left:1.15em;display:grid;gap:5px}
+ul.rlist li{line-height:1.55}
+.rtbl{overflow-x:auto;margin:12px 0;border:1px solid var(--line);border-radius:10px;background:var(--surface)}
+.rtbl table{border-collapse:collapse;width:100%;font-size:14px}
+.rtbl th,.rtbl td{text-align:left;vertical-align:top;padding:8px 11px;border-bottom:1px solid var(--line)}
+.rtbl thead th{background:var(--chip);font-family:var(--f-mono);font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);white-space:nowrap}
+.rtbl tbody tr:last-child td{border-bottom:0}
+.rtbl td b{font-weight:600}
+.rseq{margin:12px 0;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 14px 12px 10px}
+.rseq ol{margin:0;padding-left:1.3em;display:grid;gap:7px}
+.rseq li{line-height:1.55;padding-left:2px}
+.rseq li b{color:var(--acc)}
+.cgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(330px,1fr));gap:10px;margin:12px 0;align-items:start}
+.cgrid>details{margin:0}
+details.cx{margin:11px 0;border-radius:9px;border:1px solid var(--line);background:var(--surface);overflow:hidden}
+details.cx>summary{list-style:none;cursor:pointer;display:flex;align-items:baseline;gap:9px;padding:9px 12px;border-left:3px solid var(--line);font-size:14px}
+details.cx>summary::-webkit-details-marker{display:none}
+details.cx>summary::after{content:"+";margin-left:auto;font-family:var(--f-mono);font-size:14px;color:var(--muted);line-height:1}
+details.cx[open]>summary::after{content:"\2013"}
+details.cx>summary .lbl{font-family:var(--f-mono);font-size:10px;letter-spacing:.11em;text-transform:uppercase;font-weight:700;white-space:nowrap}
+details.cx>summary .pk{color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1}
+details.cx[open]>summary .pk{display:none}
+details.cx .cbody{padding:2px 13px 12px;line-height:1.56;font-size:14.6px;border-left:3px solid var(--line)}
+details.cx .cbody b{font-weight:600}
+details.rrule>summary,details.rrule .cbody{border-left-color:var(--acc)}
+details.rtrap>summary,details.rtrap .cbody{border-left-color:var(--bad)}
+details.rmem>summary,details.rmem .cbody{border-left-color:var(--mem)}
+details.rrule>summary .lbl{color:var(--acc)} details.rtrap>summary .lbl{color:var(--bad)} details.rmem>summary .lbl{color:var(--mem)}
+details.rhy{background:var(--hy-bg);border-color:var(--hy-line);color:var(--hy-ink)}
+details.rhy>summary,details.rhy .cbody{border-left-color:var(--hy-line)}
+details.rhy>summary .lbl{color:var(--hy-ink);opacity:.9}
+details.rhy>summary .pk,details.rhy>summary::after{color:var(--hy-ink);opacity:.75}
+.rvw-empty{display:none;text-align:center;color:var(--muted);border:1px dashed var(--line);border-radius:10px;padding:28px;margin-top:16px}
+.rvw-empty.on{display:block}
+.rvw[data-lec="F"]{--acc:var(--arch)} .rvw[data-lec="D"]{--acc:var(--face)}
+@media print{
+  header,.bar,.main,.rvw-bar,.rvw-toc,.rvw-empty{display:none!important}
+  .rvw{margin:0}
+  body{background:#fff}
+  .rsec{break-before:page;break-inside:auto}
+  .rsec:first-of-type{break-before:auto}
+  .rtbl,.rseq,details.cx{break-inside:avoid}
+  details.cx>summary::after{display:none}
+  .cgrid{grid-template-columns:1fr 1fr}
+}
+.fb .ans{font-size:.95rem}
+.fbexp{display:grid;gap:8px}
+.fbexp p{margin:0;line-height:1.6}
+.fbnotes{list-style:none;margin:2px 0 0;padding:0;display:grid;gap:6px}
+.fbnotes li{font-size:.9rem;line-height:1.5;color:var(--muted);padding-left:10px;border-left:2px solid var(--line)}
+.fbnotes li b{color:var(--ink);font-weight:600}
+.fbpearl{margin-top:2px;background:var(--hy-bg);border:1px solid var(--hy-line);border-left-width:3px;border-radius:9px;padding:9px 12px;font-size:.92rem;line-height:1.5;color:var(--hy-ink)}
+.fbpearl b{display:block;font:700 .66rem var(--f-mono);letter-spacing:.14em;text-transform:uppercase;color:var(--hy-line);margin-bottom:3px}
+.fb{border-radius:10px;padding:12px 14px;display:grid;gap:6px}
+.fb.ok{background:var(--ok-bg)} .fb.bad{background:var(--bad-bg)}
+.fb .v{font-weight:700}
+.fb.ok .v{color:var(--ok)} .fb.bad .v{color:var(--bad)}
+.fb ol{margin:0;padding-left:1.2em}
+.actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:space-between;align-items:center}
+.timer{font:500 .8rem var(--f-mono);color:var(--muted);font-variant-numeric:tabular-nums}
+.done{display:grid;gap:10px;text-align:left}
+
+.lo-grid{display:grid;gap:6px}
+.lo-tile{display:grid;grid-template-columns:auto 1fr auto;gap:8px;align-items:center;text-align:left;width:100%;background:transparent;border:1px solid var(--line);border-radius:8px;padding:6px 8px;cursor:pointer;color:var(--ink);font:inherit}
+.lo-tile:hover{border-color:var(--lc)}
+.lo-tile .id{font:500 .72rem var(--f-mono);color:var(--lc);white-space:nowrap}
+.lo-tile .t{font-size:.78rem;line-height:1.3}
+.lo-tile .dot{width:12px;height:12px;border-radius:50%;background:var(--line)}
+.dot.s-o{background:var(--once)} .dot.s-m{background:var(--bad)} .dot.s-M{background:var(--ok)}
+.legend{display:flex;flex-wrap:wrap;gap:10px;font-size:.72rem;color:var(--muted)}
+.legend span{display:inline-flex;gap:5px;align-items:center}
+.legend i{width:10px;height:10px;border-radius:50%;display:inline-block;background:var(--line)}
+.legend i.o{background:var(--once)} .legend i.m{background:var(--bad)} .legend i.M{background:var(--ok)}
+footer{color:var(--muted);font-size:.8rem;border-top:1px solid var(--line);padding-top:12px}
+@media (prefers-reduced-motion: no-preference){ .opt,.ent,.lo-tile{transition:border-color .12s, background .12s} }
+</style>
+
+<div class="wrap">
+<header>
+  <div>
+    <p class="meta">HoyaDocs · Block 5 · Hematology · HEM07</p>
+    <h1>HEM07 Platelet Builder</h1>
+    <p class="lede">Platelet disorders, LO by LO: build each structure box by box, then drill what you miss. Boxes tagged Rapid Review test the LO Rapid Review and Master Review checklists.</p>
+  </div>
+  <div class="hdr-actions">
+    <button class="btn primary" id="reviewBtn" type="button" aria-pressed="false">Review</button>
+    <button class="btn" id="themeBtn" type="button">Theme: auto</button>
+    <button class="btn" id="resetBtn" type="button">Reset progress</button>
+  </div>
+</header>
+
+<div class="bar">
+  <div class="seg" role="group" aria-label="Mode">
+    <span class="lab">Mode</span>
+    <button type="button" data-mode="build" aria-pressed="true">Build</button>
+    <button type="button" data-mode="drill" aria-pressed="false">Drill</button>
+  </div>
+  <div class="seg" role="group" aria-label="Lecture scope" id="scopeSeg">
+    <span class="lab">Scope</span>
+    <button type="button" data-scope="all" aria-pressed="true">All</button>
+    <button type="button" data-scope="F" aria-pressed="false">LO1–3 Platelets &amp; labs</button>
+    <button type="button" data-scope="D" aria-pressed="false">LO4–6 Disorders</button>
+  </div>
+  <div class="seg" role="group" aria-label="Focus" id="focusSeg">
+    <span class="lab">Focus</span>
+    <button type="button" data-rr="0" aria-pressed="true">All boxes</button>
+    <button type="button" data-rr="1" aria-pressed="false">Rapid Review only</button>
+  </div>
+  <div class="stats" aria-live="polite">
+    <div class="stat"><b id="sScore">0</b><span>Score</span></div>
+    <div class="stat"><b id="sStreak">0</b><span>Streak</span></div>
+    <div class="stat"><b id="sAcc">—</b><span>Accuracy</span></div>
+    <div class="stat"><b id="sBoxes">0</b><span>Boxes mastered</span></div>
+    <div class="stat"><b id="sLos">0/6</b><span>LOs mastered</span></div>
+  </div>
+</div>
+
+<div class="main">
+  <aside class="panel side" aria-label="Structures">
+    <h2>Structures</h2>
+    <div id="entList"></div>
+  </aside>
+  <section class="card" id="card" aria-live="polite"></section>
+  <aside class="panel map" aria-label="Learning objective mastery map">
+    <h2>LO mastery map</h2>
+    <div class="legend"><span><i></i>untested</span><span><i class="m"></i>missed</span><span><i class="o"></i>got it once</span><span><i class="M"></i>mastered</span></div>
+
+    <p class="hint">Tap an LO to drill just that objective. Mastered = right twice in a row.</p>
+    <div class="lo-grid" id="loGrid"></div>
+  </aside>
+</div>
+
+<div class="rvw" id="rvw" data-lec="F" hidden>
+  <div class="rvw-bar">
+    <div class="seg" id="rvwTabs" role="group" aria-label="Lecture">
+      <button type="button" data-l="F" aria-pressed="true">LO1–3 Platelets &amp; labs</button>
+      <button type="button" data-l="D" aria-pressed="false">LO4–6 Disorders</button>
+    </div>
+    <input id="rvwQ" type="search" placeholder="Search this review" autocomplete="off" aria-label="Search the review">
+    <span id="rvwCount"></span>
+    <button class="btn" type="button" id="rvwAll" aria-pressed="false">Expand all</button>
+    <button class="btn" type="button" id="rvwPrint">Print</button>
+    <button class="btn primary" type="button" id="rvwClose">Back to the game</button>
+  </div>
+  <nav class="rvw-toc" id="rvwToc" aria-label="Contents"></nav>
+  <div class="rvw-body" id="rvwBody"></div>
+  <div class="rvw-empty" id="rvwEmpty">Nothing in this lecture matches that search.</div>
+</div>
+
+
+<footer>HoyaDocs · HEM07 Platelet Builder · Updated October 7, 2026 · Revision 1.0. Yellow “HY” tags mark high-yield points, including Step 1. “Rapid Review” tags mark boxes built from the LO Rapid Review checklists.</footer>
+</div>
+
+<script>
+/* ================= LEARNING OBJECTIVES ================= */
+var LOS = {"1": "Normal platelet function and primary hemostasis", "2": "Define thrombocytopenia and thrombocytosis", "3": "Common platelet lab measurements and their use", "4": "Congenital platelet disorders: Bernard-Soulier and Glanzmann", "5": "ITP: signs, mechanism and how each treatment works", "6": "TTP / HUS: signs, the pentad and mechanisms"};
+var LOLEC = {"1": "F", "2": "F", "3": "F", "4": "D", "5": "D", "6": "D"};
+var LECS = [{"k": "F", "n": "LO1–3 Platelets & labs", "c": "arch"}, {"k": "D", "n": "LO4–6 Disorders", "c": "face"}];
+var E = [{"id": "plt", "lec": "A", "name": "Platelet basics", "sub": "Size · lifespan · TPO · spleen pool", "b": [{"lo": "1", "rr": true, "q": "Which describes normal platelets?", "a": "1–4 µm, anucleate, live 7–10 days, about ⅓ held in the spleen", "o": ["6–9 µm, nucleated, live 120 days, none in the spleen", "1–4 µm, nucleated, live 1 day, half in the liver", "10–12 µm, anucleate, live 30 days, ⅔ in the spleen"], "n": ["That describes RBC size and lifespan; platelets have no nucleus.", "Platelets are anucleate and live 7–10 days.", "Too large and too long-lived."], "w": "Platelets are the smallest circulating blood cells. Being anucleate, they can’t make new proteins but are very active. After 7–10 days they are removed by the monocyte/macrophage system.", "p": "Platelets: 1–4 µm · 7–10 days · ⅓ in spleen."}, {"lo": "1", "rr": true, "q": "Which hormone drives megakaryocyte production, and where is it mainly made?", "a": "Thrombopoietin (TPO), mainly in the liver", "o": ["Erythropoietin, mainly in the kidney", "IL-6, mainly in the spleen", "G-CSF, mainly in the bone marrow"], "n": ["EPO drives RBCs.", "IL-6 raises TPO in inflammation but isn’t the main regulator.", "G-CSF drives neutrophils."], "w": "TPO (liver, also kidney) stimulates megakaryocyte production and differentiation. Megakaryocytes shed proplatelets; steady-state output is about 35,000–50,000 platelets/µL per day and can rise up to 8-fold.", "p": "TPO from liver → megakaryocytes. Cirrhosis → ↓ TPO."}, {"lo": "1", "q": "Why does aspirin’s effect on a platelet last its whole lifespan?", "a": "Platelets are anucleate and can’t make new COX enzyme", "o": ["Aspirin is stored in platelet granules", "Aspirin destroys megakaryocytes", "Aspirin binds GPIIb/IIIa permanently"], "n": ["Not the mechanism.", "Aspirin doesn’t destroy megakaryocytes.", "That’s abciximab’s target."], "w": "Aspirin irreversibly acetylates COX → ↓ TXA₂. Without a nucleus, the platelet can’t replace the enzyme, so the effect lasts 7–10 days until new platelets are made.", "p": "Aspirin: irreversible COX block for the platelet’s life."}, {"lo": "1", "rr": true, "hy": true, "q": "Which bleeding pattern points to a PRIMARY hemostasis (platelet) problem?", "a": "Mucocutaneous bleeding: petechiae, gum bleeding, nosebleeds, heavy periods", "o": ["Bleeding into joints and muscles", "Delayed bleeding hours after surgery", "Large retroperitoneal hematomas"], "n": ["Hemarthroses = secondary hemostasis (hemophilia).", "Delayed bleeding suggests a coagulation factor problem.", "Deep bleeding suggests a factor defect."], "w": "Primary hemostasis = the platelet plug (platelets + vWF). Secondary hemostasis = the fibrin mesh from the coagulation cascade, which stabilizes the plug.", "p": "Platelets → skin and mucosa. Factors → joints and muscles."}]}, {"id": "hemo", "lec": "A", "name": "Primary hemostasis", "sub": "Tethering → rolling → activation → aggregation", "b": [{"lo": "1", "rr": true, "hy": true, "t": "o", "q": "Put the steps of primary hemostasis in order.", "a": ["Tethering: vWF binds collagen and captures platelet GPIb", "Rolling: GPIb–vWF bonds slow platelets along the vessel wall", "Activation: platelets change shape; granules release ADP and TXA₂, recruiting more platelets", "Firm adhesion and aggregation: GPIIb/IIIa binds fibrinogen, cross-linking platelets"], "w": "Injury exposes subendothelial matrix (collagen, vWF, laminin, fibronectin, thrombospondin). The plug is then stabilized by fibrin from secondary hemostasis.", "p": "Tether (Ib–vWF) → roll → activate (ADP, TXA₂) → aggregate (IIb/IIIa–fibrinogen)."}, {"lo": "1", "rr": true, "hy": true, "q": "Which receptor–ligand pair mediates platelet ADHESION to injured vessel wall?", "a": "GPIb/IX(/V) binding von Willebrand factor", "o": ["GPIIb/IIIa binding fibrinogen", "P2Y12 binding ADP", "GPIIb/IIIa binding collagen"], "n": ["That’s aggregation.", "That’s an activation signal.", "In-house slides pair collagen with IIb/IIIa, but on boards collagen binds GPVI and GPIa/IIa."], "w": "GPIb is the only receptor on a resting platelet with real affinity for activated vWF. vWF bridges exposed collagen to the platelet.", "p": "Ib = vWF = adhesion."}, {"lo": "1", "rr": true, "hy": true, "q": "Which receptor–ligand pair mediates platelet AGGREGATION?", "a": "GPIIb/IIIa binding fibrinogen", "o": ["GPIb binding vWF", "GPVI binding collagen", "P-selectin binding PSGL-1"], "n": ["Adhesion.", "Collagen binding and activation.", "Leukocyte–platelet interaction."], "w": "Activation turns on GPIIb/IIIa (“inside-out” signaling). Fibrinogen bridges IIb/IIIa receptors on neighboring platelets. ADP and TXA₂ recruit more platelets; thrombin and fibrin from secondary hemostasis then make the plug irreversible.", "p": "IIb/IIIa = fibrinogen = aggregation."}, {"lo": "1", "rr": true, "q": "Which subendothelial matrix component is the most potent platelet agonist?", "a": "Collagen", "o": ["Laminin", "Fibronectin", "Thrombospondin"], "n": ["Present but less potent.", "Present but less potent.", "Present but less potent."], "w": "Collagen both activates platelets directly (via GPVI and GPIa/IIa in standard references) and binds vWF, which captures platelets via GPIb.", "p": "Collagen = most potent matrix agonist."}, {"lo": "1", "q": "Collagen binds platelets directly through which receptors in standard references?", "a": "GPVI and GPIa/IIa (α2β1)", "o": ["GPIIb/IIIa", "GPIb/IX", "P2Y12"], "n": ["The in-house slides pair collagen with IIb/IIIa; boards use GPVI and GPIa/IIa.", "GPIb binds vWF.", "P2Y12 binds ADP."], "w": "Know “Ib = vWF (adhesion), IIb/IIIa = fibrinogen (aggregation)” cold. Collagen acts through GPVI and GPIa/IIa, and indirectly through vWF.", "p": "Collagen → GPVI, GPIa/IIa."}, {"lo": "1", "rr": true, "t": "m", "q": "Select ALL signals that drive platelet ACTIVATION and amplification.", "a": ["ADP", "Thromboxane A₂", "Thrombin", "Tyrosine kinase signaling"], "o": ["Prostacyclin (PGI₂)", "Nitric oxide"], "n": ["Prostacyclin from endothelium inhibits platelets.", "NO from endothelium inhibits platelets."], "w": "Activation is a controlled release reaction: granules fuse with the membrane and empty their contents locally, recruiting and strengthening activation of nearby platelets.", "p": "Activators: ADP, TXA₂, thrombin. Inhibitors: PGI₂, NO."}]}, {"id": "gran", "lec": "A", "name": "Granules & antiplatelet drugs", "sub": "Alpha vs dense · drug targets", "b": [{"lo": "1", "rr": true, "hy": true, "q": "Which platelet granule contains vWF, fibrinogen and coagulation factors V, XI and XIII?", "a": "Alpha (α) granules", "o": ["Dense (δ) granules", "Lysosomes", "Weibel-Palade bodies"], "n": ["Dense granules contain ADP, Ca²⁺, serotonin, histamine.", "Lysosomes contain degradative enzymes.", "Weibel-Palade bodies are in endothelial cells (they also store vWF)."], "w": "α granules are the most abundant (over 280 proteins): vWF, fibrinogen, chemokines, PDGF, PF4, FV, FXI, FXIII, prothrombin, HMWK. They reinforce aggregation and support secondary hemostasis.", "p": "α granules: vWF, fibrinogen, factors, PDGF, PF4."}, {"lo": "1", "rr": true, "q": "Which granule contents AMPLIFY aggregation through ADP, calcium and serotonin?", "a": "Dense (δ) granules", "o": ["Alpha granules", "Lysosomes", "Specific granules"], "n": ["Alpha granules carry proteins (vWF, fibrinogen).", "Lysosomes carry enzymes.", "Specific granules are in neutrophils."], "w": "Dense granules: ADP, Ca²⁺, serotonin, histamine → amplify the response and thrombus growth.", "p": "Dense = ADP, Ca²⁺, serotonin."}, {"lo": "1", "rr": true, "q": "A patient has significant bleeding and large, pale-gray platelets lacking alpha granules. Diagnosis?", "a": "Gray platelet syndrome", "o": ["Bernard-Soulier syndrome", "Glanzmann thrombasthenia", "Wiskott-Aldrich syndrome"], "n": ["BSS lacks GPIb (giant platelets but granules present).", "Glanzmann lacks GPIIb/IIIa; platelets look normal.", "Wiskott-Aldrich has small platelets."], "w": "Alpha granule deficiency (gray platelet syndrome) causes significant bleeding.", "p": "No α granules = gray platelet syndrome."}, {"lo": "1", "hy": true, "t": "m", "q": "Select ALL correct drug–target pairs.", "a": ["Aspirin → COX (↓ TXA₂)", "Clopidogrel → P2Y12 ADP receptor", "Abciximab → GPIIb/IIIa"], "o": ["Ticagrelor → GPIb", "Eptifibatide → COX"], "n": ["Ticagrelor blocks P2Y12.", "Eptifibatide blocks GPIIb/IIIa."], "w": "Aspirin → COX. Clopidogrel, prasugrel, ticagrelor → P2Y12. Abciximab, eptifibatide, tirofiban → GPIIb/IIIa.", "p": "COX · P2Y12 · IIb/IIIa."}]}, {"id": "tcp", "lec": "A", "name": "Thrombocytopenia & thrombocytosis", "sub": "Definitions · grades · 4 mechanisms", "b": [{"lo": "2", "rr": true, "q": "Thrombocytopenia is usually defined as a platelet count below:", "a": "150,000/µL", "o": ["100,000/µL", "50,000/µL", "450,000/µL"], "n": ["That’s the lower edge of mild.", "That’s the severe threshold.", "That’s the thrombocytosis threshold."], "w": "Mild 100,000–150,000 · moderate 50,000–99,000 · severe <50,000.", "p": "<150k thrombocytopenia; >450k thrombocytosis."}, {"lo": "2", "rr": true, "q": "A platelet count of 72,000/µL is graded as:", "a": "Moderate thrombocytopenia", "o": ["Mild thrombocytopenia", "Severe thrombocytopenia", "Normal"], "n": ["Mild is 100–150k.", "Severe is <50k.", "Below 150k."], "w": "Moderate = 50,000–99,000.", "p": "Mild 100–150k · moderate 50–99k · severe <50k."}, {"lo": "2", "rr": true, "q": "Which statement about bleeding risk in thrombocytopenia is correct?", "a": "It doesn’t track neatly with the count and depends on the cause", "o": ["Bleeding always begins below 100,000", "Bleeding risk is identical at any given count", "Bleeding never occurs above 10,000"], "n": ["Many patients don’t bleed at 100k.", "Cause matters (young, active ITP platelets bleed less).", "Bleeding can occur above 10k, especially with function defects."], "w": "Spontaneous intracranial bleeding becomes a risk at very low counts (often <10,000).", "p": "Count ≠ bleeding risk."}, {"lo": "2", "rr": true, "t": "m", "q": "Select ALL four mechanisms of thrombocytopenia.", "a": ["Decreased production", "Antibody-mediated destruction", "Consumption", "Sequestration"], "o": ["Increased TPO", "Iron deficiency"], "n": ["TPO raises counts.", "Iron deficiency causes reactive thrombocytosis."], "w": "“Pro-De-Con-Seq.” Marrow logic: ↑ megakaryocytes → peripheral problem; ↓ megakaryocytes → production problem.", "p": "Production · destruction · consumption · sequestration."}, {"lo": "2", "rr": true, "q": "A 70-year-old has platelets 85,000, Hb 9.5 with MCV 104, WBC 2.8 and dysplastic cells on smear. Mechanism?", "a": "Decreased production (myelodysplastic syndrome)", "o": ["Consumption", "Sequestration", "Antibody-mediated destruction"], "n": ["No schistocytes or coagulopathy.", "No splenomegaly described.", "Destruction would leave other lines normal."], "w": "Marrow disorders that hit megakaryocytes usually affect other cell lines too, so look for other cytopenias.", "p": "Thrombocytopenia + other cytopenias → production problem."}, {"lo": "2", "rr": true, "q": "A man with cirrhosis and a big spleen has platelets of 55,000 and normal megakaryocytes. Mechanism?", "a": "Sequestration (hypersplenism)", "o": ["Antibody destruction", "Consumption", "Isolated megakaryocyte failure"], "n": ["No antibody process suggested.", "No TMA or DIC.", "Megakaryocytes are normal."], "w": "A normal spleen holds about ⅓ of platelets; an enlarged spleen can hold up to 90%. Low TPO from the failing liver and alcohol’s marrow toxicity can add to it.", "p": "Big spleen holds up to 90%."}, {"lo": "2", "rr": true, "t": "m", "q": "Select ALL causes of thrombocytopenia by CONSUMPTION.", "a": ["TTP", "HUS", "DIC"], "o": ["ITP", "Cirrhosis", "Aplastic anemia"], "n": ["Destruction.", "Sequestration.", "Production."], "w": "Platelets are used up in microvascular thrombi (thrombotic microangiopathy) or widespread coagulation (DIC).", "p": "Consumption = TTP, HUS, DIC."}, {"lo": "2", "rr": true, "hy": true, "q": "Which features fit classic (non-heparin) drug-induced immune thrombocytopenia?", "a": "Starts after 1–2 weeks of a new drug, within hours on re-exposure, resolves 5–7 days after stopping", "o": ["Starts within minutes of the first dose and lasts months", "Causes thrombosis 5–10 days after heparin", "Requires splenectomy in most cases"], "n": ["Not the timing.", "That’s HIT, a special case.", "Specific therapy is rarely needed."], "w": "Mechanism: a drug-dependent platelet-reactive antibody. Hidden causes: quinine (tonic water), herbal preparations, recent vaccines, acetaminophen, nuts; alcohol is directly marrow-toxic.", "p": "Tonic water (quinine) → drug-induced thrombocytopenia."}, {"lo": "2", "hy": true, "q": "Day 7 of heparin after hip surgery, platelets fall from 240,000 to 90,000 and a DVT develops. Mechanism and management?", "a": "HIT: IgG against heparin–PF4 activates platelets; stop all heparin and start argatroban", "o": ["Drug-induced bleeding; give platelets", "Dilutional thrombocytopenia; observe", "DIC; give FFP"], "n": ["HIT causes thrombosis, not bleeding; platelets can worsen it.", "A >50% drop with thrombosis isn’t dilutional.", "No consumptive coagulopathy described."], "w": "HIT: platelets fall >50% 5–10 days after heparin, with thrombosis. Use a direct thrombin inhibitor (argatroban) or fondaparinux; avoid warfarin until platelets recover.", "p": "HIT = low platelets + clots."}, {"lo": "2", "rr": true, "t": "m", "q": "Select ALL causes of REACTIVE thrombocytosis.", "a": ["Iron deficiency", "Infection or inflammation", "After splenectomy", "Malignancy"], "o": ["JAK2-mutated essential thrombocythemia", "CML"], "n": ["Clonal (primary).", "Clonal myeloproliferative neoplasm."], "w": "Thrombocytosis = >450,000. Reactive is most common (IL-6 → ↑ TPO); it resolves with the cause and has low thrombotic risk.", "p": "Reactive: iron deficiency, inflammation, post-splenectomy."}, {"lo": "2", "rr": true, "q": "A woman has platelets of 980,000, burning red fingertips, JAK2 V617F and splenomegaly. Diagnosis?", "a": "Essential thrombocythemia", "o": ["Reactive thrombocytosis", "ITP", "Iron deficiency"], "n": ["A JAK2 mutation means clonal disease.", "ITP lowers platelets.", "Causes reactive, not JAK2-positive, thrombocytosis."], "w": "Clonal thrombocytosis: JAK2, CALR or MPL mutation; risk of thrombosis and paradoxical bleeding (acquired vWF loss at very high counts); erythromelalgia. Treat with low-dose aspirin ± hydroxyurea.", "p": "ET: JAK2/CALR/MPL + erythromelalgia."}]}, {"id": "labs", "lec": "A", "name": "Platelet labs", "sub": "Count · MPV · smear · aggregometry", "b": [{"lo": "3", "rr": true, "hy": true, "q": "A healthy man has a platelet count of 40,000 with no bruising. The smear shows large platelet clumps. Next step?", "a": "Repeat the count in a citrate (blue-top) tube", "o": ["Start steroids for ITP", "Bone marrow biopsy", "Transfuse platelets"], "n": ["This is a lab artifact, not ITP.", "Not needed.", "Not needed."], "w": "EDTA-induced pseudothrombocytopenia: platelets clump in the EDTA tube, giving a falsely low count. Always review the smear in a new thrombocytopenia.", "p": "Clumps on smear → recheck in citrate."}, {"lo": "3", "rr": true, "q": "What does an increased mean platelet volume (MPV) suggest?", "a": "Young, large platelets from increased turnover (e.g., ITP) or Bernard-Soulier", "o": ["Wiskott-Aldrich syndrome", "Marrow failure with old platelets", "Aspirin use"], "n": ["WAS has small platelets (↓ MPV).", "Production failure doesn’t raise MPV.", "Aspirin doesn’t change size."], "w": "MPV measures platelet size. Young platelets are bigger.", "p": "↑ MPV: ITP, BSS. ↓ MPV: Wiskott-Aldrich."}, {"lo": "3", "rr": true, "t": "m", "q": "Select ALL things the peripheral smear checks in a new thrombocytopenia.", "a": ["Platelet clumps (pseudothrombocytopenia)", "Giant platelets", "Schistocytes (TMA)", "Blasts or other abnormal cells"], "o": ["Clotting factor levels", "Bleeding time"], "n": ["Measured by factor assays.", "A separate functional test."], "w": "The smear confirms the count, checks platelet size and clumps, and looks for clues in other cells.", "p": "Always look at the smear."}, {"lo": "3", "rr": true, "q": "On marrow exam, increased megakaryocytes with thrombocytopenia suggest:", "a": "Peripheral loss (destruction, consumption or sequestration)", "o": ["Production failure", "Aplastic anemia", "Pseudothrombocytopenia"], "n": ["Production failure lowers megakaryocytes.", "Aplastic marrow is empty.", "Artifact; marrow isn’t needed."], "w": "Marrow isn’t needed for typical ITP under age 60.", "p": "↑ megakaryocytes = peripheral problem."}, {"lo": "3", "rr": true, "hy": true, "q": "In light transmission aggregometry, what happens when platelets aggregate?", "a": "The plasma clears, so light transmission increases", "o": ["The plasma gets cloudier, so transmission decreases", "Light transmission is unchanged", "The sample turns red"], "n": ["Backwards.", "It changes.", "Not the readout."], "w": "Platelet-rich plasma is cloudy (0%). Agonists (ADP, arachidonic acid, collagen, epinephrine, ristocetin) make platelets clump and fall out, clearing the plasma toward 100% (platelet-poor plasma).", "p": "Clump → clear → ↑ transmission."}, {"lo": "3", "rr": true, "hy": true, "q": "What does ristocetin test in aggregation studies?", "a": "vWF binding to GPIb (the adhesion axis)", "o": ["Fibrinogen binding to GPIIb/IIIa", "ADP receptor function", "COX activity"], "n": ["Tested by ADP, collagen, epinephrine.", "Tested by ADP.", "Tested by arachidonic acid."], "w": "Ristocetin forces vWF onto GPIb, causing agglutination. Abnormal in von Willebrand disease and Bernard-Soulier.", "p": "Ristocetin = vWF + GPIb."}, {"lo": "3", "rr": true, "q": "Which coagulation tests are expected in a pure platelet disorder?", "a": "Normal PT and PTT with prolonged bleeding time", "o": ["Prolonged PT and PTT", "Prolonged PTT only", "Prolonged PT only"], "n": ["DIC.", "Hemophilia or heparin.", "Warfarin or factor VII deficiency."], "w": "PT and PTT test secondary hemostasis. Bleeding time and PFA-100 test primary hemostasis.", "p": "Platelet disorder: PT/PTT normal."}, {"lo": "3", "q": "Which disorder prolongs the bleeding time AND may prolong the PTT?", "a": "von Willebrand disease", "o": ["ITP", "Glanzmann thrombasthenia", "Hemophilia A"], "n": ["PTT is normal.", "PTT is normal.", "Bleeding time is normal."], "w": "vWF carries factor VIII, so low vWF can lower factor VIII and prolong the PTT.", "p": "vWD: ↑ bleeding time ± ↑ PTT."}]}, {"id": "cong", "lec": "B", "name": "Bernard-Soulier vs Glanzmann", "sub": "GPIb vs GPIIb/IIIa · ristocetin", "b": [{"lo": "4", "rr": true, "hy": true, "q": "Which glycoprotein is defective in Bernard-Soulier syndrome, and which step fails?", "a": "GPIb/IX; adhesion to vWF", "o": ["GPIIb/IIIa; aggregation", "GPVI; collagen activation", "P2Y12; ADP signaling"], "n": ["That’s Glanzmann.", "Not BSS.", "Not BSS."], "w": "Big Suckers: Bernard-Soulier = Big platelets that can’t Stick. GP1b = step 1 (adhesion).", "p": "BSS = no GPIb = no adhesion."}, {"lo": "4", "rr": true, "hy": true, "q": "Which glycoprotein is deficient in Glanzmann thrombasthenia, and which step fails?", "a": "GPIIb/IIIa; aggregation", "o": ["GPIb/IX; adhesion", "vWF; adhesion", "Alpha granules; secretion"], "n": ["That’s BSS.", "That’s von Willebrand disease.", "That’s gray platelet syndrome."], "w": "Without IIb/IIIa, platelets can’t bind fibrinogen to each other. The severe bleeding shows how essential IIb/IIIa is.", "p": "Glanzmann = no IIb/IIIa = no aggregation."}, {"lo": "4", "rr": true, "q": "How are Bernard-Soulier and Glanzmann inherited?", "a": "Both autosomal recessive", "o": ["Both X-linked recessive", "BSS autosomal dominant; Glanzmann X-linked", "Both mitochondrial"], "n": ["Wiskott-Aldrich is X-linked; these aren’t.", "Not the patterns.", "Not mitochondrial."], "w": "Consanguinity is a common clue.", "p": "BSS and Glanzmann: both AR."}, {"lo": "4", "rr": true, "hy": true, "q": "Which smear and count fit Bernard-Soulier syndrome?", "a": "Thrombocytopenia with giant platelets", "o": ["Normal count, normal-looking platelets", "Thrombocytosis with small platelets", "Normal count with platelet clumps"], "n": ["That’s Glanzmann.", "Not BSS.", "Clumps suggest pseudothrombocytopenia."], "w": "Giant platelets + low count → think BSS (or other inherited macrothrombocytopenias; ITP also has large young platelets).", "p": "BSS: low count + giant platelets."}, {"lo": "4", "rr": true, "hy": true, "q": "Which aggregation pattern fits Bernard-Soulier syndrome?", "a": "Normal with all agonists EXCEPT ristocetin; not corrected by normal plasma", "o": ["Abnormal with all agonists EXCEPT ristocetin", "Abnormal ristocetin corrected by normal plasma", "Abnormal with arachidonic acid only"], "n": ["That’s Glanzmann.", "That’s von Willebrand disease.", "That’s aspirin effect."], "w": "Normal plasma supplies vWF but not GPIb, so the BSS defect isn’t corrected.", "p": "BSS: only ristocetin fails; plasma doesn’t fix it."}, {"lo": "4", "rr": true, "hy": true, "q": "Which aggregation pattern fits Glanzmann thrombasthenia?", "a": "Abnormal with ADP, collagen, epinephrine and arachidonic acid; normal with ristocetin", "o": ["Normal with all agonists except ristocetin", "Abnormal with ristocetin only", "Normal with all agonists"], "n": ["That’s BSS.", "That’s BSS or vWD.", "Would be normal platelets."], "w": "Ristocetin only needs vWF + GPIb, which Glanzmann platelets still have. The patterns are mirror images.", "p": "Glanzmann: everything fails except ristocetin."}, {"lo": "4", "rr": true, "hy": true, "q": "Abnormal ristocetin aggregation is CORRECTED by adding normal plasma. Diagnosis?", "a": "von Willebrand disease", "o": ["Bernard-Soulier syndrome", "Glanzmann thrombasthenia", "Gray platelet syndrome"], "n": ["BSS isn’t corrected (the receptor is missing).", "Ristocetin is normal in Glanzmann.", "Not the pattern."], "w": "Normal plasma supplies the missing vWF. vWD is the most common inherited bleeding disorder; treat with desmopressin.", "p": "Plasma fixes ristocetin → vWD."}, {"lo": "4", "q": "A 3-year-old girl with severe gum bleeding has normal platelet count and size and normal PT/PTT. Which drug class mimics her defect?", "a": "GPIIb/IIIa inhibitors (abciximab, eptifibatide, tirofiban)", "o": ["P2Y12 inhibitors", "COX inhibitors", "Direct thrombin inhibitors"], "n": ["Block ADP signaling, not IIb/IIIa itself.", "Block TXA₂.", "Act on secondary hemostasis."], "w": "Normal count and size + severe mucocutaneous bleeding → Glanzmann. IIb/IIIa inhibitors produce a drug-induced Glanzmann state.", "p": "IIb/IIIa inhibitors = drug Glanzmann."}, {"lo": "4", "rr": true, "q": "Why can platelet transfusions stop working in Glanzmann thrombasthenia?", "a": "Alloantibodies form against the GPIIb/IIIa (or HLA) on donor platelets", "o": ["Donor platelets lack GPIIb/IIIa", "The spleen enlarges after transfusion", "Transfusions cause iron overload"], "n": ["Donor platelets have normal IIb/IIIa.", "Not the mechanism.", "Not the cause of refractoriness."], "w": "The patient has never seen IIb/IIIa, so repeated exposure triggers antibodies. Recombinant factor VIIa is then used; stem cell transplant for severe disease.", "p": "Glanzmann refractoriness → rFVIIa."}, {"lo": "4", "q": "A boy has small platelets, eczema and recurrent infections. Diagnosis?", "a": "Wiskott-Aldrich syndrome", "o": ["Bernard-Soulier syndrome", "Glanzmann thrombasthenia", "ITP"], "n": ["BSS has giant platelets.", "Normal-size platelets, no immunodeficiency.", "ITP doesn’t cause eczema or infections."], "w": "X-linked (WAS gene): thrombocytopenia with small platelets (↓ MPV), eczema, immunodeficiency.", "p": "WAS: small platelets + eczema + infections."}]}, {"id": "itp", "lec": "B", "name": "ITP: diagnosis", "sub": "Isolated thrombocytopenia · antibodies · exclusion", "b": [{"lo": "5", "rr": true, "hy": true, "q": "A 32-year-old woman has 3 days of bruises and a non-itchy rash on both legs. No fever, drugs or travel. WBC and Hb normal; platelets 1,000/µL. Most likely diagnosis?", "a": "Immune thrombocytopenic purpura (ITP)", "o": ["TTP", "Aplastic anemia", "Acute leukemia"], "n": ["TTP has schistocytes, anemia and often neuro signs.", "Aplastic anemia lowers all lines.", "Leukemia would affect other counts."], "w": "Isolated, severe thrombocytopenia with purpura and petechiae in a well young woman = ITP until proven otherwise.", "p": "Isolated thrombocytopenia + well patient = ITP."}, {"lo": "5", "rr": true, "t": "m", "q": "Select ALL typical findings in ITP.", "a": ["Petechiae (starting on the legs)", "Purpura and easy bruising", "Gum bleeding and epistaxis", "Heavy menses", "No splenomegaly"], "o": ["Palpable splenomegaly", "Fever and schistocytes"], "n": ["A big spleen argues against primary ITP (think lymphoma, liver disease, SLE).", "Suggests TTP."], "w": "Petechiae are pinpoint non-blanching red dots, first on the legs where pressure is highest. Wet purpura (oral blood blisters) signals higher bleeding risk. Intracranial hemorrhage is rare but serious.", "p": "Splenomegaly or other abnormal counts → not primary ITP."}, {"lo": "5", "rr": true, "hy": true, "q": "What is the mechanism of ITP?", "a": "IgG autoantibodies against GPIIb/IIIa and/or GPIb/IX/V; coated platelets are eaten by splenic macrophages", "o": ["Autoantibody against ADAMTS13", "IgG against heparin–PF4", "Shiga toxin damaging endothelium"], "n": ["TTP.", "HIT.", "HUS."], "w": "60–70% of adults have platelet-specific IgG. The spleen is both the main site of destruction and a major site of antibody production. Antibodies can also hit megakaryocytes, lowering production.", "p": "ITP: IgG vs IIb/IIIa or Ib → splenic Fc-receptor clearance."}, {"lo": "5", "rr": true, "q": "Which marrow and smear findings fit ITP?", "a": "Normal or increased megakaryocytes; few, often large platelets", "o": ["Absent megakaryocytes", "Schistocytes and helmet cells", "Giant platelets with normal count"], "n": ["That suggests production failure.", "That’s TMA.", "Normal count rules out ITP."], "w": "The marrow tries to compensate, so megakaryocytes are normal or increased.", "p": "ITP marrow: ↑ megakaryocytes."}, {"lo": "5", "rr": true, "hy": true, "q": "A 35-year-old man has new isolated thrombocytopenia and petechiae. Which tests should be sent before labeling it primary ITP?", "a": "HIV and hepatitis C (± H. pylori) plus a smear review", "o": ["Bone marrow biopsy", "ADAMTS13 activity", "Hemoglobin electrophoresis"], "n": ["Not needed under 60 with typical features.", "For TTP.", "Not relevant."], "w": "ITP is a presumptive diagnosis of exclusion after history and exam rule out drugs, infection, pregnancy, liver disease and other cytopenias. Secondary ITP: HIV, HCV, SLE, CLL, H. pylori.", "p": "ITP workup: smear + HIV + HCV; no marrow under 60."}, {"lo": "5", "rr": true, "q": "How does childhood ITP typically differ from adult ITP?", "a": "Children: acute, after a viral infection, resolves on its own · Adults: usually chronic", "o": ["Children: chronic · Adults: acute", "Both resolve within days", "Children need splenectomy"], "n": ["Reversed.", "Not true.", "Most children are observed."], "w": "Adult ITP is more common in younger women; equal in men and women at older ages.", "p": "Kid after virus → self-limited ITP."}, {"lo": "5", "hy": true, "q": "A pregnant woman with ITP asks about her baby. What can happen?", "a": "Maternal IgG crosses the placenta and can cause neonatal thrombocytopenia", "o": ["The baby will have hemolytic disease", "ITP never affects the baby", "The baby will be born with thrombocytosis"], "n": ["That’s Rh disease.", "IgG crosses the placenta.", "Not the effect."], "w": "Contrast neonatal alloimmune thrombocytopenia: the mother (normal count) makes antibodies against the baby’s HPA-1a antigen.", "p": "Maternal ITP IgG → neonatal thrombocytopenia."}]}, {"id": "itprx", "lec": "B", "name": "ITP: treatment", "sub": "Stop the antibody · block the eater · boost the factory", "b": [{"lo": "5", "rr": true, "q": "When is ITP usually treated?", "a": "Platelets below about 30,000 or any significant bleeding", "o": ["Any count below 150,000", "Only after splenectomy", "Never; it always resolves"], "n": ["Mild ITP is often observed.", "Splenectomy is a later option.", "Adult ITP is often chronic."], "w": "Many children are observed.", "p": "Treat ITP if <30k or bleeding."}, {"lo": "5", "rr": true, "hy": true, "q": "What is first-line therapy for adult ITP, and how does it work?", "a": "Glucocorticoids: reduce antibody production and Fc-receptor phagocytosis", "o": ["Platelet transfusion", "Plasma exchange", "Splenectomy"], "n": ["Only for life-threatening bleeding.", "For TTP.", "A later option."], "w": "Prednisone or dexamethasone may also boost production.", "p": "ITP first line = steroids."}, {"lo": "5", "rr": true, "hy": true, "q": "A patient with ITP and platelets of 1,000 develops gum bleeding. Which treatment raises the count fastest, and how?", "a": "IVIG, which blocks Fc receptors on splenic macrophages", "o": ["Rituximab, which depletes B cells", "TPO agonist, which boosts production", "Splenectomy"], "n": ["Takes weeks.", "Takes 1–2 weeks.", "Not urgent first-line."], "w": "IVIG floods Fc receptors so coated platelets aren’t eaten; counts can rise in 1–2 days. Given with high-dose steroids.", "p": "Bleeding ITP → IVIG + steroids."}, {"lo": "5", "rr": true, "q": "How does anti-D immunoglobulin raise platelets in ITP?", "a": "It coats the patient’s Rh-positive RBCs, keeping splenic macrophages busy", "o": ["It destroys B cells", "It stimulates megakaryocytes", "It replaces ADAMTS13"], "n": ["Rituximab.", "TPO agonists.", "Plasma exchange."], "w": "Only works in Rh-positive patients with a spleen.", "p": "Anti-D = decoy for macrophages (Rh+, spleen intact)."}, {"lo": "5", "rr": true, "q": "Which ITP drug works by DEPLETING B cells?", "a": "Rituximab (anti-CD20)", "o": ["Romiplostim", "Fostamatinib", "IVIG"], "n": ["TPO agonist.", "SYK inhibitor.", "Fc blocker."], "w": "Fewer B cells → fewer autoantibody-producing cells.", "p": "Rituximab = anti-CD20."}, {"lo": "5", "rr": true, "hy": true, "q": "A 40-year-old with chronic ITP relapses each time steroids are tapered. Which drug INCREASES production rather than blocking destruction?", "a": "TPO receptor agonist (romiplostim, eltrombopag, avatrombopag)", "o": ["IVIG", "Anti-D", "Rituximab"], "n": ["Blocks clearance.", "Blocks clearance.", "Blocks antibody production."], "w": "TPO agonists stimulate megakaryocytes to outpace destruction.", "p": "Boost the factory = TPO agonist."}, {"lo": "5", "q": "How does fostamatinib work in ITP?", "a": "SYK inhibitor that blocks Fc-receptor signaling in macrophages", "o": ["Anti-CD20 antibody", "TPO mimetic", "Complement C5 inhibitor"], "n": ["Rituximab.", "Romiplostim/eltrombopag.", "Eculizumab."], "w": "Blocking SYK reduces macrophage phagocytosis of antibody-coated platelets.", "p": "Fostamatinib = SYK inhibitor."}, {"lo": "5", "rr": true, "q": "How does splenectomy help in ITP, and what must be done first?", "a": "Removes the main site of destruction and antibody production; vaccinate first", "o": ["Replaces ADAMTS13; no preparation needed", "Increases TPO; give iron first", "Removes Shiga toxin; give antibiotics"], "n": ["Not relevant.", "Not the mechanism.", "Not relevant."], "w": "Vaccinate against encapsulated bacteria (pneumococcus, meningococcus, Hib) before splenectomy.", "p": "Splenectomy: vaccinate first."}, {"lo": "5", "rr": true, "t": "m", "q": "Select ALL ITP treatments that act mainly by BLOCKING platelet clearance.", "a": ["IVIG", "Anti-D immunoglobulin", "Fostamatinib"], "o": ["Rituximab", "Romiplostim"], "n": ["Rituximab stops antibody production.", "Romiplostim boosts production."], "w": "Stop the antibody (steroids, rituximab, splenectomy) → block the eater (IVIG, anti-D, fostamatinib, splenectomy, steroids) → boost the factory (TPO agonists).", "p": "Block the eater: IVIG, anti-D, fostamatinib."}, {"lo": "5", "q": "Why are platelet transfusions used only for life-threatening bleeding in ITP?", "a": "Transfused platelets are quickly destroyed by the same antibodies", "o": ["They cause thrombosis", "They trigger TTP", "They worsen splenomegaly"], "n": ["That’s a concern in TTP and HIT.", "Not true.", "Not the reason."], "w": "Transfused platelets get coated and cleared like the patient’s own.", "p": "ITP: platelets only for life-threatening bleeds."}, {"lo": "5", "q": "A woman with ITP tests positive for H. pylori. What should be done?", "a": "Treat H. pylori, which can raise the platelet count", "o": ["Ignore it", "Start rituximab instead", "Splenectomy immediately"], "n": ["Eradication can help.", "Not instead of eradication.", "Not indicated first."], "w": "H. pylori is an association of secondary ITP; eradication raises counts in some patients.", "p": "ITP + H. pylori → eradicate."}]}, {"id": "tma", "lec": "B", "name": "TMA & TTP", "sub": "Definition · ADAMTS13 · FAT RN · plasma exchange", "b": [{"lo": "6", "rr": true, "hy": true, "t": "m", "q": "Select ALL features that define a thrombotic microangiopathy (TMA).", "a": ["Microvascular thrombosis", "Thrombocytopenia (<150,000 or ≥25% drop)", "Microangiopathic hemolysis (↑ LDH, ↓ haptoglobin, schistocytes)", "End-organ damage (kidney, brain)"], "o": ["Positive direct antiglobulin test", "Prolonged PT and PTT"], "n": ["TMA hemolysis is DAT negative.", "Coags are normal in TTP and HUS (abnormal in DIC)."], "w": "TMA is the consumption mechanism of thrombocytopenia. Schistocytes >2 per high-power field (≈1% of RBCs) are significant.", "p": "TMA = clots + low platelets + schistocytes + organ damage."}, {"lo": "6", "rr": true, "q": "How many schistocytes per high-power field are considered significant?", "a": "More than 2", "o": ["Any single schistocyte", "More than 20", "Schistocytes are never counted"], "n": ["Rare fragments can be normal.", "Far higher than the threshold.", "They are counted."], "w": ">2 per HPF ≈ 1% of circulating RBCs.", "p": "Schistocytes >2/HPF = significant."}, {"lo": "6", "rr": true, "hy": true, "q": "What is the mechanism of acquired TTP?", "a": "Autoantibody against ADAMTS13 → ultra-large vWF multimers → platelet-rich microthrombi", "o": ["Shiga toxin damaging glomeruli", "IgG against GPIIb/IIIa", "Tissue factor release activating coagulation"], "n": ["HUS.", "ITP.", "DIC."], "w": "ADAMTS13 is a metalloprotease that cuts vWF to normal size. Uncut multimers stretch on endothelium and trap platelets via GPIb. A rare congenital form is Upshaw-Schulman syndrome.", "p": "TTP = Too many Tangled vWF strings."}, {"lo": "6", "rr": true, "hy": true, "t": "m", "q": "Select ALL parts of the FAT RN pentad.", "a": ["Fever", "Anemia (MAHA)", "Thrombocytopenia", "Renal insufficiency", "Neurologic abnormalities"], "o": ["Splenomegaly", "Bloody diarrhea"], "n": ["Not part of the pentad.", "HUS prodrome."], "w": "The pentad is the classic description of TTP (the lecture notes other TMAs can show it too), and the full pentad is rare. MAHA + thrombocytopenia is enough to act.", "p": "FAT RN; don’t wait for all five."}, {"lo": "6", "rr": true, "hy": true, "q": "Which ADAMTS13 activity confirms TTP?", "a": "Below 10%", "o": ["Below 50%", "Above 100%", "Normal"], "n": ["Not diagnostic.", "Not relevant.", "Normal in HUS."], "w": "Also: DAT negative, normal PT/PTT and fibrinogen.", "p": "ADAMTS13 <10% = TTP."}, {"lo": "6", "rr": true, "hy": true, "q": "A 38-year-old woman has fever, confusion and a seizure. Hb 8.1, platelets 14,000, schistocytes, creatinine 1.9, normal PT/PTT, DAT negative. Next step?", "a": "Start plasma exchange immediately (± steroids, rituximab, caplacizumab)", "o": ["Wait for ADAMTS13 results before treating", "Transfuse platelets", "Give antibiotics"], "n": ["TTP is fatal if untreated; don’t wait.", "Feeds microthrombi.", "Not indicated."], "w": "Plasma exchange removes the antibody and ultra-large vWF and replaces ADAMTS13. Steroids + rituximab stop antibody production; caplacizumab blocks vWF–GPIb binding.", "p": "Suspect TTP → plasma exchange now."}, {"lo": "6", "rr": true, "q": "Why does plasma EXCHANGE work better than plasma infusion in acquired TTP?", "a": "Exchange removes the anti-ADAMTS13 antibodies and replaces functional enzyme", "o": ["Infusion causes TRALI", "Exchange removes Shiga toxin", "Infusion contains no ADAMTS13"], "n": ["Not the main reason.", "Not relevant to TTP.", "Plasma contains ADAMTS13, but the antibody inactivates it."], "w": "Infusion alone adds enzyme that circulating antibody quickly inactivates.", "p": "Exchange = remove antibody + replace enzyme."}, {"lo": "6", "rr": true, "hy": true, "q": "Why avoid platelet transfusion in TTP?", "a": "It feeds the microthrombi", "o": ["Platelets carry ADAMTS13 inhibitors", "It causes hemolysis", "It is ineffective in all thrombocytopenias"], "n": ["Not the reason.", "Not the reason.", "Not true."], "w": "Transfuse platelets only for life-threatening bleeding.", "p": "TTP: no platelets unless life-threatening bleeding."}]}, {"id": "husdic", "lec": "B", "name": "HUS vs DIC vs TTP", "sub": "Kids & Shiga toxin · coags · mixed cases", "b": [{"lo": "6", "rr": true, "hy": true, "q": "A 4-year-old develops pallor, low urine output and petechiae a week after bloody diarrhea following a petting zoo visit. Schistocytes, platelets 40,000, rising creatinine. Diagnosis?", "a": "HUS from Shiga toxin–producing E. coli O157:H7", "o": ["TTP", "ITP", "DIC"], "n": ["TTP is usually adult and neuro-dominant.", "ITP has no schistocytes or renal failure.", "DIC has abnormal coags."], "w": "HUS triad: MAHA + acute renal insufficiency + thrombocytopenia, usually in children. Verotoxin (Shiga toxin) bacteria: E. coli O157:H7, Shigella (lecture also lists Salmonella).", "p": "Kid + bloody diarrhea + AKI + schistocytes = HUS."}, {"lo": "6", "rr": true, "q": "What is the mechanism of typical HUS?", "a": "Toxin damages endothelium, especially in glomeruli; ADAMTS13 is normal", "o": ["Anti-ADAMTS13 antibodies", "Consumption of clotting factors", "Antiplatelet IgG"], "n": ["TTP.", "DIC.", "ITP."], "w": "Endothelial damage → microthrombi → renal failure.", "p": "HUS: toxin → endothelium; ADAMTS13 normal."}, {"lo": "6", "rr": true, "hy": true, "q": "How is typical (STEC) HUS treated?", "a": "Supportive care (fluids, transfusion, dialysis); avoid antibiotics", "o": ["Plasma exchange first", "Antibiotics to kill E. coli", "Eculizumab for all"], "n": ["That’s TTP.", "May increase toxin release.", "For atypical (complement) HUS."], "w": "Also avoid antimotility drugs.", "p": "STEC HUS: supportive; no antibiotics."}, {"lo": "6", "hy": true, "q": "A child has HUS without diarrhea and a factor H mutation. Treatment?", "a": "Eculizumab (anti-C5)", "o": ["Antibiotics", "Plasma exchange alone for life", "Splenectomy"], "n": ["Not infectious.", "Eculizumab is the targeted therapy.", "Not indicated."], "w": "Atypical HUS = complement dysregulation (factor H, I, MCP mutations).", "p": "Atypical HUS → eculizumab."}, {"lo": "6", "rr": true, "hy": true, "q": "A woman with placental abruption is oozing from IV sites. Platelets 45,000, schistocytes, prolonged PT and PTT, low fibrinogen, high D-dimer. Diagnosis?", "a": "DIC", "o": ["TTP", "HUS", "ITP"], "n": ["TTP has normal coags.", "HUS has normal coags.", "ITP has no schistocytes or coagulopathy."], "w": "DIC: widespread hypercoagulability consumes platelets and factors → bleeding and clotting. Causes: severe sepsis, APL, severe trauma, placental abruption. Treat the cause; platelets, FFP, cryo if bleeding.", "p": "Abnormal coags = DIC."}, {"lo": "6", "rr": true, "t": "m", "q": "Select ALL triggers of DIC.", "a": ["Severe sepsis", "Acute promyelocytic leukemia", "Severe trauma", "Placental abruption"], "o": ["Shiga toxin E. coli in a child", "Anti-ADAMTS13 antibody"], "n": ["HUS.", "TTP."], "w": "DIC occurs as an acute complication of life-threatening illness.", "p": "DIC: sepsis, APL, trauma, abruption."}, {"lo": "6", "rr": true, "q": "Which organ dominates in TTP vs HUS?", "a": "TTP: brain · HUS: kidney", "o": ["TTP: kidney · HUS: brain", "Both: liver", "Both: lungs"], "n": ["Reversed.", "Not the dominant organ.", "Not the dominant organ."], "w": "TTP = Too many Tangled vWF strings (brain). HUS = Hamburger → Uremia in a child (kidney). DIC = Disordered coagulation → Increased PT/PTT.", "p": "TTP neuro; HUS renal; DIC coags."}, {"lo": "2", "q": "A woman who drinks a lot of tonic water develops petechiae with platelets of 8,000. Counts recover within a week of stopping. Mechanism?", "a": "Quinine drug-dependent platelet antibody", "o": ["Sequestration", "Bone marrow failure", "Consumption in microthrombi"], "n": ["No splenomegaly.", "Rapid recovery argues against marrow failure.", "No TMA features."], "w": "Drug-induced immune thrombocytopenia resolves 5–7 days after stopping.", "p": "Tonic water → quinine antibody."}]}];
+
+
+(function(){
+"use strict";
+var KEY="hd-hem07-platelet-builder-v1";
+var S={box:{},score:0,streak:0,best:0,tot:0,right:0,theme:"auto"};
+function load(){try{var j=JSON.parse(localStorage.getItem(KEY)||"null");if(j&&j.box)S=Object.assign(S,j);}catch(e){}}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}}
+load();
+
+var ALL=[]; E.forEach(function(e){e.b.forEach(function(b,i){b.id=e.id+"."+i;b.ent=e;ALL.push(b);});});
+function st(b){var r=S.box[b.id];return r?r.s:"u";}
+var rrOnly=false, mode="build", scope="all", loFilter=null, curEnt=null, idx=0, cur=null, answered=false, results={}, lastId=null, t0=0, tick=null;
+
+function shuffle(a){a=a.slice();for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=a[i];a[i]=a[j];a[j]=t;}return a;}
+function esc(s){return String(s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];});}
+function inScope(b){return (scope==="all"||b.ent.lec===scope)&&(!loFilter||b.lo===loFilter)&&(!rrOnly||b.rr);}
+
+/* ---------- theme ---------- */
+var themeBtn=document.getElementById("themeBtn");
+function applyTheme(){var r=document.documentElement;if(S.theme==="auto")r.removeAttribute("data-theme");else r.setAttribute("data-theme",S.theme);themeBtn.textContent="Theme: "+S.theme;}
+themeBtn.onclick=function(){S.theme={auto:"light",light:"dark",dark:"auto"}[S.theme];applyTheme();save();};
+applyTheme();
+document.getElementById("resetBtn").onclick=function(){
+  var b=this; if(b.dataset.confirm){S.box={};S.score=S.streak=S.tot=S.right=0;save();b.textContent="Reset progress";delete b.dataset.confirm;renderAll();next();return;}
+  b.dataset.confirm="1";b.textContent="Tap again to reset";setTimeout(function(){if(b.dataset.confirm){delete b.dataset.confirm;b.textContent="Reset progress";}},3000);
+};
+
+/* ---------- stats / side / map ---------- */
+function loStatus(lo){var bs=ALL.filter(function(b){return b.lo===lo;});var ss=bs.map(st);
+  var m=ss.filter(function(x){return x==="M";}).length;
+  if(m===bs.length)return{s:"M",m:m,n:bs.length};
+  if(ss.indexOf("m")>=0)return{s:"m",m:m,n:bs.length};
+  if(ss.some(function(x){return x!=="u";}))return{s:"o",m:m,n:bs.length};
+  return{s:"u",m:m,n:bs.length};}
+function renderStats(){
+  document.getElementById("sScore").textContent=S.score;
+  document.getElementById("sStreak").textContent=S.streak;
+  document.getElementById("sAcc").textContent=S.tot?Math.round(100*S.right/S.tot)+"%":"—";
+  document.getElementById("sBoxes").textContent=ALL.filter(function(b){return st(b)==="M";}).length+"/"+ALL.length;
+  var los=Object.keys(LOS);document.getElementById("sLos").textContent=los.filter(function(l){return loStatus(l).s==="M";}).length+"/"+los.length;
+}
+function renderSide(){
+  var h="";LECS.forEach(function(L){if(scope!=="all"&&scope!==L.k)return;
+    h+='<p class="lec-h l'+L.k+'" style="color:var(--lc)">HEM07 · '+esc(L.n)+'</p>';
+    E.filter(function(e){return e.lec===L.k;}).forEach(function(e){
+      var m=e.b.filter(function(b){return st(b)==="M";}).length,p=Math.round(100*m/e.b.length);
+      h+='<button type="button" class="ent l'+e.lec+'" data-ent="'+e.id+'"'+(curEnt===e&&mode==="build"?' aria-current="true"':'')+'><span class="n">'+esc(e.name)+'</span><span class="pct">'+m+'/'+e.b.length+'</span><span class="s">'+esc(e.sub)+'</span><span class="mini"><i style="width:'+p+'%"></i></span></button>';
+    });});
+  var el=document.getElementById("entList");el.innerHTML=h;
+  el.querySelectorAll(".ent").forEach(function(b){b.onclick=function(){setMode("build");startEnt(E.filter(function(e){return e.id===b.dataset.ent;})[0]);};});
+}
+function renderMap(){
+  var h="";Object.keys(LOS).forEach(function(lo){var lec=LOLEC[lo];if(scope!=="all"&&scope!==lec)return;var s=loStatus(lo);
+    h+='<button type="button" class="lo-tile l'+lec+'" data-lo="'+lo+'"'+(loFilter===lo?' style="border-color:var(--lc)"':'')+'><span class="id">'+(lo.slice(-1)==="X"?"Extra":"LO "+lo)+'</span><span class="t">'+esc(LOS[lo])+'</span><span class="dot s-'+s.s+'" title="'+s.m+'/'+s.n+' mastered"></span></button>';});
+  var g=document.getElementById("loGrid");g.innerHTML=h;
+  g.querySelectorAll(".lo-tile").forEach(function(b){b.onclick=function(){loFilter=(loFilter===b.dataset.lo?null:b.dataset.lo);setMode("drill");};});
+}
+function renderAll(){renderStats();renderSide();renderMap();}
+
+/* ---------- flow ---------- */
+function setMode(m){mode=m;document.querySelectorAll("[data-mode]").forEach(function(b){b.setAttribute("aria-pressed",String(b.dataset.mode===m));});
+  if(m==="build"){loFilter=null;if(rrOnly){rrOnly=false;setRR();}renderAll();if(!curEnt||!inScope(curEnt.b[0]))startEnt(firstEnt());else show();}
+  else{renderAll();next();}}
+function firstEnt(){var es=E.filter(function(e){return scope==="all"||e.lec===scope;});
+  for(var i=0;i<es.length;i++){if(es[i].b.some(function(b){return st(b)!=="M";}))return es[i];}return es[0];}
+document.querySelectorAll("[data-mode]").forEach(function(b){b.onclick=function(){setMode(b.dataset.mode);};});
+function setRR(){document.querySelectorAll("[data-rr]").forEach(function(x){x.setAttribute("aria-pressed",String((x.dataset.rr==="1")===rrOnly));});}
+document.querySelectorAll("[data-rr]").forEach(function(b){b.onclick=function(){rrOnly=b.dataset.rr==="1";setRR();setMode(rrOnly?"drill":mode);};});
+document.querySelectorAll("[data-scope]").forEach(function(b){b.onclick=function(){scope=b.dataset.scope;loFilter=null;
+  document.querySelectorAll("[data-scope]").forEach(function(x){x.setAttribute("aria-pressed",String(x===b));});
+  if(mode==="build"){curEnt=null;setMode("build");}else setMode("drill");};});
+
+function startEnt(e){curEnt=e;idx=0;results={};renderSide();cur=e.b[0];show();}
+function next(){
+  if(mode==="build"){idx++;if(idx>=curEnt.b.length){finishEnt();return;}cur=curEnt.b[idx];show();return;}
+  var pool=ALL.filter(inScope);if(!pool.length){cur=null;show();return;}
+  var rank={m:0,u:1,o:2,M:3};
+  pool=shuffle(pool).sort(function(a,b){return rank[st(a)]-rank[st(b)];});
+  var best=rank[st(pool[0])];var top=pool.filter(function(b){return rank[st(b)]===best&&b.id!==lastId;});
+  if(best===3)top=pool.filter(function(b){return b.id!==lastId;});
+  cur=(top.length?top:pool)[0];show();
+}
+function finishEnt(){
+  var ok=Object.keys(results).filter(function(k){return results[k];}).length,n=curEnt.b.length;
+  var i=E.indexOf(curEnt),nxt=null;for(var j=1;j<=E.length;j++){var c=E[(i+j)%E.length];if(scope==="all"||c.lec===scope){nxt=c;break;}}
+  var card=document.getElementById("card");card.className="card l"+curEnt.lec;
+  card.innerHTML='<div class="done"><p class="meta">Structure complete</p><h2>'+esc(curEnt.name)+': '+ok+' / '+n+' first try</h2>'+
+   '<p class="hint">'+(ok===n?"Clean build. It will count as mastered after one more clean pass.":"Missed boxes are queued first in Drill mode.")+'</p>'+
+   '<div class="actions"><button class="btn" type="button" id="again">Rebuild '+esc(curEnt.name)+'</button>'+(nxt?'<button class="btn primary" type="button" id="nextEnt">Next: '+esc(nxt.name)+' →</button>':'')+'</div></div>';
+  document.getElementById("again").onclick=function(){startEnt(curEnt);};
+  if(nxt)document.getElementById("nextEnt").onclick=function(){startEnt(nxt);};
+  var ne=document.getElementById("nextEnt");if(ne)ne.focus();
+}
+
+var picks=[];
+function show(){
+  answered=false;picks=[];clearInterval(tick);
+  var card=document.getElementById("card");
+  if(!cur){card.className="card";card.innerHTML='<p class="q">Nothing in this scope yet.</p>';return;}
+  var b=cur,e=b.ent;card.className="card l"+e.lec;
+  var head='<div class="card-top"><div><p class="meta">'+(mode==="build"?"Build · box "+(idx+1)+" of "+e.b.length:"Drill"+(rrOnly?" · Rapid Review":"")+(loFilter?" · LO "+loFilter:""))+'</p><h2>'+esc(e.name)+'</h2></div>'+
+    '<div style="display:flex;gap:6px;flex-wrap:wrap"><span class="tag lo">'+(b.lo.slice(-1)==="X"?"Extra":"LO "+b.lo)+'</span>'+(b.rr?'<span class="tag rr">Rapid Review</span>':'')+(b.hy?'<span class="tag hy">HY</span>':'')+'<span class="timer" id="timer">0.0s</span></div></div>';
+  if(mode==="build"){head+='<div class="boxes" aria-hidden="true">'+e.b.map(function(x,i){var c=i===idx?"cur":(x.id in results?(results[x.id]?"done-ok":"done-bad"):"");return '<i class="'+c+'"></i>';}).join("")+'</div>';}
+  var body='<p class="q">'+esc(b.q)+'</p>';
+  if(!b.t){b._opts=shuffle([b.a].concat(b.o));
+    body+='<div class="opts">'+b._opts.map(function(o,i){return '<button type="button" class="opt" data-i="'+i+'"><span class="k">'+(i+1)+'</span><span>'+esc(o)+'</span></button>';}).join("")+'</div>';}
+  else if(b.t==="m"){b._opts=shuffle(b.a.concat(b.o));
+    body+='<p class="hint">Select all that apply, then check.</p><div class="opts">'+b._opts.map(function(o,i){return '<button type="button" class="opt" aria-pressed="false" data-i="'+i+'"><span class="k">'+(i+1)+'</span><span>'+esc(o)+'</span></button>';}).join("")+'</div>';}
+  else{b._opts=shuffle(b.a);
+    body+='<p class="hint">Tap items in order. Tap a placed item to remove it.</p><ol class="ordered" id="ordList"><li class="empty" style="cursor:default">Your order appears here</li></ol><div class="opts">'+b._opts.map(function(o,i){return '<button type="button" class="opt" data-i="'+i+'"><span class="k">+</span><span>'+esc(o)+'</span></button>';}).join("")+'</div>';}
+  var act='<div id="fb"></div><div class="actions"><span class="hint">'+(b.t?"Enter to check":"Keys 1–"+b._opts.length+" to answer")+'</span><div style="display:flex;gap:8px">'+
+    (mode==="build"?'<button class="btn" type="button" id="skipBtn">Skip structure</button>':'')+
+    (b.t?'<button class="btn primary" type="button" id="checkBtn"'+(b.t==="o"?" disabled":"")+'>Check</button>':'')+
+    '<button class="btn primary" type="button" id="nextBtn" hidden>Next box →</button></div></div>';
+  card.innerHTML=head+body+act;
+  t0=Date.now();tick=setInterval(function(){var t=document.getElementById("timer");if(t)t.textContent=((Date.now()-t0)/1000).toFixed(1)+"s";},100);
+  var opts=card.querySelectorAll(".opt");
+  if(!b.t)opts.forEach(function(o){o.onclick=function(){if(!answered)grade([+o.dataset.i]);};});
+  else if(b.t==="m")opts.forEach(function(o){o.onclick=function(){if(answered)return;var on=o.getAttribute("aria-pressed")!=="true";o.setAttribute("aria-pressed",String(on));o.classList.toggle("sel",on);};});
+  else opts.forEach(function(o){o.onclick=function(){if(answered||o.disabled)return;picks.push(+o.dataset.i);o.disabled=true;o.style.opacity=".4";drawOrd();};});
+  var cb=document.getElementById("checkBtn");if(cb)cb.onclick=function(){if(answered)return;
+    if(b.t==="m"){var sel=[];opts.forEach(function(o){if(o.getAttribute("aria-pressed")==="true")sel.push(+o.dataset.i);});grade(sel);}else grade(picks);};
+  var sk=document.getElementById("skipBtn");if(sk)sk.onclick=function(){var i=E.indexOf(curEnt);for(var j=1;j<=E.length;j++){var c=E[(i+j)%E.length];if(scope==="all"||c.lec===scope){startEnt(c);return;}}};
+  document.getElementById("nextBtn").onclick=function(){lastId=cur.id;next();};
+}
+function drawOrd(){var b=cur,ol=document.getElementById("ordList");
+  ol.innerHTML=picks.length?picks.map(function(i,k){return '<li data-k="'+k+'">'+esc(b._opts[i])+'</li>';}).join(""):'<li class="empty" style="cursor:default">Your order appears here</li>';
+  ol.querySelectorAll("li[data-k]").forEach(function(li){li.onclick=function(){if(answered)return;var k=+li.dataset.k,i=picks[k];picks.splice(k,1);
+    var o=document.querySelector('.opt[data-i="'+i+'"]');o.disabled=false;o.style.opacity="";drawOrd();};});
+  document.getElementById("checkBtn").disabled=picks.length!==b.a.length;}
+
+function grade(sel){
+  answered=true;clearInterval(tick);var b=cur,ok,card=document.getElementById("card"),opts=card.querySelectorAll(".opt");
+  if(!b.t){ok=b._opts[sel[0]]===b.a;opts.forEach(function(o){var t=b._opts[+o.dataset.i];o.disabled=true;if(t===b.a)o.classList.add("right");else if(+o.dataset.i===sel[0])o.classList.add("wrong");});}
+  else if(b.t==="m"){var chosen=sel.map(function(i){return b._opts[i];});ok=chosen.length===b.a.length&&chosen.every(function(c){return b.a.indexOf(c)>=0;});
+    opts.forEach(function(o){var t=b._opts[+o.dataset.i],isA=b.a.indexOf(t)>=0,isS=chosen.indexOf(t)>=0;o.disabled=true;o.classList.remove("sel");
+      if(isA&&isS)o.classList.add("right");else if(isA)o.classList.add("missed");else if(isS)o.classList.add("wrong");});}
+  else{var got=sel.map(function(i){return b._opts[i];});ok=got.every(function(g,k){return g===b.a[k];});
+    document.querySelectorAll("#ordList li[data-k]").forEach(function(li,k){li.classList.add(got[k]===b.a[k]?"right":"wrong");});
+    opts.forEach(function(o){o.disabled=true;});}
+  var r=S.box[b.id]||{n:0,c:0,s:"u"};r.n++;
+  if(ok){r.c++;r.s=r.c>=2?"M":"o";S.streak++;S.best=Math.max(S.best,S.streak);S.right++;S.score+=10+Math.min(S.streak,10);}
+  else{r.c=0;r.s="m";S.streak=0;}
+  S.tot++;S.box[b.id]=r;if(!(b.id in results))results[b.id]=ok;save();
+  var fb='<div class="fb '+(ok?"ok":"bad")+'"><span class="v">'+(ok?"Correct":"Not quite")+'</span>';
+  if(!b.t)fb+='<span class="ans">Answer: <b>'+esc(b.a)+'</b></span>';
+  else if(b.t==="m")fb+='<span class="ans">Answer: <b>'+b.a.map(esc).join(" · ")+'</b></span>';
+  else fb+='<span class="ans">Correct order:</span><ol>'+b.a.map(function(x){return "<li>"+esc(x)+"</li>";}).join("")+'</ol>';
+  fb+='<div class="fbexp">'+String(b.w||"").split(/\n\n+/).filter(Boolean).map(function(t){return '<p>'+esc(t)+'</p>';}).join("")+'</div>';
+  if(b.n&&b.n.length&&b.o&&b.o.length){
+    var rows=b.o.map(function(x,i){return b.n[i]?'<li><b>'+esc(x)+'</b> — '+esc(b.n[i])+'</li>':"";}).join("");
+    if(rows)fb+='<ul class="fbnotes">'+rows+'</ul>';
+  }
+  if(b.p)fb+='<div class="fbpearl"><b>High-yield</b>'+esc(b.p)+'</div>';
+  fb+='</div>';
+  document.getElementById("fb").innerHTML=fb;
+  var cb=document.getElementById("checkBtn");if(cb)cb.hidden=true;
+  var nb=document.getElementById("nextBtn");nb.hidden=false;nb.textContent=(mode==="build"&&idx===curEnt.b.length-1)?"Finish structure →":"Next box →";nb.focus();
+  renderAll();
+}
+document.addEventListener("keydown",function(ev){
+  if(ev.target.tagName==="INPUT"||ev.metaKey||ev.ctrlKey||ev.altKey)return;
+  if(ev.key==="Enter"){var nb=document.getElementById("nextBtn"),cb=document.getElementById("checkBtn");
+    if(nb&&!nb.hidden){ev.preventDefault();nb.click();}else if(cb&&!cb.hidden&&!cb.disabled){ev.preventDefault();cb.click();}return;}
+  var n=parseInt(ev.key,10);if(!cur||answered||isNaN(n))return;var o=document.querySelector('.opt[data-i="'+(n-1)+'"]');if(o&&!o.disabled)o.click();
+});
+
+renderAll();startEnt(firstEnt());
+})();
+
+/* ---------- Review: the compiled version of everything the answers teach ---------- */
+var REVIEW = {"F": "<h3 class=\"rh\">LO1 · Normal platelets &amp; primary hemostasis</h3>\n<p>Platelets: <b>1–4 µm, anucleate, 7–10 days</b>, about <b>⅓ in the spleen</b>, removed by macrophages. Made by megakaryocytes under <b>TPO</b> (liver, kidney): ≈35,000–50,000/µL/day, up to 8×.</p>\n<div class=\"rmem\"><b>Primary vs secondary</b>Primary = platelet plug (platelets + vWF) → mucocutaneous bleeding when it fails. Secondary = fibrin mesh (cascade) → deep bleeding (joints, muscles).</div>\n<div class=\"rtbl\"><table><thead><tr><th>Receptor</th><th>Ligand</th><th>Role</th></tr></thead><tbody>\n<tr><td><b>GPIb/IX(/V)</b></td><td>vWF</td><td>Adhesion / tethering (only resting receptor for activated vWF)</td></tr>\n<tr><td><b>GPIIb/IIIa</b></td><td>Fibrinogen (and vWF)</td><td>Aggregation + firm adhesion</td></tr>\n<tr><td><b>GPVI, GPIa/IIa</b></td><td>Collagen</td><td>Direct binding + activation</td></tr></tbody></table></div>\n<div class=\"rtrap\"><b>Collagen receptor</b>In-house slides pair collagen with GPIIb/IIIa. Boards: collagen → GPVI and GPIa/IIa; IIb/IIIa → fibrinogen.</div>\n<div class=\"rseq\"><ol><li><b>Tethering</b> vWF binds exposed collagen, captures platelet GPIb</li><li><b>Rolling</b> GPIb–vWF bonds slow platelets along the wall</li><li><b>Activation</b> Shape change; granules release ADP, TXA₂ (also thrombin, tyrosine kinases) → recruit more platelets</li><li><b>Firm adhesion + aggregation</b> GPIIb/IIIa binds fibrinogen, cross-linking platelets ; thrombin and fibrin make it irreversible</li></ol></div>\n<div class=\"rtbl\"><table><thead><tr><th>Granule</th><th>Contents</th><th>Note</th></tr></thead><tbody>\n<tr><td><b>Alpha</b> (most)</td><td>vWF, fibrinogen, PDGF, PF4, FV, FXI, FXIII, prothrombin, HMWK</td><td>Missing in gray platelet syndrome</td></tr>\n<tr><td><b>Dense</b></td><td>ADP, Ca²⁺, serotonin, histamine</td><td>Amplify aggregation</td></tr>\n<tr><td>Lysosomes</td><td>Degradative enzymes</td><td></td></tr></tbody></table></div>\n<div class=\"rhy\"><b>Antiplatelet drugs</b>Aspirin → COX (↓ TXA₂, lasts platelet life) · clopidogrel, prasugrel, ticagrelor → P2Y12 · abciximab, eptifibatide, tirofiban → GPIIb/IIIa.</div>\n<h3 class=\"rh\">LO2 · Thrombocytopenia &amp; thrombocytosis</h3>\n<div class=\"rtbl\"><table><thead><tr><th>Grade</th><th>Count</th></tr></thead><tbody><tr><td>Mild</td><td>100,000–150,000</td></tr><tr><td>Moderate</td><td>50,000–99,000</td></tr><tr><td>Severe</td><td>&lt;50,000</td></tr></tbody></table></div>\n<p>Bleeding risk is unpredictable and depends on cause. Platelet bleeding is mucocutaneous; spontaneous intracranial bleeding becomes a risk at very low counts (often &lt;10,000).</p>\n<div class=\"rtbl\"><table><thead><tr><th>Mechanism</th><th>Examples</th></tr></thead><tbody>\n<tr><td>↓ Production</td><td>MDS, infection, B12/folate, aplastic, infiltration, alcohol (look for other cytopenias)</td></tr>\n<tr><td>Destruction</td><td>ITP, drug antibodies, SLE, HIT</td></tr>\n<tr><td>Consumption</td><td>TTP, HUS, DIC</td></tr>\n<tr><td>Sequestration</td><td>Cirrhosis/portal HTN, myelofibrosis (spleen holds up to 90%)</td></tr></tbody></table></div>\n<div class=\"rmem\"><b>Pro-De-Con-Seq</b>Marrow: ↑ megakaryocytes → peripheral problem; ↓ megakaryocytes → production.</div>\n<div class=\"rhy\"><b>Drug-induced &amp; HIT</b>Drug antibody: 1–2 weeks, hours on re-exposure, resolves 5–7 days; quinine (tonic water), herbals, vaccines. HIT: IgG vs heparin–PF4, &gt;50% drop at 5–10 days, thrombosis → stop heparin, argatroban.</div>\n<div class=\"rtbl\"><table><thead><tr><th>&gt;450,000</th><th>Reactive (most common)</th><th>Clonal</th></tr></thead><tbody>\n<tr><td>Causes</td><td>Iron deficiency, infection, inflammation (IL-6 → TPO), malignancy, bleeding, post-splenectomy</td><td>ET, PV, myelofibrosis, CML</td></tr>\n<tr><td>Clues</td><td>Underlying condition; resolves</td><td>JAK2/CALR/MPL, splenomegaly, erythromelalgia</td></tr>\n<tr><td>Risk</td><td>Low</td><td>Thrombosis + paradoxical bleeding</td></tr></tbody></table></div>\n<h3 class=\"rh\">LO3 · Platelet labs</h3>\n<div class=\"rtbl\"><table><thead><tr><th>Test</th><th>Use</th></tr></thead><tbody>\n<tr><td>Platelet count</td><td>150–450k; <b>pseudothrombocytopenia</b> (EDTA clumps) → recheck in citrate</td></tr>\n<tr><td>MPV</td><td>↑ ITP, BSS · ↓ Wiskott-Aldrich</td></tr>\n<tr><td>Smear</td><td>Clumps, giant platelets, schistocytes, blasts</td></tr>\n<tr><td>Marrow</td><td>Megakaryocytes ↑ peripheral / ↓ production; not needed for typical ITP &lt;60</td></tr>\n<tr><td>Aggregometry</td><td>Clumping clears plasma → ↑ light transmission; agonists ADP, arachidonic acid, collagen, epinephrine, ristocetin</td></tr>\n<tr><td>Ristocetin</td><td>vWF + GPIb (adhesion axis)</td></tr>\n<tr><td>PFA-100, bleeding time</td><td>Primary hemostasis screens</td></tr></tbody></table></div>\n<div class=\"rtbl\"><table><thead><tr><th></th><th>Count</th><th>BT</th><th>PT</th><th>PTT</th></tr></thead><tbody>\n<tr><td>ITP</td><td>↓</td><td>↑</td><td>nl</td><td>nl</td></tr><tr><td>BSS</td><td>↓ giant</td><td>↑</td><td>nl</td><td>nl</td></tr>\n<tr><td>Glanzmann</td><td>nl</td><td>↑</td><td>nl</td><td>nl</td></tr><tr><td>vWD</td><td>nl</td><td>↑</td><td>nl</td><td>nl/↑</td></tr>\n<tr><td>DIC</td><td>↓</td><td>↑</td><td>↑</td><td>↑</td></tr><tr><td>Hemophilia</td><td>nl</td><td>nl</td><td>nl</td><td>↑</td></tr></tbody></table></div>\n<h3 class=\"rh\">Rapid Review checklist · LO1–LO3</h3>\n<ul class=\"rlist\">\n<li><b>LO1</b> 1–4 µm, anucleate, 7–10 d, ⅓ spleen, TPO · tether (vWF–GPIb) → roll → activate (ADP, TXA₂, thrombin) → aggregate (fibrinogen–IIb/IIIa) · collagen most potent · α vs dense granules</li>\n<li><b>LO2</b> &lt;150k with grades; risk unpredictable · production, destruction, consumption, sequestration · drug-induced timing and hidden causes · &gt;450k reactive vs clonal</li>\n<li><b>LO3</b> Count, MPV, smear, marrow · aggregometry, PFA-100, bleeding time · ristocetin = vWF–GPIb; PT/PTT normal · pseudothrombocytopenia → citrate</li></ul>\n", "D": "<h3 class=\"rh\">LO4 · Bernard-Soulier vs Glanzmann</h3>\n<div class=\"rtbl\"><table><thead><tr><th>Feature</th><th>Bernard-Soulier</th><th>Glanzmann</th></tr></thead><tbody>\n<tr><td>Defect</td><td><b>GPIb/IX</b></td><td><b>GPIIb/IIIa</b></td></tr>\n<tr><td>Step broken</td><td>Adhesion (platelet–vWF)</td><td>Aggregation (platelet–fibrinogen–platelet)</td></tr>\n<tr><td>Inheritance</td><td>AR</td><td>AR</td></tr>\n<tr><td>Count / smear</td><td><b>↓, giant platelets</b></td><td><b>Normal</b>, normal-looking; no clumping</td></tr>\n<tr><td>Aggregation</td><td>Normal except <b>ristocetin</b> (not corrected by plasma)</td><td>Abnormal with all <b>except ristocetin</b></td></tr>\n<tr><td>Bleeding</td><td>Mucocutaneous</td><td>Severe mucocutaneous</td></tr>\n<tr><td>PT/PTT</td><td>Normal</td><td>Normal</td></tr>\n<tr><td>Treatment</td><td>Platelets, antifibrinolytics, DDAVP; SCT</td><td>Platelets, rFVIIa (alloantibodies), antifibrinolytics; SCT</td></tr></tbody></table></div>\n<div class=\"rmem\"><b>Big Suckers</b>Bernard-Soulier = Big platelets that can’t Stick (GP1b = step 1). Glanzmann = platelets can’t hold hands (IIb/IIIa = later steps).</div>\n<div class=\"rtrap\"><b>Mirror images</b>BSS: everything works except ristocetin. Glanzmann: everything fails except ristocetin. Ristocetin defect corrected by normal plasma = vWD.</div>\n<div class=\"rhy\"><b>Platelet size</b>Giant + low count → BSS (ITP also large). Small + eczema + infections in a boy → Wiskott-Aldrich (X-linked). IIb/IIIa inhibitors mimic Glanzmann.</div>\n<h3 class=\"rh\">LO5 · ITP</h3>\n<p><b>Antibody-mediated</b> platelet (± megakaryocyte) destruction → <b>isolated thrombocytopenia</b> in a well adult. More common in younger women; secondary with HIV, HCV, SLE, CLL, H. pylori. Children: acute, post-viral, self-limited. Adults: chronic.</p>\n<div class=\"rseq\"><ol><li><b>Loss of tolerance</b> B cells make IgG vs GPIIb/IIIa and/or GPIb/IX/V (60–70%)</li><li><b>Splenic macrophages</b> grab coated platelets via Fc receptors</li><li><b>Megakaryocytes</b> also hit → less production</li><li><b>Result</b> petechiae (legs), purpura, mucosal bleeding; no splenomegaly</li></ol></div>\n<div class=\"rtrap\"><b>Not ITP</b>Splenomegaly or other abnormal counts → lymphoma, leukemia, liver disease, SLE, marrow failure.</div>\n<div class=\"rrule\"><b>Diagnosis</b>Exclusion: history, exam, smear (pseudothrombocytopenia, schistocytes, blasts), HIV, HCV (± H. pylori). Under 60 with typical features → no marrow. PT/PTT normal.</div>\n<div class=\"rtbl\"><table><thead><tr><th>Treatment</th><th>Blocks</th><th>How</th></tr></thead><tbody>\n<tr><td><b>Steroids</b> (first line)</td><td>Antibody + clearance</td><td>↓ antibody, ↓ Fc phagocytosis</td></tr>\n<tr><td><b>IVIG</b> (fastest)</td><td>Clearance</td><td>Blocks macrophage Fc receptors</td></tr>\n<tr><td>Anti-D</td><td>Clearance</td><td>Coats Rh+ RBCs as a decoy (spleen intact)</td></tr>\n<tr><td>Rituximab</td><td>Antibody production</td><td>Anti-CD20, depletes B cells</td></tr>\n<tr><td>TPO agonists</td><td>Production</td><td>Romiplostim, eltrombopag, avatrombopag</td></tr>\n<tr><td>Fostamatinib</td><td>Clearance</td><td>SYK inhibitor</td></tr>\n<tr><td>Splenectomy</td><td>Clearance + antibody</td><td>Vaccinate first</td></tr>\n<tr><td>Platelets</td><td>—</td><td>Life-threatening bleeding only</td></tr></tbody></table></div>\n<div class=\"rmem\"><b>Three moves</b>Stop the antibody · block the eater · boost the factory. Treat if &lt;30k or bleeding.</div>\n<div class=\"rhy\"><b>Pregnancy</b>Maternal ITP IgG → neonatal thrombocytopenia. Neonatal alloimmune thrombocytopenia: mother (normal count) makes anti-HPA-1a. Treat H. pylori if positive.</div>\n<h3 class=\"rh\">LO6 · TMA, TTP, HUS &amp; DIC</h3>\n<p><b>TMA</b> = microvascular thrombosis + thrombocytopenia (&lt;150k or ≥25% drop) + MAHA (↑ LDH, ↓ haptoglobin, &gt;2 schistocytes/HPF) + organ damage (kidney, brain). It is the consumption mechanism.</p>\n<div class=\"rseq\"><ol><li><b>Anti-ADAMTS13</b> autoantibody (congenital = Upshaw-Schulman)</li><li><b>Ultra-large vWF</b> stays stretched on endothelium</li><li><b>Platelets</b> stick via GPIb → microthrombi</li><li><b>Consumption + shearing + ischemia</b> (brain, kidney)</li></ol></div>\n<div class=\"rmem\"><b>FAT RN</b>Fever, Anemia, Thrombocytopenia, Renal, Neuro. Classic for TTP (lecture: can appear in any TMA); full pentad rare; MAHA + low platelets is enough.</div>\n<div class=\"rtbl\"><table><thead><tr><th>Feature</th><th>TTP</th><th>HUS</th><th>DIC</th></tr></thead><tbody>\n<tr><td>Who</td><td>Adults (women)</td><td>Children</td><td>Critically ill</td></tr>\n<tr><td>Cause</td><td>Anti-ADAMTS13</td><td>Shiga/verotoxin (E. coli O157:H7, Shigella)</td><td>Sepsis, APL, trauma, abruption</td></tr>\n<tr><td>Organ</td><td>Brain</td><td>Kidney</td><td>Bleeding + clotting</td></tr>\n<tr><td>PT/PTT/fibrinogen</td><td>Normal</td><td>Normal</td><td>↑ / ↑ / ↓, ↑ D-dimer</td></tr>\n<tr><td>ADAMTS13</td><td>&lt;10%</td><td>Normal</td><td>Normal / mildly ↓</td></tr>\n<tr><td>Treatment</td><td>Plasma exchange, steroids, rituximab, caplacizumab</td><td>Supportive, dialysis; no antibiotics</td><td>Treat cause; products if bleeding</td></tr></tbody></table></div>\n<div class=\"rtrap\"><b>TTP traps</b>Treat immediately; don’t wait for ADAMTS13. Avoid platelet transfusion. Exchange (not infusion) removes the antibody.</div>\n<div class=\"rhy\"><b>Atypical HUS</b>No diarrhea; complement dysregulation (factor H, I, MCP) → eculizumab.</div>\n<h3 class=\"rh\">HEM07 Rapid Review checklist · LO4–LO6</h3>\n<ul class=\"rlist\">\n<li><b>LO4</b> BSS: GPIb, AR, low count + giant platelets, only ristocetin abnormal · Glanzmann: IIb/IIIa, AR, normal count, all abnormal except ristocetin, severe bleeding · both mucocutaneous, normal PT/PTT · plasma-corrected ristocetin = vWD</li>\n<li><b>LO5</b> Antibody destruction, isolated thrombocytopenia · petechiae, purpura, mucosal bleeding, no spleen · IgG vs IIb/IIIa / Ib; spleen · exclusion, HIV, HCV, no marrow &lt;60 · steroids → IVIG/anti-D → rituximab → TPO agonists → splenectomy</li>\n<li><b>LO6</b> TMA criteria · TTP: anti-ADAMTS13, FAT RN, &lt;10%, plasma exchange, fatal untreated · HUS: kids, Shiga toxin, supportive · DIC: ↑ PT/PTT, ↓ fibrinogen; sepsis, malignancy, trauma, abruption</li></ul>\n"};
+var RVW_NAME = {"F":"LO1–3 Platelets & labs","D":"LO4–6 Disorders"};
+(function(){
+  var panel=document.getElementById("rvw"), body=document.getElementById("rvwBody"),
+      toc=document.getElementById("rvwToc"), q=document.getElementById("rvwQ"),
+      cnt=document.getElementById("rvwCount"), empty=document.getElementById("rvwEmpty"),
+      btn=document.getElementById("reviewBtn"), lec="F", secs=[];
+  var TYPES={rrule:1,rtrap:1,rmem:1,rhy:1};
+  function collapse(sec){
+    [].slice.call(sec.querySelectorAll(".rrule,.rtrap,.rmem,.rhy")).forEach(function(d){
+      var type=d.className.trim(); if(!TYPES[type])return;
+      var lbl=d.querySelector("b"), label=lbl?lbl.textContent:"Note";
+      if(lbl)lbl.parentNode.removeChild(lbl);
+      var det=document.createElement("details"); det.className="cx "+type;
+      var sum=document.createElement("summary");
+      sum.innerHTML='<span class="lbl"></span><span class="pk"></span>';
+      sum.querySelector(".lbl").textContent=label;
+      sum.querySelector(".pk").textContent=d.textContent.replace(/\s+/g," ").trim().slice(0,110);
+      var cb=document.createElement("div"); cb.className="cbody";
+      while(d.firstChild)cb.appendChild(d.firstChild);
+      det.appendChild(sum); det.appendChild(cb);
+      d.parentNode.replaceChild(det,d);
+    });
+    var h=sec.querySelector(".rh"), hys=[].slice.call(sec.querySelectorAll("details.rhy"));
+    if(h&&hys.length){ var ref=h.nextSibling; hys.forEach(function(x){ sec.insertBefore(x,ref); }); }
+    var kids=[].slice.call(sec.children), i=0;
+    while(i<kids.length){
+      if(kids[i].tagName==="DETAILS"){
+        var run=[kids[i]], cls=kids[i].className, j=i+1;
+        while(j<kids.length&&kids[j].tagName==="DETAILS"&&kids[j].className===cls){run.push(kids[j]);j++;}
+        if(run.length>1){
+          var g=document.createElement("div"); g.className="cgrid";
+          sec.insertBefore(g,run[0]); run.forEach(function(x){g.appendChild(x);});
+        }
+        i=j;
+      } else i++;
+    }
+  }
+  function group(){
+    var kids=[].slice.call(body.childNodes), out=[], cur=null;
+    kids.forEach(function(n){
+      if(n.nodeType===1&&n.tagName==="H3"){cur=document.createElement("section");cur.className="rsec";out.push(cur);}
+      if(!cur){cur=document.createElement("section");cur.className="rsec";out.push(cur);}
+      cur.appendChild(n);
+    });
+    body.innerHTML="";
+    out.forEach(function(s,i){ s.id="rs"+i; collapse(s); s._t=s.textContent.toLowerCase(); body.appendChild(s); });
+    return out;
+  }
+  function setAll(open){
+    [].slice.call(body.querySelectorAll("details.cx")).forEach(function(d){d.open=open;});
+    var t=document.getElementById("rvwAll");
+    if(t){t.textContent=open?"Collapse all":"Expand all";t.setAttribute("aria-pressed",String(open));}
+  }
+  function buildToc(){
+    toc.innerHTML=secs.map(function(s){
+      var h=s.querySelector(".rh"); return h?'<a href="#'+s.id+'">'+h.textContent+'</a>':'';
+    }).join("");
+  }
+  function filter(){
+    var terms=q.value.toLowerCase().split(/\s+/).filter(Boolean), n=0;
+    secs.forEach(function(s){
+      var on=terms.every(function(t){return s._t.indexOf(t)!==-1;});
+      s.classList.toggle("hide",!on); if(on)n++;
+    });
+    empty.classList.toggle("on",n===0);
+    cnt.textContent = n===secs.length ? secs.length+" sections" : n+" of "+secs.length;
+    toc.style.display = q.value ? "none" : "";
+  }
+  function load(l){
+    lec=l; panel.setAttribute("data-lec",l);
+    body.innerHTML=REVIEW[l]||"";
+    secs=group(); buildToc(); q.value=""; filter();
+    var t=document.getElementById("rvwAll"); if(t){t.textContent="Expand all";t.setAttribute("aria-pressed","false");}
+  }
+  function open(){
+    document.querySelector(".bar").style.display="none";
+    document.querySelector(".main").style.display="none";
+    panel.hidden=false; if(!secs.length)load(lec);
+    btn.setAttribute("aria-pressed","true");
+    window.scrollTo(0,0); q.focus({preventScroll:true});
+  }
+  function close(){
+    panel.hidden=true;
+    document.querySelector(".bar").style.display="";
+    document.querySelector(".main").style.display="";
+    btn.setAttribute("aria-pressed","false");
+    window.scrollTo(0,0);
+  }
+  btn.onclick=function(){ panel.hidden?open():close(); };
+  document.getElementById("rvwClose").onclick=close;
+  document.getElementById("rvwPrint").onclick=function(){window.print();};
+  var allBtn=document.getElementById("rvwAll");
+  if(allBtn)allBtn.onclick=function(){ setAll(this.getAttribute("aria-pressed")!=="true"); };
+  var reclose=[];
+  window.addEventListener("beforeprint",function(){
+    reclose=[];
+    [].slice.call(body.querySelectorAll("details.cx")).forEach(function(d){ if(!d.open){reclose.push(d);d.open=true;} });
+  });
+  window.addEventListener("afterprint",function(){ reclose.forEach(function(d){d.open=false;}); reclose=[]; });
+  document.getElementById("rvwTabs").onclick=function(e){
+    var b=e.target.closest("button"); if(!b)return;
+    [].forEach.call(this.children,function(c){c.setAttribute("aria-pressed",String(c===b));});
+    load(b.dataset.l); window.scrollTo(0,0);
+  };
+  q.addEventListener("input",filter);
+  document.addEventListener("keydown",function(e){
+    if(e.key==="Escape"&&!panel.hidden){ if(document.activeElement===q&&q.value){q.value="";filter();} else close(); }
+  });
+})();
+
+</script>
