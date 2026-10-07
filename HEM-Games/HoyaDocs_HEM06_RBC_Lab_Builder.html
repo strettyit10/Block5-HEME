@@ -1,0 +1,553 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HEM06 RBC Lab Builder</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,600;8..60,700&family=Public+Sans:wght@400;600;700&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+/* Layout: toolbar + stats on top; structure list | question card | LO mastery map. Stacks to one column on phones. */
+:root{
+  --bg:#f3f5f6; --surface:#ffffff; --ink:#18212b; --muted:#5a6570; --line:#dbe0e5; --chip:#eceff2;
+  --arch:#2c55a0; --face:#a3263f; --eye:#2c55a0; --accent:#a3263f;
+  --ok:#1d7a3e; --ok-bg:#e3f4e8; --bad:#b3261e; --bad-bg:#fbe7e5; --once:#b7791f; --once-bg:#fdf1dc; --mem:#c2621a;
+  --hy-bg:#fff6cc; --hy-line:#c9a227; --hy-ink:#4a3a00;
+  --f-display:"Source Serif 4", Georgia, serif; --f-body:"Public Sans", Arial, sans-serif; --f-mono:"IBM Plex Mono", ui-monospace, monospace;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#11161c; --surface:#19212a; --ink:#e6eaee; --muted:#9aa6b2; --line:#2c3642; --chip:#232c36;
+  --arch:#8fb1f0; --face:#f08a9b; --eye:#8fb1f0; --accent:#f08a9b;
+  --ok:#6fd08f; --ok-bg:#16301f; --bad:#f28b82; --bad-bg:#3a1b19; --once:#f0c070; --once-bg:#3a2e12; --mem:#f0a05c;
+  --hy-bg:#3a3110; --hy-line:#b8952a; --hy-ink:#f5e6a8; color-scheme:dark }}
+:root[data-theme="dark"]{
+  --bg:#11161c; --surface:#19212a; --ink:#e6eaee; --muted:#9aa6b2; --line:#2c3642; --chip:#232c36;
+  --arch:#8fb1f0; --face:#f08a9b; --eye:#8fb1f0; --accent:#f08a9b;
+  --ok:#6fd08f; --ok-bg:#16301f; --bad:#f28b82; --bad-bg:#3a1b19; --once:#f0c070; --once-bg:#3a2e12; --mem:#f0a05c;
+  --hy-bg:#3a3110; --hy-line:#b8952a; --hy-ink:#f5e6a8; color-scheme:dark }
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font:15px/1.5 var(--f-body);margin:0}
+.wrap{max-width:1180px;margin:0 auto;padding-inline:16px;padding-block:22px 48px;display:grid;gap:16px}
+h1,h2,h3{font-family:var(--f-display);margin:0;text-wrap:balance;line-height:1.2}
+.meta{font:500 .74rem var(--f-mono);letter-spacing:.07em;text-transform:uppercase;color:var(--muted);margin:0}
+header{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:end;gap:12px}
+header h1{font-size:1.9rem}
+header p.lede{margin:4px 0 0;color:var(--muted);max-width:62ch}
+.btn{font:600 .85rem var(--f-body);background:var(--chip);color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:7px 12px;cursor:pointer}
+.btn:hover{border-color:var(--ink)}
+.btn:focus-visible,.opt:focus-visible,.seg button:focus-visible,.ent:focus-visible,.lo-tile:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.btn.primary{background:var(--accent);color:var(--surface);border-color:var(--accent)}
+.btn[disabled]{opacity:.45;cursor:default}
+.hdr-actions{display:flex;gap:8px;flex-wrap:wrap}
+.wrap{grid-template-columns:minmax(0,1fr)} .rvw{min-width:0}
+
+.bar{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 12px}
+.seg{display:inline-flex;background:var(--chip);border-radius:10px;padding:3px;gap:2px;flex-wrap:wrap}
+.seg button{font:600 .82rem var(--f-body);border:0;background:transparent;color:var(--ink);padding:6px 11px;border-radius:8px;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--surface);box-shadow:0 1px 2px rgba(0,0,0,.12)}
+.seg .lab{font:500 .7rem var(--f-mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);align-self:center;padding:0 6px}
+.stats{display:flex;gap:18px;flex-wrap:wrap}
+.stat b{display:block;font:700 1.15rem var(--f-body);font-variant-numeric:tabular-nums}
+.stat span{font:500 .68rem var(--f-mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+
+.main{display:grid;grid-template-columns:250px minmax(0,1fr) 270px;gap:16px;align-items:start}
+@media (max-width:1000px){ .main{grid-template-columns:minmax(0,1fr)} .side{order:2} .map{order:3} }
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px;display:grid;gap:8px;min-width:0}
+.panel h2{font-size:1rem}
+.lec-h{font:700 .72rem var(--f-body);letter-spacing:.07em;text-transform:uppercase;margin-top:6px}
+.ent{display:grid;grid-template-columns:1fr auto;gap:2px 8px;text-align:left;width:100%;background:transparent;border:1px solid transparent;border-radius:8px;padding:7px 8px;cursor:pointer;color:var(--ink);font:inherit}
+.ent:hover{background:var(--chip)}
+.ent[aria-current="true"]{border-color:var(--lc);background:var(--chip)}
+.ent .n{font-weight:600;font-size:.9rem}
+.ent .s{grid-column:1;font-size:.75rem;color:var(--muted)}
+.ent .pct{grid-row:1/3;grid-column:2;align-self:center;font:500 .75rem var(--f-mono);color:var(--muted);font-variant-numeric:tabular-nums}
+.ent .mini{grid-column:1/3;height:4px;border-radius:2px;background:var(--line);overflow:hidden}
+.ent .mini i{display:block;height:100%;background:var(--lc)}
+.lF{--lc:var(--arch)} .lD{--lc:var(--face)}
+.tag.rr{background:var(--chip);color:var(--ink);border:1px solid var(--line)}
+
+.card{background:var(--surface);border:1px solid var(--line);border-top:5px solid var(--lc);border-radius:12px;padding:18px;display:grid;gap:14px;min-width:0}
+.card-top{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px;align-items:baseline}
+.card-top h2{font-size:1.35rem}
+.tag{font:500 .7rem var(--f-mono);letter-spacing:.06em;text-transform:uppercase;padding:3px 8px;border-radius:999px;background:var(--chip);color:var(--muted)}
+.tag.lo{color:var(--lc)}
+.tag.hy{background:var(--hy-bg);color:var(--hy-ink);border:1px solid var(--hy-line)}
+.boxes{display:flex;gap:4px;flex-wrap:wrap}
+.boxes i{width:18px;height:6px;border-radius:3px;background:var(--line)}
+.boxes i.done-ok{background:var(--ok)} .boxes i.done-bad{background:var(--bad)} .boxes i.cur{background:var(--lc)}
+.q{font:600 1.08rem/1.45 var(--f-body);margin:0}
+.hint{font-size:.8rem;color:var(--muted);margin:0}
+.opts{display:grid;gap:8px}
+.opt{display:grid;grid-template-columns:auto 1fr;gap:10px;align-items:start;text-align:left;width:100%;font:inherit;color:var(--ink);background:var(--bg);border:1.5px solid var(--line);border-radius:10px;padding:10px 12px;cursor:pointer}
+.opt:hover:not([disabled]){border-color:var(--lc)}
+.opt .k{font:500 .75rem var(--f-mono);color:var(--muted);border:1px solid var(--line);border-radius:5px;padding:1px 6px;margin-top:1px}
+.opt.sel{border-color:var(--lc);background:var(--chip)}
+.opt.right{border-color:var(--ok);background:var(--ok-bg)}
+.opt.wrong{border-color:var(--bad);background:var(--bad-bg)}
+.opt.missed{border-color:var(--ok);border-style:dashed}
+.opt[disabled]{cursor:default}
+.ordered{display:grid;gap:6px;counter-reset:ord;padding:0;margin:0;list-style:none;min-height:44px;border:1.5px dashed var(--line);border-radius:10px;padding:8px}
+.ordered li{counter-increment:ord;display:grid;grid-template-columns:auto 1fr;gap:8px;align-items:center;background:var(--chip);border-radius:8px;padding:7px 10px;cursor:pointer}
+.ordered li::before{content:counter(ord);font:500 .78rem var(--f-mono);color:var(--lc)}
+.ordered li.right{background:var(--ok-bg)} .ordered li.wrong{background:var(--bad-bg)}
+.ordered .empty{color:var(--muted);font-size:.85rem;padding:4px}
+/* ---------- Review ---------- */
+.rvw{margin-top:14px}
+.rvw-bar{position:sticky;top:0;z-index:8;background:var(--bg);border-bottom:1px solid var(--line);padding:10px 0;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.rvw-bar .seg{display:flex;gap:2px;background:var(--chip);border:1px solid var(--line);border-radius:9px;padding:3px}
+.rvw-bar .seg button{background:transparent;border:0;border-radius:7px;padding:6px 12px;font:inherit;font-size:13.5px;color:var(--muted);cursor:pointer}
+.rvw-bar .seg button[aria-pressed="true"]{background:var(--surface);color:var(--ink);font-weight:600;box-shadow:0 1px 2px rgba(0,0,0,.08)}
+#rvwQ{flex:1 1 180px;min-width:140px;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:7px 10px;font:inherit;font-size:14px;color:inherit}
+#rvwCount{font-family:var(--f-mono);font-size:11px;color:var(--muted);white-space:nowrap}
+.rvw-toc{display:flex;flex-wrap:wrap;gap:6px;margin:12px 0 2px}
+.rvw-toc a{font-size:12.5px;text-decoration:none;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:4px 10px}
+.rvw-toc a:hover{color:var(--ink);border-color:var(--muted)}
+.rvw-body{max-width:none}
+.rsec{padding:6px 0 10px;scroll-margin-top:64px}
+.rsec.hide{display:none}
+.rh{font-family:var(--f-display);font-size:1.5rem;font-weight:650;margin:26px 0 4px;padding-bottom:6px;border-bottom:2px solid var(--acc)}
+.rsh{font-family:var(--f-display);font-size:1.12rem;font-weight:650;margin:18px 0 4px}
+.rvw-body p{margin:8px 0;line-height:1.62}
+ul.rlist{margin:8px 0;padding-left:1.15em;display:grid;gap:5px}
+ul.rlist li{line-height:1.55}
+.rtbl{overflow-x:auto;margin:12px 0;border:1px solid var(--line);border-radius:10px;background:var(--surface)}
+.rtbl table{border-collapse:collapse;width:100%;font-size:14px}
+.rtbl th,.rtbl td{text-align:left;vertical-align:top;padding:8px 11px;border-bottom:1px solid var(--line)}
+.rtbl thead th{background:var(--chip);font-family:var(--f-mono);font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);white-space:nowrap}
+.rtbl tbody tr:last-child td{border-bottom:0}
+.rtbl td b{font-weight:600}
+.rseq{margin:12px 0;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 14px 12px 10px}
+.rseq ol{margin:0;padding-left:1.3em;display:grid;gap:7px}
+.rseq li{line-height:1.55;padding-left:2px}
+.rseq li b{color:var(--acc)}
+.cgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(330px,1fr));gap:10px;margin:12px 0;align-items:start}
+.cgrid>details{margin:0}
+details.cx{margin:11px 0;border-radius:9px;border:1px solid var(--line);background:var(--surface);overflow:hidden}
+details.cx>summary{list-style:none;cursor:pointer;display:flex;align-items:baseline;gap:9px;padding:9px 12px;border-left:3px solid var(--line);font-size:14px}
+details.cx>summary::-webkit-details-marker{display:none}
+details.cx>summary::after{content:"+";margin-left:auto;font-family:var(--f-mono);font-size:14px;color:var(--muted);line-height:1}
+details.cx[open]>summary::after{content:"\2013"}
+details.cx>summary .lbl{font-family:var(--f-mono);font-size:10px;letter-spacing:.11em;text-transform:uppercase;font-weight:700;white-space:nowrap}
+details.cx>summary .pk{color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1}
+details.cx[open]>summary .pk{display:none}
+details.cx .cbody{padding:2px 13px 12px;line-height:1.56;font-size:14.6px;border-left:3px solid var(--line)}
+details.cx .cbody b{font-weight:600}
+details.rrule>summary,details.rrule .cbody{border-left-color:var(--acc)}
+details.rtrap>summary,details.rtrap .cbody{border-left-color:var(--bad)}
+details.rmem>summary,details.rmem .cbody{border-left-color:var(--mem)}
+details.rrule>summary .lbl{color:var(--acc)} details.rtrap>summary .lbl{color:var(--bad)} details.rmem>summary .lbl{color:var(--mem)}
+details.rhy{background:var(--hy-bg);border-color:var(--hy-line);color:var(--hy-ink)}
+details.rhy>summary,details.rhy .cbody{border-left-color:var(--hy-line)}
+details.rhy>summary .lbl{color:var(--hy-ink);opacity:.9}
+details.rhy>summary .pk,details.rhy>summary::after{color:var(--hy-ink);opacity:.75}
+.rvw-empty{display:none;text-align:center;color:var(--muted);border:1px dashed var(--line);border-radius:10px;padding:28px;margin-top:16px}
+.rvw-empty.on{display:block}
+.rvw[data-lec="F"]{--acc:var(--arch)} .rvw[data-lec="D"]{--acc:var(--face)}
+@media print{
+  header,.bar,.main,.rvw-bar,.rvw-toc,.rvw-empty{display:none!important}
+  .rvw{margin:0}
+  body{background:#fff}
+  .rsec{break-before:page;break-inside:auto}
+  .rsec:first-of-type{break-before:auto}
+  .rtbl,.rseq,details.cx{break-inside:avoid}
+  details.cx>summary::after{display:none}
+  .cgrid{grid-template-columns:1fr 1fr}
+}
+.fb .ans{font-size:.95rem}
+.fbexp{display:grid;gap:8px}
+.fbexp p{margin:0;line-height:1.6}
+.fbnotes{list-style:none;margin:2px 0 0;padding:0;display:grid;gap:6px}
+.fbnotes li{font-size:.9rem;line-height:1.5;color:var(--muted);padding-left:10px;border-left:2px solid var(--line)}
+.fbnotes li b{color:var(--ink);font-weight:600}
+.fbpearl{margin-top:2px;background:var(--hy-bg);border:1px solid var(--hy-line);border-left-width:3px;border-radius:9px;padding:9px 12px;font-size:.92rem;line-height:1.5;color:var(--hy-ink)}
+.fbpearl b{display:block;font:700 .66rem var(--f-mono);letter-spacing:.14em;text-transform:uppercase;color:var(--hy-line);margin-bottom:3px}
+.fb{border-radius:10px;padding:12px 14px;display:grid;gap:6px}
+.fb.ok{background:var(--ok-bg)} .fb.bad{background:var(--bad-bg)}
+.fb .v{font-weight:700}
+.fb.ok .v{color:var(--ok)} .fb.bad .v{color:var(--bad)}
+.fb ol{margin:0;padding-left:1.2em}
+.actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:space-between;align-items:center}
+.timer{font:500 .8rem var(--f-mono);color:var(--muted);font-variant-numeric:tabular-nums}
+.done{display:grid;gap:10px;text-align:left}
+
+.lo-grid{display:grid;gap:6px}
+.lo-tile{display:grid;grid-template-columns:auto 1fr auto;gap:8px;align-items:center;text-align:left;width:100%;background:transparent;border:1px solid var(--line);border-radius:8px;padding:6px 8px;cursor:pointer;color:var(--ink);font:inherit}
+.lo-tile:hover{border-color:var(--lc)}
+.lo-tile .id{font:500 .72rem var(--f-mono);color:var(--lc);white-space:nowrap}
+.lo-tile .t{font-size:.78rem;line-height:1.3}
+.lo-tile .dot{width:12px;height:12px;border-radius:50%;background:var(--line)}
+.dot.s-o{background:var(--once)} .dot.s-m{background:var(--bad)} .dot.s-M{background:var(--ok)}
+.legend{display:flex;flex-wrap:wrap;gap:10px;font-size:.72rem;color:var(--muted)}
+.legend span{display:inline-flex;gap:5px;align-items:center}
+.legend i{width:10px;height:10px;border-radius:50%;display:inline-block;background:var(--line)}
+.legend i.o{background:var(--once)} .legend i.m{background:var(--bad)} .legend i.M{background:var(--ok)}
+footer{color:var(--muted);font-size:.8rem;border-top:1px solid var(--line);padding-top:12px}
+@media (prefers-reduced-motion: no-preference){ .opt,.ent,.lo-tile{transition:border-color .12s, background .12s} }
+</style>
+
+<div class="wrap">
+<header>
+  <div>
+    <p class="meta">HoyaDocs · Block 5 · Hematology · HEM06</p>
+    <h1>HEM06 RBC Lab Builder</h1>
+    <p class="lede">RBC disorders lab, smear and marrow stations, LO by LO: build each structure box by box, then drill what you miss. Boxes tagged Rapid Review test the LO Rapid Review and Master Review checklists. Slides are named from text descriptions.</p>
+  </div>
+  <div class="hdr-actions">
+    <button class="btn primary" id="reviewBtn" type="button" aria-pressed="false">Review</button>
+    <button class="btn" id="themeBtn" type="button">Theme: auto</button>
+    <button class="btn" id="resetBtn" type="button">Reset progress</button>
+  </div>
+</header>
+
+<div class="bar">
+  <div class="seg" role="group" aria-label="Mode">
+    <span class="lab">Mode</span>
+    <button type="button" data-mode="build" aria-pressed="true">Build</button>
+    <button type="button" data-mode="drill" aria-pressed="false">Drill</button>
+  </div>
+  <div class="seg" role="group" aria-label="Lecture scope" id="scopeSeg">
+    <span class="lab">Scope</span>
+    <button type="button" data-scope="all" aria-pressed="true">All</button>
+    <button type="button" data-scope="F" aria-pressed="false">LO1–3 Concepts</button>
+    <button type="button" data-scope="D" aria-pressed="false">LO4–6 Slide stations</button>
+  </div>
+  <div class="seg" role="group" aria-label="Focus" id="focusSeg">
+    <span class="lab">Focus</span>
+    <button type="button" data-rr="0" aria-pressed="true">All boxes</button>
+    <button type="button" data-rr="1" aria-pressed="false">Rapid Review only</button>
+  </div>
+  <div class="stats" aria-live="polite">
+    <div class="stat"><b id="sScore">0</b><span>Score</span></div>
+    <div class="stat"><b id="sStreak">0</b><span>Streak</span></div>
+    <div class="stat"><b id="sAcc">—</b><span>Accuracy</span></div>
+    <div class="stat"><b id="sBoxes">0</b><span>Boxes mastered</span></div>
+    <div class="stat"><b id="sLos">0/6</b><span>LOs mastered</span></div>
+  </div>
+</div>
+
+<div class="main">
+  <aside class="panel side" aria-label="Structures">
+    <h2>Structures</h2>
+    <div id="entList"></div>
+  </aside>
+  <section class="card" id="card" aria-live="polite"></section>
+  <aside class="panel map" aria-label="Learning objective mastery map">
+    <h2>LO mastery map</h2>
+    <div class="legend"><span><i></i>untested</span><span><i class="m"></i>missed</span><span><i class="o"></i>got it once</span><span><i class="M"></i>mastered</span></div>
+
+    <p class="hint">Tap an LO to drill just that objective. Mastered = right twice in a row.</p>
+    <div class="lo-grid" id="loGrid"></div>
+  </aside>
+</div>
+
+<div class="rvw" id="rvw" data-lec="F" hidden>
+  <div class="rvw-bar">
+    <div class="seg" id="rvwTabs" role="group" aria-label="Lecture">
+      <button type="button" data-l="F" aria-pressed="true">LO1–3 Concepts</button>
+      <button type="button" data-l="D" aria-pressed="false">LO4–6 Slide stations</button>
+    </div>
+    <input id="rvwQ" type="search" placeholder="Search this review" autocomplete="off" aria-label="Search the review">
+    <span id="rvwCount"></span>
+    <button class="btn" type="button" id="rvwAll" aria-pressed="false">Expand all</button>
+    <button class="btn" type="button" id="rvwPrint">Print</button>
+    <button class="btn primary" type="button" id="rvwClose">Back to the game</button>
+  </div>
+  <nav class="rvw-toc" id="rvwToc" aria-label="Contents"></nav>
+  <div class="rvw-body" id="rvwBody"></div>
+  <div class="rvw-empty" id="rvwEmpty">Nothing in this lecture matches that search.</div>
+</div>
+
+
+<footer>HoyaDocs · HEM06 RBC Lab Builder · Updated October 7, 2026 · Revision 1.0. Yellow “HY” tags mark high-yield points, including Step 1. “Rapid Review” tags mark boxes built from the LO Rapid Review checklists.</footer>
+</div>
+
+<script>
+/* ================= LEARNING OBJECTIVES ================= */
+var LOS = {"1": "Review normal hematopoiesis, the normal smear and marrow", "2": "Classify anemia and correlate with Hb, Hct and MCV", "3": "Disease mechanism behind each type of anemia", "4": "Correlate signs and symptoms with anemia type and marrow/smear histology", "5": "Classic smear findings linked to pathophysiology and lab tests", "6": "Treatment options for each type of anemia"};
+var LOLEC = {"1": "F", "2": "F", "3": "F", "4": "D", "5": "D", "6": "D"};
+var LECS = [{"k": "F", "n": "LO1–3 Concepts", "c": "arch"}, {"k": "D", "n": "LO4–6 Slide stations", "c": "face"}];
+var E = [{"id": "norm", "lec": "A", "name": "Normal RBC & smear", "sub": "Hematopoiesis · the ⅓ rule · baseline smear", "b": [{"lo": "1", "rr": true, "q": "Which three elements control hematopoiesis?", "a": "Genes, the marrow microenvironment and growth factors", "o": ["Spleen, liver and thymus", "Iron, B12 and folate only", "Platelets, complement and antibodies"], "n": ["These are not the controlling elements (the liver and spleen are fetal sites).", "Nutrients are needed, but the controls are genes, microenvironment and growth factors.", "Not regulators of hematopoiesis."], "w": "Pluripotent marrow stem cells self-renew and differentiate under the control of genes, the marrow microenvironment (stromal cells, proteins, cytokines) and growth factors such as EPO.", "p": "Stem cells + microenvironment + growth factors (EPO) → RBCs."}, {"lo": "1", "t": "o", "q": "Put the stages of erythropoiesis in order.", "a": ["Proerythroblast", "Basophilic erythroblast", "Polychromatophilic erythroblast", "Orthochromatophilic erythroblast", "Reticulocyte", "Mature RBC"], "w": "As cells mature, they get smaller, make more Hb (cytoplasm turns from blue to pink), condense the nucleus and finally extrude it. Reticulocytes still have RNA and look bluish (polychromasia) on the smear.", "p": "Pro → basophilic → polychromatophilic → orthochromatophilic → retic → RBC."}, {"lo": "1", "rr": true, "hy": true, "q": "Which describes a normal RBC?", "a": "Biconcave, anucleate disc 6–9 µm across, central pallor about ⅓ of the diameter, no inclusions", "o": ["Spherical, anucleate, 3–4 µm, no central pallor", "Biconcave, nucleated, 12–15 µm, central pallor ½ of the diameter", "Oval, anucleate, 10–12 µm, central pallor absent"], "n": ["That describes a spherocyte (and too small).", "Mature RBCs have no nucleus and are smaller.", "Oval macrocytes are megaloblastic."], "w": "Normal RBC: biconcave disc, 6–9 µm diameter, 1.5–2.5 µm thick, no nucleus, uniformly pink cytoplasm with a clearer center about ⅓ of the diameter.", "p": "Central pallor ≈ ⅓ = normal Hb content."}, {"lo": "1", "rr": true, "hy": true, "q": "An RBC’s central pallor takes up more than half its diameter. What does this mean?", "a": "Hypochromia: too little Hb (e.g., iron deficiency, thalassemia)", "o": ["Spherocytosis: lost membrane", "Normal Hb content", "Hyperchromia from dehydration"], "n": ["Spherocytes have NO central pallor.", "Normal pallor is about ⅓.", "Hyperchromic cells have less pallor, not more."], "w": "The ⅓ rule: bigger pallor = hypochromic (too little Hb). No pallor = spherocyte (membrane lost, Hb packed into a sphere).", "p": "Big pallor = hypochromic. No pallor = spherocyte."}, {"lo": "1", "q": "Which cell is a handy built-in ruler for judging RBC size on a smear?", "a": "A small lymphocyte, whose nucleus is about the size of a normal RBC", "o": ["A neutrophil band", "A platelet", "A megakaryocyte"], "n": ["Bands vary and are larger.", "Platelets are much smaller (2–3 µm).", "Megakaryocytes live in marrow and are huge."], "w": "A small lymphocyte’s nucleus is about 7–8 µm, close to a normal RBC. Cells clearly smaller suggest microcytes or spherocytes; clearly bigger suggest macrocytes.", "p": "Small lymphocyte nucleus ≈ normal RBC."}, {"lo": "1", "rr": true, "t": "m", "q": "Select ALL features of a NORMAL peripheral smear.", "a": ["Minimal anisocytosis", "Minimal poikilocytosis", "A few small, fuzzy blue-purple platelets", "Segmented and occasional band neutrophils"], "o": ["Many nucleated RBCs", "Frequent target cells", "RBCs stacked like coins"], "n": ["Nucleated RBCs in blood are abnormal (marrow stress, infiltration).", "Targets suggest HbC, asplenia, liver disease or thalassemia.", "Rouleaux reflect increased serum proteins."], "w": "Use the normal smear as your baseline. A band is a young neutrophil with a horseshoe nucleus (up to about 3–5% is normal); segmented neutrophils have 3–5 lobes.", "p": "Normal smear = uniform RBCs + small platelets + mature WBCs."}, {"lo": "1", "hy": true, "q": "In-house material says normal marrow has “about 0–2% erythroblasts.” What do standard references say?", "a": "Erythroid precursors are about 20–30% of nucleated marrow cells (M:E ratio ≈3:1)", "o": ["0–2% is the standard value worldwide", "Erythroid precursors are about 80% of marrow cells", "Erythroid precursors are absent in adults"], "n": ["0–2% matches the normal blood reticulocyte percentage, not marrow erythroblasts.", "Too high; myeloid cells outnumber erythroid about 3:1.", "Adults make RBCs in marrow throughout life."], "w": "Use 0–2% if an in-house question asks for it; for boards, the myeloid:erythroid ratio is about 3:1.", "p": "Normal M:E ratio ≈ 3:1. Blood retics ≈ 0.5–2%."}]}, {"id": "marrow", "lec": "A", "name": "Normal marrow & cellularity", "sub": "Iliac crest · 100 − age", "b": [{"lo": "1", "rr": true, "q": "Where is a bone marrow biopsy usually taken?", "a": "Posterior iliac crest", "o": ["Sternum", "Proximal tibia in adults", "Vertebral body"], "n": ["The sternum can be aspirated but not biopsied safely.", "The tibia is used in infants, not adults.", "Not a routine biopsy site."], "w": "The posterior iliac crest is the standard biopsy site in adults.", "p": "Marrow biopsy = posterior iliac crest."}, {"lo": "1", "rr": true, "t": "m", "q": "Select ALL elements seen in normal marrow.", "a": ["Megakaryocytes", "Erythroid islands", "Granulocytic precursors", "Fat"], "o": ["Cohesive clusters of epithelial cells", "Epithelioid granulomas"], "n": ["Cohesive clusters = metastatic carcinoma.", "Granulomas are abnormal (infection, sarcoid)."], "w": "Normal marrow between bony trabeculae: megakaryocytes (big, lobulated nuclei), erythroid islands and granulocytic precursors, mixed with fat.", "p": "Normal marrow = megakaryocytes + erythroid islands + granulocytes + fat."}, {"lo": "1", "rr": true, "hy": true, "q": "What is the expected marrow cellularity of a 70-year-old?", "a": "About 30%", "o": ["About 70%", "About 50%", "About 100%"], "n": ["That would be hypercellular for age.", "50% fits a middle-aged adult.", "Only newborns approach 100%."], "w": "Rule of thumb: cellularity ≈ 100 − age (%). Cellularity falls with age as fat replaces hematopoietic tissue.", "p": "Cellularity ≈ 100 − age."}, {"lo": "1", "rr": true, "hy": true, "q": "A 20-year-old with pancytopenia has 10% marrow cellularity. Interpretation?", "a": "Markedly hypocellular for age; think aplastic anemia", "o": ["Normal for age", "Hypercellular; think leukemia", "Normal; marrow cellularity is always 10% in adults"], "n": ["Expected is about 80%.", "10% is low, not high.", "Not true."], "w": "Expected cellularity at 20 is about 80%. An almost-fatty marrow with pancytopenia is aplastic anemia until proven otherwise.", "p": "Young + fatty marrow + pancytopenia = aplastic anemia."}, {"lo": "1", "q": "A 45-year-old’s iliac crest biopsy shows about 50% hematopoietic cells and 50% fat with megakaryocytes, erythroid islands and granulocytic precursors. Interpretation?", "a": "Normal marrow for age", "o": ["Hypocellular marrow", "Hypercellular marrow", "Myelophthisic marrow"], "n": ["Expected is about 55%; 50% is normal.", "Not increased.", "No infiltrate is described."], "w": "100 − 45 ≈ 55%, so roughly half cells and half fat is normal.", "p": "Middle age ≈ 50% cellular."}]}, {"id": "class", "lec": "A", "name": "Lab vocabulary & MCV classes", "sub": "Indices · aniso vs poikilo · cutoffs", "b": [{"lo": "2", "rr": true, "q": "Which term means variation in RBC SIZE?", "a": "Anisocytosis", "o": ["Poikilocytosis", "Polychromasia", "Hypochromia"], "n": ["Poikilocytosis = variation in shape.", "Polychromasia = bluish reticulocytes.", "Hypochromia = pale cells with too little Hb."], "w": "An-iso = “not equal” (sizes). Poikilo (Greek poikilos, varied) = shapes. RDW is the lab measure of anisocytosis.", "p": "Aniso = size. Poikilo = shape."}, {"lo": "2", "rr": true, "q": "Which index is the coefficient of variation of RBC volume?", "a": "RDW", "o": ["MCV", "MCH", "MCHC"], "n": ["MCV is average volume.", "MCH is average Hb amount per cell.", "MCHC is average Hb concentration."], "w": "RDW = degree of size variation. MCV = average volume; MCH = average Hb amount per RBC; MCHC = average Hb concentration in packed RBCs.", "p": "RDW = anisocytosis in a number."}, {"lo": "2", "rr": true, "q": "Which index is the average CONCENTRATION of Hb in a given volume of packed RBCs?", "a": "MCHC", "o": ["MCH", "MCV", "Hct"], "n": ["MCH is the amount per cell, not concentration.", "MCV is volume.", "Hct is the percentage of blood occupied by RBCs."], "w": "MCHC tells you how densely packed the Hb is: low in hypochromic anemias, high in spherocytes.", "p": "MCHC ↓ hypochromic · ↑ spherocytes."}, {"lo": "2", "rr": true, "hy": true, "q": "In this LAB (and on Step 1), microcytosis is defined as MCV below:", "a": "80 fL", "o": ["70 fL", "90 fL", "100 fL"], "n": ["70 fL is the Anemia I lecture cutoff; this lab uses 80.", "Within the normal range.", "That is the macrocytic cutoff."], "w": "This lab uses the board standard: micro <80 fL, normo 80–100 fL, macro >100 fL. The Anemia I lecture used <70 fL. Match the exam you’re taking.", "p": "Lab and boards: <80. Anemia I lecture: <70."}, {"lo": "2", "rr": true, "t": "m", "q": "Select ALL causes of MICROCYTIC anemia listed in the lab.", "a": ["Iron deficiency", "Thalassemia minor", "Anemia of chronic disease"], "o": ["B12 deficiency", "Acute blood loss", "Aplastic anemia"], "n": ["Macrocytic.", "Normocytic.", "Normocytic or mildly macrocytic."], "w": "Micro <80: IDA, thalassemia minor, ACD. Normo 80–100: acute blood loss, hemolysis (e.g., sickle cell), chronic disease, CKD, marrow failure or infiltration.", "p": "Microcytic = IDA, thal, ACD."}, {"lo": "2", "rr": true, "t": "m", "q": "Select ALL causes of MACROCYTIC anemia listed in the lab.", "a": ["Megaloblastic (B12, folate)", "Hemolytic anemia with high retics", "Liver disease", "Thyroid disease", "Primary marrow failure, drugs and toxins"], "o": ["Iron deficiency", "Thalassemia minor"], "n": ["Microcytic.", "Microcytic."], "w": "Macrocytic anemia (>100 fL) is further sorted by RDW and reticulocyte count: megaloblastic, hemolytic (retics are big), liver/thyroid disease, primary marrow failure, drugs, toxins.", "p": "Macrocytic → sort by RDW + retics."}, {"lo": "2", "rr": true, "q": "What term describes hereditary diseases producing structurally abnormal hemoglobin?", "a": "Hemoglobinopathies", "o": ["Thalassemias", "Myelophthisic anemias", "Sideroblastic anemias"], "n": ["Thalassemias are quantitative (too little normal chain), though often grouped together.", "Myelophthisic = marrow replacement.", "Sideroblastic = heme synthesis defect."], "w": "Example: HbS (sickle cell), HbC. Hemoglobinopathy = structural (qualitative) defect.", "p": "Hemoglobinopathy = abnormal Hb structure (HbS)."}, {"lo": "2", "q": "Why is a peripheral smear needed when CBC indices are abnormal?", "a": "Indices give averages; only the smear shows morphology (shapes, inclusions, parasites)", "o": ["The smear measures Hb concentration more accurately", "The smear replaces the reticulocyte count", "The smear is required to calculate MCV"], "n": ["The analyzer measures Hb.", "Retics are counted separately (though polychromasia hints at them).", "MCV comes from the analyzer."], "w": "Spherocytes, schistocytes, sickle cells, target cells, malaria rings and rouleaux are invisible in the numbers; you need to look.", "p": "Numbers classify; the smear names."}]}, {"id": "mech", "lec": "A", "name": "Mechanism bins", "sub": "Production · destruction · loss", "b": [{"lo": "3", "rr": true, "t": "m", "q": "Select ALL anemias caused mainly by DECREASED PRODUCTION.", "a": ["Iron deficiency", "Anemia of chronic disease", "Megaloblastic anemia", "Aplastic anemia", "Myelophthisic anemia"], "o": ["Sickle cell anemia", "Warm AIHA", "Malaria"], "n": ["Destruction.", "Destruction.", "Destruction."], "w": "Production problems: missing ingredient (iron, B12/folate), iron locked away (ACD), stem cell failure (aplastic), marrow replaced (myelophthisic).", "p": "Production: IDA, ACD, megaloblastic, aplastic, myelophthisic."}, {"lo": "3", "rr": true, "t": "m", "q": "Select ALL anemias caused mainly by DESTRUCTION.", "a": ["Sickle cell anemia", "Warm AIHA", "MAHA / DIC", "Malaria"], "o": ["Aplastic anemia", "Iron deficiency", "Acute blood loss"], "n": ["Production.", "Production.", "Loss."], "w": "Destruction: HbS polymerization (sickle cell), IgG-coated cells nibbled in the spleen (AIHA), fibrin strands slicing cells (MAHA/DIC), parasite rupture and splenic removal (malaria).", "p": "Destruction: sickle cell, AIHA, MAHA/DIC, malaria."}, {"lo": "3", "rr": true, "hy": true, "q": "Which anemia in the lab falls into BOTH the production and destruction bins?", "a": "β-thalassemia", "o": ["Iron deficiency", "Warm AIHA", "Acute blood loss"], "n": ["Production only.", "Destruction only.", "Loss."], "w": "↓ β-globin → excess α chains precipitate → precursors die in the marrow (ineffective erythropoiesis, a production problem) and damaged cells are removed by the spleen (hemolysis).", "p": "Thalassemia = production + destruction."}, {"lo": "3", "rr": true, "q": "What is the mechanism of anemia of chronic disease?", "a": "Inflammation raises hepcidin, locking iron in macrophages", "o": ["Autoantibodies destroy RBCs", "Stem cells fail", "Chronic bleeding depletes iron"], "n": ["That is AIHA.", "That is aplastic anemia.", "That is iron deficiency."], "w": "IL-6 → ↑ hepcidin → ferroportin degraded → iron trapped in macrophages and enterocytes → production falls.", "p": "ACD: hepcidin locks the iron away."}, {"lo": "3", "rr": true, "q": "What is myelophthisic anemia?", "a": "Normal marrow replaced or crowded out by foreign tissue (tumor, granulomas, fibrosis)", "o": ["Stem cell failure leaving an empty, fatty marrow", "Immune destruction of circulating RBCs", "Ineffective erythropoiesis from B12 deficiency"], "n": ["That is aplastic anemia.", "That is AIHA.", "That is megaloblastic anemia."], "w": "Myelo- (marrow) + phthisis (wasting). Metastatic carcinoma, granulomas and fibrosis crowd out hematopoietic cells.", "p": "Myelophthisic = marrow replaced."}, {"lo": "3", "rr": true, "t": "m", "q": "Select ALL anemias in the lab that can cause PANCYTOPENIA rather than isolated anemia.", "a": ["Megaloblastic anemia", "Aplastic anemia", "Myelophthisic anemia"], "o": ["Iron deficiency", "Sickle cell anemia", "Warm AIHA"], "n": ["Usually isolated anemia (platelets often high).", "Usually isolated anemia with high WBC.", "Isolated anemia (unless Evans syndrome)."], "w": "Megaloblastic (all dividing cells affected), aplastic (stem cell failure), myelophthisic (marrow replaced). Hypersplenism and some leukemias also cause pancytopenia.", "p": "Pancytopenia: megaloblastic, aplastic, myelophthisic."}, {"lo": "3", "rr": true, "q": "After an acute bleed, when does the marrow start to respond with more reticulocytes?", "a": "After about 3–5 days", "o": ["Within minutes", "After about 4 weeks", "Never; acute bleeding is a production problem"], "n": ["EPO and maturation take days.", "Much sooner.", "Acute blood loss is the loss bin."], "w": "In acute blood loss RBCs are physically lost; the marrow responds after 3–5 days.", "p": "Acute loss: retics rise after 3–5 days."}, {"lo": "3", "q": "Why does malaria cause anemia?", "a": "Plasmodium replicates inside RBCs, rupturing them, and the spleen removes infected cells", "o": ["Plasmodium suppresses EPO production", "Plasmodium destroys marrow stem cells", "Plasmodium causes iron malabsorption"], "n": ["Not the main mechanism.", "Not the main mechanism.", "Not the mechanism."], "w": "Malaria causes both intravascular hemolysis (rupture) and extravascular removal (spleen), with splenomegaly and often thrombocytopenia.", "p": "Malaria = intra + extravascular destruction."}]}, {"id": "microst", "lec": "B", "name": "Microcytic stations", "sub": "Iron deficiency · β-thalassemia · target cells", "b": [{"lo": "5", "rr": true, "q": "Station: RBCs smaller than normal with an enlarged central pallor, more anisocytosis and poikilocytosis, and elongated pencil cells. Name it.", "a": "Hypochromic microcytic anemia: iron deficiency", "o": ["β-thalassemia major", "Megaloblastic anemia", "Hereditary spherocytosis"], "n": ["Thalassemia shows marked bizarre poikilocytosis and target cells.", "Megaloblastic cells are large and oval.", "Spherocytes have NO central pallor."], "w": "Not enough iron → not enough Hb per cell (hypochromic) → extra divisions → small cells (microcytic). Pencil cells are a classic IDA clue.", "p": "Pale + small + pencil cells = iron deficiency."}, {"lo": "5", "rr": true, "t": "m", "q": "Select ALL lab findings expected with the iron deficiency slide.", "a": ["↓ MCV", "↑ RDW", "↑ TIBC", "↓ ferritin", "Often ↑ platelets"], "o": ["↑ HbA2", "↑ serum iron"], "n": ["↑ HbA2 = β-thal minor.", "Serum iron is low."], "w": "IDA: ↓ Hb/Hct, ↓ MCV, ↓ MCH/MCHC, ↑ RDW; ↓ iron, ↑ TIBC, ↓ ferritin; reactive thrombocytosis is common.", "p": "IDA: ↓ ferritin is the best single test."}, {"lo": "4", "rr": true, "q": "Who is at highest risk of the anemia shown on the iron deficiency slide, and what must you do in an older adult?", "a": "Children and women of reproductive age; in older adults, find the GI bleed", "o": ["Elderly men only; give iron and recheck", "Infants only; transfuse", "Anyone; bone marrow biopsy for all"], "n": ["Older men are evaluated for bleeding, not just treated.", "Not limited to infants; transfusion isn’t routine.", "Marrow is rarely needed."], "w": "IDA is the most common cause of hypochromic microcytic anemia. Fatigue, pica, koilonychia. Treat with oral (or IV) iron plus treatment of the source.", "p": "Older adult + IDA → colonoscopy + EGD."}, {"lo": "5", "rr": true, "q": "Station: marked poikilocytosis (bizarre shapes), microcytic hypochromic cells, target cells, nucleated RBCs and basophilic stippling in a Mediterranean child with a big spleen. Name it.", "a": "β-thalassemia (major)", "o": ["Iron deficiency", "Sickle cell anemia", "Lead poisoning"], "n": ["IDA has pencil cells, not this degree of bizarre shapes and nRBCs.", "Sickle cells are crescents; children lose their spleen.", "Lead shows stippling but not this picture in a Mediterranean child with HSM."], "w": "↓ β-globin → excess α chains precipitate → ineffective erythropoiesis + hemolysis. Major: severe anemia from about 6 months, HSM, crew-cut skull, chipmunk facies, iron overload.", "p": "Mediterranean + targets + HSM = β-thal major."}, {"lo": "5", "rr": true, "hy": true, "q": "Which mnemonic lists the causes of target cells (codocytes)?", "a": "HALT: HbC disease, Asplenia, Liver disease, Thalassemia", "o": ["TAILS: Thalassemia, ACD, Iron, Lead, Sideroblastic", "FAT RN: Fever, Anemia, Thrombocytopenia, Renal, Neuro", "HALT: Hemolysis, Anemia, Lead, TTP"], "n": ["TAILS = microcytic anemias.", "FAT RN = TTP pentad.", "Wrong expansion."], "w": "Target cells have extra membrane relative to Hb content, creating a central “bull’s-eye.”", "p": "Targets = HALT."}, {"lo": "6", "rr": true, "q": "How are β-thal minor and major treated?", "a": "Minor: no treatment, genetic counseling, no iron · Major: transfusions + iron chelation, stem cell transplant", "o": ["Both: oral iron", "Minor: transfusions · Major: oral iron", "Both: splenectomy first"], "n": ["Iron doesn’t help and can cause overload.", "Reversed and wrong.", "Not first line."], "w": "β-thal minor causes mild or no anemia (↑ HbA2 on electrophoresis). Major causes transfusion dependence and iron overload (↑↑ HbF, little/no HbA).", "p": "Thal minor: no iron. Major: transfuse + chelate."}, {"lo": "5", "q": "Which test confirms the diagnosis on the β-thalassemia slide?", "a": "Hemoglobin electrophoresis", "o": ["Serum ferritin", "Direct antiglobulin test", "Bone marrow biopsy"], "n": ["Ferritin is normal or high; it separates IDA, not thal.", "DAT tests immune hemolysis.", "Not needed."], "w": "Minor: ↑ HbA2. Major: ↑↑ HbF with little or no HbA. Iron studies are normal or increased.", "p": "Thalassemia → electrophoresis."}]}, {"id": "megast", "lec": "B", "name": "Megaloblastic stations", "sub": "Blood + marrow · old body, young face", "b": [{"lo": "5", "rr": true, "hy": true, "q": "Station: a neutrophil with 7 lobes next to large oval RBCs in a 64-year-old with a smooth red tongue. Name it.", "a": "Megaloblastic anemia (pernicious anemia, B12 deficiency)", "o": ["Iron deficiency", "Liver disease macrocytosis", "Myelodysplasia with bilobed neutrophils"], "n": ["IDA is microcytic.", "Liver disease gives round macrocytes and normal neutrophils.", "Bilobed (Pelger-Huët-like) neutrophils are the opposite of hypersegmentation."], "w": "Hypersegmented neutrophil (≥6 lobes, or >5% of neutrophils with 5 lobes; normal 3–5) + macro-ovalocytes. B12 or folate deficiency → ↓ DNA synthesis → nuclei mature slowly while cytoplasm grows.", "p": "Hypersegmented PMN + macro-ovalocytes = megaloblastic."}, {"lo": "5", "rr": true, "t": "m", "q": "Select ALL labs expected with the megaloblastic blood slide.", "a": ["MCV >100 (often 110–130)", "↑ RDW", "Low reticulocytes", "↑ LDH and indirect bilirubin", "↑ MMA if B12 deficient"], "o": ["Positive DAT", "↑ MMA in folate deficiency"], "n": ["Not immune.", "MMA is normal in folate deficiency."], "w": "± pancytopenia; ↓ B12 or folate; ↑ homocysteine in both; ↑ MMA in B12 only.", "p": "MMA ↑ = B12."}, {"lo": "5", "rr": true, "hy": true, "t": "m", "q": "Select ALL four features of megaloblastic MARROW.", "a": ["Enlarged nuclei in red cell precursors", "Immature (fine, open) nuclear chromatin", "Normal cytoplasmic maturation without nuclear pyknosis", "Nuclear–cytoplasmic asynchrony"], "o": ["Hypocellular, fatty marrow", "Ringed sideroblasts"], "n": ["Megaloblastic marrow is hypercellular; fatty = aplastic.", "Sideroblastic anemia."], "w": "Megaloblasts have an “old body with a young face”: pink, adult cytoplasm (Hb made on time) around a big, baby-like nucleus (DNA lagging). Giant metamyelocytes are also seen.", "p": "Old body, young face = megaloblast."}, {"lo": "5", "rr": true, "q": "Station: hypercellular marrow; erythroid precursors with big, fine-chromatin nuclei but pink, hemoglobinized cytoplasm. Name it.", "a": "Megaloblastic change (nuclear–cytoplasmic asynchrony)", "o": ["Normal marrow", "Aplastic anemia", "Metastatic carcinoma"], "n": ["Normal precursors condense their nuclei as cytoplasm turns pink.", "Aplastic marrow is fatty and empty.", "Carcinoma forms cohesive clusters."], "w": "The nucleus fails to condense on schedule (no pyknosis) while the cytoplasm matures normally.", "p": "Big immature nucleus + pink cytoplasm = megaloblast."}, {"lo": "4", "rr": true, "q": "Which symptom on the megaloblastic slide’s patient points specifically to B12 rather than folate?", "a": "Neuropathy / subacute combined degeneration", "o": ["Fatigue", "Glossitis", "Diarrhea"], "n": ["Both.", "Both.", "Both."], "w": "Fatigue, glossitis and diarrhea occur in both. Neurologic damage is B12 only. The slide’s classic association is pernicious anemia.", "p": "Neuro = B12."}, {"lo": "6", "rr": true, "hy": true, "q": "How is megaloblastic anemia treated?", "a": "B12 (parenteral or high-dose oral; lifelong in PA) or folate after excluding B12 deficiency", "o": ["Folate for everyone without checking B12", "Oral iron", "Splenectomy"], "n": ["Folate alone can mask B12 deficiency while nerves are damaged.", "Not iron.", "Not relevant."], "w": "Check B12 before giving folate. Pernicious anemia requires lifelong B12.", "p": "Check B12 before folate."}, {"lo": "5", "hy": true, "q": "A patient with AIHA has reticulocytes of 20% and MCV 104 fL. Does she have B12 deficiency?", "a": "Not necessarily; reticulocytes are larger than mature RBCs", "o": ["Yes; any MCV over 100 is megaloblastic", "Yes, because AIHA destroys B12", "No; AIHA always lowers the MCV"], "n": ["Macrocytosis has non-megaloblastic causes.", "Not true.", "Not true."], "w": "Look for polychromasia, not oval macrocytes or hypersegmented neutrophils.", "p": "Very high retics → mildly ↑ MCV."}]}, {"id": "sicklest", "lec": "B", "name": "Sickle cell station", "sub": "HbS polymerization · crisis · treatment", "b": [{"lo": "5", "rr": true, "q": "Station: long, thin crescent-shaped RBCs, some clumped together, with target cells and Howell-Jolly bodies. Name it.", "a": "Sickle cell anemia", "o": ["Elliptocytosis", "β-thalassemia", "Schistocytes from DIC"], "n": ["Elliptocytes are oval, not crescents.", "Thal shows bizarre shapes and targets, not crescents.", "Schistocytes are fragments (helmets, triangles)."], "w": "Howell-Jolly bodies appear after autosplenectomy.", "p": "Crescents + Howell-Jolly = sickle cell with autosplenectomy."}, {"lo": "5", "rr": true, "hy": true, "q": "What is the mechanism of sickling shown on the slide?", "a": "HbS (β6 Glu → Val) polymerizes at low O₂; sickled cells stick and plug small vessels", "o": ["Excess α chains precipitate", "IgG antibodies coat the cells", "Fibrin strands slice the cells"], "n": ["β-thalassemia.", "Warm AIHA.", "MAHA."], "w": "Blocked vessels → ↓ flow → more hypoxia → more sickling (vicious cycle) → ischemia.", "p": "Low O₂ → polymer → sickle → vaso-occlusion → more hypoxia."}, {"lo": "4", "rr": true, "q": "What is the classic presentation of a sickle crisis?", "a": "Severe abdominal, bone or chest pain", "o": ["Painless jaundice", "Bloody diarrhea", "Cyclic fevers every 48 hours"], "n": ["Not a crisis.", "Suggests HUS prodrome.", "Suggests malaria."], "w": "Also dactylitis, acute chest syndrome, stroke, autosplenectomy → encapsulated infections, gallstones.", "p": "Sickle crisis = pain (bone, abdomen, chest)."}, {"lo": "5", "rr": true, "t": "m", "q": "Select ALL labs expected in sickle cell anemia.", "a": ["Hb 5–9 g/dL", "↑ reticulocytes", "↑ indirect bilirubin", "↓ haptoglobin", "Electrophoresis: HbS, ↑ HbF, no HbA"], "o": ["Microcytic anemia with ↓ ferritin", "Positive DAT"], "n": ["Usually normocytic; ferritin isn’t low.", "Not immune."], "w": "Sickle cell anemia is a normocytic hemolytic anemia.", "p": "No HbA on electrophoresis = SS disease."}, {"lo": "6", "rr": true, "t": "m", "q": "Select ALL treatments used in sickle cell anemia.", "a": ["Hydroxyurea", "Hydration and pain control", "Transfusion / exchange for complications", "Penicillin and vaccines", "Stem cell transplant or gene therapy"], "o": ["Oral iron", "Splenectomy for every patient"], "n": ["Not indicated (iron isn’t deficient).", "Patients usually autosplenectomize; routine splenectomy isn’t done."], "w": "Hydroxyurea raises HbF, which doesn’t sickle.", "p": "Hydroxyurea ↑ HbF."}, {"lo": "4", "q": "Why does the sickle cell patient on the slide have Howell-Jolly bodies and a risk of pneumococcal sepsis?", "a": "Repeated splenic infarcts caused autosplenectomy", "o": ["Hydroxyurea effect", "Iron overload", "Parvovirus infection"], "n": ["Hydroxyurea causes macrocytosis, not Howell-Jolly bodies.", "Not the cause.", "Parvovirus causes aplastic crisis."], "w": "No functioning spleen → nuclear remnants stay in RBCs and encapsulated bacteria aren’t cleared.", "p": "Howell-Jolly = asplenia."}]}, {"id": "aihast", "lec": "B", "name": "Spherocytes + retics station", "sub": "Warm AIHA vs HS", "b": [{"lo": "5", "rr": true, "hy": true, "q": "Station: many larger bluish cells and smaller dense RBCs lacking central pallor; DAT positive. Name it.", "a": "Reticulocytes + spherocytes: warm autoimmune hemolytic anemia", "o": ["Hereditary spherocytosis", "Iron deficiency", "Megaloblastic anemia"], "n": ["HS is DAT negative.", "IDA cells are pale with big pallor.", "Megaloblastic cells are oval macrocytes."], "w": "IgG coats RBCs → splenic macrophages bite off membrane → spherocytes → extravascular hemolysis; marrow responds with polychromatophilic reticulocytes.", "p": "Spherocytes + polychromasia + DAT+ = warm AIHA."}, {"lo": "5", "rr": true, "t": "m", "q": "Select ALL labs expected on the AIHA slide.", "a": ["Reticulocytes very high (e.g., 20%)", "↑ indirect bilirubin", "↑ LDH", "↓ haptoglobin", "Positive DAT"], "o": ["Low reticulocytes", "Normal haptoglobin with hemoglobinuria"], "n": ["Retics are high.", "Haptoglobin falls."], "w": "MCHC can be high from spherocytes.", "p": "Hemolysis panel + DAT+ = immune hemolysis."}, {"lo": "5", "rr": true, "hy": true, "q": "Spherocytes and polychromasia appear, but the DAT is negative and the mother had a splenectomy. Diagnosis?", "a": "Hereditary spherocytosis", "o": ["Warm AIHA", "Cold agglutinin disease", "Microangiopathic hemolytic anemia"], "n": ["Warm AIHA is DAT positive.", "Cold agglutinins show agglutination and DAT C3.", "MAHA shows schistocytes."], "w": "The DAT decides: positive = AIHA; negative + family history = HS.", "p": "Spherocytes: DAT+ AIHA, DAT− HS."}, {"lo": "4", "rr": true, "q": "What should you look for in a patient with warm AIHA?", "a": "SLE, CLL/lymphoma and drugs", "o": ["Mycoplasma and EBV", "Fava bean exposure", "Recent travel to malaria areas"], "n": ["Those cause cold agglutinins.", "G6PD.", "Malaria."], "w": "Clinical: fatigue, jaundice, splenomegaly.", "p": "Warm AIHA → SLE, CLL, lymphoma, drugs."}, {"lo": "6", "rr": true, "q": "First-line treatment for the AIHA slide’s patient?", "a": "Glucocorticoids", "o": ["Plasma exchange", "Hydroxyurea", "Oral iron"], "n": ["TTP.", "Sickle cell.", "IDA."], "w": "Then rituximab or IVIG; splenectomy if refractory.", "p": "Warm AIHA: steroids → rituximab/IVIG → splenectomy."}]}, {"id": "schist", "lec": "B", "name": "Schistocytes station", "sub": "MAHA · DIC vs TTP", "b": [{"lo": "5", "rr": true, "hy": true, "q": "Station: numerous fragmented RBCs including helmet cells and triangles, with few platelets, in a septic ICU patient oozing from IV sites. Name it.", "a": "Schistocytes: microangiopathic hemolytic anemia from DIC", "o": ["Spherocytes from warm AIHA", "Bite cells from G6PD deficiency", "Teardrop cells from myelofibrosis"], "n": ["Spherocytes are round with no pallor.", "Bite cells have a bite out of the edge.", "Teardrops have a single tail."], "w": "RBCs are cut by fibrin strands or microthrombi in small vessels → intravascular hemolysis.", "p": "Helmet cells = schistocytes = mechanical hemolysis."}, {"lo": "5", "rr": true, "t": "m", "q": "Select ALL causes of schistocytes.", "a": ["DIC", "TTP", "HUS", "Malignant hypertension", "Mechanical prosthetic heart valve"], "o": ["Hereditary spherocytosis", "Iron deficiency"], "n": ["Spherocytes, not schistocytes.", "Pencil cells, not schistocytes."], "w": "Also HELLP and disseminated cancer.", "p": "Schistocytes: DIC, TTP, HUS, malignant HTN, valves, HELLP."}, {"lo": "5", "rr": true, "hy": true, "q": "Which labs separate DIC from TTP on the schistocyte slide?", "a": "DIC: ↑ PT/PTT, ↓ fibrinogen, ↑ D-dimer · TTP: normal PT/PTT", "o": ["DIC: normal PT/PTT · TTP: ↑ PT/PTT", "Both: ↑ PT/PTT", "Only TTP has schistocytes"], "n": ["Reversed.", "TTP has normal coags.", "Both have schistocytes."], "w": "Both: schistocytes, ↓ platelets, ↑ LDH, ↓↓ haptoglobin, ↑ indirect bilirubin.", "p": "Abnormal coags = DIC."}, {"lo": "4", "rr": true, "q": "Which patients develop DIC?", "a": "Very sick patients: sepsis, trauma, obstetric complications, APL", "o": ["Healthy young women with fever and confusion", "Children after bloody diarrhea", "Travelers with cyclic fevers"], "n": ["That is TTP.", "That is HUS.", "That is malaria."], "w": "DIC causes bleeding (oozing) and clotting at the same time.", "p": "DIC = sick patient + oozing + abnormal coags."}, {"lo": "6", "rr": true, "q": "How is the schistocyte slide treated?", "a": "Treat the cause; DIC → platelets, plasma, cryoprecipitate if bleeding · TTP → plasma exchange", "o": ["Steroids for all", "Oral iron", "Splenectomy for all"], "n": ["Not first line for DIC.", "Not relevant.", "Not indicated."], "w": "Treatment matches mechanism.", "p": "DIC: fix the cause. TTP: plasma exchange."}]}, {"id": "malst", "lec": "B", "name": "Malaria station", "sub": "Ring forms · species · primaquine", "b": [{"lo": "5", "rr": true, "q": "Station: small blue rings with a dark chromatin dot inside RBCs in a traveler with fevers every 48 hours. Name it.", "a": "Malaria ring forms (P. vivax / ovale)", "o": ["Howell-Jolly bodies", "Basophilic stippling", "Babesia tetrads"], "n": ["Single round dark nuclear remnants, no ring.", "Fine blue granules throughout the cell.", "Babesia can form rings but the classic finding is a Maltese cross; and the 48-hour fever after travel fits malaria."], "w": "Plasmodium replicates inside RBCs → rupture and splenic removal → hemolysis and anemia.", "p": "Rings inside RBCs + travel + cyclic fever = malaria."}, {"lo": "5", "rr": true, "q": "How is malaria diagnosed in the lab?", "a": "Thick and thin Giemsa blood smears (± rapid antigen test)", "o": ["Bone marrow biopsy", "Direct antiglobulin test", "Hemoglobin electrophoresis"], "n": ["Not needed.", "Not relevant.", "Not relevant."], "w": "Thick smear detects parasites; thin smear identifies species. Hemolysis labs and thrombocytopenia are common.", "p": "Malaria = thick + thin smear."}, {"lo": "4", "rr": true, "hy": true, "q": "Which species features match P. falciparum?", "a": "Most severe (cerebral malaria), banana-shaped gametocytes, multiple rings per cell", "o": ["48-hour fever cycle with liver hypnozoites", "72-hour fever cycle", "Mild disease confined to the liver"], "n": ["That is vivax/ovale.", "That is P. malariae.", "Not falciparum."], "w": "Vivax and ovale cause 48-hour fevers and form dormant liver hypnozoites that cause relapse.", "p": "Falciparum = severe, banana gametocytes, many rings."}, {"lo": "6", "rr": true, "hy": true, "q": "A patient with P. vivax needs primaquine for hypnozoites. What must be checked first?", "a": "G6PD activity", "o": ["Ferritin", "Hemoglobin electrophoresis", "ADAMTS13"], "n": ["Not related.", "Not required.", "TTP."], "w": "Primaquine is an oxidant and causes hemolysis in G6PD deficiency. Blood-stage treatment depends on species and resistance (chloroquine if sensitive; artemisinin combinations for falciparum).", "p": "Primaquine → check G6PD."}, {"lo": "5", "rr": true, "hy": true, "t": "m", "q": "Select ALL conditions that protect against P. falciparum malaria.", "a": ["Sickle cell trait", "G6PD deficiency"], "o": ["Iron overload", "Hereditary hemochromatosis", "Pernicious anemia"], "n": ["Not protective.", "Not protective.", "Not protective."], "w": "Parasitized HbS-containing cells sickle and are cleared, and G6PD-deficient cells handle the parasite’s oxidant stress poorly, so parasite growth is limited. Thalassemia trait and HbC also protect, and Duffy-negative RBCs resist P. vivax. Classic teaching lists four human species (falciparum, vivax, ovale, malariae); P. knowlesi is a recognized fifth.", "p": "Sickle trait + G6PD deficiency → falciparum protection."}]}, {"id": "roul", "lec": "B", "name": "Rouleaux station", "sub": "Coin stacks · ESR · myeloma", "b": [{"lo": "5", "rr": true, "hy": true, "q": "Station: RBCs stacked in long chains like a roll of coins. Name it.", "a": "Rouleaux", "o": ["Agglutination", "Schistocytes", "Target cells"], "n": ["Agglutination is irregular clumps, not orderly stacks.", "Fragments.", "Bull’s-eye cells."], "w": "↑ serum proteins (fibrinogen, globulins) neutralize the RBCs’ negative surface charge → cells stick face-to-face.", "p": "Coin stacks = rouleaux."}, {"lo": "5", "rr": true, "hy": true, "q": "Why does the ESR rise in inflammation?", "a": "Acute-phase proteins promote rouleaux, and stacked cells sediment faster", "o": ["Inflammation shrinks RBCs", "WBCs drag RBCs down", "Inflammation lowers plasma viscosity"], "n": ["Not the mechanism.", "Not the mechanism.", "Not the mechanism."], "w": "Fibrinogen and globulins reduce charge repulsion. The ESR rises nonspecifically.", "p": "ESR = nonspecific; ↑ fibrinogen/globulins."}, {"lo": "4", "rr": true, "hy": true, "q": "A 70-year-old with back pain, hypercalcemia, anemia and a very high ESR has rouleaux on the smear. Most likely diagnosis?", "a": "Multiple myeloma", "o": ["Cold agglutinin disease", "Iron deficiency", "Aplastic anemia"], "n": ["Cold agglutinins cause irregular clumps.", "Doesn’t explain rouleaux and hypercalcemia.", "Doesn’t cause rouleaux."], "w": "Monoclonal immunoglobulin (M-spike) causes rouleaux. Next: serum/urine protein electrophoresis.", "p": "Rouleaux + CRAB = myeloma."}, {"lo": "5", "rr": true, "q": "How do rouleaux differ from agglutination?", "a": "Rouleaux are orderly coin stacks from ↑ proteins; agglutination is irregular clumping from antibodies", "o": ["They are the same finding", "Rouleaux come from antibodies; agglutination from proteins", "Agglutination is seen only in myeloma"], "n": ["Different mechanisms.", "Reversed.", "Agglutination is classic for cold agglutinin disease."], "w": "Cold agglutinin disease (IgM) causes clumps; myeloma and inflammation cause rouleaux.", "p": "Stacks = proteins. Clumps = antibodies."}]}, {"id": "marst", "lec": "B", "name": "Marrow stations", "sub": "Aplastic · granuloma · metastatic carcinoma", "b": [{"lo": "5", "rr": true, "hy": true, "q": "Station: marrow almost entirely fat with markedly reduced hematopoietic cells in a 22-year-old with pancytopenia 2 months after hepatitis. Name it.", "a": "Aplastic anemia", "o": ["Normal marrow", "Megaloblastic anemia", "Myelofibrosis"], "n": ["Expected cellularity at 22 is about 80%.", "Megaloblastic marrow is hypercellular.", "Myelofibrosis shows fibrosis, often a dry tap and teardrops."], "w": "Stem cell failure, often immune (T-cell) attack.", "p": "Empty fatty marrow + pancytopenia = aplastic anemia."}, {"lo": "4", "rr": true, "t": "m", "q": "Select ALL causes of aplastic anemia.", "a": ["Hepatitis (post-hepatitis)", "Chloramphenicol", "Benzene", "Radiation", "Fanconi anemia"], "o": ["Iron deficiency", "Hereditary spherocytosis"], "n": ["Not a cause.", "Not a cause."], "w": "Infections (hepatitis, parvovirus B19 in at-risk patients, EBV, HIV), drugs (chloramphenicol, chemotherapy, carbamazepine), toxins (benzene, radiation), idiopathic, inherited (Fanconi).", "p": "Aplastic: drugs, toxins, viruses, idiopathic, Fanconi."}, {"lo": "4", "rr": true, "q": "Which clinical triad matches aplastic anemia?", "a": "Fatigue (anemia), infections (neutropenia), bleeding/petechiae (thrombocytopenia), with no splenomegaly", "o": ["Pain crises, dactylitis, gallstones", "Jaundice, splenomegaly, spherocytes", "Bone pain, hypercalcemia, rouleaux"], "n": ["Sickle cell.", "HS or AIHA.", "Myeloma."], "w": "Labs: pancytopenia, low retics, normocytic or mildly macrocytic RBCs.", "p": "Aplastic: pancytopenia, no splenomegaly."}, {"lo": "6", "rr": true, "q": "Which treatment is curative for aplastic anemia in a young patient?", "a": "Hematopoietic stem cell transplant", "o": ["Iron chelation", "Splenectomy", "Oral B12"], "n": ["Not relevant.", "Not relevant.", "Not relevant."], "w": "Also: remove the cause, transfusion support, immunosuppression (antithymocyte globulin + cyclosporine), eltrombopag.", "p": "Aplastic: ATG + cyclosporine or transplant."}, {"lo": "5", "rr": true, "q": "Station: a small, poorly formed nodule of epithelioid macrophages within the marrow of an HIV patient with fever. What must be done?", "a": "Cultures and special stains (AFB, fungal stains) for an infectious cause", "o": ["Start steroids immediately", "Iron studies", "Hemoglobin electrophoresis"], "n": ["Could worsen infection.", "Not relevant.", "Not relevant."], "w": "Marrow granuloma causes: TB, atypical mycobacteria (MAC in HIV), fungi (histoplasmosis), sarcoidosis, drugs, lymphoma. Granulomas can crowd out marrow and cause cytopenias.", "p": "Marrow granuloma → culture + AFB/fungal stains."}, {"lo": "5", "rr": true, "hy": true, "q": "Station: cohesive clusters of dark blue cells filling the spaces between trabeculae, replacing hematopoietic cells, in a woman with past breast cancer. Name it.", "a": "Metastatic carcinoma (myelophthisic anemia)", "o": ["Normal erythroid islands", "Megaloblastic marrow", "Lymphoma"], "n": ["Erythroid islands are hematopoietic and discohesive.", "Megaloblasts don’t form cohesive epithelial clusters.", "Lymphoma cells are usually discohesive."], "w": "Hematopoietic cells float singly (discohesive). Cohesive clumps = metastatic carcinoma until proven otherwise.", "p": "Cohesive clusters in marrow = metastatic carcinoma."}, {"lo": "5", "rr": true, "hy": true, "t": "m", "q": "Select ALL findings of a leukoerythroblastic smear from marrow infiltration.", "a": ["Teardrop cells (dacrocytes)", "Nucleated RBCs", "Immature granulocytes (myelocytes)"], "o": ["Hypersegmented neutrophils", "Bite cells"], "n": ["Megaloblastic.", "G6PD."], "w": "Common primaries: breast, prostate, lung, kidney, thyroid; neuroblastoma in children. Clinical: bone pain, cytopenias, ↑ alkaline phosphatase, hypercalcemia.", "p": "Teardrops + nRBCs + myelocytes = marrow infiltration."}, {"lo": "4", "q": "A 60-year-old woman has anemia, teardrop cells, nucleated RBCs, myelocytes and new back pain. Next best step?", "a": "Bone marrow biopsy (± imaging) to look for marrow infiltration", "o": ["Start oral iron", "Give B12", "Repeat CBC in 6 months"], "n": ["Not iron deficiency.", "Not megaloblastic.", "Delays diagnosis of possible metastasis."], "w": "A leukoerythroblastic picture points to metastatic carcinoma (breast, prostate, lung) or myelofibrosis.", "p": "Leukoerythroblastic smear → marrow biopsy."}]}, {"id": "idrill", "lec": "B", "name": "Name that slide", "sub": "Mixed ID drill", "b": [{"lo": "5", "rr": true, "q": "Small RBCs with big central pallor and a few elongated forms in a 32-year-old woman with heavy periods.", "a": "Iron deficiency anemia", "o": ["β-thalassemia minor", "Anemia of chronic disease", "Lead poisoning"], "n": ["Thal minor has normal RDW and targets, no pencil cells.", "ACD is usually normocytic with a normal RDW.", "Lead shows coarse basophilic stippling."], "w": "Pencil cells + hypochromia + menorrhagia = IDA.", "p": "Menorrhagia + pencil cells = IDA."}, {"lo": "5", "rr": true, "q": "Helmet-shaped and triangular fragments in a woman with fever, confusion, platelets of 15,000 and normal PT/PTT.", "a": "Schistocytes from TTP", "o": ["Schistocytes from DIC", "Spherocytes from warm AIHA", "Bite cells from G6PD"], "n": ["DIC has abnormal coags.", "No spherocytes described.", "No bite cells described."], "w": "Normal coags + neuro + low platelets + schistocytes = TTP → plasma exchange.", "p": "Schistocytes + normal coags + neuro = TTP."}, {"lo": "5", "rr": true, "q": "Irregular clumps of RBCs at room temperature in a student with atypical pneumonia and blue fingertips.", "a": "Agglutination from cold agglutinins", "o": ["Rouleaux from myeloma", "Sickle cells", "Spherocytes from warm AIHA"], "n": ["Rouleaux are orderly stacks.", "No crescents.", "No spheres."], "w": "Mycoplasma → IgM cold agglutinins.", "p": "Clumps + Mycoplasma = cold agglutinins."}, {"lo": "5", "rr": true, "q": "RBCs with a bull’s-eye center in a patient with cirrhosis.", "a": "Target cells", "o": ["Spherocytes", "Stomatocytes", "Teardrop cells"], "n": ["No pallor at all.", "Mouth-shaped slit of pallor.", "Single tail."], "w": "Liver disease adds cholesterol to the membrane → extra membrane → target cells (HALT).", "p": "Liver disease → targets."}, {"lo": "5", "rr": true, "q": "Teardrop cells, nucleated RBCs and myelocytes in a man with known prostate cancer and back pain.", "a": "Leukoerythroblastic smear from metastatic carcinoma", "o": ["Megaloblastic anemia", "Iron deficiency", "Warm AIHA"], "n": ["Oval macrocytes and hypersegmented PMNs would be seen.", "Pencil cells and hypochromia would be seen.", "Spherocytes would be seen."], "w": "Prostate cancer commonly metastasizes to bone and marrow.", "p": "Teardrops = marrow infiltration or fibrosis."}, {"lo": "5", "q": "A smear shows RBCs with a single dark purple round inclusion in a patient who had a splenectomy for trauma.", "a": "Howell-Jolly bodies", "o": ["Malaria ring forms", "Basophilic stippling", "Heinz bodies"], "n": ["Rings have a thin blue cytoplasmic ring around a dot.", "Many fine granules.", "Need a supravital stain and attach to the membrane."], "w": "Nuclear remnants normally removed by the spleen.", "p": "Howell-Jolly = asplenia."}]}, {"id": "rx", "lec": "B", "name": "Treatment matching", "sub": "Replace · stop · treat what infiltrates", "b": [{"lo": "6", "rr": true, "q": "Treatment for anemia of chronic disease?", "a": "Treat the underlying inflammation; ESA in selected patients (CKD, cancer)", "o": ["Oral iron for all", "Splenectomy", "Plasma exchange"], "n": ["Iron is locked away; oral iron is usually ineffective.", "Not relevant.", "Not relevant."], "w": "Fix the inflammation that raises hepcidin.", "p": "ACD: treat the cause; ESA if selected."}, {"lo": "6", "rr": true, "q": "Treatment for myelophthisic anemia (metastatic or granulomatous)?", "a": "Treat the underlying cancer or infection; supportive transfusion", "o": ["Iron and B12", "Steroids alone", "Splenectomy"], "n": ["Not deficient.", "Not first line.", "Not relevant."], "w": "Remove what is crowding out the marrow.", "p": "Myelophthisic: treat what infiltrates."}, {"lo": "6", "rr": true, "t": "m", "q": "Match the principle: select ALL pairs that correctly match anemia to treatment.", "a": ["Iron deficiency → oral iron + find the blood loss", "Warm AIHA → steroids", "TTP → plasma exchange", "Aplastic anemia → ATG + cyclosporine or transplant"], "o": ["β-thal minor → oral iron", "Malaria (vivax) → primaquine without G6PD testing"], "n": ["Iron doesn’t help thal minor and can cause overload.", "Check G6PD first."], "w": "Treatment matches mechanism: replace what’s missing, stop what’s destroying, treat what’s infiltrating.", "p": "Replace · stop · treat."}, {"lo": "6", "rr": true, "q": "Which principle summarizes treatment across the lab’s anemias?", "a": "Replace what’s missing, stop what’s destroying, treat what’s infiltrating", "o": ["Transfuse every anemia", "Remove the spleen in every hemolytic anemia", "Give iron to every microcytic anemia"], "n": ["Transfusion is supportive, not universal.", "Splenectomy only helps selected disorders.", "Thalassemia and ACD don’t need iron."], "w": "Missing ingredient → replace (iron, B12, folate). Destruction → stop it (steroids, plasma exchange, treat infection). Infiltration → treat the cancer or infection.", "p": "Treatment matches mechanism."}]}];
+
+
+(function(){
+"use strict";
+var KEY="hd-hem06-rbc-lab-builder-v1";
+var S={box:{},score:0,streak:0,best:0,tot:0,right:0,theme:"auto"};
+function load(){try{var j=JSON.parse(localStorage.getItem(KEY)||"null");if(j&&j.box)S=Object.assign(S,j);}catch(e){}}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}}
+load();
+
+var ALL=[]; E.forEach(function(e){e.b.forEach(function(b,i){b.id=e.id+"."+i;b.ent=e;ALL.push(b);});});
+function st(b){var r=S.box[b.id];return r?r.s:"u";}
+var rrOnly=false, mode="build", scope="all", loFilter=null, curEnt=null, idx=0, cur=null, answered=false, results={}, lastId=null, t0=0, tick=null;
+
+function shuffle(a){a=a.slice();for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=a[i];a[i]=a[j];a[j]=t;}return a;}
+function esc(s){return String(s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];});}
+function inScope(b){return (scope==="all"||b.ent.lec===scope)&&(!loFilter||b.lo===loFilter)&&(!rrOnly||b.rr);}
+
+/* ---------- theme ---------- */
+var themeBtn=document.getElementById("themeBtn");
+function applyTheme(){var r=document.documentElement;if(S.theme==="auto")r.removeAttribute("data-theme");else r.setAttribute("data-theme",S.theme);themeBtn.textContent="Theme: "+S.theme;}
+themeBtn.onclick=function(){S.theme={auto:"light",light:"dark",dark:"auto"}[S.theme];applyTheme();save();};
+applyTheme();
+document.getElementById("resetBtn").onclick=function(){
+  var b=this; if(b.dataset.confirm){S.box={};S.score=S.streak=S.tot=S.right=0;save();b.textContent="Reset progress";delete b.dataset.confirm;renderAll();next();return;}
+  b.dataset.confirm="1";b.textContent="Tap again to reset";setTimeout(function(){if(b.dataset.confirm){delete b.dataset.confirm;b.textContent="Reset progress";}},3000);
+};
+
+/* ---------- stats / side / map ---------- */
+function loStatus(lo){var bs=ALL.filter(function(b){return b.lo===lo;});var ss=bs.map(st);
+  var m=ss.filter(function(x){return x==="M";}).length;
+  if(m===bs.length)return{s:"M",m:m,n:bs.length};
+  if(ss.indexOf("m")>=0)return{s:"m",m:m,n:bs.length};
+  if(ss.some(function(x){return x!=="u";}))return{s:"o",m:m,n:bs.length};
+  return{s:"u",m:m,n:bs.length};}
+function renderStats(){
+  document.getElementById("sScore").textContent=S.score;
+  document.getElementById("sStreak").textContent=S.streak;
+  document.getElementById("sAcc").textContent=S.tot?Math.round(100*S.right/S.tot)+"%":"—";
+  document.getElementById("sBoxes").textContent=ALL.filter(function(b){return st(b)==="M";}).length+"/"+ALL.length;
+  var los=Object.keys(LOS);document.getElementById("sLos").textContent=los.filter(function(l){return loStatus(l).s==="M";}).length+"/"+los.length;
+}
+function renderSide(){
+  var h="";LECS.forEach(function(L){if(scope!=="all"&&scope!==L.k)return;
+    h+='<p class="lec-h l'+L.k+'" style="color:var(--lc)">HEM06 · '+esc(L.n)+'</p>';
+    E.filter(function(e){return e.lec===L.k;}).forEach(function(e){
+      var m=e.b.filter(function(b){return st(b)==="M";}).length,p=Math.round(100*m/e.b.length);
+      h+='<button type="button" class="ent l'+e.lec+'" data-ent="'+e.id+'"'+(curEnt===e&&mode==="build"?' aria-current="true"':'')+'><span class="n">'+esc(e.name)+'</span><span class="pct">'+m+'/'+e.b.length+'</span><span class="s">'+esc(e.sub)+'</span><span class="mini"><i style="width:'+p+'%"></i></span></button>';
+    });});
+  var el=document.getElementById("entList");el.innerHTML=h;
+  el.querySelectorAll(".ent").forEach(function(b){b.onclick=function(){setMode("build");startEnt(E.filter(function(e){return e.id===b.dataset.ent;})[0]);};});
+}
+function renderMap(){
+  var h="";Object.keys(LOS).forEach(function(lo){var lec=LOLEC[lo];if(scope!=="all"&&scope!==lec)return;var s=loStatus(lo);
+    h+='<button type="button" class="lo-tile l'+lec+'" data-lo="'+lo+'"'+(loFilter===lo?' style="border-color:var(--lc)"':'')+'><span class="id">'+(lo.slice(-1)==="X"?"Extra":"LO "+lo)+'</span><span class="t">'+esc(LOS[lo])+'</span><span class="dot s-'+s.s+'" title="'+s.m+'/'+s.n+' mastered"></span></button>';});
+  var g=document.getElementById("loGrid");g.innerHTML=h;
+  g.querySelectorAll(".lo-tile").forEach(function(b){b.onclick=function(){loFilter=(loFilter===b.dataset.lo?null:b.dataset.lo);setMode("drill");};});
+}
+function renderAll(){renderStats();renderSide();renderMap();}
+
+/* ---------- flow ---------- */
+function setMode(m){mode=m;document.querySelectorAll("[data-mode]").forEach(function(b){b.setAttribute("aria-pressed",String(b.dataset.mode===m));});
+  if(m==="build"){loFilter=null;if(rrOnly){rrOnly=false;setRR();}renderAll();if(!curEnt||!inScope(curEnt.b[0]))startEnt(firstEnt());else show();}
+  else{renderAll();next();}}
+function firstEnt(){var es=E.filter(function(e){return scope==="all"||e.lec===scope;});
+  for(var i=0;i<es.length;i++){if(es[i].b.some(function(b){return st(b)!=="M";}))return es[i];}return es[0];}
+document.querySelectorAll("[data-mode]").forEach(function(b){b.onclick=function(){setMode(b.dataset.mode);};});
+function setRR(){document.querySelectorAll("[data-rr]").forEach(function(x){x.setAttribute("aria-pressed",String((x.dataset.rr==="1")===rrOnly));});}
+document.querySelectorAll("[data-rr]").forEach(function(b){b.onclick=function(){rrOnly=b.dataset.rr==="1";setRR();setMode(rrOnly?"drill":mode);};});
+document.querySelectorAll("[data-scope]").forEach(function(b){b.onclick=function(){scope=b.dataset.scope;loFilter=null;
+  document.querySelectorAll("[data-scope]").forEach(function(x){x.setAttribute("aria-pressed",String(x===b));});
+  if(mode==="build"){curEnt=null;setMode("build");}else setMode("drill");};});
+
+function startEnt(e){curEnt=e;idx=0;results={};renderSide();cur=e.b[0];show();}
+function next(){
+  if(mode==="build"){idx++;if(idx>=curEnt.b.length){finishEnt();return;}cur=curEnt.b[idx];show();return;}
+  var pool=ALL.filter(inScope);if(!pool.length){cur=null;show();return;}
+  var rank={m:0,u:1,o:2,M:3};
+  pool=shuffle(pool).sort(function(a,b){return rank[st(a)]-rank[st(b)];});
+  var best=rank[st(pool[0])];var top=pool.filter(function(b){return rank[st(b)]===best&&b.id!==lastId;});
+  if(best===3)top=pool.filter(function(b){return b.id!==lastId;});
+  cur=(top.length?top:pool)[0];show();
+}
+function finishEnt(){
+  var ok=Object.keys(results).filter(function(k){return results[k];}).length,n=curEnt.b.length;
+  var i=E.indexOf(curEnt),nxt=null;for(var j=1;j<=E.length;j++){var c=E[(i+j)%E.length];if(scope==="all"||c.lec===scope){nxt=c;break;}}
+  var card=document.getElementById("card");card.className="card l"+curEnt.lec;
+  card.innerHTML='<div class="done"><p class="meta">Structure complete</p><h2>'+esc(curEnt.name)+': '+ok+' / '+n+' first try</h2>'+
+   '<p class="hint">'+(ok===n?"Clean build. It will count as mastered after one more clean pass.":"Missed boxes are queued first in Drill mode.")+'</p>'+
+   '<div class="actions"><button class="btn" type="button" id="again">Rebuild '+esc(curEnt.name)+'</button>'+(nxt?'<button class="btn primary" type="button" id="nextEnt">Next: '+esc(nxt.name)+' →</button>':'')+'</div></div>';
+  document.getElementById("again").onclick=function(){startEnt(curEnt);};
+  if(nxt)document.getElementById("nextEnt").onclick=function(){startEnt(nxt);};
+  var ne=document.getElementById("nextEnt");if(ne)ne.focus();
+}
+
+var picks=[];
+function show(){
+  answered=false;picks=[];clearInterval(tick);
+  var card=document.getElementById("card");
+  if(!cur){card.className="card";card.innerHTML='<p class="q">Nothing in this scope yet.</p>';return;}
+  var b=cur,e=b.ent;card.className="card l"+e.lec;
+  var head='<div class="card-top"><div><p class="meta">'+(mode==="build"?"Build · box "+(idx+1)+" of "+e.b.length:"Drill"+(rrOnly?" · Rapid Review":"")+(loFilter?" · LO "+loFilter:""))+'</p><h2>'+esc(e.name)+'</h2></div>'+
+    '<div style="display:flex;gap:6px;flex-wrap:wrap"><span class="tag lo">'+(b.lo.slice(-1)==="X"?"Extra":"LO "+b.lo)+'</span>'+(b.rr?'<span class="tag rr">Rapid Review</span>':'')+(b.hy?'<span class="tag hy">HY</span>':'')+'<span class="timer" id="timer">0.0s</span></div></div>';
+  if(mode==="build"){head+='<div class="boxes" aria-hidden="true">'+e.b.map(function(x,i){var c=i===idx?"cur":(x.id in results?(results[x.id]?"done-ok":"done-bad"):"");return '<i class="'+c+'"></i>';}).join("")+'</div>';}
+  var body='<p class="q">'+esc(b.q)+'</p>';
+  if(!b.t){b._opts=shuffle([b.a].concat(b.o));
+    body+='<div class="opts">'+b._opts.map(function(o,i){return '<button type="button" class="opt" data-i="'+i+'"><span class="k">'+(i+1)+'</span><span>'+esc(o)+'</span></button>';}).join("")+'</div>';}
+  else if(b.t==="m"){b._opts=shuffle(b.a.concat(b.o));
+    body+='<p class="hint">Select all that apply, then check.</p><div class="opts">'+b._opts.map(function(o,i){return '<button type="button" class="opt" aria-pressed="false" data-i="'+i+'"><span class="k">'+(i+1)+'</span><span>'+esc(o)+'</span></button>';}).join("")+'</div>';}
+  else{b._opts=shuffle(b.a);
+    body+='<p class="hint">Tap items in order. Tap a placed item to remove it.</p><ol class="ordered" id="ordList"><li class="empty" style="cursor:default">Your order appears here</li></ol><div class="opts">'+b._opts.map(function(o,i){return '<button type="button" class="opt" data-i="'+i+'"><span class="k">+</span><span>'+esc(o)+'</span></button>';}).join("")+'</div>';}
+  var act='<div id="fb"></div><div class="actions"><span class="hint">'+(b.t?"Enter to check":"Keys 1–"+b._opts.length+" to answer")+'</span><div style="display:flex;gap:8px">'+
+    (mode==="build"?'<button class="btn" type="button" id="skipBtn">Skip structure</button>':'')+
+    (b.t?'<button class="btn primary" type="button" id="checkBtn"'+(b.t==="o"?" disabled":"")+'>Check</button>':'')+
+    '<button class="btn primary" type="button" id="nextBtn" hidden>Next box →</button></div></div>';
+  card.innerHTML=head+body+act;
+  t0=Date.now();tick=setInterval(function(){var t=document.getElementById("timer");if(t)t.textContent=((Date.now()-t0)/1000).toFixed(1)+"s";},100);
+  var opts=card.querySelectorAll(".opt");
+  if(!b.t)opts.forEach(function(o){o.onclick=function(){if(!answered)grade([+o.dataset.i]);};});
+  else if(b.t==="m")opts.forEach(function(o){o.onclick=function(){if(answered)return;var on=o.getAttribute("aria-pressed")!=="true";o.setAttribute("aria-pressed",String(on));o.classList.toggle("sel",on);};});
+  else opts.forEach(function(o){o.onclick=function(){if(answered||o.disabled)return;picks.push(+o.dataset.i);o.disabled=true;o.style.opacity=".4";drawOrd();};});
+  var cb=document.getElementById("checkBtn");if(cb)cb.onclick=function(){if(answered)return;
+    if(b.t==="m"){var sel=[];opts.forEach(function(o){if(o.getAttribute("aria-pressed")==="true")sel.push(+o.dataset.i);});grade(sel);}else grade(picks);};
+  var sk=document.getElementById("skipBtn");if(sk)sk.onclick=function(){var i=E.indexOf(curEnt);for(var j=1;j<=E.length;j++){var c=E[(i+j)%E.length];if(scope==="all"||c.lec===scope){startEnt(c);return;}}};
+  document.getElementById("nextBtn").onclick=function(){lastId=cur.id;next();};
+}
+function drawOrd(){var b=cur,ol=document.getElementById("ordList");
+  ol.innerHTML=picks.length?picks.map(function(i,k){return '<li data-k="'+k+'">'+esc(b._opts[i])+'</li>';}).join(""):'<li class="empty" style="cursor:default">Your order appears here</li>';
+  ol.querySelectorAll("li[data-k]").forEach(function(li){li.onclick=function(){if(answered)return;var k=+li.dataset.k,i=picks[k];picks.splice(k,1);
+    var o=document.querySelector('.opt[data-i="'+i+'"]');o.disabled=false;o.style.opacity="";drawOrd();};});
+  document.getElementById("checkBtn").disabled=picks.length!==b.a.length;}
+
+function grade(sel){
+  answered=true;clearInterval(tick);var b=cur,ok,card=document.getElementById("card"),opts=card.querySelectorAll(".opt");
+  if(!b.t){ok=b._opts[sel[0]]===b.a;opts.forEach(function(o){var t=b._opts[+o.dataset.i];o.disabled=true;if(t===b.a)o.classList.add("right");else if(+o.dataset.i===sel[0])o.classList.add("wrong");});}
+  else if(b.t==="m"){var chosen=sel.map(function(i){return b._opts[i];});ok=chosen.length===b.a.length&&chosen.every(function(c){return b.a.indexOf(c)>=0;});
+    opts.forEach(function(o){var t=b._opts[+o.dataset.i],isA=b.a.indexOf(t)>=0,isS=chosen.indexOf(t)>=0;o.disabled=true;o.classList.remove("sel");
+      if(isA&&isS)o.classList.add("right");else if(isA)o.classList.add("missed");else if(isS)o.classList.add("wrong");});}
+  else{var got=sel.map(function(i){return b._opts[i];});ok=got.every(function(g,k){return g===b.a[k];});
+    document.querySelectorAll("#ordList li[data-k]").forEach(function(li,k){li.classList.add(got[k]===b.a[k]?"right":"wrong");});
+    opts.forEach(function(o){o.disabled=true;});}
+  var r=S.box[b.id]||{n:0,c:0,s:"u"};r.n++;
+  if(ok){r.c++;r.s=r.c>=2?"M":"o";S.streak++;S.best=Math.max(S.best,S.streak);S.right++;S.score+=10+Math.min(S.streak,10);}
+  else{r.c=0;r.s="m";S.streak=0;}
+  S.tot++;S.box[b.id]=r;if(!(b.id in results))results[b.id]=ok;save();
+  var fb='<div class="fb '+(ok?"ok":"bad")+'"><span class="v">'+(ok?"Correct":"Not quite")+'</span>';
+  if(!b.t)fb+='<span class="ans">Answer: <b>'+esc(b.a)+'</b></span>';
+  else if(b.t==="m")fb+='<span class="ans">Answer: <b>'+b.a.map(esc).join(" · ")+'</b></span>';
+  else fb+='<span class="ans">Correct order:</span><ol>'+b.a.map(function(x){return "<li>"+esc(x)+"</li>";}).join("")+'</ol>';
+  fb+='<div class="fbexp">'+String(b.w||"").split(/\n\n+/).filter(Boolean).map(function(t){return '<p>'+esc(t)+'</p>';}).join("")+'</div>';
+  if(b.n&&b.n.length&&b.o&&b.o.length){
+    var rows=b.o.map(function(x,i){return b.n[i]?'<li><b>'+esc(x)+'</b> — '+esc(b.n[i])+'</li>':"";}).join("");
+    if(rows)fb+='<ul class="fbnotes">'+rows+'</ul>';
+  }
+  if(b.p)fb+='<div class="fbpearl"><b>High-yield</b>'+esc(b.p)+'</div>';
+  fb+='</div>';
+  document.getElementById("fb").innerHTML=fb;
+  var cb=document.getElementById("checkBtn");if(cb)cb.hidden=true;
+  var nb=document.getElementById("nextBtn");nb.hidden=false;nb.textContent=(mode==="build"&&idx===curEnt.b.length-1)?"Finish structure →":"Next box →";nb.focus();
+  renderAll();
+}
+document.addEventListener("keydown",function(ev){
+  if(ev.target.tagName==="INPUT"||ev.metaKey||ev.ctrlKey||ev.altKey)return;
+  if(ev.key==="Enter"){var nb=document.getElementById("nextBtn"),cb=document.getElementById("checkBtn");
+    if(nb&&!nb.hidden){ev.preventDefault();nb.click();}else if(cb&&!cb.hidden&&!cb.disabled){ev.preventDefault();cb.click();}return;}
+  var n=parseInt(ev.key,10);if(!cur||answered||isNaN(n))return;var o=document.querySelector('.opt[data-i="'+(n-1)+'"]');if(o&&!o.disabled)o.click();
+});
+
+renderAll();startEnt(firstEnt());
+})();
+
+/* ---------- Review: the compiled version of everything the answers teach ---------- */
+var REVIEW = {"F": "<h3 class=\"rh\">LO1 · Normal hematopoiesis, smear &amp; marrow</h3>\n<p>Pluripotent marrow stem cells, controlled by <b>genes + microenvironment + growth factors (EPO)</b>, mature: proerythroblast → basophilic → polychromatophilic → orthochromatophilic erythroblast → reticulocyte → RBC.</p>\n<div class=\"rtbl\"><table><thead><tr><th>Normal</th><th>Features</th></tr></thead><tbody>\n<tr><td><b>RBC</b></td><td>Biconcave, anucleate, 6–9 µm, 1.5–2.5 µm thick, central pallor ≈ ⅓, no inclusions</td></tr>\n<tr><td><b>Smear</b></td><td>Minimal aniso/poikilocytosis; small fuzzy blue platelets; segmented (3–5 lobes) and band (≤3%) neutrophils</td></tr>\n<tr><td><b>Marrow</b></td><td>Posterior iliac crest; megakaryocytes, erythroid islands, granulocytes + fat; ≈50% cellular in middle age</td></tr></tbody></table></div>\n<div class=\"rmem\"><b>The ⅓ rule</b>Pallor ≈ ⅓ = normal. Bigger = hypochromic (IDA, thal). None = spherocyte. A small lymphocyte’s nucleus ≈ a normal RBC.</div>\n<div class=\"rhy\"><b>Cellularity</b>≈ 100 − age (%). 70-year-old at 30% = normal; 20-year-old at 10% = hypocellular (aplastic).</div>\n<div class=\"rtrap\"><b>Number check</b>In-house: “0–2% erythroblasts.” Standard: erythroid precursors ≈20–30% of nucleated marrow cells (M:E ≈3:1); 0–2% matches blood retics. Use the in-house value in-house.</div>\n<h3 class=\"rh\">LO2 · Classifying anemia</h3>\n<div class=\"rtbl\"><table><thead><tr><th>Term</th><th>Meaning</th></tr></thead><tbody>\n<tr><td>MCV</td><td>Average volume</td></tr><tr><td>MCH</td><td>Average Hb amount per cell</td></tr>\n<tr><td>MCHC</td><td>Average Hb concentration in packed RBCs</td></tr><tr><td>RDW</td><td>Coefficient of variation of volume (size variation)</td></tr>\n<tr><td>Anisocytosis</td><td>Variation in <b>size</b></td></tr><tr><td>Poikilocytosis</td><td>Variation in <b>shape</b></td></tr>\n<tr><td>Hemoglobinopathy</td><td>Hereditary structurally abnormal Hb (HbS)</td></tr></tbody></table></div>\n<div class=\"rtbl\"><table><thead><tr><th>MCV</th><th>Causes</th></tr></thead><tbody>\n<tr><td><b>&lt;80 fL</b> microcytic</td><td>IDA, thal minor, ACD</td></tr>\n<tr><td><b>80–100</b> normocytic</td><td>Acute blood loss, hemolysis (sickle cell), chronic disease, CKD, marrow failure/infiltration</td></tr>\n<tr><td><b>&gt;100</b> macrocytic</td><td>Megaloblastic, hemolytic (big retics), liver/thyroid, marrow failure, drugs, toxins → sort by RDW + retics</td></tr></tbody></table></div>\n<div class=\"rtrap\"><b>Cutoff</b>This lab: microcytic &lt;80 fL (boards). Anemia I lecture: &lt;70 fL. Match the exam.</div>\n<h3 class=\"rh\">LO3 · Mechanism bins</h3>\n<div class=\"rtbl\"><table><thead><tr><th>Anemia</th><th>Bin</th><th>One line</th></tr></thead><tbody>\n<tr><td>Iron deficiency</td><td>Production</td><td>No iron → small, pale cells</td></tr>\n<tr><td>β-thalassemia</td><td>Production + destruction</td><td>Excess α chains → ineffective erythropoiesis + hemolysis</td></tr>\n<tr><td>Chronic disease</td><td>Production</td><td>↑ hepcidin locks iron in macrophages</td></tr>\n<tr><td>Megaloblastic</td><td>Production (ineffective)</td><td>↓ DNA synthesis → asynchrony</td></tr>\n<tr><td>Sickle cell</td><td>Destruction</td><td>HbS polymerizes → hemolysis + vaso-occlusion</td></tr>\n<tr><td>Warm AIHA</td><td>Destruction</td><td>IgG-coated cells nibbled → spherocytes</td></tr>\n<tr><td>MAHA / DIC</td><td>Destruction</td><td>Fibrin strands slice cells → schistocytes</td></tr>\n<tr><td>Malaria</td><td>Destruction</td><td>Parasite ruptures cells + splenic removal</td></tr>\n<tr><td>Aplastic</td><td>Production</td><td>Stem cell failure → fatty marrow, pancytopenia</td></tr>\n<tr><td>Myelophthisic</td><td>Production</td><td>Marrow replaced (tumor, granulomas, fibrosis)</td></tr>\n<tr><td>Acute blood loss</td><td>Loss</td><td>Marrow responds after 3–5 days</td></tr></tbody></table></div>\n<div class=\"rhy\"><b>Pancytopenia</b>Megaloblastic, aplastic and myelophthisic anemias can lower all three lines (also hypersplenism, leukemias).</div>\n<h3 class=\"rh\">Rapid Review checklist · LO1–LO3</h3>\n<ul class=\"rlist\">\n<li><b>LO1</b> Stem cells + microenvironment + EPO · normal RBC 6–9 µm, pallor ≈ ⅓ · normal smear · normal marrow ≈50% (100 − age)</li>\n<li><b>LO2</b> MCV, MCH, MCHC, RDW · aniso = size, poikilo = shape · micro &lt;80 / normo / macro &gt;100</li>\n<li><b>LO3</b> Production: IDA, ACD, megaloblastic, aplastic, myelophthisic · destruction: sickle, AIHA, MAHA/DIC, malaria (thal = both) · loss: acute bleeding</li></ul>\n", "D": "<h3 class=\"rh\">Smear stations at a glance</h3>\n<div class=\"rtbl\"><table><thead><tr><th>What you see</th><th>Name it</th><th>Mechanism</th><th>Key labs</th><th>Treatment</th></tr></thead><tbody>\n<tr><td>Small, big pallor, pencil cells</td><td><b>Iron deficiency</b></td><td>No iron → small, pale</td><td>↓ MCV, ↑ RDW, ↓ ferritin, ↑ TIBC, ↑ plts</td><td>Iron + find the bleed</td></tr>\n<tr><td>Bizarre shapes, targets, nRBCs, stippling</td><td><b>β-thalassemia</b></td><td>Excess α → ineffective erythropoiesis</td><td>Electrophoresis: ↑ A2 (minor), ↑↑ F (major)</td><td>Minor: none, no iron · major: transfuse + chelate, SCT</td></tr>\n<tr><td>Hypersegmented PMN (6–8 lobes) + macro-ovalocytes</td><td><b>Megaloblastic</b></td><td>↓ DNA synthesis</td><td>MCV &gt;100, low retics, ↑ LDH, ↑ MMA (B12)</td><td>B12 (lifelong in PA) or folate after B12 check</td></tr>\n<tr><td>Crescents, targets, Howell-Jolly</td><td><b>Sickle cell</b></td><td>HbS polymerizes at low O₂</td><td>Hb 5–9, ↑ retics, HbS + ↑ F, no A</td><td>Hydroxyurea, fluids, analgesia, transfusion, penicillin</td></tr>\n<tr><td>Bluish retics + dense spheres</td><td><b>Warm AIHA</b></td><td>IgG → splenic nibbling</td><td>Retics ≈20%, DAT +, ↑ MCHC</td><td>Steroids → rituximab/IVIG → splenectomy</td></tr>\n<tr><td>Helmets, triangles, few plts</td><td><b>MAHA / DIC</b></td><td>Fibrin strands slice cells</td><td>DIC: ↑ PT/PTT, ↓ fibrinogen, ↑ D-dimer; TTP: normal</td><td>Treat cause; DIC products if bleeding; TTP plasma exchange</td></tr>\n<tr><td>Blue rings with a dot inside RBCs</td><td><b>Malaria</b></td><td>Parasite ruptures RBCs</td><td>Thick + thin Giemsa smears</td><td>Species-directed; primaquine after G6PD check</td></tr>\n<tr><td>Coin stacks</td><td><b>Rouleaux</b></td><td>↑ fibrinogen/globulins</td><td>↑ ESR; M-spike in myeloma</td><td>Treat cause</td></tr></tbody></table></div>\n<div class=\"rhy\"><b>Target cells</b>HALT: HbC, Asplenia, Liver disease, Thalassemia.</div>\n<div class=\"rmem\"><b>Megaloblast</b>“Old body, young face”: pink adult cytoplasm around a big immature nucleus. Marrow: enlarged nuclei, immature chromatin, normal cytoplasm without pyknosis, asynchrony.</div>\n<div class=\"rtrap\"><b>Spherocytes</b>DAT + = warm AIHA. DAT − + family history = hereditary spherocytosis.</div>\n<div class=\"rtrap\"><b>Rouleaux vs agglutination</b>Orderly stacks (proteins: myeloma, inflammation) vs irregular clumps (antibodies: cold agglutinins).</div>\n<div class=\"rhy\"><b>Malaria</b>Falciparum = severe, banana gametocytes, many rings. Vivax/ovale = 48-h fevers + hypnozoites. Sickle trait and G6PD deficiency protect against falciparum.</div>\n<div class=\"rhy\"><b>Big MCV in hemolysis</b>Retics ≈20% can push MCV to ~104 fL. Look for polychromasia, not oval macrocytes.</div>\n<h3 class=\"rh\">Marrow stations</h3>\n<div class=\"rtbl\"><table><thead><tr><th>What you see</th><th>Name it</th><th>Workup / clinic</th><th>Treatment</th></tr></thead><tbody>\n<tr><td>Half cells, half fat; megakaryocytes, erythroid islands</td><td><b>Normal</b> (middle age)</td><td>Cellularity ≈ 100 − age</td><td>—</td></tr>\n<tr><td>Almost all fat</td><td><b>Aplastic anemia</b></td><td>Pancytopenia, low retics, no splenomegaly; drugs (chloramphenicol, carbamazepine, chemo), toxins (benzene, radiation), viruses (hepatitis, EBV, HIV, parvo), idiopathic, Fanconi</td><td>Remove cause, transfuse, ATG + cyclosporine, eltrombopag, SCT</td></tr>\n<tr><td>Poorly formed nodule of epithelioid macrophages</td><td><b>Granuloma</b></td><td>Cultures + AFB/fungal stains; TB, MAC (HIV), histoplasmosis, sarcoid, drugs, lymphoma</td><td>Treat the cause</td></tr>\n<tr><td>Cohesive dark blue clusters between trabeculae</td><td><b>Metastatic carcinoma</b></td><td>Leukoerythroblastic smear (teardrops, nRBCs, myelocytes); breast, prostate, lung, kidney, thyroid; bone pain, ↑ ALP, hypercalcemia</td><td>Treat the cancer; transfuse</td></tr></tbody></table></div>\n<div class=\"rhy\"><b>Cohesive clusters</b>Hematopoietic cells are discohesive. Cohesive clumps in marrow = metastatic carcinoma until proven otherwise.</div>\n<h3 class=\"rh\">LO6 · Treatment summary</h3>\n<div class=\"rtbl\"><table><thead><tr><th>Anemia</th><th>Treatment</th></tr></thead><tbody>\n<tr><td>Iron deficiency</td><td>Oral (IV) iron; find and fix blood loss</td></tr>\n<tr><td>Thalassemia</td><td>Minor: none, counseling, no iron · Major: transfuse + chelate, SCT</td></tr>\n<tr><td>Chronic disease</td><td>Treat inflammation; ESA in selected (CKD, cancer)</td></tr>\n<tr><td>Megaloblastic</td><td>B12 or folate; check B12 before folate</td></tr>\n<tr><td>Sickle cell</td><td>Hydroxyurea, hydration, analgesia, transfusion, penicillin + vaccines, SCT/gene therapy</td></tr>\n<tr><td>Warm AIHA</td><td>Steroids → rituximab/IVIG → splenectomy</td></tr>\n<tr><td>MAHA / DIC / TTP</td><td>Treat cause; DIC products if bleeding; TTP plasma exchange</td></tr>\n<tr><td>Malaria</td><td>Species-directed; primaquine (G6PD check)</td></tr>\n<tr><td>Aplastic</td><td>Remove cause, transfuse, ATG + cyclosporine, SCT</td></tr>\n<tr><td>Myelophthisic</td><td>Treat cancer or infection; transfuse</td></tr></tbody></table></div>\n<div class=\"rrule\"><b>Principle</b>Replace what’s missing, stop what’s destroying, treat what’s infiltrating.</div>\n<h3 class=\"rh\">HEM06 Master Review checklist</h3>\n<ul class=\"rlist\">\n<li>Normal RBC 6–9 µm, pallor ≈ ⅓; normal marrow ≈50% in middle age (≈100 − age)</li>\n<li>Micro &lt;80: IDA (pale, pencil), thal (poikilocytes, targets), ACD · Macro &gt;100: megaloblastic (oval macrocytes, hypersegmented PMNs), hemolytic, liver/thyroid, marrow failure</li>\n<li>Megaloblastic marrow: big nuclei, immature chromatin, normal cytoplasm, no pyknosis, asynchrony</li>\n<li>Sickles · spherocytes + retics (AIHA) · schistocytes/helmets (MAHA, DIC) · ring forms (malaria) · rouleaux (↑ fibrinogen/globulins, ESR, myeloma)</li>\n<li>Marrow: aplastic (fat) · granuloma (culture + stains) · metastatic carcinoma (cohesive clusters, leukoerythroblastic smear)</li>\n<li>Treatment matches mechanism</li></ul>\n"};
+var RVW_NAME = {"F":"LO1–3 Concepts","D":"LO4–6 Slide stations"};
+(function(){
+  var panel=document.getElementById("rvw"), body=document.getElementById("rvwBody"),
+      toc=document.getElementById("rvwToc"), q=document.getElementById("rvwQ"),
+      cnt=document.getElementById("rvwCount"), empty=document.getElementById("rvwEmpty"),
+      btn=document.getElementById("reviewBtn"), lec="F", secs=[];
+  var TYPES={rrule:1,rtrap:1,rmem:1,rhy:1};
+  function collapse(sec){
+    [].slice.call(sec.querySelectorAll(".rrule,.rtrap,.rmem,.rhy")).forEach(function(d){
+      var type=d.className.trim(); if(!TYPES[type])return;
+      var lbl=d.querySelector("b"), label=lbl?lbl.textContent:"Note";
+      if(lbl)lbl.parentNode.removeChild(lbl);
+      var det=document.createElement("details"); det.className="cx "+type;
+      var sum=document.createElement("summary");
+      sum.innerHTML='<span class="lbl"></span><span class="pk"></span>';
+      sum.querySelector(".lbl").textContent=label;
+      sum.querySelector(".pk").textContent=d.textContent.replace(/\s+/g," ").trim().slice(0,110);
+      var cb=document.createElement("div"); cb.className="cbody";
+      while(d.firstChild)cb.appendChild(d.firstChild);
+      det.appendChild(sum); det.appendChild(cb);
+      d.parentNode.replaceChild(det,d);
+    });
+    var h=sec.querySelector(".rh"), hys=[].slice.call(sec.querySelectorAll("details.rhy"));
+    if(h&&hys.length){ var ref=h.nextSibling; hys.forEach(function(x){ sec.insertBefore(x,ref); }); }
+    var kids=[].slice.call(sec.children), i=0;
+    while(i<kids.length){
+      if(kids[i].tagName==="DETAILS"){
+        var run=[kids[i]], cls=kids[i].className, j=i+1;
+        while(j<kids.length&&kids[j].tagName==="DETAILS"&&kids[j].className===cls){run.push(kids[j]);j++;}
+        if(run.length>1){
+          var g=document.createElement("div"); g.className="cgrid";
+          sec.insertBefore(g,run[0]); run.forEach(function(x){g.appendChild(x);});
+        }
+        i=j;
+      } else i++;
+    }
+  }
+  function group(){
+    var kids=[].slice.call(body.childNodes), out=[], cur=null;
+    kids.forEach(function(n){
+      if(n.nodeType===1&&n.tagName==="H3"){cur=document.createElement("section");cur.className="rsec";out.push(cur);}
+      if(!cur){cur=document.createElement("section");cur.className="rsec";out.push(cur);}
+      cur.appendChild(n);
+    });
+    body.innerHTML="";
+    out.forEach(function(s,i){ s.id="rs"+i; collapse(s); s._t=s.textContent.toLowerCase(); body.appendChild(s); });
+    return out;
+  }
+  function setAll(open){
+    [].slice.call(body.querySelectorAll("details.cx")).forEach(function(d){d.open=open;});
+    var t=document.getElementById("rvwAll");
+    if(t){t.textContent=open?"Collapse all":"Expand all";t.setAttribute("aria-pressed",String(open));}
+  }
+  function buildToc(){
+    toc.innerHTML=secs.map(function(s){
+      var h=s.querySelector(".rh"); return h?'<a href="#'+s.id+'">'+h.textContent+'</a>':'';
+    }).join("");
+  }
+  function filter(){
+    var terms=q.value.toLowerCase().split(/\s+/).filter(Boolean), n=0;
+    secs.forEach(function(s){
+      var on=terms.every(function(t){return s._t.indexOf(t)!==-1;});
+      s.classList.toggle("hide",!on); if(on)n++;
+    });
+    empty.classList.toggle("on",n===0);
+    cnt.textContent = n===secs.length ? secs.length+" sections" : n+" of "+secs.length;
+    toc.style.display = q.value ? "none" : "";
+  }
+  function load(l){
+    lec=l; panel.setAttribute("data-lec",l);
+    body.innerHTML=REVIEW[l]||"";
+    secs=group(); buildToc(); q.value=""; filter();
+    var t=document.getElementById("rvwAll"); if(t){t.textContent="Expand all";t.setAttribute("aria-pressed","false");}
+  }
+  function open(){
+    document.querySelector(".bar").style.display="none";
+    document.querySelector(".main").style.display="none";
+    panel.hidden=false; if(!secs.length)load(lec);
+    btn.setAttribute("aria-pressed","true");
+    window.scrollTo(0,0); q.focus({preventScroll:true});
+  }
+  function close(){
+    panel.hidden=true;
+    document.querySelector(".bar").style.display="";
+    document.querySelector(".main").style.display="";
+    btn.setAttribute("aria-pressed","false");
+    window.scrollTo(0,0);
+  }
+  btn.onclick=function(){ panel.hidden?open():close(); };
+  document.getElementById("rvwClose").onclick=close;
+  document.getElementById("rvwPrint").onclick=function(){window.print();};
+  var allBtn=document.getElementById("rvwAll");
+  if(allBtn)allBtn.onclick=function(){ setAll(this.getAttribute("aria-pressed")!=="true"); };
+  var reclose=[];
+  window.addEventListener("beforeprint",function(){
+    reclose=[];
+    [].slice.call(body.querySelectorAll("details.cx")).forEach(function(d){ if(!d.open){reclose.push(d);d.open=true;} });
+  });
+  window.addEventListener("afterprint",function(){ reclose.forEach(function(d){d.open=false;}); reclose=[]; });
+  document.getElementById("rvwTabs").onclick=function(e){
+    var b=e.target.closest("button"); if(!b)return;
+    [].forEach.call(this.children,function(c){c.setAttribute("aria-pressed",String(c===b));});
+    load(b.dataset.l); window.scrollTo(0,0);
+  };
+  q.addEventListener("input",filter);
+  document.addEventListener("keydown",function(e){
+    if(e.key==="Escape"&&!panel.hidden){ if(document.activeElement===q&&q.value){q.value="";filter();} else close(); }
+  });
+})();
+
+</script>
