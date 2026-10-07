@@ -1,0 +1,674 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>HEM Path Disease Map</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;700;800&family=Source+Sans+3:wght@400;600&family=JetBrains+Mono:wght@500&display=swap">
+<style>
+/* Layout: masthead → lecture key → filter bar → one dense sortable table; reference-tool treatment */
+:root{
+  --bg:#f7f5f5; --surface:#ffffff; --fg:#231b1d; --muted:#6c5f62; --line:#e4dcdd;
+  --accent:#9b1c31; --accent-soft:#f6e3e6; --lo-fg:#ffffff;
+  --warn:#8a5a00; --warn-soft:#fff3d6; --chip:#efe9ea; --bnb:#1f6f78; --bnb-soft:#e2f1f2; --pth:#6b4fa0; --pth-soft:#eee8f7; --bc:#9a5b00; --bc-soft:#fbefdc; --hy-bg:#fff4c2; --hy-bd:#c9a400; --hy-fg:#5c4a00;
+  --f-display:"Archivo",system-ui,sans-serif; --f-body:"Source Sans 3",system-ui,sans-serif; --f-mono:"JetBrains Mono",ui-monospace,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#171213; --surface:#211a1c; --fg:#f1eaeb; --muted:#a9999c; --line:#3a2f32;
+  --accent:#e0627a; --accent-soft:#3d1e25; --lo-fg:#1a0f12;
+  --warn:#f0c060; --warn-soft:#3a2e12; --chip:#2c2326; --bnb:#6cc6cf; --bnb-soft:#173336; --pth:#b9a3e6; --pth-soft:#2a2240; --bc:#f0b45c; --bc-soft:#3a2a12; --hy-bg:#3d3510; --hy-bd:#d9b62e; --hy-fg:#f5e08a; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#171213; --surface:#211a1c; --fg:#f1eaeb; --muted:#a9999c; --line:#3a2f32;
+  --accent:#e0627a; --accent-soft:#3d1e25; --lo-fg:#1a0f12;
+  --warn:#f0c060; --warn-soft:#3a2e12; --chip:#2c2326; --bnb:#6cc6cf; --bnb-soft:#173336; --pth:#b9a3e6; --pth-soft:#2a2240; --bc:#f0b45c; --bc-soft:#3a2a12; --hy-bg:#3d3510; --hy-bd:#d9b62e; --hy-fg:#f5e08a; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font:15px/1.5 var(--f-body);margin:0}
+.wrap{max-width:1180px;margin:0 auto;padding-inline:20px;padding-block:28px 48px;display:grid;gap:22px}
+header{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-end;gap:12px;border-bottom:2px solid var(--accent);padding-bottom:14px}
+.brand{font:700 12px/1 var(--f-display);letter-spacing:.14em;text-transform:uppercase;color:var(--accent)}
+h1{font:800 clamp(26px,4vw,36px)/1.1 var(--f-display);margin:6px 0 4px;text-wrap:balance}
+.sub{color:var(--muted);max-width:68ch;margin:0}
+.rev{font:500 12px var(--f-mono);color:var(--muted);text-align:right}
+details.key{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:10px 14px}
+details.key summary{cursor:pointer;font:700 14px var(--f-display)}
+.keygrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:4px 18px;margin-top:10px;font-size:14px}
+.keygrid span{font-family:var(--f-mono);font-size:12px;color:var(--accent);margin-right:6px}
+.legend{display:flex;flex-wrap:wrap;gap:14px;font-size:13px;color:var(--muted);align-items:center;margin-top:10px}
+.controls{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.controls input,.controls select{font:inherit;color:var(--fg);background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:7px 10px}
+.controls input{flex:1 1 220px;min-width:0}
+.controls input:focus,.controls select:focus,button:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.toggles{display:flex;flex-wrap:wrap;gap:6px}
+.toggles button{font:600 13px var(--f-body);border:1px solid var(--line);background:var(--surface);color:var(--fg);border-radius:999px;padding:5px 12px;cursor:pointer}
+.toggles button[aria-pressed="true"]{background:var(--accent);color:var(--lo-fg);border-color:var(--accent)}
+.count{font:500 12px var(--f-mono);color:var(--muted)}
+.tablewrap{overflow-x:auto;background:var(--surface);border:1px solid var(--line);border-radius:8px}
+table{border-collapse:collapse;width:100%;min-width:1440px}
+th,td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font:700 12px var(--f-display);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);position:sticky;top:0;background:var(--surface);cursor:pointer;white-space:nowrap}
+th:hover{color:var(--fg)}
+tr.cat td{background:var(--accent-soft);font:700 13px var(--f-display);color:var(--accent);letter-spacing:.04em;padding-block:6px}
+td.dz{font-weight:600;min-width:200px}
+.tag{display:inline-block;font:500 11.5px/1 var(--f-mono);padding:4px 6px;border-radius:4px;margin:0 4px 4px 0;white-space:nowrap}
+.tag.lo{background:var(--accent);color:var(--lo-fg)}
+.tag.cv{border:1px solid var(--accent);color:var(--accent)}
+.tag.mn{border:1px dashed var(--muted);color:var(--muted)}
+.none{color:var(--muted);font-size:13px}
+.note{font-size:13.5px;color:var(--muted);max-width:42ch}
+.flag{display:inline-block;background:var(--warn-soft);color:var(--warn);font:700 11px var(--f-display);letter-spacing:.04em;text-transform:uppercase;padding:2px 6px;border-radius:4px;margin-right:6px}
+.bnb{display:inline-block;font-size:12.5px;line-height:1.3;padding:3px 7px;border-radius:4px;margin:0 4px 4px 0}
+.bnb b{font-weight:600}
+.bnb.bs{background:var(--bnb-soft);color:var(--bnb)}
+.bnb.bm{border:1px dashed var(--bnb);color:var(--bnb)}
+.bnb span{font-family:var(--f-mono);font-size:11px;white-space:nowrap}
+.pth{display:block;font-size:12.5px;line-height:1.3;padding:4px 7px;border-radius:4px;margin:0 0 4px;max-width:30ch}
+.legend .pth{display:inline-block}
+.pth b{font-family:var(--f-mono);font-weight:500;font-size:11.5px;display:block}
+.pth span{font-size:12px}
+.pth.ps{background:var(--pth-soft);color:var(--pth)}
+.pth.pm{border:1px dashed var(--pth);color:var(--pth)}
+.bcx{display:block;font-size:12.5px;line-height:1.3;padding:4px 7px;border-radius:4px;margin:0 0 4px;max-width:30ch}
+.legend .bcx{display:inline-block}
+.bcx b{font-family:var(--f-mono);font-weight:500;font-size:11.5px;display:block}
+.bcx span{font-size:12px}
+.bcx.cs{background:var(--bc-soft);color:var(--bc)}
+.bcx.cm{border:1px dashed var(--bc);color:var(--bc)}
+.etag{display:inline-block;font:700 10.5px/1 var(--f-display);letter-spacing:.08em;padding:4px 7px;border-radius:4px;margin-top:6px}
+.etag.ex{background:var(--accent);color:var(--lo-fg)}
+.etag.hy{background:var(--hy-bg);color:var(--hy-fg);border:1px solid var(--hy-bd)}
+.ewhy{font-weight:400;font-size:12px;color:var(--muted);margin-top:3px}
+footer{font-size:12.5px;color:var(--muted)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <div class="brand">HoyaDocs · Block 5 · HEM Pathology</div>
+      <h1>HEM Path Disease Map</h1>
+    </div>
+    <div class="rev">Updated 2026-10-06<br>Revision 7</div>
+  </header>
+
+  <details class="key">
+    <summary>Lecture key and how to read the tags</summary>
+    <div class="keygrid" id="keygrid"></div>
+    <div class="legend">
+      <span><span class="tag lo">HEM07</span> named in that lecture's LOs</span>
+      <span><span class="tag cv">HEM07</span> taught in that lecture</span>
+      <span><span class="tag mn">HEM07</span> mentioned only (differential, distractor, handout)</span>
+      <span><span class="bnb bs"><b>BnB PDF</b></span> dedicated BnB slides</span>
+      <span><span class="bnb bm"><b>BnB PDF</b></span> mentioned on a BnB slide only</span>
+      <span><span class="pth ps"><b>Ch 5 · §II</b></span> Pathoma section covering it</span>
+      <span><span class="pth pm"><b>Ch 5 · §II</b></span> mentioned in that Pathoma section only</span>
+      <span><span class="bcx cs"><b>Ch 4 · §5 · p. 31</b></span> Bootcamp section covering it</span>
+      <span><span class="bcx cm"><b>Ch 4 · §5 · p. 31</b></span> mentioned in that Bootcamp section only</span>
+      <span><span class="etag ex">EXAM</span> flagged "on exam" / "guaranteed" in the review sheet</span>
+      <span><span class="etag hy">HY</span> referenced in the review sheet</span>
+      <span><span class="flag">Gap</span> LO and lecture coverage don't line up</span>
+    </div>
+  </details>
+
+  <div class="controls">
+    <input id="q" type="search" placeholder="Search a disease, gene, buzzword…" aria-label="Search diseases">
+    <select id="lec" aria-label="Filter by lecture"><option value="">All lectures</option></select>
+    <div class="toggles" role="group" aria-label="Filter rows">
+      <button id="f-all" aria-pressed="true">All</button>
+      <button id="f-exam" aria-pressed="false">EXAM</button>
+      <button id="f-hy" aria-pressed="false">HY</button>
+      <button id="f-lo" aria-pressed="false">In LOs</button>
+      <button id="f-nolo" aria-pressed="false">Taught, not in LOs</button>
+      <button id="f-gap" aria-pressed="false">Gaps</button>
+      <button id="f-nobnb" aria-pressed="false">No BnB slides</button>
+      <button id="f-nopa" aria-pressed="false">No Pathoma section</button>
+      <button id="f-nobc" aria-pressed="false">No Bootcamp section</button>
+    </div>
+    <span class="count" id="count"></span>
+  </div>
+
+  <div class="tablewrap">
+    <table>
+      <thead><tr>
+        <th data-k="d">Disease / pathology</th>
+        <th data-k="lo">LO lecture(s)</th>
+        <th data-k="cv">Covered in lecture(s)</th>
+        <th data-k="b">BnB slides (PDF · pages)</th>
+        <th data-k="p">Pathoma (chapter · section)</th>
+        <th data-k="c">Bootcamp (chapter · section · page)</th>
+        <th data-k="n">Notes</th>
+      </tr></thead>
+      <tbody id="tb"></tbody>
+    </table>
+  </div>
+  <footer>HoyaDocs · Updated 2026-10-06 · Rev 7. EXAM and HY tags come from the class review sheet: EXAM = flagged "on exam" or "guaranteed on exam"; HY = referenced without a flag. Bootcamp references use the chapter and outline numbering of the Hematology &amp; Oncology PDF, with PDF page numbers. Pathoma references are to Fundamentals of Pathology, 1st edition (2011); section letters can shift in later editions. BnB page numbers refer to the HEM slide PDFs (Red Blood Cells, Hemostasis, White Blood Cells). Not included because they aren't pathology classes: HEM10 (clinical coagulation) and the genetics lectures.</footer>
+</div>
+
+<script>
+const LECT={"02":"RBC Intro & Anemia I","03":"Anemia II","05":"RBC Clinical Case Review","06":"RBC Disorders Lab","07":"Platelet Disorders","08":"Coagulation Disorders","09":"Coagulation Case Review","13":"WBC Intro & Myeloproliferative Neoplasms","14":"MDS & Acute Leukemias","19":"Non-Hodgkin & Hodgkin Lymphoma","20":"Educational Case: APL","23":"Wrap-Up: Late Effects","25":"WBC Step 1 Review","26":"Plasma Cell Disorders","27":"WBC Disorders Lab"};
+// [disease, category, LO lectures, covered (suffix * = mention only), note, gap?]
+const D=[
+["Iron deficiency anemia","RBC production & anemia",["02"],["02","05","06","25*"],"Pica, koilonychia; ↑RDW, ↓ferritin. Rule out GI cancer in adults."],
+["α-Thalassemia (silent carrier, trait, HbH, hydrops fetalis)","RBC production & anemia",[],["02","05*"],"Taught in HEM02 but not in its LOs. Trait has a normal Hb electrophoresis.",1],
+["β-Thalassemia major","RBC production & anemia",["02"],["02","06"],"Target cells, ↑HbF, extramedullary hematopoiesis, transfusion → iron overload."],
+["β-Thalassemia minor (trait)","RBC production & anemia",["02"],["02","06"],"Mild microcytosis with normal RDW; distinguish from IDA."],
+["Secondary hemochromatosis (transfusional iron overload)","RBC production & anemia",[],["02","06"],"Complication of β-thal major; heart, liver, pancreas."],
+["Sickle cell disease","RBC production & anemia",["02"],["02","05","06","03*"],"Glu→Val at β6; autosplenectomy, acute chest, stroke, AVN, pigment gallstones."],
+["Sickle cell trait","RBC production & anemia",["02"],["02","05*"],"~40% HbS; usually asymptomatic."],
+["Anemia of chronic disease / inflammation","RBC production & anemia",[],["02","06","25*"],"Microcytic or normocytic; ferritin can be falsely high."],
+["Anemia of chronic kidney disease (↓EPO)","RBC production & anemia",[],["05"],"Step-style question (analgesic nephropathy)."],
+["Acute blood loss","RBC production & anemia",[],["02*"],"Normocytic differential."],
+["Sideroblastic anemia (incl. lead, alcohol)","RBC production & anemia",[],["02*"],"Anemia handout only."],
+["Aplastic anemia","RBC production & anemia",[],["06","02*","20*"],"Hypocellular marrow; drugs, toxins, infection, idiopathic."],
+["Myelophthisic anemia / metastatic carcinoma to marrow","RBC production & anemia",[],["06","02*","27*"],"Breast carcinoma in marrow (HEM06); DLBCL vs carcinoma (HEM27)."],
+["Megaloblastic anemia","RBC production & anemia",["03"],["03","06"],"Hypersegmented neutrophils, nuclear–cytoplasmic asynchrony."],
+["Vitamin B12 deficiency","RBC production & anemia",["03"],["03","05","06","07*"],"Ileal resection (Crohn), vegans, bariatric surgery; neuro signs; ↑MMA + ↑homocysteine."],
+["Folate deficiency","RBC production & anemia",["03"],["03","06","07*"],"Stores last 3–5 months; ↑homocysteine, normal MMA."],
+["Pernicious anemia (autoimmune atrophic gastritis)","RBC production & anemia",["03"],["03","05","06"],"Anti-IF and anti-parietal cell antibodies; risk of gastric adenocarcinoma (HEM06)."],
+["Non-megaloblastic macrocytosis (liver, thyroid, drugs/toxins)","RBC production & anemia",[],["06","02*"],"Listed as macrocytic causes."],
+
+["Hemolytic anemia: intravascular vs extravascular","Hemolytic anemias",["03"],["03","06"],"↑retic, ↑indirect bili, ↑LDH, ↓haptoglobin."],
+["Warm autoimmune hemolytic anemia (IgG)","Hemolytic anemias",["03"],["03","06","19*"],"Spherocytes, DAT+. Also a CLL complication."],
+["Cold agglutinin disease (IgM)","Hemolytic anemias",["03"],["03","26*"],"Agglutination; complement-mediated. Also a myeloma complication."],
+["ABO incompatibility (acute hemolytic transfusion reaction)","Hemolytic anemias",["03"],["03"],"IgM, complement, intravascular; anti-C5 therapy."],
+["Rh incompatibility / hemolytic disease of the newborn","Hemolytic anemias",["03"],["03"],"Anti-D; jaundice, hydrops fetalis; prevented with RhIg."],
+["Drug-induced hemolysis","Hemolytic anemias",["03"],["02*"],"In the LOs but covered only in the anemia handout (oxidation, antibody, TMA mechanisms).",1],
+["Hereditary spherocytosis","Hemolytic anemias",["03"],["03","05"],"Ankyrin/spectrin; ↑osmotic fragility; ↑MCHC; splenectomy."],
+["Hereditary elliptocytosis","Hemolytic anemias",[],["02*"],"Anemia handout only."],
+["G6PD deficiency","Hemolytic anemias",["03"],["03"],"Heinz bodies, bite cells; fava beans, drugs, infection."],
+["Microangiopathic hemolytic anemia (MAHA)","Hemolytic anemias",["03"],["06","07","09","02*"],"Schistocytes. LO sits in HEM03, but it is taught in HEM07/09.",1],
+["Mechanical hemolysis (prosthetic valve)","Hemolytic anemias",[],["03","02*"],"Schistocytes."],
+["Malaria","Hemolytic anemias",[],["03","06"],"Intravascular hemolysis; P. vivax ring forms on smear."],
+["Paroxysmal nocturnal hemoglobinuria","Hemolytic anemias",[],["20*"],"Pancytopenia differential only."],
+
+["Bernard-Soulier syndrome","Platelet disorders",["07"],["07","09*","20*"],"GPIb/IX defect; giant platelets; no response to ristocetin only."],
+["Glanzmann thrombasthenia","Platelet disorders",["07"],["07","09","20*"],"GPIIb/IIIa defect; ristocetin normal, all others abnormal. HEM09 Case 2."],
+["Gray platelet syndrome (α-granule storage pool)","Platelet disorders",[],["07","09*"],"Significant bleeding."],
+["Thrombocytopenia (mechanisms)","Platelet disorders",["07"],["07","08*"],"Low production, destruction, consumption, sequestration."],
+["Thrombocytosis","Platelet disorders",["07"],["13*"],"Defined in the HEM07 LOs but barely covered; see ET (HEM13).",1],
+["Drug-induced thrombocytopenia","Platelet disorders",[],["07"],"Quinine, acetaminophen, alcohol, vaccines; 1–2 weeks after a new drug."],
+["Hypersplenism / splenic sequestration","Platelet disorders",[],["07","20*","25*"],"Cirrhosis, myelofibrosis; up to 90% of platelets pooled."],
+["Immune thrombocytopenic purpura (ITP)","Platelet disorders",["07"],["07","08*","19*"],"Isolated thrombocytopenia; anti-GPIIb/IIIa; HIV, HCV, H. pylori."],
+["Heparin-induced thrombocytopenia (HIT)","Platelet disorders",[],["07*"],"Mentioned only."],
+["Thrombotic microangiopathy (TMA)","Platelet disorders",["07"],["07"],"Thrombocytopenia, MAHA, end-organ damage."],
+["Thrombotic thrombocytopenic purpura (TTP)","Platelet disorders",["03","07","09"],["07","09","02*"],"ADAMTS13 <10%; pentad; plasma exchange. HEM09 Case 5."],
+["Hemolytic uremic syndrome (HUS)","Platelet disorders",["07"],["07"],"Children; Shiga toxin (EHEC O157, Shigella, Salmonella); triad."],
+
+["Hemophilia A (FVIII)","Coagulation & thrombosis",["08","09"],["08","20*"],"X-linked; hemarthrosis; ↑aPTT. Females: Turner syndrome, extreme lyonization."],
+["Hemophilia B (FIX)","Coagulation & thrombosis",["08","09"],["08","20*"],"HEM09 LOs list a hemophilia B case, but that case was not presented.",1],
+["Hemophilia C (FXI)","Coagulation & thrombosis",[],["08"],"Autosomal; bleeding only with trauma."],
+["Acquired FVIII inhibitor (acquired hemophilia A)","Coagulation & thrombosis",[],["08","09"],"Older patient; mixing study does not correct; Bethesda assay. HEM09 Case 1.",1],
+["von Willebrand disease (types 1, 2, 2B, 3)","Coagulation & thrombosis",["08"],["08","09","20*"],"Mucosal bleeding; ristocetin cofactor; DDAVP for type 1 but not 2B. HEM09 Case 4."],
+["Factor V Leiden","Coagulation & thrombosis",["08"],["08"],"R506Q; resistant to activated protein C; venous thrombosis."],
+["Protein C / protein S deficiency","Coagulation & thrombosis",[],["08"],"Prothrombotic phenotype."],
+["Lupus anticoagulant / antiphospholipid antibodies","Coagulation & thrombosis",[],["08","09"],"↑aPTT in vitro but thrombosis in vivo; dRVVT. HEM09 Case 3 (stroke).",1],
+["Disseminated intravascular coagulation (DIC)","Coagulation & thrombosis",[],["06","08","14","20","02*"],"↑PT/aPTT, ↓fibrinogen, ↑D-dimer, schistocytes; APL."],
+["Vitamin K deficiency","Coagulation & thrombosis",[],["08","20*"],"↑PT (factors II, VII, IX, X)."],
+["Liver disease coagulopathy","Coagulation & thrombosis",[],["08","20*"],"↑PT ± aPTT."],
+["Venous thromboembolism / DVT","Coagulation & thrombosis",[],["08"],"Natural anticoagulant defects."],
+
+["Reactive (non-neoplastic) neutrophilia","Myeloid neoplasms",["13"],["13"],"<30k, bands, fever, no basophilia, no splenomegaly."],
+["Chronic myeloid leukemia (CML)","Myeloid neoplasms",["13"],["13","27","14*","25*"],"t(9;22) BCR-ABL; basophilia; splenomegaly; imatinib; blast crisis."],
+["Polycythemia vera","Myeloid neoplasms",["13","25"],["13","25"],"JAK2 V617F; pruritus, thrombosis; phlebotomy + aspirin; spent phase."],
+["Essential thrombocythemia","Myeloid neoplasms",["13"],["13"],"Platelets >600k; JAK2, CALR, MPL; erythromelalgia."],
+["Primary myelofibrosis","Myeloid neoplasms",["13"],["13","07*","25*"],"Teardrop cells, leukoerythroblastosis, massive splenomegaly."],
+["Clonal hematopoiesis (CHIP)","Myeloid neoplasms",[],["14"],"TET2, DNMT3A; ~1% per year progress to a neoplasm."],
+["Myelodysplastic syndrome (primary and therapy-related)","Myeloid neoplasms",["14"],["14","07*","13*","20*"],"Cytopenias with hypercellular dysplastic marrow; 5q–, SF3B1, TP53; can progress to AML."],
+["Acute myeloid leukemia (AML)","Myeloid neoplasms",["14"],["14","20","27","13*","23*"],"≥20% blasts; CD13/33; Auer rods; also a second malignancy after treatment."],
+["AML with t(8;21) or inv(16) (core-binding factor)","Myeloid neoplasms",["14"],["14","20*"],"Favorable prognosis."],
+["Acute promyelocytic leukemia (APL)","Myeloid neoplasms",["14"],["14","20","27*"],"t(15;17) PML-RARA; DIC; ATRA + arsenic. HEM20 case."],
+["Acute monocytic leukemia","Myeloid neoplasms",[],["14"],"Gingival hyperplasia."],
+["Tumor lysis syndrome","Myeloid neoplasms",[],["20"],"↑K, ↑phosphate, ↑uric acid; allopurinol or rasburicase."],
+["Differentiation (retinoic acid) syndrome","Myeloid neoplasms",[],["20"],"After ATRA; treat with dexamethasone."],
+["Leukemia-predisposing syndromes (Down, Bloom, Fanconi anemia, NF, ataxia-telangiectasia)","Myeloid neoplasms",[],["14"],"Step 1 pearl for AML; ataxia-telangiectasia for ALL."],
+
+["B-acute lymphoblastic leukemia (B-ALL)","Lymphoid leukemias & lymphomas",["14","25"],["14","27","23*"],"Ages 2–10; TdT+, CD10/19; hyperdiploidy and t(12;21) favorable; CNS and testis relapse."],
+["T-ALL / T-lymphoblastic lymphoma","Lymphoid leukemias & lymphomas",["14","25"],["14","25"],"Adolescent with mediastinal mass; NOTCH1. HEM25 Q1."],
+["CLL / small lymphocytic lymphoma","Lymphoid leukemias & lymphomas",["19","25"],["19","25","27","14*"],"CD5+/CD23+; smudge cells; trisomy 12; AIHA, hypogammaglobulinemia. HEM25 Q2."],
+["Richter and prolymphocytic transformation","Lymphoid leukemias & lymphomas",["19"],["19"],"CLL → DLBCL (Richter); poor prognosis."],
+["Hairy cell leukemia","Lymphoid leukemias & lymphomas",["19","25"],["19","25","27"],"BRAF; CD11c/25/103; splenomegaly, pancytopenia. HEM25 Q3 (M. kansasii)."],
+["Follicular lymphoma","Lymphoid leukemias & lymphomas",["19"],["19","27","25*"],"t(14;18) BCL2; transforms to DLBCL."],
+["Mantle cell lymphoma","Lymphoid leukemias & lymphomas",["19"],["19","25*","27*"],"t(11;14) cyclin D1; CD5+/CD23–."],
+["Marginal zone / MALT lymphoma","Lymphoid leukemias & lymphomas",["19"],["19","25*","27*"],"H. pylori gastritis, Sjögren; t(11;18)."],
+["Diffuse large B-cell lymphoma (DLBCL)","Lymphoid leukemias & lymphomas",["19"],["19","27","26*"],"Most common aggressive NHL; BCL6; de novo or transformed."],
+["Immunodeficiency-associated large B-cell lymphoma","Lymphoid leukemias & lymphomas",[],["19"],"HIV, organ transplant; EBV."],
+["Primary effusion lymphoma","Lymphoid leukemias & lymphomas",[],["19"],"HHV-8; pleural or ascitic effusion."],
+["Burkitt lymphoma","Lymphoid leukemias & lymphomas",["19"],["19","25*"],"t(8;14) MYC; starry sky; endemic (jaw, EBV), sporadic, HIV."],
+["Lymphoplasmacytic lymphoma / Waldenström macroglobulinemia","Lymphoid leukemias & lymphomas",["19","26"],["26","27","25*"],"In the HEM19 LOs but taught in HEM26. IgM, hyperviscosity, MYD88 L265P, Dutcher bodies.",1],
+["Anaplastic large cell lymphoma","Lymphoid leukemias & lymphomas",[],["19*"],"Listed in the classification slide only."],
+["Mycosis fungoides / Sézary syndrome","Lymphoid leukemias & lymphomas",["19"],["19"],"CD4+ skin T-cell lymphoma; Pautrier microabscesses."],
+["Adult T-cell leukemia/lymphoma (ATLL)","Lymphoid leukemias & lymphomas",["19"],["19"],"HTLV-1; hypercalcemia; cloverleaf cells."],
+["HTLV-1 myelopathy","Lymphoid leukemias & lymphomas",[],["19*"],"Demyelinating disease from HTLV-1."],
+["Hodgkin lymphoma, nodular sclerosis","Lymphoid leukemias & lymphomas",["19"],["19","27","25*"],"Most common; young adults; mediastinum; lacunar cells; CD15/30+."],
+["Hodgkin lymphoma, mixed cellularity","Lymphoid leukemias & lymphomas",["19"],["19","27"],"Strongest EBV link; B symptoms; abdominal nodes."],
+["Hodgkin lymphoma, lymphocyte-rich","Lymphoid leukemias & lymphomas",["19"],["19"],"Older patients; ~40% EBV+."],
+["Hodgkin lymphoma, lymphocyte-depleted","Lymphoid leukemias & lymphomas",["19"],["19","27"],"Older patients, HIV; advanced stage."],
+["Nodular lymphocyte-predominant Hodgkin lymphoma","Lymphoid leukemias & lymphomas",["19"],["19","27"],"Popcorn (L&H) cells; CD20+, CD15/30–."],
+
+["Monoclonal gammopathy of undetermined significance (MGUS)","Plasma cell disorders",["26"],["26"],"Precursor lesion; risk factors for progression."],
+["Smoldering myeloma","Plasma cell disorders",["26"],["26"],"No myeloma-defining events."],
+["Multiple myeloma","Plasma cell disorders",["26"],["26","06*","27"],"CRAB; M spike; Bence Jones; rouleaux; punched-out lesions; Russell bodies."],
+["Plasmacytoma (solitary bone, extraosseous)","Plasma cell disorders",["26"],["26"],"No diffuse marrow involvement."],
+["Plasma cell leukemia","Plasma cell disorders",["26"],["26*"],"Listed in the WHO classification only."],
+["AL amyloidosis / light-chain deposition disease","Plasma cell disorders",[],["26","25*"],"Myeloma complication; HEM25 Q4 distractor."],
+["POEMS syndrome","Plasma cell disorders",[],["26"],"Polyneuropathy, organomegaly, endocrinopathy, M protein, skin changes."],
+["Hyperviscosity syndrome / cryoglobulinemia","Plasma cell disorders",[],["26"],"IgM >3 g/dL; vision changes, stroke; plasmapheresis."],
+
+["Anthracycline cardiomyopathy and radiation heart disease","Late effects of treatment",["23"],["23"],"Cardiomyopathy and CHF; coronary and carotid disease after mantle radiation."],
+["Second malignancies after treatment","Late effects of treatment",["23"],["23"],"AML, breast cancer after Hodgkin chest radiation, skin cancers, brain tumors, sarcomas."],
+["Neurocognitive, growth and endocrine late effects","Late effects of treatment",["23"],["23"],"After ALL or brain tumors; short stature; thyroid disease; osteoporosis."],
+["Infertility / premature ovarian failure","Late effects of treatment",["23"],["23"],"Alkylating agents, pelvic radiation, total body irradiation."],
+["PTSD and psychosocial effects","Late effects of treatment",["23"],["23"],"About 1 in 5 survivors."]
+];
+// BnB HEM PDFs: disease -> [[pdf, pages, S = dedicated slides | M = mentioned only]]
+const B={
+"Iron deficiency anemia":[["Microcytic Anemias I","10, 15–22, 26","S"],["Microcytic Anemias II","8–9","M"]],
+"α-Thalassemia (silent carrier, trait, HbH, hydrops fetalis)":[["Alpha Thalassemia","1–20","S"]],
+"β-Thalassemia major":[["Beta Thalassemia","8–15","S"]],
+"β-Thalassemia minor (trait)":[["Beta Thalassemia","6–7, 18–19","S"]],
+"Secondary hemochromatosis (transfusional iron overload)":[["Beta Thalassemia","15","M"],["Sickle Cell Disease","19","M"]],
+"Sickle cell disease":[["Sickle Cell Disease","1–20, 22–23, 25","S"]],
+"Sickle cell trait":[["Sickle Cell Disease","21","S"]],
+"Anemia of chronic disease / inflammation":[["Microcytic Anemias II","3–9","S"]],
+"Anemia of chronic kidney disease (↓EPO)":[["Other Anemias","5–6","S"],["Platelet Disorders","20 (uremic bleeding)","M"]],
+"Acute blood loss":[["Other Anemias","4","M"]],
+"Sideroblastic anemia (incl. lead, alcohol)":[["Microcytic Anemias II","10–22 (lead 10–17)","S"]],
+"Aplastic anemia":[["Other Anemias","7–20","S"]],
+"Myelophthisic anemia / metastatic carcinoma to marrow":[["Myeloproliferative Disorders","19 (leukoerythroblastosis)","M"]],
+"Megaloblastic anemia":[["Other Anemias","24–27","S"]],
+"Vitamin B12 deficiency":[["Other Anemias","27","M"]],
+"Folate deficiency":[["Other Anemias","27","M"]],
+"Non-megaloblastic macrocytosis (liver, thyroid, drugs/toxins)":[["Other Anemias","28","S"]],
+"Hemolytic anemia: intravascular vs extravascular":[["Hemolysis Basics","2–21","S"]],
+"Warm autoimmune hemolytic anemia (IgG)":[["Extrinsic Hemolysis","4–15","S"]],
+"Cold agglutinin disease (IgM)":[["Extrinsic Hemolysis","16–21","S"]],
+"ABO incompatibility (acute hemolytic transfusion reaction)":[["Extrinsic Hemolysis","10–12 (antiglobulin tests)","M"]],
+"Rh incompatibility / hemolytic disease of the newborn":[["Extrinsic Hemolysis","12","M"],["Alpha Thalassemia","19 (hydrops)","M"]],
+"Drug-induced hemolysis":[["Extrinsic Hemolysis","14","S"]],
+"Hereditary spherocytosis":[["Intrinsic Hemolysis","3–10","S"]],
+"G6PD deficiency":[["Intrinsic Hemolysis","11–17","S"]],
+"Microangiopathic hemolytic anemia (MAHA)":[["Thrombotic Microangiopathy","3–5","S"],["Extrinsic Hemolysis","22","S"]],
+"Mechanical hemolysis (prosthetic valve)":[["Extrinsic Hemolysis","23","S"]],
+"Malaria":[["Extrinsic Hemolysis","24","S"],["Sickle Cell Disease","24","M"]],
+"Paroxysmal nocturnal hemoglobinuria":[["Intrinsic Hemolysis","20–26","S"]],
+"Bernard-Soulier syndrome":[["Platelet Disorders","5–7","S"]],
+"Glanzmann thrombasthenia":[["Platelet Disorders","3–4, 7","S"]],
+"Thrombocytopenia (mechanisms)":[["Platelet Disorders","22","S"],["Platelets","21","M"]],
+"Thrombocytosis":[["Myeloproliferative Disorders","11–14 (ET only)","M"]],
+"Hypersplenism / splenic sequestration":[["Platelet Disorders","21","S"],["Sickle Cell Disease","14","M"]],
+"Immune thrombocytopenic purpura (ITP)":[["Platelet Disorders","14–19","S"]],
+"Heparin-induced thrombocytopenia (HIT)":[["Platelet Disorders","17","M"],["Platelets","16","M"]],
+"Thrombotic microangiopathy (TMA)":[["Thrombotic Microangiopathy","2, 6, 22","S"]],
+"Thrombotic thrombocytopenic purpura (TTP)":[["Thrombotic Microangiopathy","13–19","S"]],
+"Hemolytic uremic syndrome (HUS)":[["Thrombotic Microangiopathy","20–21","S"]],
+"Hemophilia A (FVIII)":[["Coagulopathies","3–9","S"]],
+"Hemophilia B (FIX)":[["Coagulopathies","3–7","S"]],
+"Hemophilia C (FXI)":[["Coagulopathies","3","M"]],
+"Acquired FVIII inhibitor (acquired hemophilia A)":[["Coagulopathies","10–13 (incl. mixing study)","S"]],
+"von Willebrand disease (types 1, 2, 2B, 3)":[["Platelet Disorders","8–13","S"]],
+"Factor V Leiden":[["Hypercoagulable States","7–9","S"]],
+"Protein C / protein S deficiency":[["Hypercoagulable States","12","S"],["Coagulation II","18","M"]],
+"Lupus anticoagulant / antiphospholipid antibodies":[["Hypercoagulable States","13–18","S"]],
+"Disseminated intravascular coagulation (DIC)":[["Thrombotic Microangiopathy","7–12","S"],["Acute Leukemias","21","M"]],
+"Vitamin K deficiency":[["Coagulopathies","14–15","S"]],
+"Liver disease coagulopathy":[["Coagulopathies","17","S"],["Platelet Disorders","21","S"]],
+"Venous thromboembolism / DVT":[["Hypercoagulable States","2–7","S"]],
+"Reactive (non-neoplastic) neutrophilia":[["Chronic Leukemias","6–7 (left shift, LAP)","S"]],
+"Chronic myeloid leukemia (CML)":[["Chronic Leukemias","3–9","S"]],
+"Polycythemia vera":[["Myeloproliferative Disorders","2–10","S"]],
+"Essential thrombocythemia":[["Myeloproliferative Disorders","11–14","S"]],
+"Primary myelofibrosis":[["Myeloproliferative Disorders","15–21","S"]],
+"Myelodysplastic syndrome (primary and therapy-related)":[["Acute Leukemias","22–24","S"]],
+"Acute myeloid leukemia (AML)":[["Acute Leukemias","15–18","S"]],
+"Acute promyelocytic leukemia (APL)":[["Acute Leukemias","19–21","S"],["Thrombotic Microangiopathy","10","M"]],
+"Leukemia-predisposing syndromes (Down, Bloom, Fanconi anemia, NF, ataxia-telangiectasia)":[["Acute Leukemias","12 (Down → ALL)","S"],["Other Anemias","18–19 (Fanconi)","S"]],
+"B-acute lymphoblastic leukemia (B-ALL)":[["Acute Leukemias","4–12","S"]],
+"T-ALL / T-lymphoblastic lymphoma":[["Acute Leukemias","13–14","S"]],
+"CLL / small lymphocytic lymphoma":[["Chronic Leukemias","10–16","S"],["Non-Hodgkin Lymphoma","16","S"]],
+"Richter and prolymphocytic transformation":[["Chronic Leukemias","16 (Richter only)","S"]],
+"Hairy cell leukemia":[["Chronic Leukemias","17–21","S"]],
+"Follicular lymphoma":[["Non-Hodgkin Lymphoma","7–10","S"]],
+"Mantle cell lymphoma":[["Non-Hodgkin Lymphoma","11–13","S"]],
+"Marginal zone / MALT lymphoma":[["Non-Hodgkin Lymphoma","14–15","S"]],
+"Diffuse large B-cell lymphoma (DLBCL)":[["Non-Hodgkin Lymphoma","5–6","S"]],
+"Burkitt lymphoma":[["Non-Hodgkin Lymphoma","17–20","S"]],
+"Lymphoplasmacytic lymphoma / Waldenström macroglobulinemia":[["Plasma Cell Disorders","20–21","S"]],
+"Mycosis fungoides / Sézary syndrome":[["Non-Hodgkin Lymphoma","24–26","S"]],
+"Adult T-cell leukemia/lymphoma (ATLL)":[["Non-Hodgkin Lymphoma","21–23","S"]],
+"Hodgkin lymphoma, nodular sclerosis":[["Hodgkin Lymphoma","11","S"]],
+"Hodgkin lymphoma, mixed cellularity":[["Hodgkin Lymphoma","12","S"]],
+"Hodgkin lymphoma, lymphocyte-rich":[["Hodgkin Lymphoma","13","S"]],
+"Hodgkin lymphoma, lymphocyte-depleted":[["Hodgkin Lymphoma","14","S"]],
+"Nodular lymphocyte-predominant Hodgkin lymphoma":[["Hodgkin Lymphoma","15","S"]],
+"Monoclonal gammopathy of undetermined significance (MGUS)":[["Plasma Cell Disorders","19","S"]],
+"Multiple myeloma":[["Plasma Cell Disorders","3–18","S"]],
+"AL amyloidosis / light-chain deposition disease":[["Plasma Cell Disorders","6","M"]],
+"Hyperviscosity syndrome / cryoglobulinemia":[["Plasma Cell Disorders","22","S"]]
+};
+const bnbLevel=r=>{const b=B[r[0]]||[];return b.some(x=>x[2]==='S')?2:b.length?1:0};
+// Pathoma (Fundamentals of Pathology, 1st ed.): disease -> [[chapter, section, topic heading: section title, S = covered | M = mentioned]]
+const PA={
+"Iron deficiency anemia":[[5,"II","Microcytic Anemias: Iron Deficiency Anemia","S"]],
+"α-Thalassemia (silent carrier, trait, HbH, hydrops fetalis)":[[5,"V.D","Microcytic Anemias: Thalassemia (α)","S"]],
+"β-Thalassemia major":[[5,"V.E.3","Microcytic Anemias: Thalassemia (β major)","S"]],
+"β-Thalassemia minor (trait)":[[5,"V.E.2","Microcytic Anemias: Thalassemia (β minor)","S"]],
+"Secondary hemochromatosis (transfusional iron overload)":[[5,"V.E.3","Thalassemia: β major transfusions","M"],[11,"VI","Liver: Hemochromatosis","S"]],
+"Sickle cell disease":[[5,"II","Extravascular Hemolysis: Sickle Cell Anemia","S"]],
+"Sickle cell trait":[[5,"II.G","Extravascular Hemolysis: Sickle Cell Anemia (trait)","S"]],
+"Anemia of chronic disease / inflammation":[[5,"III","Microcytic Anemias: Anemia of Chronic Disease","S"]],
+"Anemia of chronic kidney disease (↓EPO)":[[5,"I.B","Anemia Due to Underproduction: Basic Principles (renal failure)","M"],[4,"V.D","Primary Hemostasis: uremic platelet dysfunction","M"]],
+"Sideroblastic anemia (incl. lead, alcohol)":[[5,"IV","Microcytic Anemias: Sideroblastic Anemia (lead, alcohol, B6)","S"]],
+"Aplastic anemia":[[5,"III","Anemia Due to Underproduction: Aplastic Anemia","S"]],
+"Myelophthisic anemia / metastatic carcinoma to marrow":[[5,"IV","Anemia Due to Underproduction: Myelophthisic Process","S"]],
+"Megaloblastic anemia":[[5,"I","Macrocytic Anemia: Basic Principles","S"]],
+"Vitamin B12 deficiency":[[5,"III","Macrocytic Anemia: Vitamin B12 Deficiency","S"]],
+"Folate deficiency":[[5,"II","Macrocytic Anemia: Folate Deficiency","S"]],
+"Pernicious anemia (autoimmune atrophic gastritis)":[[5,"III.C","Macrocytic Anemia: Vitamin B12 Deficiency","S"],[10,"V","Stomach: Chronic Gastritis (autoimmune)","S"]],
+"Non-megaloblastic macrocytosis (liver, thyroid, drugs/toxins)":[[5,"I.D","Macrocytic Anemia: Basic Principles","M"]],
+"Hemolytic anemia: intravascular vs extravascular":[[5,"III","Normocytic Anemia: Peripheral RBC Destruction (Hemolysis)","S"]],
+"Warm autoimmune hemolytic anemia (IgG)":[[5,"III.B","Intravascular Hemolysis: Immune Hemolytic Anemia (IgG)","S"]],
+"Cold agglutinin disease (IgM)":[[5,"III.C","Intravascular Hemolysis: Immune Hemolytic Anemia (IgM)","S"]],
+"ABO incompatibility (acute hemolytic transfusion reaction)":[[5,"III.D","Immune Hemolytic Anemia: Coombs tests","M"]],
+"Drug-induced hemolysis":[[5,"III.B.2","Intravascular Hemolysis: Immune Hemolytic Anemia (drugs)","S"],[5,"II.C","Intravascular Hemolysis: G6PD (oxidant drugs)","M"]],
+"Hereditary spherocytosis":[[5,"I","Extravascular Hemolysis: Hereditary Spherocytosis","S"]],
+"G6PD deficiency":[[5,"II","Intravascular Hemolysis: G6PD Deficiency","S"]],
+"Microangiopathic hemolytic anemia (MAHA)":[[4,"IV","Primary Hemostasis: Microangiopathic Hemolytic Anemia","S"],[5,"IV","Intravascular Hemolysis: Microangiopathic Hemolytic Anemia","S"]],
+"Mechanical hemolysis (prosthetic valve)":[[5,"IV.B","Intravascular Hemolysis: MAHA (valves, aortic stenosis)","S"]],
+"Malaria":[[5,"V","Intravascular Hemolysis: Malaria","S"]],
+"Paroxysmal nocturnal hemoglobinuria":[[5,"I","Intravascular Hemolysis: PNH","S"]],
+"Bernard-Soulier syndrome":[[4,"V.A","Primary Hemostasis: Qualitative Platelet Disorders","S"]],
+"Glanzmann thrombasthenia":[[4,"V.B","Primary Hemostasis: Qualitative Platelet Disorders","S"]],
+"Thrombocytopenia (mechanisms)":[[4,"II","Primary Hemostasis: Disorders of Primary Hemostasis","S"]],
+"Thrombocytosis":[[6,"IV","Myeloproliferative Disorders: Essential Thrombocythemia","M"]],
+"Immune thrombocytopenic purpura (ITP)":[[4,"III","Primary Hemostasis: ITP","S"]],
+"Heparin-induced thrombocytopenia (HIT)":[[4,"I","Other Disorders of Hemostasis: HIT","S"]],
+"Thrombotic microangiopathy (TMA)":[[4,"IV","Primary Hemostasis: Microangiopathic Hemolytic Anemia","S"]],
+"Thrombotic thrombocytopenic purpura (TTP)":[[4,"IV.C","Primary Hemostasis: MAHA (TTP)","S"]],
+"Hemolytic uremic syndrome (HUS)":[[4,"IV.D","Primary Hemostasis: MAHA (HUS)","S"]],
+"Hemophilia A (FVIII)":[[4,"III","Secondary Hemostasis: Hemophilia A","S"]],
+"Hemophilia B (FIX)":[[4,"IV","Secondary Hemostasis: Hemophilia B","S"]],
+"Acquired FVIII inhibitor (acquired hemophilia A)":[[4,"V","Secondary Hemostasis: Coagulation Factor Inhibitor","S"]],
+"von Willebrand disease (types 1, 2, 2B, 3)":[[4,"VI","Secondary Hemostasis: von Willebrand Disease","S"]],
+"Factor V Leiden":[[4,"IV.D","Thrombosis: Hypercoagulable State","S"]],
+"Protein C / protein S deficiency":[[4,"IV.C","Thrombosis: Hypercoagulable State","S"]],
+"Lupus anticoagulant / antiphospholipid antibodies":[[2,"II.E","Autoimmune Disorders: SLE (antiphospholipid syndrome)","S"]],
+"Disseminated intravascular coagulation (DIC)":[[4,"II","Other Disorders of Hemostasis: DIC","S"]],
+"Vitamin K deficiency":[[4,"VII","Secondary Hemostasis: Vitamin K Deficiency","S"]],
+"Liver disease coagulopathy":[[4,"VIII.A","Secondary Hemostasis: Other Causes (liver failure)","S"]],
+"Venous thromboembolism / DVT":[[4,"IV.B","Thrombosis: Hypercoagulable State (DVT)","S"],[4,"II","Embolism: Pulmonary Embolism","S"]],
+"Reactive (non-neoplastic) neutrophilia":[[6,"III.A","Leukopenia & Leukocytosis: Leukocytosis","S"],[6,"II.D","Myeloproliferative Disorders: CML vs leukemoid reaction","S"]],
+"Chronic myeloid leukemia (CML)":[[6,"II","Myeloproliferative Disorders: CML","S"]],
+"Polycythemia vera":[[6,"III","Myeloproliferative Disorders: Polycythemia Vera","S"]],
+"Essential thrombocythemia":[[6,"IV","Myeloproliferative Disorders: Essential Thrombocythemia","S"]],
+"Primary myelofibrosis":[[6,"V","Myeloproliferative Disorders: Myelofibrosis","S"]],
+"Myelodysplastic syndrome (primary and therapy-related)":[[6,"III.E","Acute Leukemia: AML (from myelodysplastic syndromes)","S"]],
+"Acute myeloid leukemia (AML)":[[6,"III","Acute Leukemia: Acute Myeloid Leukemia","S"]],
+"Acute promyelocytic leukemia (APL)":[[6,"III.D.1","Acute Leukemia: AML (APL)","S"],[4,"II.B","Other Disorders of Hemostasis: DIC causes","M"]],
+"Acute monocytic leukemia":[[6,"III.D.2","Acute Leukemia: AML (acute monocytic)","S"]],
+"Tumor lysis syndrome":[[12,"IV","Acute Renal Failure: Acute Tubular Necrosis (urate)","M"]],
+"Leukemia-predisposing syndromes (Down, Bloom, Fanconi anemia, NF, ataxia-telangiectasia)":[[6,"II.B, III.D.3","Acute Leukemia: Down syndrome (ALL, megakaryoblastic AML)","M"]],
+"B-acute lymphoblastic leukemia (B-ALL)":[[6,"II","Acute Leukemia: Acute Lymphoblastic Leukemia","S"]],
+"T-ALL / T-lymphoblastic lymphoma":[[6,"II.E","Acute Leukemia: ALL (T-ALL)","S"]],
+"CLL / small lymphocytic lymphoma":[[6,"II","Chronic Leukemia: CLL","S"]],
+"Richter and prolymphocytic transformation":[[6,"II.D.3","Chronic Leukemia: CLL complications (Richter)","S"]],
+"Hairy cell leukemia":[[6,"III","Chronic Leukemia: Hairy Cell Leukemia","S"]],
+"Follicular lymphoma":[[6,"II","Lymphoma: Follicular Lymphoma","S"]],
+"Mantle cell lymphoma":[[6,"III","Lymphoma: Mantle Cell Lymphoma","S"]],
+"Marginal zone / MALT lymphoma":[[6,"IV","Lymphoma: Marginal Zone Lymphoma","S"]],
+"Diffuse large B-cell lymphoma (DLBCL)":[[6,"VI","Lymphoma: Diffuse Large B-cell Lymphoma","S"]],
+"Immunodeficiency-associated large B-cell lymphoma":[[6,"IV.E.3","Infectious Mononucleosis: complications (B-cell lymphoma with HIV)","M"]],
+"Burkitt lymphoma":[[6,"V","Lymphoma: Burkitt Lymphoma","S"]],
+"Lymphoplasmacytic lymphoma / Waldenström macroglobulinemia":[[6,"III","Plasma Cell Disorders: Waldenström Macroglobulinemia","S"]],
+"Mycosis fungoides / Sézary syndrome":[[6,"V","Chronic Leukemia: Mycosis Fungoides","S"]],
+"Adult T-cell leukemia/lymphoma (ATLL)":[[6,"IV","Chronic Leukemia: ATLL","S"]],
+"Hodgkin lymphoma, nodular sclerosis":[[6,"I.D","Hodgkin Lymphoma: Basic Principles","S"]],
+"Hodgkin lymphoma, mixed cellularity":[[6,"I.E.2","Hodgkin Lymphoma: Basic Principles","S"]],
+"Hodgkin lymphoma, lymphocyte-rich":[[6,"I.E.1","Hodgkin Lymphoma: Basic Principles","S"]],
+"Hodgkin lymphoma, lymphocyte-depleted":[[6,"I.E.3","Hodgkin Lymphoma: Basic Principles","S"]],
+"Monoclonal gammopathy of undetermined significance (MGUS)":[[6,"II","Plasma Cell Disorders: MGUS","S"]],
+"Multiple myeloma":[[6,"I","Plasma Cell Disorders: Multiple Myeloma","S"]],
+"AL amyloidosis / light-chain deposition disease":[[1,"II.A","Amyloidosis: Systemic Amyloidosis (primary AL)","S"],[6,"I.B.5","Plasma Cell Disorders: Multiple Myeloma","M"]],
+"Hyperviscosity syndrome / cryoglobulinemia":[[6,"III.B.3","Plasma Cell Disorders: Waldenström Macroglobulinemia","S"],[6,"III.C","Myeloproliferative Disorders: Polycythemia Vera","M"]],
+"Anthracycline cardiomyopathy and radiation heart disease":[[8,"II","Cardiomyopathy: Dilated Cardiomyopathy (doxorubicin)","M"]]
+};
+const paLevel=r=>{const b=PA[r[0]]||[];return b.some(x=>x[3]==='S')?2:b.length?1:0};
+// Bootcamp Hematology & Oncology PDF: disease -> [[chapter, outline section, topic, PDF page, S = covered | M = mentioned]]
+const BC={
+"Iron deficiency anemia":[[3,"3","Iron Deficiency Anemia","18","S"]],
+"α-Thalassemia (silent carrier, trait, HbH, hydrops fetalis)":[[3,"8","α-Thalassemia","23","S"],[3,"7.D","Hemoglobin: HbH and Hb Bart's","22","M"]],
+"β-Thalassemia major":[[3,"9","β-Thalassemia (major / Cooley)","24","S"]],
+"β-Thalassemia minor (trait)":[[3,"9","β-Thalassemia (minor)","24","S"]],
+"Sickle cell disease":[[4,"3","Sickle Cell Anemia","29","S"]],
+"Sickle cell trait":[[4,"3.B","Sickle Cell Anemia: variants","29","S"]],
+"Anemia of chronic disease / inflammation":[[3,"4","Anemia of Chronic Disease","19","S"]],
+"Anemia of chronic kidney disease (↓EPO)":[[4,"10.A","Additional Causes: Chronic Kidney Disease","36","S"]],
+"Sideroblastic anemia (incl. lead, alcohol)":[[3,"6","Sideroblastic Anemia","21","S"],[3,"5","Lead Toxicity","20","S"]],
+"Aplastic anemia":[[4,"9","Aplastic Anemia","35","S"]],
+"Myelophthisic anemia / metastatic carcinoma to marrow":[[2,"5.E","Neutrophil: leukoerythroblastic reaction","11","M"]],
+"Megaloblastic anemia":[[5,"1.C","Megaloblastic vs Non-Megaloblastic","40","S"]],
+"Vitamin B12 deficiency":[[5,"3","Cobalamin (B12) Deficiency","42","S"]],
+"Folate deficiency":[[5,"2","Folate (B9) Deficiency","41","S"]],
+"Pernicious anemia (autoimmune atrophic gastritis)":[[5,"3.A","B12 Deficiency: etiology (pernicious anemia)","42","M"]],
+"Non-megaloblastic macrocytosis (liver, thyroid, drugs/toxins)":[[5,"5","Non-Megaloblastic Anemia (alcohol, liver disease)","44","S"]],
+"Hemolytic anemia: intravascular vs extravascular":[[4,"2","Hemolysis","28","S"]],
+"Warm autoimmune hemolytic anemia (IgG)":[[4,"8","Autoimmune Hemolytic Anemia (warm)","34","S"]],
+"Cold agglutinin disease (IgM)":[[4,"8","Autoimmune Hemolytic Anemia (cold)","34","S"]],
+"ABO incompatibility (acute hemolytic transfusion reaction)":[[1,"2.A","Hemolytic Disease of the Newborn: ABO (not transfusion reaction)","4","S"]],
+"Rh incompatibility / hemolytic disease of the newborn":[[1,"2.B","Hemolytic Disease of the Newborn: Rh","4","S"]],
+"Drug-induced hemolysis":[[4,"8.B","AIHA etiology (penicillin, methyldopa)","34","S"],[4,"6","G6PD Deficiency (oxidant drugs)","32","M"]],
+"Hereditary spherocytosis":[[4,"5","Hereditary Spherocytosis","31","S"]],
+"G6PD deficiency":[[4,"6","G6PD Deficiency","32","S"]],
+"Microangiopathic hemolytic anemia (MAHA)":[[4,"10.B","Additional Causes: Microangiopathic","37","S"],[6,"4","Thrombotic Microangiopathies","50","S"]],
+"Mechanical hemolysis (prosthetic valve)":[[4,"10.C","Additional Causes: Macroangiopathic","37","S"]],
+"Malaria":[[4,"10.D","Additional Causes: Infectious (malaria, Babesia)","37","S"]],
+"Paroxysmal nocturnal hemoglobinuria":[[4,"4","Paroxysmal Nocturnal Hemoglobinuria","30","S"]],
+"Bernard-Soulier syndrome":[[6,"3.B","Platelet Disorders: Bernard-Soulier","49","S"],[7,"2.F","Ristocetin Testing","55","M"]],
+"Glanzmann thrombasthenia":[[6,"3.C","Platelet Disorders: Glanzmann","49","S"],[7,"2.F","Ristocetin Testing","55","M"]],
+"Thrombocytopenia (mechanisms)":[[6,"3.A","Platelet Disorders: General Presentation","49","S"],[2,"1.E","Platelet: Relevant Pathology","7","M"]],
+"Thrombocytosis":[[2,"1.E","Platelet: Relevant Pathology","7","M"],[10,"3.B","Essential Thrombocythemia","89","M"]],
+"Drug-induced thrombocytopenia":[[6,"5.C","GpIIb/IIIa Inhibitors (abciximab)","51","M"]],
+"Immune thrombocytopenic purpura (ITP)":[[6,"3.D","Platelet Disorders: ITP","49","S"]],
+"Heparin-induced thrombocytopenia (HIT)":[[7,"9.A","Anticoagulation: Heparin (HIT)","62","S"],[7,"10","Disorders of Hemostasis: Summary","63","M"]],
+"Thrombotic microangiopathy (TMA)":[[6,"4","Thrombotic Microangiopathies","50","S"]],
+"Thrombotic thrombocytopenic purpura (TTP)":[[6,"4.B","Thrombotic Microangiopathies: TTP","50","S"]],
+"Hemolytic uremic syndrome (HUS)":[[6,"4.C","Thrombotic Microangiopathies: HUS","50","S"]],
+"Hemophilia A (FVIII)":[[7,"6","Hemophilia","59","S"]],
+"Hemophilia B (FIX)":[[7,"6","Hemophilia","59","S"]],
+"Hemophilia C (FXI)":[[7,"6","Hemophilia","59","S"]],
+"Acquired FVIII inhibitor (acquired hemophilia A)":[[7,"2.E","Mixing Study (factor inhibitor)","55","M"]],
+"von Willebrand disease (types 1, 2, 2B, 3)":[[7,"5","Von Willebrand Disease","58","S"]],
+"Factor V Leiden":[[7,"4.B","Thrombophilia: Factor V Leiden","57","S"]],
+"Protein C / protein S deficiency":[[7,"4.D","Thrombophilia: Protein C/S Deficiency","57","S"]],
+"Lupus anticoagulant / antiphospholipid antibodies":[[7,"4.F","Thrombophilia: Antiphospholipid Syndrome","57","S"]],
+"Disseminated intravascular coagulation (DIC)":[[7,"7","DIC","60","S"]],
+"Vitamin K deficiency":[[7,"8.C","Vitamin K Deficiency","61","S"]],
+"Liver disease coagulopathy":[[7,"2.B","Hemostasis Diagnostics: PT (liver disease)","55","M"]],
+"Venous thromboembolism / DVT":[[7,"4","Thrombophilia","57","S"]],
+"Reactive (non-neoplastic) neutrophilia":[[2,"5.E","Neutrophil: left shift, neutrophilia","11","M"],[9,"2.D","CML Diagnostics (↓LAP)","78","M"]],
+"Chronic myeloid leukemia (CML)":[[9,"2","Chronic Myeloid Leukemia","78","S"]],
+"Polycythemia vera":[[10,"3.A","Polycythemia Vera","89","S"]],
+"Essential thrombocythemia":[[10,"3.B","Essential Thrombocythemia","89","S"]],
+"Primary myelofibrosis":[[10,"4.A","Myelofibrosis","90","S"]],
+"Myelodysplastic syndrome (primary and therapy-related)":[[10,"4.B","Myelodysplastic Syndromes","90","S"]],
+"Acute myeloid leukemia (AML)":[[9,"1","Acute Myeloid Leukemia","77","S"]],
+"Acute promyelocytic leukemia (APL)":[[9,"1.F","Acute Promyelocytic Leukemia","77","S"]],
+"Acute monocytic leukemia":[[9,"1.C","AML presentation (gingival hyperplasia)","77","M"]],
+"Tumor lysis syndrome":[[10,"5","Tumor Lysis Syndrome","91","S"]],
+"Leukemia-predisposing syndromes (Down, Bloom, Fanconi anemia, NF, ataxia-telangiectasia)":[[9,"1.B, 3.B","AML / ALL associations (trisomy 21)","77, 79","M"],[4,"9","Aplastic Anemia (Fanconi anemia)","35","M"]],
+"B-acute lymphoblastic leukemia (B-ALL)":[[9,"3.E","ALL: B-cell ALL","79","S"]],
+"T-ALL / T-lymphoblastic lymphoma":[[9,"3.F","ALL: T-cell ALL","79","S"]],
+"CLL / small lymphocytic lymphoma":[[9,"4","Chronic Lymphocytic Leukemia","80","S"]],
+"Richter and prolymphocytic transformation":[[9,"4.B","CLL associations (Richter)","80","M"]],
+"Hairy cell leukemia":[[9,"6.C","B-cell NHL: Hairy Cell Leukemia","82","S"]],
+"Follicular lymphoma":[[9,"6.B","B-cell NHL: Follicular Lymphoma","82","S"]],
+"Mantle cell lymphoma":[[9,"6.E","B-cell NHL: Mantle Cell Lymphoma","82","S"]],
+"Marginal zone / MALT lymphoma":[[9,"6.D","B-cell NHL: Marginal Zone (MALT)","82","S"]],
+"Diffuse large B-cell lymphoma (DLBCL)":[[9,"6.F","B-cell NHL: DLBCL","82","S"]],
+"Immunodeficiency-associated large B-cell lymphoma":[[9,"6.A, 6.F","Burkitt (HIV form); DLBCL (primary CNS)","82","M"]],
+"Burkitt lymphoma":[[9,"6.A","B-cell NHL: Burkitt Lymphoma","82","S"]],
+"Lymphoplasmacytic lymphoma / Waldenström macroglobulinemia":[[10,"2.B","Waldenström Macroglobulinemia","88","S"]],
+"Mycosis fungoides / Sézary syndrome":[[9,"7.A, 7.B","T-cell NHL: Mycosis Fungoides; Sézary","83","S"]],
+"Adult T-cell leukemia/lymphoma (ATLL)":[[9,"7.C","T-cell NHL: Adult T-cell Lymphoma","83","S"]],
+"Hodgkin lymphoma, nodular sclerosis":[[9,"5.D","Hodgkin Lymphoma: Subtypes","81","S"]],
+"Hodgkin lymphoma, mixed cellularity":[[9,"5.D","Hodgkin Lymphoma: Subtypes","81","S"]],
+"Hodgkin lymphoma, lymphocyte-rich":[[9,"5.D","Hodgkin Lymphoma: Subtypes","81","S"]],
+"Hodgkin lymphoma, lymphocyte-depleted":[[9,"5.D","Hodgkin Lymphoma: Subtypes","81","S"]],
+"Monoclonal gammopathy of undetermined significance (MGUS)":[[10,"2.A","MGUS","88","S"]],
+"Multiple myeloma":[[10,"1","Multiple Myeloma","87","S"]],
+"Plasmacytoma (solitary bone, extraosseous)":[[10,"1.D","Multiple Myeloma associations","87","M"]],
+"AL amyloidosis / light-chain deposition disease":[[10,"1.D","Multiple Myeloma associations","87","M"]],
+"Hyperviscosity syndrome / cryoglobulinemia":[[10,"2.B","Waldenström Macroglobulinemia","88","S"],[10,"3.A","Polycythemia Vera","89","M"]],
+"Anthracycline cardiomyopathy and radiation heart disease":[[8,"","Cell Cycle Independent Drug Targets (doxorubicin)","74","M"]],
+"Second malignancies after treatment":[[10,"4.B","MDS (secondary to chemo, radiation)","90","M"],[9,"1.B","AML associations (chemotherapy, radiation)","77","M"]]
+};
+const bcLevel=r=>{const b=BC[r[0]]||[];return b.some(x=>x[4]==='S')?2:b.length?1:0};
+// Student review sheet (Remember HEM-GEN Exam): EXAM = flagged "ON EXAM" / "GUARANTEED ON EXAM"; HY = referenced without a flag
+const TAG={
+"Iron deficiency anemia":["EXAM","Pica; always check for a GI bleed; hepcidin"],
+"β-Thalassemia major":["EXAM","Electrophoresis shows more HbF than HbA"],
+"Megaloblastic anemia":["EXAM","Hypersegmented neutrophils"],
+"Vitamin B12 deficiency":["EXAM","Ileal resection; neuro symptoms need parenteral B12"],
+"G6PD deficiency":["EXAM","Bite cells; fava beans"],
+"Hereditary spherocytosis":["EXAM","Ankyrin/spectrin, ↑osmotic fragility, spherocytes"],
+"Bernard-Soulier syndrome":["EXAM","Defective GPIb/IX"],
+"Glanzmann thrombasthenia":["EXAM","Defective GPIIb/IIIa"],
+"Immune thrombocytopenic purpura (ITP)":["EXAM","Isolated thrombocytopenia in a well adult"],
+"Thrombotic microangiopathy (TMA)":["EXAM","Classic TMA pentad"],
+"Thrombotic thrombocytopenic purpura (TTP)":["EXAM","Pentad (flagged under TMA)"],
+"Hemophilia A (FVIII)":["EXAM","X-linked"],
+"Hemophilia B (FIX)":["EXAM","X-linked"],
+"von Willebrand disease (types 1, 2, 2B, 3)":["EXAM","FVIII may be ↓; DDAVP for mild disease"],
+"Chronic myeloid leukemia (CML)":["EXAM","GUARANTEED: BCR-ABL t(9;22)"],
+"Polycythemia vera":["EXAM","JAK2; headache, dizziness"],
+"Primary myelofibrosis":["EXAM","Extramedullary hematopoiesis in liver"],
+"Myelodysplastic syndrome (primary and therapy-related)":["EXAM","Therapy-related worse; ringed sideroblasts; monosomy 5/7"],
+"Acute myeloid leukemia (AML)":["EXAM",">20% blasts, Auer rods, CD markers"],
+"AML with t(8;21) or inv(16) (core-binding factor)":["EXAM","GUARANTEED: inv(16) good prognosis"],
+"Acute monocytic leukemia":["EXAM","Gingival hyperplasia"],
+"Acute promyelocytic leukemia (APL)":["EXAM","GUARANTEED: ATRA; t(15;17); DIC"],
+"Disseminated intravascular coagulation (DIC)":["EXAM","High frequency of DIC in APL"],
+"Tumor lysis syndrome":["EXAM","Hydration, allopurinol, rasburicase"],
+"B-acute lymphoblastic leukemia (B-ALL)":["EXAM","t(12;21), hyperdiploidy, TdT, testicular involvement"],
+"T-ALL / T-lymphoblastic lymphoma":["EXAM","NOTCH1, mediastinal mass, CNS/testes relapse"],
+"CLL / small lymphocytic lymphoma":["EXAM","Smudge cells; mature lymphocytes on smear"],
+"Hairy cell leukemia":["EXAM","CD11c/25/103, BRAF; splenomegaly, no LAD"],
+"Mycosis fungoides / Sézary syndrome":["EXAM","Pautrier abscess, cerebriform nuclei"],
+"Marginal zone / MALT lymphoma":["EXAM","MALToma small-bowel presentation"],
+"Primary effusion lymphoma":["EXAM","HIV + HHV-8"],
+"Burkitt lymphoma":["EXAM","CD10/19/20, EBV, jaw mass, starry sky"],
+"Follicular lymphoma":["EXAM","Paratrabecular lymphoid aggregates"],
+"Hodgkin lymphoma, nodular sclerosis":["EXAM","GUARANTEED: classical types CD15/CD30+"],
+"Hodgkin lymphoma, mixed cellularity":["EXAM","GUARANTEED: classical types CD15/CD30+"],
+"Hodgkin lymphoma, lymphocyte-rich":["EXAM","GUARANTEED: classical types CD15/CD30+"],
+"Hodgkin lymphoma, lymphocyte-depleted":["EXAM","GUARANTEED: CD15/CD30+; EBV, HIV"],
+"Nodular lymphocyte-predominant Hodgkin lymphoma":["EXAM","Five HL subtypes flagged; popcorn cells"],
+"Multiple myeloma":["EXAM","GUARANTEED: IL-6; CD38/138, lytic lesions, rouleaux, Bence Jones"],
+"POEMS syndrome":["EXAM","Flagged in plasma cell notes"],
+"Lymphoplasmacytic lymphoma / Waldenström macroglobulinemia":["EXAM","No lytic lesions; mast cells; IgM"],
+"Second malignancies after treatment":["EXAM","Late-effect risk rises >30 years after treatment"],
+"α-Thalassemia (silent carrier, trait, HbH, hydrops fetalis)":["HY"],
+"β-Thalassemia minor (trait)":["HY"],
+"Secondary hemochromatosis (transfusional iron overload)":["HY"],
+"Sickle cell disease":["HY"],
+"Anemia of chronic disease / inflammation":["HY"],
+"Anemia of chronic kidney disease (↓EPO)":["HY"],
+"Acute blood loss":["HY"],
+"Aplastic anemia":["HY"],
+"Myelophthisic anemia / metastatic carcinoma to marrow":["HY"],
+"Folate deficiency":["HY"],
+"Pernicious anemia (autoimmune atrophic gastritis)":["HY"],
+"Non-megaloblastic macrocytosis (liver, thyroid, drugs/toxins)":["HY"],
+"Hemolytic anemia: intravascular vs extravascular":["HY"],
+"Warm autoimmune hemolytic anemia (IgG)":["HY"],
+"Cold agglutinin disease (IgM)":["HY"],
+"ABO incompatibility (acute hemolytic transfusion reaction)":["HY"],
+"Rh incompatibility / hemolytic disease of the newborn":["HY"],
+"Drug-induced hemolysis":["HY"],
+"Microangiopathic hemolytic anemia (MAHA)":["HY"],
+"Mechanical hemolysis (prosthetic valve)":["HY"],
+"Malaria":["HY"],
+"Gray platelet syndrome (α-granule storage pool)":["HY"],
+"Thrombocytopenia (mechanisms)":["HY"],
+"Thrombocytosis":["HY"],
+"Drug-induced thrombocytopenia":["HY"],
+"Hypersplenism / splenic sequestration":["HY"],
+"Hemolytic uremic syndrome (HUS)":["HY"],
+"Hemophilia C (FXI)":["HY"],
+"Acquired FVIII inhibitor (acquired hemophilia A)":["HY"],
+"Factor V Leiden":["HY"],
+"Protein C / protein S deficiency":["HY"],
+"Lupus anticoagulant / antiphospholipid antibodies":["HY"],
+"Vitamin K deficiency":["HY"],
+"Liver disease coagulopathy":["HY"],
+"Venous thromboembolism / DVT":["HY"],
+"Reactive (non-neoplastic) neutrophilia":["HY"],
+"Essential thrombocythemia":["HY"],
+"Clonal hematopoiesis (CHIP)":["HY"],
+"Differentiation (retinoic acid) syndrome":["HY"],
+"Leukemia-predisposing syndromes (Down, Bloom, Fanconi anemia, NF, ataxia-telangiectasia)":["HY"],
+"Mantle cell lymphoma":["HY"],
+"Diffuse large B-cell lymphoma (DLBCL)":["HY"],
+"Immunodeficiency-associated large B-cell lymphoma":["HY"],
+"Anaplastic large cell lymphoma":["HY"],
+"Adult T-cell leukemia/lymphoma (ATLL)":["HY"],
+"Monoclonal gammopathy of undetermined significance (MGUS)":["HY"],
+"Smoldering myeloma":["HY"],
+"Plasmacytoma (solitary bone, extraosseous)":["HY"],
+"Hyperviscosity syndrome / cryoglobulinemia":["HY"],
+"Anthracycline cardiomyopathy and radiation heart disease":["HY"],
+"Neurocognitive, growth and endocrine late effects":["HY"],
+"Infertility / premature ovarian failure":["HY"],
+"PTSD and psychosocial effects":["HY"]
+};
+const CATS=[...new Set(D.map(r=>r[1]))];
+const keygrid=document.getElementById('keygrid'),lecSel=document.getElementById('lec');
+Object.entries(LECT).forEach(([k,v])=>{keygrid.insertAdjacentHTML('beforeend',`<div><span>HEM${k}</span>${v}</div>`);lecSel.insertAdjacentHTML('beforeend',`<option value="${k}">HEM${k} · ${v}</option>`)});
+let mode='all',sortK=null,sortDir=1;
+const tag=(c,cls)=>`<span class="tag ${cls}" title="${LECT[c.replace('*','')]}${c.endsWith('*')?' (mentioned only)':''}">HEM${c.replace('*','')}</span>`;
+function render(){
+  const q=document.getElementById('q').value.trim().toLowerCase(),lec=lecSel.value;
+  let rows=D.filter(r=>{
+    if(q&&!(r[0]+' '+r[4]+' '+r[1]+' '+(TAG[r[0]]||[]).join(' ')).toLowerCase().includes(q))return false;
+    if(lec&&!r[2].includes(lec)&&!r[3].some(c=>c.replace('*','')===lec))return false;
+    if(mode==='lo'&&!r[2].length)return false;
+    if(mode==='nolo'&&r[2].length)return false;
+    if(mode==='gap'&&!r[5])return false;
+    if(mode==='nobnb'&&bnbLevel(r)===2)return false;
+    if(mode==='nopa'&&paLevel(r)===2)return false;
+    if(mode==='nobc'&&bcLevel(r)===2)return false;
+    if(mode==='exam'&&!(TAG[r[0]]&&TAG[r[0]][0]==='EXAM'))return false;
+    if(mode==='hy'&&!(TAG[r[0]]&&TAG[r[0]][0]==='HY'))return false;
+    return true});
+  const tb=document.getElementById('tb');let html='';
+  if(sortK){
+    const key=r=>sortK==='d'?r[0]:sortK==='lo'?(r[2][0]||'99'):sortK==='cv'?r[3][0].replace('*',''):sortK==='c'?String(2-bcLevel(r))+String((BC[r[0]]||[[99]])[0][0]).padStart(2,'0')+((BC[r[0]]||[[0,'']])[0][1]):sortK==='p'?String(2-paLevel(r))+String((PA[r[0]]||[[99]])[0][0]).padStart(2,'0')+((PA[r[0]]||[[0,'']])[0][1]):sortK==='b'?String(2-bnbLevel(r))+((B[r[0]]||[[''] ])[0][0]):r[4];
+    rows=[...rows].sort((a,b)=>key(a).localeCompare(key(b))*sortDir);
+    rows.forEach(r=>html+=row(r));
+  }else{
+    CATS.forEach(c=>{const g=rows.filter(r=>r[1]===c);if(g.length){html+=`<tr class="cat"><td colspan="7">${c} · ${g.length}</td></tr>`;g.forEach(r=>html+=row(r))}});
+  }
+  tb.innerHTML=html||'<tr><td colspan="7" class="none">No diseases match. Clear the search or pick another filter.</td></tr>';
+  document.getElementById('count').textContent=`${rows.length} of ${D.length}`;
+}
+function row(r){
+  const lo=r[2].length?r[2].map(c=>tag(c,'lo')).join(''):'<span class="none">Not in LOs</span>';
+  const cv=r[3].map(c=>tag(c,c.endsWith('*')?'mn':'cv')).join('');
+  const b=B[r[0]]||[];
+  const bn=b.length?b.map(x=>`<div class="bnb ${x[2]==='S'?'bs':'bm'}"><b>${x[0]}</b> <span>p. ${x[1]}</span></div>`).join(''):'<span class="none">No BnB slides</span>';
+  const pa=PA[r[0]]||[];
+  const pn=pa.length?pa.map(x=>`<div class="pth ${x[3]==='S'?'ps':'pm'}"><b>Ch ${x[0]} · §${x[1]}</b><span>${x[2]}</span></div>`).join(''):'<span class="none">Not in Pathoma</span>';
+  const bc=BC[r[0]]||[];
+  const cn=bc.length?bc.map(x=>`<div class="bcx ${x[4]==='S'?'cs':'cm'}"><b>Ch ${x[0]}${x[1]?' · §'+x[1]:''} · p. ${x[3]}</b><span>${x[2]}</span></div>`).join(''):'<span class="none">Not in Bootcamp</span>';
+  return `<tr><td class="dz">${r[0]}${TAG[r[0]]?`<div class="etag ${TAG[r[0]][0]==='EXAM'?'ex':'hy'}" title="${TAG[r[0]][1]||'Referenced in the student review sheet'}">${TAG[r[0]][0]}</div>${TAG[r[0]][1]?`<div class="ewhy">${TAG[r[0]][1]}</div>`:''}`:''}</td><td>${lo}</td><td>${cv}</td><td>${bn}</td><td>${pn}</td><td>${cn}</td><td class="note">${r[5]?'<span class="flag">Gap</span>':''}${r[4]}</td></tr>`;
+}
+document.getElementById('q').addEventListener('input',render);
+lecSel.addEventListener('change',render);
+['all','exam','hy','lo','nolo','gap','nobnb','nopa','nobc'].forEach(m=>document.getElementById('f-'+m).addEventListener('click',e=>{
+  mode=m;document.querySelectorAll('.toggles button').forEach(b=>b.setAttribute('aria-pressed',b===e.currentTarget));render()}));
+document.querySelectorAll('th[data-k]').forEach(th=>th.addEventListener('click',()=>{
+  const k=th.dataset.k;if(sortK===k){sortDir===1?sortDir=-1:(sortK=null,sortDir=1)}else{sortK=k;sortDir=1}render()}));
+render();
+</script>
+</body>
+</html>
