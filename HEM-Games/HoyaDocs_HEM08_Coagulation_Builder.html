@@ -1,0 +1,553 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HEM08 Coagulation Builder</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,600;8..60,700&family=Public+Sans:wght@400;600;700&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+/* Layout: toolbar + stats on top; structure list | question card | LO mastery map. Stacks to one column on phones. */
+:root{
+  --bg:#f3f5f6; --surface:#ffffff; --ink:#18212b; --muted:#5a6570; --line:#dbe0e5; --chip:#eceff2;
+  --arch:#2c55a0; --face:#a3263f; --eye:#2c55a0; --accent:#a3263f;
+  --ok:#1d7a3e; --ok-bg:#e3f4e8; --bad:#b3261e; --bad-bg:#fbe7e5; --once:#b7791f; --once-bg:#fdf1dc; --mem:#c2621a;
+  --hy-bg:#fff6cc; --hy-line:#c9a227; --hy-ink:#4a3a00;
+  --f-display:"Source Serif 4", Georgia, serif; --f-body:"Public Sans", Arial, sans-serif; --f-mono:"IBM Plex Mono", ui-monospace, monospace;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#11161c; --surface:#19212a; --ink:#e6eaee; --muted:#9aa6b2; --line:#2c3642; --chip:#232c36;
+  --arch:#8fb1f0; --face:#f08a9b; --eye:#8fb1f0; --accent:#f08a9b;
+  --ok:#6fd08f; --ok-bg:#16301f; --bad:#f28b82; --bad-bg:#3a1b19; --once:#f0c070; --once-bg:#3a2e12; --mem:#f0a05c;
+  --hy-bg:#3a3110; --hy-line:#b8952a; --hy-ink:#f5e6a8; color-scheme:dark }}
+:root[data-theme="dark"]{
+  --bg:#11161c; --surface:#19212a; --ink:#e6eaee; --muted:#9aa6b2; --line:#2c3642; --chip:#232c36;
+  --arch:#8fb1f0; --face:#f08a9b; --eye:#8fb1f0; --accent:#f08a9b;
+  --ok:#6fd08f; --ok-bg:#16301f; --bad:#f28b82; --bad-bg:#3a1b19; --once:#f0c070; --once-bg:#3a2e12; --mem:#f0a05c;
+  --hy-bg:#3a3110; --hy-line:#b8952a; --hy-ink:#f5e6a8; color-scheme:dark }
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font:15px/1.5 var(--f-body);margin:0}
+.wrap{max-width:1180px;margin:0 auto;padding-inline:16px;padding-block:22px 48px;display:grid;gap:16px}
+h1,h2,h3{font-family:var(--f-display);margin:0;text-wrap:balance;line-height:1.2}
+.meta{font:500 .74rem var(--f-mono);letter-spacing:.07em;text-transform:uppercase;color:var(--muted);margin:0}
+header{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:end;gap:12px}
+header h1{font-size:1.9rem}
+header p.lede{margin:4px 0 0;color:var(--muted);max-width:62ch}
+.btn{font:600 .85rem var(--f-body);background:var(--chip);color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:7px 12px;cursor:pointer}
+.btn:hover{border-color:var(--ink)}
+.btn:focus-visible,.opt:focus-visible,.seg button:focus-visible,.ent:focus-visible,.lo-tile:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.btn.primary{background:var(--accent);color:var(--surface);border-color:var(--accent)}
+.btn[disabled]{opacity:.45;cursor:default}
+.hdr-actions{display:flex;gap:8px;flex-wrap:wrap}
+.wrap{grid-template-columns:minmax(0,1fr)} .rvw{min-width:0}
+
+.bar{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 12px}
+.seg{display:inline-flex;background:var(--chip);border-radius:10px;padding:3px;gap:2px;flex-wrap:wrap}
+.seg button{font:600 .82rem var(--f-body);border:0;background:transparent;color:var(--ink);padding:6px 11px;border-radius:8px;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--surface);box-shadow:0 1px 2px rgba(0,0,0,.12)}
+.seg .lab{font:500 .7rem var(--f-mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);align-self:center;padding:0 6px}
+.stats{display:flex;gap:18px;flex-wrap:wrap}
+.stat b{display:block;font:700 1.15rem var(--f-body);font-variant-numeric:tabular-nums}
+.stat span{font:500 .68rem var(--f-mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+
+.main{display:grid;grid-template-columns:250px minmax(0,1fr) 270px;gap:16px;align-items:start}
+@media (max-width:1000px){ .main{grid-template-columns:minmax(0,1fr)} .side{order:2} .map{order:3} }
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px;display:grid;gap:8px;min-width:0}
+.panel h2{font-size:1rem}
+.lec-h{font:700 .72rem var(--f-body);letter-spacing:.07em;text-transform:uppercase;margin-top:6px}
+.ent{display:grid;grid-template-columns:1fr auto;gap:2px 8px;text-align:left;width:100%;background:transparent;border:1px solid transparent;border-radius:8px;padding:7px 8px;cursor:pointer;color:var(--ink);font:inherit}
+.ent:hover{background:var(--chip)}
+.ent[aria-current="true"]{border-color:var(--lc);background:var(--chip)}
+.ent .n{font-weight:600;font-size:.9rem}
+.ent .s{grid-column:1;font-size:.75rem;color:var(--muted)}
+.ent .pct{grid-row:1/3;grid-column:2;align-self:center;font:500 .75rem var(--f-mono);color:var(--muted);font-variant-numeric:tabular-nums}
+.ent .mini{grid-column:1/3;height:4px;border-radius:2px;background:var(--line);overflow:hidden}
+.ent .mini i{display:block;height:100%;background:var(--lc)}
+.lF{--lc:var(--arch)} .lD{--lc:var(--face)}
+.tag.rr{background:var(--chip);color:var(--ink);border:1px solid var(--line)}
+
+.card{background:var(--surface);border:1px solid var(--line);border-top:5px solid var(--lc);border-radius:12px;padding:18px;display:grid;gap:14px;min-width:0}
+.card-top{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px;align-items:baseline}
+.card-top h2{font-size:1.35rem}
+.tag{font:500 .7rem var(--f-mono);letter-spacing:.06em;text-transform:uppercase;padding:3px 8px;border-radius:999px;background:var(--chip);color:var(--muted)}
+.tag.lo{color:var(--lc)}
+.tag.hy{background:var(--hy-bg);color:var(--hy-ink);border:1px solid var(--hy-line)}
+.boxes{display:flex;gap:4px;flex-wrap:wrap}
+.boxes i{width:18px;height:6px;border-radius:3px;background:var(--line)}
+.boxes i.done-ok{background:var(--ok)} .boxes i.done-bad{background:var(--bad)} .boxes i.cur{background:var(--lc)}
+.q{font:600 1.08rem/1.45 var(--f-body);margin:0}
+.hint{font-size:.8rem;color:var(--muted);margin:0}
+.opts{display:grid;gap:8px}
+.opt{display:grid;grid-template-columns:auto 1fr;gap:10px;align-items:start;text-align:left;width:100%;font:inherit;color:var(--ink);background:var(--bg);border:1.5px solid var(--line);border-radius:10px;padding:10px 12px;cursor:pointer}
+.opt:hover:not([disabled]){border-color:var(--lc)}
+.opt .k{font:500 .75rem var(--f-mono);color:var(--muted);border:1px solid var(--line);border-radius:5px;padding:1px 6px;margin-top:1px}
+.opt.sel{border-color:var(--lc);background:var(--chip)}
+.opt.right{border-color:var(--ok);background:var(--ok-bg)}
+.opt.wrong{border-color:var(--bad);background:var(--bad-bg)}
+.opt.missed{border-color:var(--ok);border-style:dashed}
+.opt[disabled]{cursor:default}
+.ordered{display:grid;gap:6px;counter-reset:ord;padding:0;margin:0;list-style:none;min-height:44px;border:1.5px dashed var(--line);border-radius:10px;padding:8px}
+.ordered li{counter-increment:ord;display:grid;grid-template-columns:auto 1fr;gap:8px;align-items:center;background:var(--chip);border-radius:8px;padding:7px 10px;cursor:pointer}
+.ordered li::before{content:counter(ord);font:500 .78rem var(--f-mono);color:var(--lc)}
+.ordered li.right{background:var(--ok-bg)} .ordered li.wrong{background:var(--bad-bg)}
+.ordered .empty{color:var(--muted);font-size:.85rem;padding:4px}
+/* ---------- Review ---------- */
+.rvw{margin-top:14px}
+.rvw-bar{position:sticky;top:0;z-index:8;background:var(--bg);border-bottom:1px solid var(--line);padding:10px 0;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.rvw-bar .seg{display:flex;gap:2px;background:var(--chip);border:1px solid var(--line);border-radius:9px;padding:3px}
+.rvw-bar .seg button{background:transparent;border:0;border-radius:7px;padding:6px 12px;font:inherit;font-size:13.5px;color:var(--muted);cursor:pointer}
+.rvw-bar .seg button[aria-pressed="true"]{background:var(--surface);color:var(--ink);font-weight:600;box-shadow:0 1px 2px rgba(0,0,0,.08)}
+#rvwQ{flex:1 1 180px;min-width:140px;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:7px 10px;font:inherit;font-size:14px;color:inherit}
+#rvwCount{font-family:var(--f-mono);font-size:11px;color:var(--muted);white-space:nowrap}
+.rvw-toc{display:flex;flex-wrap:wrap;gap:6px;margin:12px 0 2px}
+.rvw-toc a{font-size:12.5px;text-decoration:none;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:4px 10px}
+.rvw-toc a:hover{color:var(--ink);border-color:var(--muted)}
+.rvw-body{max-width:none}
+.rsec{padding:6px 0 10px;scroll-margin-top:64px}
+.rsec.hide{display:none}
+.rh{font-family:var(--f-display);font-size:1.5rem;font-weight:650;margin:26px 0 4px;padding-bottom:6px;border-bottom:2px solid var(--acc)}
+.rsh{font-family:var(--f-display);font-size:1.12rem;font-weight:650;margin:18px 0 4px}
+.rvw-body p{margin:8px 0;line-height:1.62}
+ul.rlist{margin:8px 0;padding-left:1.15em;display:grid;gap:5px}
+ul.rlist li{line-height:1.55}
+.rtbl{overflow-x:auto;margin:12px 0;border:1px solid var(--line);border-radius:10px;background:var(--surface)}
+.rtbl table{border-collapse:collapse;width:100%;font-size:14px}
+.rtbl th,.rtbl td{text-align:left;vertical-align:top;padding:8px 11px;border-bottom:1px solid var(--line)}
+.rtbl thead th{background:var(--chip);font-family:var(--f-mono);font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);white-space:nowrap}
+.rtbl tbody tr:last-child td{border-bottom:0}
+.rtbl td b{font-weight:600}
+.rseq{margin:12px 0;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 14px 12px 10px}
+.rseq ol{margin:0;padding-left:1.3em;display:grid;gap:7px}
+.rseq li{line-height:1.55;padding-left:2px}
+.rseq li b{color:var(--acc)}
+.cgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(330px,1fr));gap:10px;margin:12px 0;align-items:start}
+.cgrid>details{margin:0}
+details.cx{margin:11px 0;border-radius:9px;border:1px solid var(--line);background:var(--surface);overflow:hidden}
+details.cx>summary{list-style:none;cursor:pointer;display:flex;align-items:baseline;gap:9px;padding:9px 12px;border-left:3px solid var(--line);font-size:14px}
+details.cx>summary::-webkit-details-marker{display:none}
+details.cx>summary::after{content:"+";margin-left:auto;font-family:var(--f-mono);font-size:14px;color:var(--muted);line-height:1}
+details.cx[open]>summary::after{content:"\2013"}
+details.cx>summary .lbl{font-family:var(--f-mono);font-size:10px;letter-spacing:.11em;text-transform:uppercase;font-weight:700;white-space:nowrap}
+details.cx>summary .pk{color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1}
+details.cx[open]>summary .pk{display:none}
+details.cx .cbody{padding:2px 13px 12px;line-height:1.56;font-size:14.6px;border-left:3px solid var(--line)}
+details.cx .cbody b{font-weight:600}
+details.rrule>summary,details.rrule .cbody{border-left-color:var(--acc)}
+details.rtrap>summary,details.rtrap .cbody{border-left-color:var(--bad)}
+details.rmem>summary,details.rmem .cbody{border-left-color:var(--mem)}
+details.rrule>summary .lbl{color:var(--acc)} details.rtrap>summary .lbl{color:var(--bad)} details.rmem>summary .lbl{color:var(--mem)}
+details.rhy{background:var(--hy-bg);border-color:var(--hy-line);color:var(--hy-ink)}
+details.rhy>summary,details.rhy .cbody{border-left-color:var(--hy-line)}
+details.rhy>summary .lbl{color:var(--hy-ink);opacity:.9}
+details.rhy>summary .pk,details.rhy>summary::after{color:var(--hy-ink);opacity:.75}
+.rvw-empty{display:none;text-align:center;color:var(--muted);border:1px dashed var(--line);border-radius:10px;padding:28px;margin-top:16px}
+.rvw-empty.on{display:block}
+.rvw[data-lec="F"]{--acc:var(--arch)} .rvw[data-lec="D"]{--acc:var(--face)}
+@media print{
+  header,.bar,.main,.rvw-bar,.rvw-toc,.rvw-empty{display:none!important}
+  .rvw{margin:0}
+  body{background:#fff}
+  .rsec{break-before:page;break-inside:auto}
+  .rsec:first-of-type{break-before:auto}
+  .rtbl,.rseq,details.cx{break-inside:avoid}
+  details.cx>summary::after{display:none}
+  .cgrid{grid-template-columns:1fr 1fr}
+}
+.fb .ans{font-size:.95rem}
+.fbexp{display:grid;gap:8px}
+.fbexp p{margin:0;line-height:1.6}
+.fbnotes{list-style:none;margin:2px 0 0;padding:0;display:grid;gap:6px}
+.fbnotes li{font-size:.9rem;line-height:1.5;color:var(--muted);padding-left:10px;border-left:2px solid var(--line)}
+.fbnotes li b{color:var(--ink);font-weight:600}
+.fbpearl{margin-top:2px;background:var(--hy-bg);border:1px solid var(--hy-line);border-left-width:3px;border-radius:9px;padding:9px 12px;font-size:.92rem;line-height:1.5;color:var(--hy-ink)}
+.fbpearl b{display:block;font:700 .66rem var(--f-mono);letter-spacing:.14em;text-transform:uppercase;color:var(--hy-line);margin-bottom:3px}
+.fb{border-radius:10px;padding:12px 14px;display:grid;gap:6px}
+.fb.ok{background:var(--ok-bg)} .fb.bad{background:var(--bad-bg)}
+.fb .v{font-weight:700}
+.fb.ok .v{color:var(--ok)} .fb.bad .v{color:var(--bad)}
+.fb ol{margin:0;padding-left:1.2em}
+.actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:space-between;align-items:center}
+.timer{font:500 .8rem var(--f-mono);color:var(--muted);font-variant-numeric:tabular-nums}
+.done{display:grid;gap:10px;text-align:left}
+
+.lo-grid{display:grid;gap:6px}
+.lo-tile{display:grid;grid-template-columns:auto 1fr auto;gap:8px;align-items:center;text-align:left;width:100%;background:transparent;border:1px solid var(--line);border-radius:8px;padding:6px 8px;cursor:pointer;color:var(--ink);font:inherit}
+.lo-tile:hover{border-color:var(--lc)}
+.lo-tile .id{font:500 .72rem var(--f-mono);color:var(--lc);white-space:nowrap}
+.lo-tile .t{font-size:.78rem;line-height:1.3}
+.lo-tile .dot{width:12px;height:12px;border-radius:50%;background:var(--line)}
+.dot.s-o{background:var(--once)} .dot.s-m{background:var(--bad)} .dot.s-M{background:var(--ok)}
+.legend{display:flex;flex-wrap:wrap;gap:10px;font-size:.72rem;color:var(--muted)}
+.legend span{display:inline-flex;gap:5px;align-items:center}
+.legend i{width:10px;height:10px;border-radius:50%;display:inline-block;background:var(--line)}
+.legend i.o{background:var(--once)} .legend i.m{background:var(--bad)} .legend i.M{background:var(--ok)}
+footer{color:var(--muted);font-size:.8rem;border-top:1px solid var(--line);padding-top:12px}
+@media (prefers-reduced-motion: no-preference){ .opt,.ent,.lo-tile{transition:border-color .12s, background .12s} }
+</style>
+
+<div class="wrap">
+<header>
+  <div>
+    <p class="meta">HoyaDocs · Block 5 · Hematology · HEM08</p>
+    <h1>HEM08 Coagulation Builder</h1>
+    <p class="lede">Coagulation disorders, LO by LO: build each structure box by box, then drill what you miss. Boxes tagged Rapid Review test the LO Rapid Review and Master Review checklists.</p>
+  </div>
+  <div class="hdr-actions">
+    <button class="btn primary" id="reviewBtn" type="button" aria-pressed="false">Review</button>
+    <button class="btn" id="themeBtn" type="button">Theme: auto</button>
+    <button class="btn" id="resetBtn" type="button">Reset progress</button>
+  </div>
+</header>
+
+<div class="bar">
+  <div class="seg" role="group" aria-label="Mode">
+    <span class="lab">Mode</span>
+    <button type="button" data-mode="build" aria-pressed="true">Build</button>
+    <button type="button" data-mode="drill" aria-pressed="false">Drill</button>
+  </div>
+  <div class="seg" role="group" aria-label="Lecture scope" id="scopeSeg">
+    <span class="lab">Scope</span>
+    <button type="button" data-scope="all" aria-pressed="true">All</button>
+    <button type="button" data-scope="F" aria-pressed="false">LO1–3 Normal coagulation</button>
+    <button type="button" data-scope="D" aria-pressed="false">LO4–7 Bleeding &amp; clotting</button>
+  </div>
+  <div class="seg" role="group" aria-label="Focus" id="focusSeg">
+    <span class="lab">Focus</span>
+    <button type="button" data-rr="0" aria-pressed="true">All boxes</button>
+    <button type="button" data-rr="1" aria-pressed="false">Rapid Review only</button>
+  </div>
+  <div class="stats" aria-live="polite">
+    <div class="stat"><b id="sScore">0</b><span>Score</span></div>
+    <div class="stat"><b id="sStreak">0</b><span>Streak</span></div>
+    <div class="stat"><b id="sAcc">—</b><span>Accuracy</span></div>
+    <div class="stat"><b id="sBoxes">0</b><span>Boxes mastered</span></div>
+    <div class="stat"><b id="sLos">0/7</b><span>LOs mastered</span></div>
+  </div>
+</div>
+
+<div class="main">
+  <aside class="panel side" aria-label="Structures">
+    <h2>Structures</h2>
+    <div id="entList"></div>
+  </aside>
+  <section class="card" id="card" aria-live="polite"></section>
+  <aside class="panel map" aria-label="Learning objective mastery map">
+    <h2>LO mastery map</h2>
+    <div class="legend"><span><i></i>untested</span><span><i class="m"></i>missed</span><span><i class="o"></i>got it once</span><span><i class="M"></i>mastered</span></div>
+
+    <p class="hint">Tap an LO to drill just that objective. Mastered = right twice in a row.</p>
+    <div class="lo-grid" id="loGrid"></div>
+  </aside>
+</div>
+
+<div class="rvw" id="rvw" data-lec="F" hidden>
+  <div class="rvw-bar">
+    <div class="seg" id="rvwTabs" role="group" aria-label="Lecture">
+      <button type="button" data-l="F" aria-pressed="true">LO1–3 Normal coagulation</button>
+      <button type="button" data-l="D" aria-pressed="false">LO4–7 Bleeding &amp; clotting</button>
+    </div>
+    <input id="rvwQ" type="search" placeholder="Search this review" autocomplete="off" aria-label="Search the review">
+    <span id="rvwCount"></span>
+    <button class="btn" type="button" id="rvwAll" aria-pressed="false">Expand all</button>
+    <button class="btn" type="button" id="rvwPrint">Print</button>
+    <button class="btn primary" type="button" id="rvwClose">Back to the game</button>
+  </div>
+  <nav class="rvw-toc" id="rvwToc" aria-label="Contents"></nav>
+  <div class="rvw-body" id="rvwBody"></div>
+  <div class="rvw-empty" id="rvwEmpty">Nothing in this lecture matches that search.</div>
+</div>
+
+
+<footer>HoyaDocs · HEM08 Coagulation Builder · Updated October 7, 2026 · Revision 1.0. Yellow “HY” tags mark high-yield points, including Step 1. “Rapid Review” tags mark boxes built from the LO Rapid Review checklists.</footer>
+</div>
+
+<script>
+/* ================= LEARNING OBJECTIVES ================= */
+var LOS = {"1": "Normal hemostasis, thrombin, and endothelial pro- and anticoagulant features", "2": "Cascade factors; intrinsic and extrinsic pathways in practice (PT, aPTT)", "3": "Plasmin and fibrinolysis", "4": "Using coagulation labs to evaluate a coagulopathy", "5": "Hemophilia A and B: pathogenesis, presentation, complications, outcome", "6": "von Willebrand disease vs hemophilia A", "7": "Factor V Leiden: mechanism and clinical consequences"};
+var LOLEC = {"1": "F", "2": "F", "3": "F", "4": "D", "5": "D", "6": "D", "7": "D"};
+var LECS = [{"k": "F", "n": "LO1–3 Normal coagulation", "c": "arch"}, {"k": "D", "n": "LO4–7 Bleeding & clotting", "c": "face"}];
+var E = [{"id": "hemo", "lec": "A", "name": "Hemostasis & thrombin", "sub": "4 stages · thrombin’s jobs", "b": [{"lo": "1", "rr": true, "t": "o", "q": "Put the stages of hemostasis in order.", "a": ["Vasoconstriction", "Primary hemostasis: platelet plug", "Secondary hemostasis: fibrin mesh", "Fibrinolysis and repair"], "w": "Platelets are the sandbags (primary), fibrin is the concrete poured over them (secondary), and plasmin is the demolition crew once the wall is rebuilt (fibrinolysis).", "p": "Constrict → plug → fibrin → lyse."}, {"lo": "1", "rr": true, "t": "o", "q": "Put the three phases of secondary hemostasis in order.", "a": ["Extrinsic and intrinsic pathways produce prothrombinase (Xa + Va)", "Prothrombinase converts prothrombin to thrombin", "Thrombin converts soluble fibrinogen to insoluble fibrin"], "w": "Fibrin is the scaffolding that protects the platelet plug from shear stress. Platelets host the clotting complexes on their activated phospholipid surface and keep thrombin generation local.", "p": "Pathways → prothrombinase → thrombin → fibrin."}, {"lo": "1", "q": "Why do platelets matter for SECONDARY hemostasis?", "a": "Their activated surface hosts the clotting complexes and localizes thrombin generation to the injury", "o": ["They secrete tissue factor into plasma", "They synthesize all coagulation factors", "They break down fibrin"], "n": ["Tissue factor is on subendothelial cells and activated endothelium.", "Factors are made by the liver (VIII by endothelium).", "Plasmin breaks down fibrin."], "w": "Negatively charged phospholipid on activated platelets is where tenase and prothrombinase assemble.", "p": "Platelet surface = assembly site for the cascade."}, {"lo": "1", "rr": true, "hy": true, "t": "m", "q": "Select ALL actions of thrombin.", "a": ["Converts fibrinogen to fibrin", "Activates factors V, VIII and XI (positive feedback)", "Activates factor XIII", "Activates platelets through PAR receptors", "Activates protein C when bound to thrombomodulin"], "o": ["Activates plasminogen directly", "Cleaves vWF multimers"], "n": ["tPA and urokinase activate plasminogen.", "That’s ADAMTS13."], "w": "Thrombin is both pro- and anticoagulant: on injured tissue it clots; on intact endothelium it binds thrombomodulin and activates protein C, shutting clotting off at the edge of the injury.", "p": "Thrombin: fibrin, feedback (V, VIII, XI, XIII), platelets, protein C."}, {"lo": "1", "rr": true, "hy": true, "q": "What happens when thrombin binds thrombomodulin on intact endothelium?", "a": "It activates protein C, which inactivates Va and VIIIa", "o": ["It cleaves fibrinogen faster", "It activates factor XIII", "It releases tPA"], "n": ["Thrombomodulin redirects thrombin away from clotting.", "Not the effect.", "Not the effect."], "w": "This switch keeps the clot from spreading beyond the injury.", "p": "Thrombin + thrombomodulin → protein C (anticoagulant)."}, {"lo": "1", "hy": true, "t": "m", "q": "Select ALL drugs that block thrombin DIRECTLY.", "a": ["Argatroban", "Bivalirudin", "Dabigatran"], "o": ["Unfractionated heparin", "Warfarin"], "n": ["Heparin works indirectly by boosting antithrombin.", "Warfarin lowers vitamin K–dependent factor production."], "w": "Dabigatran is the oral direct thrombin inhibitor.", "p": "Direct thrombin inhibitors: argatroban, bivalirudin, dabigatran."}]}, {"id": "endo", "lec": "A", "name": "Endothelium: Teflon vs Velcro", "sub": "Anti- vs procoagulant features", "b": [{"lo": "1", "rr": true, "hy": true, "t": "m", "q": "Select ALL ANTICOAGULANT features of healthy endothelium.", "a": ["Prostacyclin (PGI₂)", "Nitric oxide", "Heparan sulfate", "Thrombomodulin", "TFPI", "tPA"], "o": ["Tissue factor", "PAI-1", "Endothelin"], "n": ["Procoagulant (starts the extrinsic pathway).", "Blocks tPA, favoring clot persistence.", "Vasoconstrictor."], "w": "Healthy endothelium is “Teflon.” Injury flips it to “Velcro”: tissue factor, vWF, PAI-1, endothelin.", "p": "Teflon: PGI₂, NO, heparan sulfate, thrombomodulin, TFPI, tPA."}, {"lo": "1", "rr": true, "t": "m", "q": "Select ALL PROCOAGULANT features of injured endothelium.", "a": ["Tissue factor expression", "vWF release from Weibel-Palade bodies", "PAI-1 release", "Endothelin (vasoconstriction)", "Exposed collagen"], "o": ["Prostacyclin", "ADPase"], "n": ["Anti-platelet.", "Breaks down ADP (anti-platelet)."], "w": "Injury = “Velcro.”", "p": "Velcro: TF, vWF, PAI-1, endothelin."}, {"lo": "1", "rr": true, "q": "How does heparan sulfate on endothelium prevent clotting?", "a": "It activates antithrombin, which neutralizes thrombin and Xa", "o": ["It blocks TF–VIIa directly", "It converts plasminogen to plasmin", "It inactivates Va and VIIIa"], "n": ["That’s TFPI.", "That’s tPA.", "That’s activated protein C."], "w": "Heparin drugs mimic this.", "p": "Heparan sulfate → antithrombin."}, {"lo": "1", "rr": true, "q": "Which endothelial product blocks the TF–VIIa complex?", "a": "TFPI (tissue factor pathway inhibitor)", "o": ["Thrombomodulin", "Prostacyclin", "PAI-1"], "n": ["Redirects thrombin to protein C.", "Inhibits platelets.", "Inhibits tPA."], "w": "TFPI shuts down the start of the extrinsic pathway.", "p": "TFPI blocks TF–VIIa."}, {"lo": "1", "q": "Which endothelial products block platelet aggregation?", "a": "Prostacyclin, nitric oxide and ADPase", "o": ["Tissue factor and vWF", "PAI-1 and endothelin", "Thrombomodulin and TFPI"], "n": ["Procoagulant.", "Pro-clot.", "Anticoagulant but act on the cascade, not platelets."], "w": "PGI₂ and NO also vasodilate; ADPase breaks down ADP released by platelets.", "p": "Anti-platelet: PGI₂, NO, ADPase."}]}, {"id": "casc", "lec": "A", "name": "The cascade", "sub": "Factors · vitamin K · pathways", "b": [{"lo": "2", "rr": true, "hy": true, "q": "Which coagulation factor is NOT made exclusively by hepatocytes?", "a": "Factor VIII (endothelial cells, especially liver sinusoids)", "o": ["Factor VII", "Fibrinogen", "Factor IX"], "n": ["Hepatocytes.", "Hepatocytes.", "Hepatocytes."], "w": "This is why factor VIII can be normal or high in liver disease while other factors fall.", "p": "All factors from liver except VIII."}, {"lo": "2", "rr": true, "hy": true, "t": "m", "q": "Select ALL vitamin K–dependent proteins.", "a": ["Factor II", "Factor VII", "Factor IX", "Factor X", "Protein C", "Protein S"], "o": ["Factor VIII", "Factor V", "Antithrombin"], "n": ["Not vitamin K–dependent.", "Not vitamin K–dependent.", "Not vitamin K–dependent."], "w": "Vitamin K enables γ-carboxylation of glutamate residues so the factors bind Ca²⁺ and phospholipid. “1972” = factors 10, 9, 7, 2.", "p": "Vitamin K: II, VII, IX, X, C, S (“1972”)."}, {"lo": "2", "rr": true, "q": "How does the extrinsic pathway start in the body?", "a": "Tissue factor exposed by injury binds VIIa; TF–VIIa activates factor X", "o": ["Factor XII is activated on glass", "Thrombin activates factor XI", "Kallikrein activates factor VII"], "n": ["That’s the lab contact activation of the intrinsic pathway.", "Feedback amplification, not initiation.", "Not the mechanism."], "w": "“Extrinsic” because it needs something outside plasma (tissue damage). This is how clotting starts in vivo. TF–VIIa also activates IX.", "p": "In vivo start: TF + VIIa."}, {"lo": "2", "rr": true, "t": "o", "q": "Put the intrinsic pathway in order.", "a": ["Factor XII activated by kallikrein on negatively charged surfaces", "XIIa activates XI", "XIa activates IX", "IXa + VIIIa (tenase) activates X"], "w": "“Intrinsic” because in a test tube only factors already in blood are needed. In the body it mainly amplifies thrombin generation.", "p": "XII → XI → IX + VIII → X."}, {"lo": "2", "rr": true, "q": "What is the prothrombinase complex?", "a": "Xa + Va + Ca²⁺ on phospholipid", "o": ["IXa + VIIIa", "TF + VIIa", "Thrombin + thrombomodulin"], "n": ["That’s tenase.", "That’s the extrinsic initiator.", "That activates protein C."], "w": "Prothrombinase converts prothrombin (II) to thrombin (IIa). Thrombin converts fibrinogen to fibrin; XIIIa cross-links it.", "p": "Tenase = IXa + VIIIa. Prothrombinase = Xa + Va."}, {"lo": "2", "hy": true, "q": "A patient has a markedly prolonged aPTT but has never bled, even after surgery. Most likely deficiency?", "a": "Factor XII", "o": ["Factor VIII", "Factor IX", "Factor XI"], "n": ["Hemophilia A bleeds.", "Hemophilia B bleeds.", "Hemophilia C bleeds after trauma."], "w": "Factor XII is needed for the test-tube contact pathway but not for hemostasis in the body.", "p": "↑↑ aPTT + no bleeding = factor XII deficiency."}, {"lo": "2", "hy": true, "q": "An infant has delayed bleeding from the umbilical stump; PT and aPTT are normal. Which deficiency?", "a": "Factor XIII", "o": ["Factor VII", "Factor VIII", "Factor XII"], "n": ["Would prolong PT.", "Would prolong aPTT.", "Prolongs aPTT without bleeding."], "w": "PT and aPTT stop at fibrin formation, before cross-linking, so they’re normal in factor XIII deficiency.", "p": "Umbilical bleeding + normal PT/aPTT = factor XIII."}]}, {"id": "ptptt", "lec": "A", "name": "PT & aPTT", "sub": "What each measures · what prolongs it", "b": [{"lo": "2", "rr": true, "hy": true, "q": "Which test measures the EXTRINSIC and common pathway, and which drug does it monitor?", "a": "PT / INR; warfarin", "o": ["aPTT; warfarin", "PT; heparin", "aPTT; heparin"], "n": ["aPTT is intrinsic.", "PT doesn’t monitor heparin.", "aPTT does monitor heparin, but it measures the intrinsic pathway."], "w": "“WEPT”: Warfarin, Extrinsic, PT. “HIP”: Heparin, Intrinsic, PTT.", "p": "WEPT and HIP."}, {"lo": "2", "rr": true, "t": "m", "q": "Select ALL causes of a prolonged PT.", "a": ["Liver disease", "DIC", "Vitamin K deficiency", "Warfarin", "Factor VII deficiency"], "o": ["Hemophilia A", "Factor XII deficiency"], "n": ["Isolated aPTT.", "Isolated aPTT."], "w": "PT measures VII, X, V, II and fibrinogen.", "p": "PT ↑: liver, DIC, vitamin K, warfarin, VII."}, {"lo": "2", "rr": true, "t": "m", "q": "Select ALL causes of a prolonged aPTT.", "a": ["Heparin", "Factor VIII, IX or XI deficiency", "Factor XII deficiency", "Lupus anticoagulant", "Acquired factor VIII inhibitor"], "o": ["Factor VII deficiency", "Factor XIII deficiency"], "n": ["Isolated PT.", "Normal PT and aPTT."], "w": "aPTT measures XII, XI, IX, VIII, X, V, II and fibrinogen.", "p": "aPTT ↑: heparin, VIII/IX/XI/XII, inhibitors."}, {"lo": "2", "rr": true, "hy": true, "q": "Why does the PT rise FIRST with warfarin, vitamin K deficiency or early liver failure?", "a": "Factor VII has the shortest half-life", "o": ["Factor VIII is made only in the liver", "Factor II has the shortest half-life", "The aPTT is insensitive to all factors"], "n": ["VIII is the one not made in hepatocytes.", "Prothrombin has the longest half-life.", "Not true."], "w": "As production stops, factor VII falls first, prolonging the PT before the aPTT.", "p": "VII shortest half-life → PT first."}, {"lo": "2", "hy": true, "t": "m", "q": "Select ALL causes of vitamin K deficiency.", "a": ["Newborns not given vitamin K at birth", "Broad-spectrum antibiotics", "Fat malabsorption (cystic fibrosis, celiac, biliary obstruction)"], "o": ["Iron deficiency", "Hemophilia A"], "n": ["Unrelated.", "Unrelated."], "w": "Newborns: sterile gut, low placental transfer, low vitamin K in breast milk → give IM vitamin K at birth. ↑ PT first, then ↑ aPTT. Correct with vitamin K (slow) or FFP / PCC (fast).", "p": "Newborn + antibiotics + fat malabsorption → vitamin K deficiency."}, {"lo": "2", "q": "A patient on warfarin has an INR of 7 and is bleeding. Fastest reversal?", "a": "4-factor prothrombin complex concentrate plus IV vitamin K", "o": ["Oral vitamin K alone", "Protamine sulfate", "Platelet transfusion"], "n": ["Too slow for active bleeding.", "Reverses heparin.", "Platelets aren’t the problem."], "w": "Warfarin lowers II, VII, IX, X (and proteins C, S). PCC replaces them immediately; IV vitamin K gives a lasting effect.", "p": "Warfarin bleed → PCC + IV vitamin K."}]}, {"id": "fib", "lec": "A", "name": "Plasmin & fibrinolysis", "sub": "tPA · brakes · D-dimer · drugs", "b": [{"lo": "3", "rr": true, "t": "o", "q": "Put fibrinolysis in order.", "a": ["Plasminogen binds fibrin in the clot", "tPA (or urokinase) converts plasminogen to plasmin", "Plasmin cuts cross-linked fibrin", "D-dimer and other degradation products are released"], "w": "Plasmin also cleaves fibrinogen and factors V and VIII.", "p": "tPA → plasmin → fibrin → D-dimer."}, {"lo": "3", "rr": true, "t": "m", "q": "Select ALL natural brakes on fibrinolysis.", "a": ["PAI-1 (blocks tPA)", "α2-Antiplasmin (inactivates free plasmin)"], "o": ["Urokinase", "Antithrombin"], "n": ["Activates plasminogen.", "Inhibits thrombin and Xa; acts on the cascade, not fibrinolysis."], "w": "PAI-1 rises in obesity and inflammation, favoring clot persistence.", "p": "Brakes: PAI-1 (tPA), α2-antiplasmin (plasmin)."}, {"lo": "3", "rr": true, "hy": true, "q": "Why does D-dimer rise in DIC but not when plasmin breaks down fibrinogen alone?", "a": "D-dimer comes only from fibrin cross-linked by factor XIIIa", "o": ["Fibrinogen is never cleaved by plasmin", "D-dimer is made by the liver in DIC", "D-dimer comes from platelet breakdown"], "n": ["Plasmin does cleave fibrinogen (to other fragments).", "Not true.", "Not true."], "w": "D-dimer proves a clot formed and is being lysed. It is very sensitive but not specific: a normal D-dimer rules out DVT/PE in low-risk patients; it rises in DIC, PE, DVT, surgery, pregnancy and cancer.", "p": "Normal D-dimer rules out VTE (low risk)."}, {"lo": "3", "rr": true, "q": "How do alteplase and tranexamic acid differ?", "a": "Alteplase (tPA) dissolves clots; tranexamic acid blocks plasminogen binding to fibrin and protects clots", "o": ["Both dissolve clots", "Both block thrombin", "Alteplase protects clots; tranexamic acid dissolves them"], "n": ["TXA protects clots.", "Neither is a thrombin inhibitor.", "Reversed."], "w": "Thrombolytics (alteplase, tenecteplase, reteplase) are used in stroke, MI and massive PE; main risk is intracranial bleeding (reverse with aminocaproic acid or cryoprecipitate). Antifibrinolytics (TXA, aminocaproic acid) are used for mucosal bleeding, dental work in hemophilia/vWD and trauma.", "p": "tPA dissolves; TXA protects."}, {"lo": "3", "q": "A hemophilia patient needs a tooth extraction. Why add tranexamic acid?", "a": "Saliva is rich in fibrinolytic activity; TXA protects the clot in the mouth", "o": ["TXA replaces factor VIII", "TXA raises platelet count", "TXA activates protein C"], "n": ["Not a factor.", "Not its action.", "Not its action."], "w": "Antifibrinolytics block plasminogen’s lysine-binding sites.", "p": "Mouth bleeds → tranexamic acid."}]}, {"id": "eval", "lec": "B", "name": "Evaluating a bleeder", "sub": "Bleeding pattern · panel · mixing study", "b": [{"lo": "4", "rr": true, "hy": true, "q": "Which bleeding pattern points to a COAGULATION FACTOR problem?", "a": "Deep, delayed bleeding into joints and muscles without petechiae", "o": ["Immediate bleeding with petechiae and nosebleeds", "Heavy menses and gum bleeding", "Petechiae on the legs"], "n": ["Platelet/vWF pattern.", "Platelet/vWF pattern.", "Platelet pattern."], "w": "Platelets/vWF: skin and mucosa, immediate, petechiae (ITP, vWD, BSS, Glanzmann). Factors: joints, muscles, retroperitoneum, delayed re-bleeding, no petechiae (hemophilia, vitamin K deficiency, warfarin).", "p": "Mucocutaneous = platelets/vWF. Deep/delayed = factors."}, {"lo": "4", "rr": true, "hy": true, "q": "An isolated prolonged aPTT CORRECTS with a 1:1 mix of normal plasma. What does this mean?", "a": "Factor deficiency", "o": ["Inhibitor", "Platelet dysfunction", "Vitamin K deficiency"], "n": ["An inhibitor would also block the normal plasma’s factors.", "Doesn’t affect aPTT.", "Would prolong PT first."], "w": "Normal plasma supplies the missing factor. Next: factor VIII, IX, XI assays (and vWF).", "p": "Corrects = deficiency. Doesn’t = inhibitor."}, {"lo": "4", "rr": true, "t": "m", "q": "Select ALL causes of a prolonged aPTT that does NOT correct on mixing.", "a": ["Acquired factor VIII inhibitor", "Lupus anticoagulant", "Heparin contamination"], "o": ["Hemophilia A (no inhibitor)", "Factor XI deficiency"], "n": ["Corrects (deficiency).", "Corrects (deficiency)."], "w": "Inhibitors neutralize the normal plasma’s factors or phospholipid.", "p": "No correction = inhibitor (FVIII antibody, lupus anticoagulant, heparin)."}, {"lo": "4", "rr": true, "t": "m", "q": "Select ALL causes of BOTH prolonged PT and aPTT.", "a": ["DIC", "Liver disease", "Vitamin K deficiency (later)", "Supratherapeutic warfarin", "Common-pathway factor deficiency (X, V, II, fibrinogen)"], "o": ["Hemophilia A", "Factor VII deficiency"], "n": ["aPTT only.", "PT only."], "w": "PT only: factor VII deficiency, early warfarin, early vitamin K deficiency or liver disease.", "p": "Both ↑: DIC, liver, vitamin K, warfarin, common pathway."}, {"lo": "4", "rr": true, "hy": true, "q": "A patient has a prolonged aPTT that doesn’t correct on mixing, recurrent DVTs and two miscarriages. Explanation?", "a": "Lupus anticoagulant (antiphospholipid syndrome): prolongs aPTT in vitro, causes clots in vivo", "o": ["Hemophilia A", "Factor XII deficiency", "Vitamin K deficiency"], "n": ["Mixing would correct, and it causes bleeding.", "Mixing would correct; no clots.", "Would prolong PT; no clots."], "w": "Lupus anticoagulant binds the phospholipid the test needs, prolonging the aPTT, but promotes thrombosis in the body.", "p": "Lupus anticoagulant: long aPTT, clots."}, {"lo": "4", "rr": true, "q": "A bleeding patient has normal platelets, PT and aPTT. What should you consider?", "a": "Platelet function or vWF problem (or factor XIII deficiency)", "o": ["Hemophilia A", "Vitamin K deficiency", "DIC"], "n": ["Prolongs aPTT.", "Prolongs PT.", "Abnormal everything."], "w": "Next: bleeding time / PFA-100, vWF antigen and activity, aggregation studies, factor XIII.", "p": "Normal PT/aPTT + bleeding → platelet function, vWD, XIII."}, {"lo": "4", "rr": true, "hy": true, "q": "A 2-month-old boy bruises when touched, has pink urine and had prolonged umbilical stump bleeding. aPTT 100 s, PT normal. Most likely diagnosis?", "a": "Hemophilia A", "o": ["Thrombocytopenia", "Acquired hemophilia", "Factor VII deficiency"], "n": ["Wouldn’t prolong the aPTT.", "Unlikely in a young infant; problem present since birth.", "Would prolong PT."], "w": "Bleeding since birth with isolated ↑ aPTT in a boy → most likely FVIII deficiency (A is 5× more common than B). Next: mixing study (corrects), factor VIII and IX assays, vWF, maternal carrier testing.", "p": "Infant boy + isolated ↑ aPTT = hemophilia A."}]}, {"id": "hemA", "lec": "B", "name": "Hemophilia: genetics & presentation", "sub": "VIII vs IX · X-linked · severity", "b": [{"lo": "5", "rr": true, "hy": true, "q": "Which factors are deficient in hemophilia A and B?", "a": "A: factor VIII · B: factor IX", "o": ["A: IX · B: VIII", "A: XI · B: IX", "A: VIII · B: XI"], "n": ["Reversed.", "XI is hemophilia C.", "XI is hemophilia C."], "w": "“A = Eight, B = Nine”: after seven comes 8; before ten comes 9. B = Christmas disease (Christmas factor IX). Both break the tenase complex.", "p": "A = VIII, B = IX, C = XI."}, {"lo": "5", "rr": true, "t": "m", "q": "Select ALL correct statements about hemophilia A and B epidemiology.", "a": ["X-linked recessive", "About 1 in 5,000 male births", "Together >90% of congenital bleeding disorders that come to attention", "Hemophilia A is about 5× more common than B"], "o": ["Autosomal dominant", "Equally common in females"], "n": ["That’s vWD.", "Almost all patients are male."], "w": "A and B are clinically identical.", "p": "1/5,000 males; A ≈5× B."}, {"lo": "5", "rr": true, "t": "m", "q": "Select ALL ways a FEMALE can have hemophilia.", "a": ["Carrier mother and affected father", "Turner syndrome (45,XO)", "Extreme lyonization"], "o": ["Inheriting one affected X from her mother only, with normal X-inactivation", "Autosomal inheritance"], "n": ["She’d be a carrier.", "Hemophilia A/B are X-linked."], "w": "Skewed X-inactivation can switch off most normal X’s.", "p": "Female hemophilia: two bad X’s, one X, or skewed lyonization."}, {"lo": "5", "rr": true, "q": "About what fraction of hemophilia cases arise from new mutations, and what explains it?", "a": "About one-third; the Haldane hypothesis", "o": ["About 1%; founder effect", "About two-thirds; consanguinity", "None; all are inherited"], "n": ["Too low.", "Too high.", "Many have no family history."], "w": "For a lethal X-linked disorder to persist, about ⅓ of cases must come from new mutations, so a negative family history doesn’t exclude hemophilia.", "p": "⅓ new mutations → no family history."}, {"lo": "5", "rr": true, "q": "Which features describe hemophilia C?", "a": "Factor XI deficiency, autosomal, bleeding mainly after trauma or surgery", "o": ["Factor IX deficiency, X-linked, spontaneous joint bleeds", "Factor XII deficiency, no bleeding", "Factor VIII inhibitor in older adults"], "n": ["That’s hemophilia B.", "Not hemophilia C.", "That’s acquired hemophilia A."], "w": "Affects males and females equally; more common in Ashkenazi Jewish populations.", "p": "Hemophilia C = XI, autosomal."}, {"lo": "5", "rr": true, "hy": true, "q": "How is hemophilia severity graded by factor activity?", "a": "Severe <1% · moderate 1–5% · mild 5–40%", "o": ["Severe <1% · moderate 5–75% · mild 1–5%", "Severe <10% · moderate 10–50% · mild 50–100%", "Severe <0.1% · moderate 0.1–1% · mild 1–5%"], "n": ["Trap: mild and moderate are swapped (one practice explanation did this). Boards use <1 / 1–5 / 5–40.", "Not the standard.", "Not the standard."], "w": "Severe: spontaneous joint and muscle bleeds, diagnosed in infancy (circumcision, crawling). Moderate: bleeds with minor trauma. Mild: bleeds only with major trauma or surgery, may be diagnosed in adulthood.", "p": "<1 · 1–5 · 5–40."}, {"lo": "5", "rr": true, "t": "m", "q": "Select ALL classic presentations of hemophilia.", "a": ["Hemarthroses with a repeatedly bleeding “target joint”", "Deep muscle hematomas (e.g., iliopsoas)", "Prolonged bleeding after circumcision or dental work", "Hematuria", "Intracranial hemorrhage"], "o": ["Petechiae", "Heavy menses as the main symptom in boys"], "n": ["Platelets are normal; no petechiae.", "Mucocutaneous pattern fits vWD."], "w": "ICH is the leading cause of bleeding death.", "p": "Hemophilia: joints, muscles, delayed bleeding, no petechiae."}, {"lo": "5", "rr": true, "t": "m", "q": "Select ALL lab findings in hemophilia A.", "a": ["Prolonged aPTT", "Normal PT", "Normal platelet count and bleeding time", "Mixing study corrects", "Low factor VIII"], "o": ["Low vWF antigen", "Prolonged bleeding time"], "n": ["vWF is normal.", "Normal in hemophilia."], "w": "Isolated ↑ aPTT that corrects = deficiency; factor assays name it.", "p": "Hemophilia: ↑ aPTT only."}, {"lo": "5", "rr": true, "q": "A woman’s father has hemophilia A; her husband is unaffected. Risk for her children?", "a": "Each son 50% affected; each daughter 50% carrier, none affected", "o": ["All sons affected", "Each son 25% affected", "No risk; it skips generations"], "n": ["She has one affected X.", "Each son has a 50% chance of her affected X.", "Doesn’t skip; she is an obligate carrier."], "w": "Daughters of affected men are obligate carriers.", "p": "Carrier mom: 50% of sons affected."}]}, {"id": "hemB", "lec": "B", "name": "Hemophilia: complications & treatment", "sub": "Arthropathy · inhibitors · emicizumab", "b": [{"lo": "5", "rr": true, "hy": true, "q": "An 11-year-old boy with affected male relatives has platelets 228,000, PT 13 s, PTT 52 s that corrects with mixing. Without therapy, which complication is most likely?", "a": "Hemarthroses", "o": ["Conjunctival petechiae", "Hemolysis", "Splenomegaly"], "n": ["Petechiae = platelet disorders.", "Not a feature.", "Not a feature."], "w": "Repeated joint bleeds → iron deposits → synovitis → cartilage destruction → deformity, ankylosis, chronic pain (hemophilic arthropathy).", "p": "Untreated hemophilia → crippling arthropathy."}, {"lo": "5", "rr": true, "hy": true, "q": "A boy with severe hemophilia A stops responding to factor VIII, and his aPTT no longer corrects on mixing. Why?", "a": "He developed an alloantibody inhibitor against infused factor VIII", "o": ["His liver stopped making factor VIII", "He developed vitamin K deficiency", "He developed thrombocytopenia"], "n": ["Factor VIII isn’t made by hepatocytes, and the mixing result points to an inhibitor.", "Would prolong PT.", "Wouldn’t change mixing."], "w": "Inhibitors occur in about 25–30% of severe hemophilia A. Options: bypassing agents (recombinant VIIa, activated PCC), emicizumab, immune tolerance induction.", "p": "Factor stops working + mixing fails → inhibitor."}, {"lo": "5", "rr": true, "q": "How does emicizumab work?", "a": "Bispecific antibody bridging IXa and X, mimicking factor VIII", "o": ["Releases stored vWF and FVIII", "Blocks plasminogen binding to fibrin", "Replaces factor IX"], "n": ["Desmopressin.", "Tranexamic acid.", "Factor IX concentrate."], "w": "Used in hemophilia A with or without inhibitors.", "p": "Emicizumab = FVIII mimic (IXa–X bridge)."}, {"lo": "5", "rr": true, "hy": true, "q": "Which patient benefits from desmopressin (DDAVP)?", "a": "Mild hemophilia A (and type 1 vWD)", "o": ["Severe hemophilia B", "Any hemophilia with inhibitors", "Factor XIII deficiency"], "n": ["DDAVP doesn’t release factor IX.", "Inhibitors neutralize released FVIII.", "Not relevant."], "w": "DDAVP releases stored FVIII and vWF from endothelium (Weibel-Palade bodies). Mild hemophilia A + dental extraction: DDAVP + tranexamic acid can avoid factor concentrate.", "p": "DDAVP: mild A, type 1 vWD; not B."}, {"lo": "5", "rr": true, "t": "m", "q": "Select ALL appropriate parts of hemophilia management.", "a": ["Recombinant factor replacement (on demand or prophylaxis)", "Tranexamic acid for mucosal bleeding", "Avoiding aspirin, NSAIDs and IM injections", "Gene therapy in selected patients"], "o": ["Routine platelet transfusion", "Warfarin for joint pain"], "n": ["Platelets are normal.", "Anticoagulants worsen bleeding."], "w": "Prophylaxis prevents joint damage; with modern care, life expectancy is near normal.", "p": "Prophylaxis prevents arthropathy."}, {"lo": "5", "q": "Why were HIV and hepatitis C common in older hemophilia patients?", "a": "Transmission through plasma-derived factor concentrates before recombinant products", "o": ["Hemophilia causes immunodeficiency", "Factor VIII deficiency predisposes to viral infection", "Frequent joint surgery"], "n": ["Not true.", "Not true.", "Not the main reason."], "w": "Recombinant and virally inactivated products have largely eliminated this risk.", "p": "Historical: HIV/HCV from plasma-derived factor."}, {"lo": "5", "q": "A 68-year-old woman with no prior bleeding develops large bruises and a thigh hematoma. aPTT 78 s, PT normal, no correction on mixing, FVIII 2%. Diagnosis?", "a": "Acquired hemophilia A (autoantibody against FVIII)", "o": ["Congenital hemophilia A", "Lupus anticoagulant", "von Willebrand disease"], "n": ["New bleeding at 68 points to acquired disease.", "Causes clots, not bleeding.", "Mixing would correct."], "w": "Occurs in older adults, postpartum women, autoimmune disease and cancer. Treat bleeding with bypassing agents; suppress the antibody with steroids, rituximab.", "p": "New bleeder + ↑ aPTT not correcting + low VIII = acquired hemophilia."}, {"lo": "5", "q": "A hemophilia patient has hip pain, a flexed hip and numbness over the anterior thigh. Explanation?", "a": "Iliopsoas hematoma compressing the femoral nerve", "o": ["Septic arthritis", "Avascular necrosis", "Lumbar disc herniation"], "n": ["Fever and joint effusion expected.", "Not typical.", "Doesn’t fit the bleeding context."], "w": "Large muscle hematomas can cause compartment syndrome and nerve compression.", "p": "Iliopsoas bleed → femoral nerve palsy."}]}, {"id": "vwd", "lec": "B", "name": "von Willebrand disease", "sub": "vWF’s two jobs · types · vs hemophilia A", "b": [{"lo": "6", "rr": true, "hy": true, "t": "m", "q": "Select ALL functions of von Willebrand factor.", "a": ["Bridges exposed collagen to platelet GPIb (adhesion)", "Supports platelet-to-platelet interactions", "Carries and protects factor VIII in plasma"], "o": ["Cross-links fibrin", "Activates protein C"], "n": ["That’s factor XIIIa.", "That’s thrombin–thrombomodulin."], "w": "Low vWF → mucocutaneous bleeding (adhesion) and low FVIII (its bodyguard is missing), so the aPTT may rise.", "p": "vWF: platelet glue + FVIII bodyguard."}, {"lo": "6", "rr": true, "q": "Where is vWF made and stored?", "a": "Endothelial cells (Weibel-Palade bodies) and megakaryocytes (platelet α granules)", "o": ["Hepatocytes only", "Platelet dense granules", "Kidney tubular cells"], "n": ["Not hepatocytes.", "Dense granules hold ADP, Ca²⁺, serotonin.", "Not a source."], "w": "DDAVP releases vWF from Weibel-Palade bodies.", "p": "vWF: Weibel-Palade bodies + α granules."}, {"lo": "6", "rr": true, "q": "Which statement about von Willebrand disease is correct?", "a": "Most common inherited bleeding disorder; mostly autosomal dominant", "o": ["Rare; X-linked recessive", "Most common; autosomal recessive only", "Affects only males"], "n": ["That describes hemophilia.", "Type 3 is recessive; most are dominant.", "Affects both sexes."], "w": "About 1% of people; many mild cases are never diagnosed. Family history is often subtle (a parent who bled a lot after wisdom teeth).", "p": "vWD: most common, AD, both sexes."}, {"lo": "6", "rr": true, "hy": true, "q": "Match the vWD type: near-total absence of vWF with very low FVIII and joint bleeds like hemophilia.", "a": "Type 3 (autosomal recessive)", "o": ["Type 1", "Type 2B", "Type 2N"], "n": ["Partial quantitative, mild–moderate, most common (≈75%).", "Qualitative; can cause thrombocytopenia.", "Qualitative; can’t bind FVIII (mimics hemophilia A) but vWF is present."], "w": "Type 1 = partial ↓ quantity (AD, DDAVP-responsive). Type 2 = quality defects. Type 3 = absent (AR, most severe).", "p": "Type 1 quantity · type 2 quality · type 3 absent."}, {"lo": "6", "rr": true, "t": "m", "q": "Select ALL lab findings expected in von Willebrand disease.", "a": ["Normal platelet count", "Normal PT", "Prolonged bleeding time / PFA-100", "Low vWF antigen and ristocetin cofactor activity", "Reduced ristocetin aggregation corrected by normal plasma"], "o": ["Isolated prolonged PT", "Giant platelets"], "n": ["PT is normal.", "That’s Bernard-Soulier."], "w": "aPTT is normal or ↑ (from low FVIII).", "p": "vWD: ↑ bleeding time, ↓ vWF, ↓ ristocetin; PT normal."}, {"lo": "6", "rr": true, "hy": true, "q": "A 12-year-old girl’s first periods lasted 8–10 days; she had nosebleeds and bruises easily. Her father re-bled after wisdom-teeth extraction. aPTT, PT and platelets normal. Diagnosis?", "a": "von Willebrand disease", "o": ["Hemophilia A", "ITP", "Factor XII deficiency"], "n": ["X-linked, very rare in girls, deep bleeding, and aPTT normal argues against.", "Platelet count is normal.", "Doesn’t cause bleeding."], "w": "Mucocutaneous bleeding with normal counts and a likely affected father (autosomal). Tests: vWF antigen, activity (ristocetin cofactor), FVIII. Treat with desmopressin, tranexamic acid and/or hormonal therapy; check iron.", "p": "Teen girl + menorrhagia + bleeding father = vWD."}, {"lo": "6", "rr": true, "hy": true, "t": "m", "q": "Select ALL features that distinguish vWD from hemophilia A.", "a": ["Autosomal dominant vs X-linked", "Affects both sexes vs almost always males", "Mucocutaneous vs deep joint/muscle bleeding", "Prolonged vs normal bleeding time", "Low vWF vs normal vWF"], "o": ["Prolonged PT in vWD", "Low platelet count in hemophilia"], "n": ["PT is normal in both.", "Platelets are normal in both."], "w": "FVIII: ↓ or normal in vWD; ↓↓ in hemophilia A. DDAVP helps type 1 vWD and mild hemophilia A.", "p": "vWD vs hemophilia A: inheritance, bleeding site, bleeding time."}, {"lo": "6", "rr": true, "q": "A 23-year-old woman bruises easily. Platelets 229,000, PT 12 s, PTT 38 s (mildly long) corrected by mixing; ristocetin aggregation markedly reduced. Most likely consequence?", "a": "Excessive bleeding after oral surgery", "o": ["Recurrent DVT", "Marrow aplasia", "Increased bacterial infections"], "n": ["vWD isn’t prothrombotic.", "Not a stem cell disorder.", "Not a WBC disorder."], "w": "Mildly ↑ PTT from low FVIII; mucosal and surgical bleeding expected.", "p": "vWD → dental and surgical bleeding."}, {"lo": "6", "rr": true, "q": "What is the treatment of choice for type 1 vWD before a procedure?", "a": "Desmopressin (DDAVP)", "o": ["Recombinant factor IX", "Warfarin", "Platelet transfusion"], "n": ["Not relevant.", "Worsens bleeding.", "Not first line."], "w": "vWF-containing concentrates for type 3, severe disease or major surgery; tranexamic acid; hormonal therapy for heavy menses; avoid NSAIDs/aspirin.", "p": "Type 1 vWD → DDAVP."}]}, {"id": "fvl", "lec": "B", "name": "Factor V Leiden & anticoagulants", "sub": "Protein C/S · antithrombin · APC resistance", "b": [{"lo": "7", "rr": true, "hy": true, "q": "What does activated protein C (with protein S) do?", "a": "Cleaves and inactivates factors Va and VIIIa", "o": ["Inhibits thrombin and Xa", "Blocks TF–VIIa", "Activates plasminogen"], "n": ["That’s antithrombin.", "That’s TFPI.", "That’s tPA."], "w": "Protein C is activated by thrombin–thrombomodulin on intact endothelium. Protein S is its cofactor. Both are vitamin K–dependent.", "p": "APC + S → inactivate Va, VIIIa."}, {"lo": "7", "rr": true, "q": "What does antithrombin inhibit, and what boosts it?", "a": "Thrombin (IIa) and Xa (also IXa, XIa); heparin boosts it about 1,000-fold", "o": ["Va and VIIIa; warfarin boosts it", "Plasmin; tPA boosts it", "TF–VIIa; vitamin K boosts it"], "n": ["That’s protein C.", "Not antithrombin.", "That’s TFPI."], "w": "Heparin works only by enhancing antithrombin.", "p": "Antithrombin + heparin → IIa, Xa."}, {"lo": "7", "rr": true, "hy": true, "q": "What is the molecular defect in Factor V Leiden?", "a": "G1691A → R506Q at an APC cleavage site in factor V", "o": ["Loss of factor V production", "G20210A in the prothrombin gene", "Deletion of the protein C gene"], "n": ["FV Leiden is a gain-of-function resistance, not loss.", "That’s the prothrombin mutation (2nd most common thrombophilia).", "That’s protein C deficiency."], "w": "Arginine → glutamine at one of 3 APC cleavage sites in Va.", "p": "FV Leiden = R506Q."}, {"lo": "7", "rr": true, "hy": true, "t": "o", "q": "Put the Factor V Leiden mechanism in order.", "a": ["R506Q mutation at the APC cleavage site", "Activated protein C can’t cleave factor Va (APC resistance)", "Va stays active, so more prothrombinase forms", "More thrombin is generated", "Venous thrombosis"], "w": "“Leiden = Lasting”: Va lasts longer because protein C can’t switch it off. It’s a gain of function (resistant to its brake).", "p": "APC resistance → more thrombin → clots."}, {"lo": "7", "rr": true, "q": "Factor V has both pro- and anticoagulant roles. Which pair is correct?", "a": "Pro: Va binds Xa (prothrombinase) · Anti: Va is the target APC cleaves to limit thrombin", "o": ["Pro: Va activates protein C · Anti: Va binds Xa", "Pro: Va cross-links fibrin · Anti: Va activates tPA", "Va has only procoagulant roles"], "n": ["Reversed and wrong.", "Not factor V functions.", "It interacts with APC, limiting thrombus size."], "w": "FV deficiency can cause bleeding, but resistant FV (Leiden) causes thrombosis.", "p": "FV: prothrombinase + APC target."}, {"lo": "7", "rr": true, "hy": true, "q": "Which epidemiology fits Factor V Leiden?", "a": "Most common inherited thrombophilia in Europeans; heterozygous 3–8% (low risk), homozygous ≈1 in 5,000 (high risk)", "o": ["Most common in East Asians", "Heterozygous carriers have the highest risk", "Found in about 50% of people"], "n": ["Extremely rare in Asian populations.", "Homozygotes have higher risk.", "Far too high."], "w": "5.2% of Caucasian Americans, 2.2% Hispanic, 1.2% African American, 1.25% Native American, 0.45% Asian American.", "p": "FV Leiden: 5.2% of Caucasian Americans."}, {"lo": "7", "rr": true, "hy": true, "q": "A 26-year-old woman on oral contraceptives develops a DVT; her mother had a PE at 40. Her plasma shows APC resistance. Defect, and how is it confirmed?", "a": "Factor V Leiden; confirm by PCR genetic testing", "o": ["Antithrombin deficiency; check aPTT on heparin", "Protein C deficiency; check for skin necrosis", "Lupus anticoagulant; mixing study"], "n": ["Wouldn’t cause APC resistance.", "Not APC resistance.", "Not APC resistance."], "w": "Estrogen is a second hit. Stop the OCP and anticoagulate; no routine anticoagulation for asymptomatic carriers; prophylaxis in high-risk situations.", "p": "APC resistance assay → PCR."}, {"lo": "7", "rr": true, "t": "m", "q": "Select ALL typical sites or features of thrombosis in Factor V Leiden.", "a": ["Deep vein thrombosis", "Pulmonary embolism", "Portal and mesenteric veins", "Cerebral venous sinuses", "Young age at first clot"], "o": ["Arterial MI as the main presentation", "Bleeding after dental extraction"], "n": ["FV Leiden is mainly a venous thrombophilia.", "It’s prothrombotic."], "w": "Risk multiplies with estrogen, pregnancy, surgery, immobility and cancer (Virchow’s triad). Also linked to recurrent pregnancy loss.", "p": "Young + venous clot in odd site → thrombophilia."}, {"lo": "7", "hy": true, "q": "A man started on warfarin without a heparin bridge develops painful dark skin patches on day 3. Deficiency and mechanism?", "a": "Protein C deficiency; protein C falls before II, IX, X, causing transient hypercoagulability", "o": ["Antithrombin deficiency; heparin resistance", "Factor V Leiden; APC resistance", "Vitamin K excess"], "n": ["Not the mechanism of skin necrosis.", "Not the classic cause.", "Not relevant."], "w": "Warfarin-induced skin necrosis: microvascular thrombosis in skin. Prevent by bridging with heparin.", "p": "Warfarin skin necrosis = protein C deficiency."}, {"lo": "7", "hy": true, "q": "A patient with nephrotic syndrome and a DVT barely changes his aPTT despite escalating heparin. Why, and what next?", "a": "Antithrombin deficiency (lost in urine); use a direct thrombin inhibitor such as argatroban", "o": ["Factor V Leiden; add warfarin", "Protein C deficiency; give vitamin K", "Lupus anticoagulant; stop anticoagulation"], "n": ["Doesn’t cause heparin resistance.", "Doesn’t cause heparin resistance.", "Not the explanation."], "w": "Heparin works only through antithrombin.", "p": "Heparin resistance = antithrombin deficiency."}, {"lo": "7", "q": "Which inherited thrombophilia is the second most common and raises prothrombin levels?", "a": "Prothrombin G20210A", "o": ["Factor V Leiden", "Protein S deficiency", "Antithrombin deficiency"], "n": ["Most common.", "Less common; protein deficiency.", "Less common; heparin resistance."], "w": "Think thrombophilia in young patients with DVT/PE, unusual sites, recurrent clots or strong family history.", "p": "#1 FV Leiden, #2 prothrombin G20210A."}]}];
+
+
+(function(){
+"use strict";
+var KEY="hd-hem08-coag-builder-v1";
+var S={box:{},score:0,streak:0,best:0,tot:0,right:0,theme:"auto"};
+function load(){try{var j=JSON.parse(localStorage.getItem(KEY)||"null");if(j&&j.box)S=Object.assign(S,j);}catch(e){}}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}}
+load();
+
+var ALL=[]; E.forEach(function(e){e.b.forEach(function(b,i){b.id=e.id+"."+i;b.ent=e;ALL.push(b);});});
+function st(b){var r=S.box[b.id];return r?r.s:"u";}
+var rrOnly=false, mode="build", scope="all", loFilter=null, curEnt=null, idx=0, cur=null, answered=false, results={}, lastId=null, t0=0, tick=null;
+
+function shuffle(a){a=a.slice();for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=a[i];a[i]=a[j];a[j]=t;}return a;}
+function esc(s){return String(s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];});}
+function inScope(b){return (scope==="all"||b.ent.lec===scope)&&(!loFilter||b.lo===loFilter)&&(!rrOnly||b.rr);}
+
+/* ---------- theme ---------- */
+var themeBtn=document.getElementById("themeBtn");
+function applyTheme(){var r=document.documentElement;if(S.theme==="auto")r.removeAttribute("data-theme");else r.setAttribute("data-theme",S.theme);themeBtn.textContent="Theme: "+S.theme;}
+themeBtn.onclick=function(){S.theme={auto:"light",light:"dark",dark:"auto"}[S.theme];applyTheme();save();};
+applyTheme();
+document.getElementById("resetBtn").onclick=function(){
+  var b=this; if(b.dataset.confirm){S.box={};S.score=S.streak=S.tot=S.right=0;save();b.textContent="Reset progress";delete b.dataset.confirm;renderAll();next();return;}
+  b.dataset.confirm="1";b.textContent="Tap again to reset";setTimeout(function(){if(b.dataset.confirm){delete b.dataset.confirm;b.textContent="Reset progress";}},3000);
+};
+
+/* ---------- stats / side / map ---------- */
+function loStatus(lo){var bs=ALL.filter(function(b){return b.lo===lo;});var ss=bs.map(st);
+  var m=ss.filter(function(x){return x==="M";}).length;
+  if(m===bs.length)return{s:"M",m:m,n:bs.length};
+  if(ss.indexOf("m")>=0)return{s:"m",m:m,n:bs.length};
+  if(ss.some(function(x){return x!=="u";}))return{s:"o",m:m,n:bs.length};
+  return{s:"u",m:m,n:bs.length};}
+function renderStats(){
+  document.getElementById("sScore").textContent=S.score;
+  document.getElementById("sStreak").textContent=S.streak;
+  document.getElementById("sAcc").textContent=S.tot?Math.round(100*S.right/S.tot)+"%":"—";
+  document.getElementById("sBoxes").textContent=ALL.filter(function(b){return st(b)==="M";}).length+"/"+ALL.length;
+  var los=Object.keys(LOS);document.getElementById("sLos").textContent=los.filter(function(l){return loStatus(l).s==="M";}).length+"/"+los.length;
+}
+function renderSide(){
+  var h="";LECS.forEach(function(L){if(scope!=="all"&&scope!==L.k)return;
+    h+='<p class="lec-h l'+L.k+'" style="color:var(--lc)">HEM08 · '+esc(L.n)+'</p>';
+    E.filter(function(e){return e.lec===L.k;}).forEach(function(e){
+      var m=e.b.filter(function(b){return st(b)==="M";}).length,p=Math.round(100*m/e.b.length);
+      h+='<button type="button" class="ent l'+e.lec+'" data-ent="'+e.id+'"'+(curEnt===e&&mode==="build"?' aria-current="true"':'')+'><span class="n">'+esc(e.name)+'</span><span class="pct">'+m+'/'+e.b.length+'</span><span class="s">'+esc(e.sub)+'</span><span class="mini"><i style="width:'+p+'%"></i></span></button>';
+    });});
+  var el=document.getElementById("entList");el.innerHTML=h;
+  el.querySelectorAll(".ent").forEach(function(b){b.onclick=function(){setMode("build");startEnt(E.filter(function(e){return e.id===b.dataset.ent;})[0]);};});
+}
+function renderMap(){
+  var h="";Object.keys(LOS).forEach(function(lo){var lec=LOLEC[lo];if(scope!=="all"&&scope!==lec)return;var s=loStatus(lo);
+    h+='<button type="button" class="lo-tile l'+lec+'" data-lo="'+lo+'"'+(loFilter===lo?' style="border-color:var(--lc)"':'')+'><span class="id">'+(lo.slice(-1)==="X"?"Extra":"LO "+lo)+'</span><span class="t">'+esc(LOS[lo])+'</span><span class="dot s-'+s.s+'" title="'+s.m+'/'+s.n+' mastered"></span></button>';});
+  var g=document.getElementById("loGrid");g.innerHTML=h;
+  g.querySelectorAll(".lo-tile").forEach(function(b){b.onclick=function(){loFilter=(loFilter===b.dataset.lo?null:b.dataset.lo);setMode("drill");};});
+}
+function renderAll(){renderStats();renderSide();renderMap();}
+
+/* ---------- flow ---------- */
+function setMode(m){mode=m;document.querySelectorAll("[data-mode]").forEach(function(b){b.setAttribute("aria-pressed",String(b.dataset.mode===m));});
+  if(m==="build"){loFilter=null;if(rrOnly){rrOnly=false;setRR();}renderAll();if(!curEnt||!inScope(curEnt.b[0]))startEnt(firstEnt());else show();}
+  else{renderAll();next();}}
+function firstEnt(){var es=E.filter(function(e){return scope==="all"||e.lec===scope;});
+  for(var i=0;i<es.length;i++){if(es[i].b.some(function(b){return st(b)!=="M";}))return es[i];}return es[0];}
+document.querySelectorAll("[data-mode]").forEach(function(b){b.onclick=function(){setMode(b.dataset.mode);};});
+function setRR(){document.querySelectorAll("[data-rr]").forEach(function(x){x.setAttribute("aria-pressed",String((x.dataset.rr==="1")===rrOnly));});}
+document.querySelectorAll("[data-rr]").forEach(function(b){b.onclick=function(){rrOnly=b.dataset.rr==="1";setRR();setMode(rrOnly?"drill":mode);};});
+document.querySelectorAll("[data-scope]").forEach(function(b){b.onclick=function(){scope=b.dataset.scope;loFilter=null;
+  document.querySelectorAll("[data-scope]").forEach(function(x){x.setAttribute("aria-pressed",String(x===b));});
+  if(mode==="build"){curEnt=null;setMode("build");}else setMode("drill");};});
+
+function startEnt(e){curEnt=e;idx=0;results={};renderSide();cur=e.b[0];show();}
+function next(){
+  if(mode==="build"){idx++;if(idx>=curEnt.b.length){finishEnt();return;}cur=curEnt.b[idx];show();return;}
+  var pool=ALL.filter(inScope);if(!pool.length){cur=null;show();return;}
+  var rank={m:0,u:1,o:2,M:3};
+  pool=shuffle(pool).sort(function(a,b){return rank[st(a)]-rank[st(b)];});
+  var best=rank[st(pool[0])];var top=pool.filter(function(b){return rank[st(b)]===best&&b.id!==lastId;});
+  if(best===3)top=pool.filter(function(b){return b.id!==lastId;});
+  cur=(top.length?top:pool)[0];show();
+}
+function finishEnt(){
+  var ok=Object.keys(results).filter(function(k){return results[k];}).length,n=curEnt.b.length;
+  var i=E.indexOf(curEnt),nxt=null;for(var j=1;j<=E.length;j++){var c=E[(i+j)%E.length];if(scope==="all"||c.lec===scope){nxt=c;break;}}
+  var card=document.getElementById("card");card.className="card l"+curEnt.lec;
+  card.innerHTML='<div class="done"><p class="meta">Structure complete</p><h2>'+esc(curEnt.name)+': '+ok+' / '+n+' first try</h2>'+
+   '<p class="hint">'+(ok===n?"Clean build. It will count as mastered after one more clean pass.":"Missed boxes are queued first in Drill mode.")+'</p>'+
+   '<div class="actions"><button class="btn" type="button" id="again">Rebuild '+esc(curEnt.name)+'</button>'+(nxt?'<button class="btn primary" type="button" id="nextEnt">Next: '+esc(nxt.name)+' →</button>':'')+'</div></div>';
+  document.getElementById("again").onclick=function(){startEnt(curEnt);};
+  if(nxt)document.getElementById("nextEnt").onclick=function(){startEnt(nxt);};
+  var ne=document.getElementById("nextEnt");if(ne)ne.focus();
+}
+
+var picks=[];
+function show(){
+  answered=false;picks=[];clearInterval(tick);
+  var card=document.getElementById("card");
+  if(!cur){card.className="card";card.innerHTML='<p class="q">Nothing in this scope yet.</p>';return;}
+  var b=cur,e=b.ent;card.className="card l"+e.lec;
+  var head='<div class="card-top"><div><p class="meta">'+(mode==="build"?"Build · box "+(idx+1)+" of "+e.b.length:"Drill"+(rrOnly?" · Rapid Review":"")+(loFilter?" · LO "+loFilter:""))+'</p><h2>'+esc(e.name)+'</h2></div>'+
+    '<div style="display:flex;gap:6px;flex-wrap:wrap"><span class="tag lo">'+(b.lo.slice(-1)==="X"?"Extra":"LO "+b.lo)+'</span>'+(b.rr?'<span class="tag rr">Rapid Review</span>':'')+(b.hy?'<span class="tag hy">HY</span>':'')+'<span class="timer" id="timer">0.0s</span></div></div>';
+  if(mode==="build"){head+='<div class="boxes" aria-hidden="true">'+e.b.map(function(x,i){var c=i===idx?"cur":(x.id in results?(results[x.id]?"done-ok":"done-bad"):"");return '<i class="'+c+'"></i>';}).join("")+'</div>';}
+  var body='<p class="q">'+esc(b.q)+'</p>';
+  if(!b.t){b._opts=shuffle([b.a].concat(b.o));
+    body+='<div class="opts">'+b._opts.map(function(o,i){return '<button type="button" class="opt" data-i="'+i+'"><span class="k">'+(i+1)+'</span><span>'+esc(o)+'</span></button>';}).join("")+'</div>';}
+  else if(b.t==="m"){b._opts=shuffle(b.a.concat(b.o));
+    body+='<p class="hint">Select all that apply, then check.</p><div class="opts">'+b._opts.map(function(o,i){return '<button type="button" class="opt" aria-pressed="false" data-i="'+i+'"><span class="k">'+(i+1)+'</span><span>'+esc(o)+'</span></button>';}).join("")+'</div>';}
+  else{b._opts=shuffle(b.a);
+    body+='<p class="hint">Tap items in order. Tap a placed item to remove it.</p><ol class="ordered" id="ordList"><li class="empty" style="cursor:default">Your order appears here</li></ol><div class="opts">'+b._opts.map(function(o,i){return '<button type="button" class="opt" data-i="'+i+'"><span class="k">+</span><span>'+esc(o)+'</span></button>';}).join("")+'</div>';}
+  var act='<div id="fb"></div><div class="actions"><span class="hint">'+(b.t?"Enter to check":"Keys 1–"+b._opts.length+" to answer")+'</span><div style="display:flex;gap:8px">'+
+    (mode==="build"?'<button class="btn" type="button" id="skipBtn">Skip structure</button>':'')+
+    (b.t?'<button class="btn primary" type="button" id="checkBtn"'+(b.t==="o"?" disabled":"")+'>Check</button>':'')+
+    '<button class="btn primary" type="button" id="nextBtn" hidden>Next box →</button></div></div>';
+  card.innerHTML=head+body+act;
+  t0=Date.now();tick=setInterval(function(){var t=document.getElementById("timer");if(t)t.textContent=((Date.now()-t0)/1000).toFixed(1)+"s";},100);
+  var opts=card.querySelectorAll(".opt");
+  if(!b.t)opts.forEach(function(o){o.onclick=function(){if(!answered)grade([+o.dataset.i]);};});
+  else if(b.t==="m")opts.forEach(function(o){o.onclick=function(){if(answered)return;var on=o.getAttribute("aria-pressed")!=="true";o.setAttribute("aria-pressed",String(on));o.classList.toggle("sel",on);};});
+  else opts.forEach(function(o){o.onclick=function(){if(answered||o.disabled)return;picks.push(+o.dataset.i);o.disabled=true;o.style.opacity=".4";drawOrd();};});
+  var cb=document.getElementById("checkBtn");if(cb)cb.onclick=function(){if(answered)return;
+    if(b.t==="m"){var sel=[];opts.forEach(function(o){if(o.getAttribute("aria-pressed")==="true")sel.push(+o.dataset.i);});grade(sel);}else grade(picks);};
+  var sk=document.getElementById("skipBtn");if(sk)sk.onclick=function(){var i=E.indexOf(curEnt);for(var j=1;j<=E.length;j++){var c=E[(i+j)%E.length];if(scope==="all"||c.lec===scope){startEnt(c);return;}}};
+  document.getElementById("nextBtn").onclick=function(){lastId=cur.id;next();};
+}
+function drawOrd(){var b=cur,ol=document.getElementById("ordList");
+  ol.innerHTML=picks.length?picks.map(function(i,k){return '<li data-k="'+k+'">'+esc(b._opts[i])+'</li>';}).join(""):'<li class="empty" style="cursor:default">Your order appears here</li>';
+  ol.querySelectorAll("li[data-k]").forEach(function(li){li.onclick=function(){if(answered)return;var k=+li.dataset.k,i=picks[k];picks.splice(k,1);
+    var o=document.querySelector('.opt[data-i="'+i+'"]');o.disabled=false;o.style.opacity="";drawOrd();};});
+  document.getElementById("checkBtn").disabled=picks.length!==b.a.length;}
+
+function grade(sel){
+  answered=true;clearInterval(tick);var b=cur,ok,card=document.getElementById("card"),opts=card.querySelectorAll(".opt");
+  if(!b.t){ok=b._opts[sel[0]]===b.a;opts.forEach(function(o){var t=b._opts[+o.dataset.i];o.disabled=true;if(t===b.a)o.classList.add("right");else if(+o.dataset.i===sel[0])o.classList.add("wrong");});}
+  else if(b.t==="m"){var chosen=sel.map(function(i){return b._opts[i];});ok=chosen.length===b.a.length&&chosen.every(function(c){return b.a.indexOf(c)>=0;});
+    opts.forEach(function(o){var t=b._opts[+o.dataset.i],isA=b.a.indexOf(t)>=0,isS=chosen.indexOf(t)>=0;o.disabled=true;o.classList.remove("sel");
+      if(isA&&isS)o.classList.add("right");else if(isA)o.classList.add("missed");else if(isS)o.classList.add("wrong");});}
+  else{var got=sel.map(function(i){return b._opts[i];});ok=got.every(function(g,k){return g===b.a[k];});
+    document.querySelectorAll("#ordList li[data-k]").forEach(function(li,k){li.classList.add(got[k]===b.a[k]?"right":"wrong");});
+    opts.forEach(function(o){o.disabled=true;});}
+  var r=S.box[b.id]||{n:0,c:0,s:"u"};r.n++;
+  if(ok){r.c++;r.s=r.c>=2?"M":"o";S.streak++;S.best=Math.max(S.best,S.streak);S.right++;S.score+=10+Math.min(S.streak,10);}
+  else{r.c=0;r.s="m";S.streak=0;}
+  S.tot++;S.box[b.id]=r;if(!(b.id in results))results[b.id]=ok;save();
+  var fb='<div class="fb '+(ok?"ok":"bad")+'"><span class="v">'+(ok?"Correct":"Not quite")+'</span>';
+  if(!b.t)fb+='<span class="ans">Answer: <b>'+esc(b.a)+'</b></span>';
+  else if(b.t==="m")fb+='<span class="ans">Answer: <b>'+b.a.map(esc).join(" · ")+'</b></span>';
+  else fb+='<span class="ans">Correct order:</span><ol>'+b.a.map(function(x){return "<li>"+esc(x)+"</li>";}).join("")+'</ol>';
+  fb+='<div class="fbexp">'+String(b.w||"").split(/\n\n+/).filter(Boolean).map(function(t){return '<p>'+esc(t)+'</p>';}).join("")+'</div>';
+  if(b.n&&b.n.length&&b.o&&b.o.length){
+    var rows=b.o.map(function(x,i){return b.n[i]?'<li><b>'+esc(x)+'</b> — '+esc(b.n[i])+'</li>':"";}).join("");
+    if(rows)fb+='<ul class="fbnotes">'+rows+'</ul>';
+  }
+  if(b.p)fb+='<div class="fbpearl"><b>High-yield</b>'+esc(b.p)+'</div>';
+  fb+='</div>';
+  document.getElementById("fb").innerHTML=fb;
+  var cb=document.getElementById("checkBtn");if(cb)cb.hidden=true;
+  var nb=document.getElementById("nextBtn");nb.hidden=false;nb.textContent=(mode==="build"&&idx===curEnt.b.length-1)?"Finish structure →":"Next box →";nb.focus();
+  renderAll();
+}
+document.addEventListener("keydown",function(ev){
+  if(ev.target.tagName==="INPUT"||ev.metaKey||ev.ctrlKey||ev.altKey)return;
+  if(ev.key==="Enter"){var nb=document.getElementById("nextBtn"),cb=document.getElementById("checkBtn");
+    if(nb&&!nb.hidden){ev.preventDefault();nb.click();}else if(cb&&!cb.hidden&&!cb.disabled){ev.preventDefault();cb.click();}return;}
+  var n=parseInt(ev.key,10);if(!cur||answered||isNaN(n))return;var o=document.querySelector('.opt[data-i="'+(n-1)+'"]');if(o&&!o.disabled)o.click();
+});
+
+renderAll();startEnt(firstEnt());
+})();
+
+/* ---------- Review: the compiled version of everything the answers teach ---------- */
+var REVIEW = {"F": "<h3 class=\"rh\">LO1 · Hemostasis, thrombin &amp; endothelium</h3>\n<div class=\"rseq\"><ol><li><b>Vasoconstriction</b> Endothelin, reflex</li><li><b>Primary</b> Platelet plug (vWF, GPIb, GPIIb/IIIa)</li><li><b>Secondary</b> Pathways → prothrombinase (Xa + Va) → thrombin → fibrin scaffold</li><li><b>Fibrinolysis</b> Plasmin trims the clot</li></ol></div>\n<div class=\"rmem\"><b>Dam patch</b>Platelets = sandbags · fibrin = concrete · plasmin = demolition crew.</div>\n<div class=\"rtbl\"><table><thead><tr><th>Thrombin action</th><th>Effect</th></tr></thead><tbody>\n<tr><td>Fibrinogen → fibrin</td><td>Clot scaffold</td></tr><tr><td>Activates V, VIII, XI</td><td>Positive feedback (thrombin burst)</td></tr>\n<tr><td>Activates XIII</td><td>Cross-links fibrin</td></tr><tr><td>Activates platelets (PAR)</td><td>Strongest platelet agonist</td></tr>\n<tr><td>Binds thrombomodulin</td><td>Activates protein C (anticoagulant)</td></tr></tbody></table></div>\n<div class=\"rhy\"><b>Thrombin drugs</b>Direct: argatroban, bivalirudin, dabigatran (oral). Heparin works indirectly via antithrombin.</div>\n<div class=\"rtbl\"><table><thead><tr><th></th><th>Healthy (“Teflon”)</th><th>Injured (“Velcro”)</th></tr></thead><tbody>\n<tr><td>Platelets</td><td>PGI₂, NO, ADPase</td><td>vWF release, exposed collagen</td></tr>\n<tr><td>Coagulation</td><td>Heparan sulfate (antithrombin), thrombomodulin (protein C), TFPI</td><td>Tissue factor</td></tr>\n<tr><td>Fibrinolysis</td><td>tPA</td><td>PAI-1</td></tr><tr><td>Tone</td><td>Dilation (NO, PGI₂)</td><td>Endothelin</td></tr></tbody></table></div>\n<h3 class=\"rh\">LO2 · The cascade, PT &amp; aPTT</h3>\n<p>All factors are made in hepatocytes <b>except VIII</b> (endothelium). Vitamin K (γ-carboxylation): <b>II, VII, IX, X, C, S</b> (“1972”).</p>\n<div class=\"rtbl\"><table><thead><tr><th>Pathway</th><th>Steps</th><th>Test</th></tr></thead><tbody>\n<tr><td><b>Extrinsic</b></td><td>TF + VIIa → X (how clotting starts in vivo)</td><td>PT / INR</td></tr>\n<tr><td><b>Intrinsic</b></td><td>XII (kallikrein, negative surfaces) → XI → IX; IXa + VIIIa (tenase) → X</td><td>aPTT</td></tr>\n<tr><td><b>Common</b></td><td>Xa + Va (prothrombinase) → thrombin → fibrin; XIIIa cross-links</td><td>Both</td></tr></tbody></table></div>\n<div class=\"rtbl\"><table><thead><tr><th></th><th>PT</th><th>aPTT</th></tr></thead><tbody>\n<tr><td>Prolonged by</td><td>Liver disease, DIC, vitamin K deficiency, warfarin, FVII deficiency</td><td>Heparin, VIII/IX/XI/XII deficiency, lupus anticoagulant, acquired FVIII inhibitor</td></tr>\n<tr><td>Monitors</td><td>Warfarin</td><td>Unfractionated heparin</td></tr></tbody></table></div>\n<div class=\"rmem\"><b>WEPT &amp; HIP</b>Warfarin–Extrinsic–PT. Heparin–Intrinsic–PTT. Factor VII has the shortest half-life → PT rises first.</div>\n<div class=\"rtrap\"><b>XII vs XIII</b>XII deficiency: ↑↑ aPTT, no bleeding. XIII deficiency: bleeding (umbilical stump) with normal PT and aPTT.</div>\n<div class=\"rhy\"><b>Vitamin K deficiency</b>Newborns (give IM vitamin K), broad-spectrum antibiotics, fat malabsorption, warfarin. ↑ PT first. Fast reversal: PCC/FFP + IV vitamin K.</div>\n<h3 class=\"rh\">LO3 · Plasmin &amp; fibrinolysis</h3>\n<div class=\"rseq\"><ol><li><b>Plasminogen</b> binds fibrin</li><li><b>tPA / urokinase</b> → plasmin</li><li><b>Plasmin</b> cuts cross-linked fibrin (also fibrinogen, V, VIII)</li><li><b>D-dimer</b> released</li></ol></div>\n<div class=\"rtbl\"><table><thead><tr><th>Molecule / drug</th><th>Role</th></tr></thead><tbody>\n<tr><td>PAI-1</td><td>Blocks tPA (↑ obesity, inflammation)</td></tr><tr><td>α2-Antiplasmin</td><td>Inactivates free plasmin</td></tr>\n<tr><td>Alteplase, tenecteplase, reteplase</td><td>Dissolve clots (stroke, MI, massive PE); bleeding risk</td></tr>\n<tr><td>Tranexamic acid, aminocaproic acid</td><td>Block plasminogen binding → protect clots (menses, dental work, trauma)</td></tr></tbody></table></div>\n<div class=\"rhy\"><b>D-dimer</b>Only from cross-linked fibrin. Sensitive, not specific: normal = rules out VTE in low risk; ↑ in DIC, PE, DVT, surgery, pregnancy, cancer.</div>\n<h3 class=\"rh\">Rapid Review checklist · LO1–LO3</h3>\n<ul class=\"rlist\">\n<li><b>LO1</b> Constrict → plug → fibrin → lyse · pathways → prothrombinase → thrombin → fibrin · thrombin jobs · Teflon vs Velcro</li>\n<li><b>LO2</b> Liver except VIII; vitamin K “1972” · extrinsic (PT), intrinsic (aPTT), common · what prolongs each</li>\n<li><b>LO3</b> tPA → plasmin → D-dimer · PAI-1, α2-antiplasmin · alteplase vs TXA · D-dimer rule-out</li></ul>\n", "D": "<h3 class=\"rh\">LO4 · Evaluating a bleeding patient</h3>\n<div class=\"rtbl\"><table><thead><tr><th></th><th>Platelet / vWF</th><th>Factor</th></tr></thead><tbody>\n<tr><td>Where</td><td>Skin, mucosa: petechiae, nose, gums, menses, GI</td><td>Deep: joints, muscles, retroperitoneum, brain</td></tr>\n<tr><td>When</td><td>Immediate</td><td>Delayed, re-bleeding</td></tr>\n<tr><td>Petechiae</td><td>Yes</td><td>No</td></tr>\n<tr><td>Examples</td><td>ITP, vWD, BSS, Glanzmann</td><td>Hemophilia, vitamin K deficiency, warfarin</td></tr></tbody></table></div>\n<div class=\"rseq\"><ol><li><b>Platelet count</b> Low → ITP, TTP, DIC, marrow</li><li><b>PT + aPTT normal</b> Platelet function, vWD, factor XIII</li><li><b>aPTT only</b> Mixing: corrects = VIII/IX/XI (XII no bleed), vWD 3/2N · doesn’t = FVIII inhibitor, lupus anticoagulant, heparin</li><li><b>PT only</b> FVII, early warfarin / vitamin K / liver</li><li><b>Both</b> DIC, liver, vitamin K, warfarin excess, common-pathway factor</li></ol></div>\n<div class=\"rtbl\"><table><thead><tr><th>Disorder</th><th>Plt</th><th>BT</th><th>PT</th><th>aPTT</th></tr></thead><tbody>\n<tr><td>Hemophilia</td><td>nl</td><td>nl</td><td>nl</td><td>↑</td></tr><tr><td>vWD</td><td>nl</td><td>↑</td><td>nl</td><td>nl/↑</td></tr>\n<tr><td>Vitamin K / warfarin</td><td>nl</td><td>nl</td><td>↑ first</td><td>↑ later</td></tr><tr><td>Heparin</td><td>nl</td><td>nl</td><td>nl/mild ↑</td><td>↑</td></tr>\n<tr><td>Liver disease</td><td>↓</td><td>↑/nl</td><td>↑</td><td>↑</td></tr><tr><td>DIC</td><td>↓</td><td>↑</td><td>↑</td><td>↑</td></tr>\n<tr><td>ITP</td><td>↓</td><td>↑</td><td>nl</td><td>nl</td></tr><tr><td>Lupus anticoagulant</td><td>nl/↓</td><td>nl</td><td>nl</td><td>↑, no correction → clots</td></tr></tbody></table></div>\n<div class=\"rtrap\"><b>Lupus anticoagulant</b>Long aPTT in the tube, thrombosis in the body (DVT, stroke, miscarriage).</div>\n<h3 class=\"rh\">LO5 · Hemophilia A &amp; B</h3>\n<p><b>A = VIII, B = IX</b> (Christmas), C = XI (autosomal, trauma bleeding). A and B: X-linked recessive, ≈1 in 5,000 male births, &gt;90% of congenital bleeding disorders, A ≈5× B, clinically identical; both break tenase.</p>\n<div class=\"rmem\"><b>A = Eight, B = Nine</b>After seven comes 8; before ten comes 9.</div>\n<div class=\"rrule\"><b>Genetics</b>Females: carrier mom + affected dad, Turner, extreme lyonization. ≈⅓ new mutations (Haldane) → no family history. Carrier mother: 50% of sons affected, 50% of daughters carriers.</div>\n<div class=\"rtbl\"><table><thead><tr><th>Severity</th><th>Activity</th><th>Bleeding</th></tr></thead><tbody>\n<tr><td>Severe</td><td>&lt;1%</td><td>Spontaneous joints/muscles; infancy</td></tr><tr><td>Moderate</td><td>1–5%</td><td>Minor trauma</td></tr><tr><td>Mild</td><td>5–40%</td><td>Major trauma/surgery; adulthood</td></tr></tbody></table></div>\n<p>Presentation: hemarthroses (target joint), muscle hematomas (iliopsoas → femoral nerve), delayed bleeding after circumcision/dental work, hematuria, ICH; <b>no petechiae</b>. Labs: ↑ aPTT, normal PT/platelets/BT, mixing corrects, ↓ factor.</p>\n<div class=\"rtbl\"><table><thead><tr><th>Complication</th><th>Note</th></tr></thead><tbody>\n<tr><td>Arthropathy</td><td>Iron → synovitis → cartilage loss → ankylosis</td></tr>\n<tr><td>Inhibitors</td><td>≈25–30% severe A; mixing stops correcting → bypassing agents (rVIIa, aPCC), emicizumab, immune tolerance</td></tr>\n<tr><td>ICH</td><td>Leading bleeding death</td></tr><tr><td>Infections</td><td>Historical HIV/HCV from plasma factor</td></tr></tbody></table></div>\n<div class=\"rhy\"><b>Treatment</b>Factor replacement (prophylaxis prevents arthropathy) · emicizumab (bridges IXa–X) · DDAVP for mild A only · tranexamic acid for mouth bleeds · gene therapy · avoid NSAIDs, IM injections. Acquired hemophilia A: older adult, no correction, low VIII → bypassing agents + steroids/rituximab.</div>\n<h3 class=\"rh\">LO6 · von Willebrand disease vs hemophilia A</h3>\n<p>vWF (endothelium Weibel-Palade bodies + megakaryocyte α granules) does two jobs: <b>adhesion</b> (collagen–GPIb) and <b>carrying FVIII</b>. vWD: most common inherited bleeding disorder (≈1%), mostly AD.</p>\n<div class=\"rtbl\"><table><thead><tr><th>Type</th><th>Defect</th></tr></thead><tbody>\n<tr><td>1 (≈75%)</td><td>Partial ↓ quantity; AD; DDAVP</td></tr><tr><td>2 (A, B, M, N)</td><td>Quality; 2B → thrombocytopenia; 2N mimics hemophilia A</td></tr><tr><td>3</td><td>Absent; AR; very low FVIII, joint bleeds</td></tr></tbody></table></div>\n<div class=\"rtbl\"><table><thead><tr><th>Feature</th><th>vWD</th><th>Hemophilia A</th></tr></thead><tbody>\n<tr><td>Inheritance</td><td>AD</td><td>X-linked</td></tr><tr><td>Who</td><td>Both sexes</td><td>Males</td></tr>\n<tr><td>Bleeding</td><td>Mucocutaneous</td><td>Deep, delayed</td></tr><tr><td>Bleeding time</td><td>↑</td><td>Normal</td></tr>\n<tr><td>aPTT</td><td>nl/↑</td><td>↑</td></tr><tr><td>vWF / ristocetin</td><td>↓ (plasma corrects)</td><td>Normal</td></tr>\n<tr><td>FVIII</td><td>↓/nl</td><td>↓↓</td></tr><tr><td>DDAVP</td><td>Type 1</td><td>Mild only</td></tr></tbody></table></div>\n<div class=\"rhy\"><b>vWD vignette</b>Young woman: heavy periods, nosebleeds, bruising, dental bleeding (her or a parent); normal platelets and PT; ↑ bleeding time; ↓ ristocetin aggregation → desmopressin, TXA, hormonal therapy, check iron.</div>\n<h3 class=\"rh\">LO7 · Factor V Leiden &amp; natural anticoagulants</h3>\n<div class=\"rtbl\"><table><thead><tr><th>Anticoagulant</th><th>Action</th><th>Deficiency clue</th></tr></thead><tbody>\n<tr><td>Protein C (vit K)</td><td>Thrombin–thrombomodulin activate it; APC cleaves Va, VIIIa</td><td>Warfarin skin necrosis</td></tr>\n<tr><td>Protein S (vit K)</td><td>APC cofactor</td><td>Venous thrombosis</td></tr>\n<tr><td>Antithrombin</td><td>Inhibits IIa, Xa (IXa, XIa); heparin ×1,000</td><td>Heparin resistance; nephrotic syndrome</td></tr>\n<tr><td>TFPI</td><td>Blocks TF–VIIa</td><td>—</td></tr></tbody></table></div>\n<div class=\"rseq\"><ol><li><b>G1691A → R506Q</b> at an APC cleavage site in factor V</li><li><b>APC resistance</b> Va can’t be cleaved</li><li><b>More prothrombinase</b> → more thrombin</li><li><b>Venous thrombosis</b> DVT, PE, portal/mesenteric, cerebral sinus; young age</li></ol></div>\n<div class=\"rmem\"><b>Leiden = Lasting</b>Va lasts longer; gain of function (resistant to its brake).</div>\n<p>Most common inherited thrombophilia in Europeans: heterozygous 3–8% (5.2% Caucasian Americans), low risk; homozygous ≈1 in 5,000, high risk. Triggers: estrogen, pregnancy, surgery, immobility, cancer; recurrent pregnancy loss. Dx: APC resistance assay → PCR. Treat clots; avoid estrogen; no routine anticoagulation for carriers.</p>\n<div class=\"rhy\"><b>Thrombophilias</b>FV Leiden (#1) · prothrombin G20210A (#2) · protein C/S deficiency (warfarin skin necrosis) · antithrombin deficiency (heparin doesn’t prolong aPTT). Think of them with young, unusual-site, recurrent or familial clots.</div>\n<h3 class=\"rh\">Rapid Review checklist · LO4–LO7</h3>\n<ul class=\"rlist\">\n<li><b>LO4</b> Mucocutaneous = platelets/vWF; deep = factors · mixing corrects = deficiency · both ↑ = DIC, liver, vitamin K, warfarin; PT only = VII · lupus anticoagulant clots</li>\n<li><b>LO5</b> A = VIII, B = IX, X-linked, 1/5,000, A 5× B · females · ⅓ new · C = XI · &lt;1 / 1–5 / 5–40 · presentation and labs · arthropathy, ICH, inhibitors; factor, emicizumab, DDAVP, TXA</li>\n<li><b>LO6</b> vWF jobs and sources · AD, types 1–3 · labs · vs hemophilia A</li>\n<li><b>LO7</b> Protein C/S, antithrombin · R506Q → APC resistance · epidemiology · young venous clots · APC assay + PCR</li></ul>\n"};
+var RVW_NAME = {"F":"LO1–3 Normal coagulation","D":"LO4–7 Bleeding & clotting"};
+(function(){
+  var panel=document.getElementById("rvw"), body=document.getElementById("rvwBody"),
+      toc=document.getElementById("rvwToc"), q=document.getElementById("rvwQ"),
+      cnt=document.getElementById("rvwCount"), empty=document.getElementById("rvwEmpty"),
+      btn=document.getElementById("reviewBtn"), lec="F", secs=[];
+  var TYPES={rrule:1,rtrap:1,rmem:1,rhy:1};
+  function collapse(sec){
+    [].slice.call(sec.querySelectorAll(".rrule,.rtrap,.rmem,.rhy")).forEach(function(d){
+      var type=d.className.trim(); if(!TYPES[type])return;
+      var lbl=d.querySelector("b"), label=lbl?lbl.textContent:"Note";
+      if(lbl)lbl.parentNode.removeChild(lbl);
+      var det=document.createElement("details"); det.className="cx "+type;
+      var sum=document.createElement("summary");
+      sum.innerHTML='<span class="lbl"></span><span class="pk"></span>';
+      sum.querySelector(".lbl").textContent=label;
+      sum.querySelector(".pk").textContent=d.textContent.replace(/\s+/g," ").trim().slice(0,110);
+      var cb=document.createElement("div"); cb.className="cbody";
+      while(d.firstChild)cb.appendChild(d.firstChild);
+      det.appendChild(sum); det.appendChild(cb);
+      d.parentNode.replaceChild(det,d);
+    });
+    var h=sec.querySelector(".rh"), hys=[].slice.call(sec.querySelectorAll("details.rhy"));
+    if(h&&hys.length){ var ref=h.nextSibling; hys.forEach(function(x){ sec.insertBefore(x,ref); }); }
+    var kids=[].slice.call(sec.children), i=0;
+    while(i<kids.length){
+      if(kids[i].tagName==="DETAILS"){
+        var run=[kids[i]], cls=kids[i].className, j=i+1;
+        while(j<kids.length&&kids[j].tagName==="DETAILS"&&kids[j].className===cls){run.push(kids[j]);j++;}
+        if(run.length>1){
+          var g=document.createElement("div"); g.className="cgrid";
+          sec.insertBefore(g,run[0]); run.forEach(function(x){g.appendChild(x);});
+        }
+        i=j;
+      } else i++;
+    }
+  }
+  function group(){
+    var kids=[].slice.call(body.childNodes), out=[], cur=null;
+    kids.forEach(function(n){
+      if(n.nodeType===1&&n.tagName==="H3"){cur=document.createElement("section");cur.className="rsec";out.push(cur);}
+      if(!cur){cur=document.createElement("section");cur.className="rsec";out.push(cur);}
+      cur.appendChild(n);
+    });
+    body.innerHTML="";
+    out.forEach(function(s,i){ s.id="rs"+i; collapse(s); s._t=s.textContent.toLowerCase(); body.appendChild(s); });
+    return out;
+  }
+  function setAll(open){
+    [].slice.call(body.querySelectorAll("details.cx")).forEach(function(d){d.open=open;});
+    var t=document.getElementById("rvwAll");
+    if(t){t.textContent=open?"Collapse all":"Expand all";t.setAttribute("aria-pressed",String(open));}
+  }
+  function buildToc(){
+    toc.innerHTML=secs.map(function(s){
+      var h=s.querySelector(".rh"); return h?'<a href="#'+s.id+'">'+h.textContent+'</a>':'';
+    }).join("");
+  }
+  function filter(){
+    var terms=q.value.toLowerCase().split(/\s+/).filter(Boolean), n=0;
+    secs.forEach(function(s){
+      var on=terms.every(function(t){return s._t.indexOf(t)!==-1;});
+      s.classList.toggle("hide",!on); if(on)n++;
+    });
+    empty.classList.toggle("on",n===0);
+    cnt.textContent = n===secs.length ? secs.length+" sections" : n+" of "+secs.length;
+    toc.style.display = q.value ? "none" : "";
+  }
+  function load(l){
+    lec=l; panel.setAttribute("data-lec",l);
+    body.innerHTML=REVIEW[l]||"";
+    secs=group(); buildToc(); q.value=""; filter();
+    var t=document.getElementById("rvwAll"); if(t){t.textContent="Expand all";t.setAttribute("aria-pressed","false");}
+  }
+  function open(){
+    document.querySelector(".bar").style.display="none";
+    document.querySelector(".main").style.display="none";
+    panel.hidden=false; if(!secs.length)load(lec);
+    btn.setAttribute("aria-pressed","true");
+    window.scrollTo(0,0); q.focus({preventScroll:true});
+  }
+  function close(){
+    panel.hidden=true;
+    document.querySelector(".bar").style.display="";
+    document.querySelector(".main").style.display="";
+    btn.setAttribute("aria-pressed","false");
+    window.scrollTo(0,0);
+  }
+  btn.onclick=function(){ panel.hidden?open():close(); };
+  document.getElementById("rvwClose").onclick=close;
+  document.getElementById("rvwPrint").onclick=function(){window.print();};
+  var allBtn=document.getElementById("rvwAll");
+  if(allBtn)allBtn.onclick=function(){ setAll(this.getAttribute("aria-pressed")!=="true"); };
+  var reclose=[];
+  window.addEventListener("beforeprint",function(){
+    reclose=[];
+    [].slice.call(body.querySelectorAll("details.cx")).forEach(function(d){ if(!d.open){reclose.push(d);d.open=true;} });
+  });
+  window.addEventListener("afterprint",function(){ reclose.forEach(function(d){d.open=false;}); reclose=[]; });
+  document.getElementById("rvwTabs").onclick=function(e){
+    var b=e.target.closest("button"); if(!b)return;
+    [].forEach.call(this.children,function(c){c.setAttribute("aria-pressed",String(c===b));});
+    load(b.dataset.l); window.scrollTo(0,0);
+  };
+  q.addEventListener("input",filter);
+  document.addEventListener("keydown",function(e){
+    if(e.key==="Escape"&&!panel.hidden){ if(document.activeElement===q&&q.value){q.value="";filter();} else close(); }
+  });
+})();
+
+</script>
