@@ -1,0 +1,556 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HEM27 WBC Disorders Lab Builder</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,600;8..60,700&family=Public+Sans:wght@400;600;700&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+/* Layout: toolbar + stats on top; structure list | question card | LO mastery map. Stacks to one column on phones. */
+:root{
+  --bg:#f3f5f6; --surface:#ffffff; --ink:#18212b; --muted:#5a6570; --line:#dbe0e5; --chip:#eceff2;
+  --arch:#2c55a0; --face:#a3263f; --eye:#2c55a0; --accent:#a3263f;
+  --ok:#1d7a3e; --ok-bg:#e3f4e8; --bad:#b3261e; --bad-bg:#fbe7e5; --once:#b7791f; --once-bg:#fdf1dc; --mem:#c2621a;
+  --hy-bg:#fff6cc; --hy-line:#c9a227; --hy-ink:#4a3a00;
+  --f-display:"Source Serif 4", Georgia, serif; --f-body:"Public Sans", Arial, sans-serif; --f-mono:"IBM Plex Mono", ui-monospace, monospace;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#11161c; --surface:#19212a; --ink:#e6eaee; --muted:#9aa6b2; --line:#2c3642; --chip:#232c36;
+  --arch:#8fb1f0; --face:#f08a9b; --eye:#8fb1f0; --accent:#f08a9b;
+  --ok:#6fd08f; --ok-bg:#16301f; --bad:#f28b82; --bad-bg:#3a1b19; --once:#f0c070; --once-bg:#3a2e12; --mem:#f0a05c;
+  --hy-bg:#3a3110; --hy-line:#b8952a; --hy-ink:#f5e6a8; color-scheme:dark }}
+:root[data-theme="dark"]{
+  --bg:#11161c; --surface:#19212a; --ink:#e6eaee; --muted:#9aa6b2; --line:#2c3642; --chip:#232c36;
+  --arch:#8fb1f0; --face:#f08a9b; --eye:#8fb1f0; --accent:#f08a9b;
+  --ok:#6fd08f; --ok-bg:#16301f; --bad:#f28b82; --bad-bg:#3a1b19; --once:#f0c070; --once-bg:#3a2e12; --mem:#f0a05c;
+  --hy-bg:#3a3110; --hy-line:#b8952a; --hy-ink:#f5e6a8; color-scheme:dark }
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font:15px/1.5 var(--f-body);margin:0}
+.wrap{max-width:1180px;margin:0 auto;padding-inline:16px;padding-block:22px 48px;display:grid;gap:16px}
+h1,h2,h3{font-family:var(--f-display);margin:0;text-wrap:balance;line-height:1.2}
+.meta{font:500 .74rem var(--f-mono);letter-spacing:.07em;text-transform:uppercase;color:var(--muted);margin:0}
+header{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:end;gap:12px}
+header h1{font-size:1.9rem}
+header p.lede{margin:4px 0 0;color:var(--muted);max-width:62ch}
+.btn{font:600 .85rem var(--f-body);background:var(--chip);color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:7px 12px;cursor:pointer}
+.btn:hover{border-color:var(--ink)}
+.btn:focus-visible,.opt:focus-visible,.seg button:focus-visible,.ent:focus-visible,.lo-tile:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.btn.primary{background:var(--accent);color:var(--surface);border-color:var(--accent)}
+.btn[disabled]{opacity:.45;cursor:default}
+.hdr-actions{display:flex;gap:8px;flex-wrap:wrap}
+.wrap{grid-template-columns:minmax(0,1fr)} .rvw{min-width:0}
+
+.bar{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 12px}
+.seg{display:inline-flex;background:var(--chip);border-radius:10px;padding:3px;gap:2px;flex-wrap:wrap}
+.seg button{font:600 .82rem var(--f-body);border:0;background:transparent;color:var(--ink);padding:6px 11px;border-radius:8px;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--surface);box-shadow:0 1px 2px rgba(0,0,0,.12)}
+.seg .lab{font:500 .7rem var(--f-mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);align-self:center;padding:0 6px}
+.stats{display:flex;gap:18px;flex-wrap:wrap}
+.stat b{display:block;font:700 1.15rem var(--f-body);font-variant-numeric:tabular-nums}
+.stat span{font:500 .68rem var(--f-mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+
+.main{display:grid;grid-template-columns:250px minmax(0,1fr) 270px;gap:16px;align-items:start}
+@media (max-width:1000px){ .main{grid-template-columns:minmax(0,1fr)} .side{order:2} .map{order:3} }
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px;display:grid;gap:8px;min-width:0}
+.panel h2{font-size:1rem}
+.lec-h{font:700 .72rem var(--f-body);letter-spacing:.07em;text-transform:uppercase;margin-top:6px}
+.ent{display:grid;grid-template-columns:1fr auto;gap:2px 8px;text-align:left;width:100%;background:transparent;border:1px solid transparent;border-radius:8px;padding:7px 8px;cursor:pointer;color:var(--ink);font:inherit}
+.ent:hover{background:var(--chip)}
+.ent[aria-current="true"]{border-color:var(--lc);background:var(--chip)}
+.ent .n{font-weight:600;font-size:.9rem}
+.ent .s{grid-column:1;font-size:.75rem;color:var(--muted)}
+.ent .pct{grid-row:1/3;grid-column:2;align-self:center;font:500 .75rem var(--f-mono);color:var(--muted);font-variant-numeric:tabular-nums}
+.ent .mini{grid-column:1/3;height:4px;border-radius:2px;background:var(--line);overflow:hidden}
+.ent .mini i{display:block;height:100%;background:var(--lc)}
+.lF{--lc:var(--arch)} .lD{--lc:var(--face)} .lT{--lc:var(--tcol)}
+:root{--tcol:#1d7a5f} @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--tcol:#6fd0b0}} :root[data-theme="dark"]{--tcol:#6fd0b0}
+.tag.rr{background:var(--chip);color:var(--ink);border:1px solid var(--line)}
+
+.card{background:var(--surface);border:1px solid var(--line);border-top:5px solid var(--lc);border-radius:12px;padding:18px;display:grid;gap:14px;min-width:0}
+.card-top{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px;align-items:baseline}
+.card-top h2{font-size:1.35rem}
+.tag{font:500 .7rem var(--f-mono);letter-spacing:.06em;text-transform:uppercase;padding:3px 8px;border-radius:999px;background:var(--chip);color:var(--muted)}
+.tag.lo{color:var(--lc)}
+.tag.hy{background:var(--hy-bg);color:var(--hy-ink);border:1px solid var(--hy-line)}
+.boxes{display:flex;gap:4px;flex-wrap:wrap}
+.boxes i{width:18px;height:6px;border-radius:3px;background:var(--line)}
+.boxes i.done-ok{background:var(--ok)} .boxes i.done-bad{background:var(--bad)} .boxes i.cur{background:var(--lc)}
+.q{font:600 1.08rem/1.45 var(--f-body);margin:0}
+.hint{font-size:.8rem;color:var(--muted);margin:0}
+.opts{display:grid;gap:8px}
+.opt{display:grid;grid-template-columns:auto 1fr;gap:10px;align-items:start;text-align:left;width:100%;font:inherit;color:var(--ink);background:var(--bg);border:1.5px solid var(--line);border-radius:10px;padding:10px 12px;cursor:pointer}
+.opt:hover:not([disabled]){border-color:var(--lc)}
+.opt .k{font:500 .75rem var(--f-mono);color:var(--muted);border:1px solid var(--line);border-radius:5px;padding:1px 6px;margin-top:1px}
+.opt.sel{border-color:var(--lc);background:var(--chip)}
+.opt.right{border-color:var(--ok);background:var(--ok-bg)}
+.opt.wrong{border-color:var(--bad);background:var(--bad-bg)}
+.opt.missed{border-color:var(--ok);border-style:dashed}
+.opt[disabled]{cursor:default}
+.ordered{display:grid;gap:6px;counter-reset:ord;padding:0;margin:0;list-style:none;min-height:44px;border:1.5px dashed var(--line);border-radius:10px;padding:8px}
+.ordered li{counter-increment:ord;display:grid;grid-template-columns:auto 1fr;gap:8px;align-items:center;background:var(--chip);border-radius:8px;padding:7px 10px;cursor:pointer}
+.ordered li::before{content:counter(ord);font:500 .78rem var(--f-mono);color:var(--lc)}
+.ordered li.right{background:var(--ok-bg)} .ordered li.wrong{background:var(--bad-bg)}
+.ordered .empty{color:var(--muted);font-size:.85rem;padding:4px}
+/* ---------- Review ---------- */
+.rvw{margin-top:14px}
+.rvw-bar{position:sticky;top:0;z-index:8;background:var(--bg);border-bottom:1px solid var(--line);padding:10px 0;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.rvw-bar .seg{display:flex;gap:2px;background:var(--chip);border:1px solid var(--line);border-radius:9px;padding:3px}
+.rvw-bar .seg button{background:transparent;border:0;border-radius:7px;padding:6px 12px;font:inherit;font-size:13.5px;color:var(--muted);cursor:pointer}
+.rvw-bar .seg button[aria-pressed="true"]{background:var(--surface);color:var(--ink);font-weight:600;box-shadow:0 1px 2px rgba(0,0,0,.08)}
+#rvwQ{flex:1 1 180px;min-width:140px;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:7px 10px;font:inherit;font-size:14px;color:inherit}
+#rvwCount{font-family:var(--f-mono);font-size:11px;color:var(--muted);white-space:nowrap}
+.rvw-toc{display:flex;flex-wrap:wrap;gap:6px;margin:12px 0 2px}
+.rvw-toc a{font-size:12.5px;text-decoration:none;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:4px 10px}
+.rvw-toc a:hover{color:var(--ink);border-color:var(--muted)}
+.rvw-body{max-width:none}
+.rsec{padding:6px 0 10px;scroll-margin-top:64px}
+.rsec.hide{display:none}
+.rh{font-family:var(--f-display);font-size:1.5rem;font-weight:650;margin:26px 0 4px;padding-bottom:6px;border-bottom:2px solid var(--acc)}
+.rsh{font-family:var(--f-display);font-size:1.12rem;font-weight:650;margin:18px 0 4px}
+.rvw-body p{margin:8px 0;line-height:1.62}
+ul.rlist{margin:8px 0;padding-left:1.15em;display:grid;gap:5px}
+ul.rlist li{line-height:1.55}
+.rtbl{overflow-x:auto;margin:12px 0;border:1px solid var(--line);border-radius:10px;background:var(--surface)}
+.rtbl table{border-collapse:collapse;width:100%;font-size:14px}
+.rtbl th,.rtbl td{text-align:left;vertical-align:top;padding:8px 11px;border-bottom:1px solid var(--line)}
+.rtbl thead th{background:var(--chip);font-family:var(--f-mono);font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);white-space:nowrap}
+.rtbl tbody tr:last-child td{border-bottom:0}
+.rtbl td b{font-weight:600}
+.rseq{margin:12px 0;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 14px 12px 10px}
+.rseq ol{margin:0;padding-left:1.3em;display:grid;gap:7px}
+.rseq li{line-height:1.55;padding-left:2px}
+.rseq li b{color:var(--acc)}
+.cgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(330px,1fr));gap:10px;margin:12px 0;align-items:start}
+.cgrid>details{margin:0}
+details.cx{margin:11px 0;border-radius:9px;border:1px solid var(--line);background:var(--surface);overflow:hidden}
+details.cx>summary{list-style:none;cursor:pointer;display:flex;align-items:baseline;gap:9px;padding:9px 12px;border-left:3px solid var(--line);font-size:14px}
+details.cx>summary::-webkit-details-marker{display:none}
+details.cx>summary::after{content:"+";margin-left:auto;font-family:var(--f-mono);font-size:14px;color:var(--muted);line-height:1}
+details.cx[open]>summary::after{content:"\2013"}
+details.cx>summary .lbl{font-family:var(--f-mono);font-size:10px;letter-spacing:.11em;text-transform:uppercase;font-weight:700;white-space:nowrap}
+details.cx>summary .pk{color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1}
+details.cx[open]>summary .pk{display:none}
+details.cx .cbody{padding:2px 13px 12px;line-height:1.56;font-size:14.6px;border-left:3px solid var(--line)}
+details.cx .cbody b{font-weight:600}
+details.rrule>summary,details.rrule .cbody{border-left-color:var(--acc)}
+details.rtrap>summary,details.rtrap .cbody{border-left-color:var(--bad)}
+details.rmem>summary,details.rmem .cbody{border-left-color:var(--mem)}
+details.rrule>summary .lbl{color:var(--acc)} details.rtrap>summary .lbl{color:var(--bad)} details.rmem>summary .lbl{color:var(--mem)}
+details.rhy{background:var(--hy-bg);border-color:var(--hy-line);color:var(--hy-ink)}
+details.rhy>summary,details.rhy .cbody{border-left-color:var(--hy-line)}
+details.rhy>summary .lbl{color:var(--hy-ink);opacity:.9}
+details.rhy>summary .pk,details.rhy>summary::after{color:var(--hy-ink);opacity:.75}
+.rvw-empty{display:none;text-align:center;color:var(--muted);border:1px dashed var(--line);border-radius:10px;padding:28px;margin-top:16px}
+.rvw-empty.on{display:block}
+.rvw[data-lec="F"]{--acc:var(--arch)} .rvw[data-lec="D"]{--acc:var(--face)} .rvw[data-lec="T"]{--acc:var(--tcol)}
+@media print{
+  header,.bar,.main,.rvw-bar,.rvw-toc,.rvw-empty{display:none!important}
+  .rvw{margin:0}
+  body{background:#fff}
+  .rsec{break-before:page;break-inside:auto}
+  .rsec:first-of-type{break-before:auto}
+  .rtbl,.rseq,details.cx{break-inside:avoid}
+  details.cx>summary::after{display:none}
+  .cgrid{grid-template-columns:1fr 1fr}
+}
+.fb .ans{font-size:.95rem}
+.fbexp{display:grid;gap:8px}
+.fbexp p{margin:0;line-height:1.6}
+.fbnotes{list-style:none;margin:2px 0 0;padding:0;display:grid;gap:6px}
+.fbnotes li{font-size:.9rem;line-height:1.5;color:var(--muted);padding-left:10px;border-left:2px solid var(--line)}
+.fbnotes li b{color:var(--ink);font-weight:600}
+.fbpearl{margin-top:2px;background:var(--hy-bg);border:1px solid var(--hy-line);border-left-width:3px;border-radius:9px;padding:9px 12px;font-size:.92rem;line-height:1.5;color:var(--hy-ink)}
+.fbpearl b{display:block;font:700 .66rem var(--f-mono);letter-spacing:.14em;text-transform:uppercase;color:var(--hy-line);margin-bottom:3px}
+.fb{border-radius:10px;padding:12px 14px;display:grid;gap:6px}
+.fb.ok{background:var(--ok-bg)} .fb.bad{background:var(--bad-bg)}
+.fb .v{font-weight:700}
+.fb.ok .v{color:var(--ok)} .fb.bad .v{color:var(--bad)}
+.fb ol{margin:0;padding-left:1.2em}
+.actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:space-between;align-items:center}
+.timer{font:500 .8rem var(--f-mono);color:var(--muted);font-variant-numeric:tabular-nums}
+.done{display:grid;gap:10px;text-align:left}
+
+.lo-grid{display:grid;gap:6px}
+.lo-tile{display:grid;grid-template-columns:auto 1fr auto;gap:8px;align-items:center;text-align:left;width:100%;background:transparent;border:1px solid var(--line);border-radius:8px;padding:6px 8px;cursor:pointer;color:var(--ink);font:inherit}
+.lo-tile:hover{border-color:var(--lc)}
+.lo-tile .id{font:500 .72rem var(--f-mono);color:var(--lc);white-space:nowrap}
+.lo-tile .t{font-size:.78rem;line-height:1.3}
+.lo-tile .dot{width:12px;height:12px;border-radius:50%;background:var(--line)}
+.dot.s-o{background:var(--once)} .dot.s-m{background:var(--bad)} .dot.s-M{background:var(--ok)}
+.legend{display:flex;flex-wrap:wrap;gap:10px;font-size:.72rem;color:var(--muted)}
+.legend span{display:inline-flex;gap:5px;align-items:center}
+.legend i{width:10px;height:10px;border-radius:50%;display:inline-block;background:var(--line)}
+.legend i.o{background:var(--once)} .legend i.m{background:var(--bad)} .legend i.M{background:var(--ok)}
+footer{color:var(--muted);font-size:.8rem;border-top:1px solid var(--line);padding-top:12px}
+@media (prefers-reduced-motion: no-preference){ .opt,.ent,.lo-tile{transition:border-color .12s, background .12s} }
+</style>
+
+<div class="wrap">
+<header>
+  <div>
+    <p class="meta">HoyaDocs · Block 5 · Hematology · HEM27</p>
+    <h1>HEM27 WBC Disorders Lab Builder</h1>
+    <p class="lede">The white blood cell disorders lab, LO by LO, plus a slide atlas practical: build each structure box by box, then drill what you miss. Boxes tagged Rapid Review test the LO Rapid Review and Master Review checklists.</p>
+  </div>
+  <div class="hdr-actions">
+    <button class="btn primary" id="reviewBtn" type="button" aria-pressed="false">Review</button>
+    <button class="btn" id="themeBtn" type="button">Theme: auto</button>
+    <button class="btn" id="resetBtn" type="button">Reset progress</button>
+  </div>
+</header>
+
+<div class="bar">
+  <div class="seg" role="group" aria-label="Mode">
+    <span class="lab">Mode</span>
+    <button type="button" data-mode="build" aria-pressed="true">Build</button>
+    <button type="button" data-mode="drill" aria-pressed="false">Drill</button>
+  </div>
+  <div class="seg" role="group" aria-label="Section scope" id="scopeSeg">
+    <span class="lab">Scope</span>
+    <button type="button" data-scope="all" aria-pressed="true">All</button>
+    <button type="button" data-scope="F" aria-pressed="false">LO1–2 Hematopoiesis &amp; WHO</button>
+    <button type="button" data-scope="D" aria-pressed="false">LO3–4 Leukemia vs lymphoma</button>
+    <button type="button" data-scope="T" aria-pressed="false">LO5 Workup &amp; slides</button>
+  </div>
+  <div class="seg" role="group" aria-label="Focus" id="focusSeg">
+    <span class="lab">Focus</span>
+    <button type="button" data-rr="0" aria-pressed="true">All boxes</button>
+    <button type="button" data-rr="1" aria-pressed="false">Rapid Review only</button>
+  </div>
+  <div class="stats" aria-live="polite">
+    <div class="stat"><b id="sScore">0</b><span>Score</span></div>
+    <div class="stat"><b id="sStreak">0</b><span>Streak</span></div>
+    <div class="stat"><b id="sAcc">—</b><span>Accuracy</span></div>
+    <div class="stat"><b id="sBoxes">0</b><span>Boxes mastered</span></div>
+    <div class="stat"><b id="sLos">0/5</b><span>LOs mastered</span></div>
+  </div>
+</div>
+
+<div class="main">
+  <aside class="panel side" aria-label="Structures">
+    <h2>Structures</h2>
+    <div id="entList"></div>
+  </aside>
+  <section class="card" id="card" aria-live="polite"></section>
+  <aside class="panel map" aria-label="Learning objective mastery map">
+    <h2>LO mastery map</h2>
+    <div class="legend"><span><i></i>untested</span><span><i class="m"></i>missed</span><span><i class="o"></i>got it once</span><span><i class="M"></i>mastered</span></div>
+
+    <p class="hint">Tap an LO to drill just that objective. Mastered = right twice in a row.</p>
+    <div class="lo-grid" id="loGrid"></div>
+  </aside>
+</div>
+
+<div class="rvw" id="rvw" data-lec="F" hidden>
+  <div class="rvw-bar">
+    <div class="seg" id="rvwTabs" role="group" aria-label="Section">
+      <button type="button" data-l="F" aria-pressed="true">LO1–2 Hematopoiesis &amp; WHO</button>
+      <button type="button" data-l="D" aria-pressed="false">LO3–4 Leukemia vs lymphoma</button>
+      <button type="button" data-l="T" aria-pressed="false">LO5 Workup &amp; slides</button>
+    </div>
+    <input id="rvwQ" type="search" placeholder="Search this review" autocomplete="off" aria-label="Search the review">
+    <span id="rvwCount"></span>
+    <button class="btn" type="button" id="rvwAll" aria-pressed="false">Expand all</button>
+    <button class="btn" type="button" id="rvwPrint">Print</button>
+    <button class="btn primary" type="button" id="rvwClose">Back to the game</button>
+  </div>
+  <nav class="rvw-toc" id="rvwToc" aria-label="Contents"></nav>
+  <div class="rvw-body" id="rvwBody"></div>
+  <div class="rvw-empty" id="rvwEmpty">Nothing in this section matches that search.</div>
+</div>
+
+
+<footer>HoyaDocs · HEM27 WBC Disorders Lab Builder · Updated October 8, 2026 · Revision 1.0. Yellow “HY” tags mark high-yield points, including Step 1. “Rapid Review” tags mark boxes built from the LO Rapid Review checklists.</footer>
+</div>
+
+<script>
+/* ================= LEARNING OBJECTIVES ================= */
+var LOS = {"1": "Normal hematopoiesis and the hormonal and environmental factors that support it", "2": "WHO classification of white blood cell disorders", "3": "Leukemia vs lymphoma and how they overlap", "4": "Common clinical signs and symptoms of hematologic disorders", "5": "Approach to the patient: laboratory and ancillary tests and outcomes (plus slide atlas)"};
+var LOLEC = {"1": "F", "2": "F", "3": "D", "4": "D", "5": "T"};
+var LECS = [{"k": "F", "n": "LO1–2 Hematopoiesis & WHO", "c": "arch"}, {"k": "D", "n": "LO3–4 Leukemia vs lymphoma", "c": "face"}, {"k": "T", "n": "LO5 Workup & slides", "c": "eye"}];
+var E = [{"id": "tree", "lec": "F", "name": "The hematopoietic family tree", "sub": "HSC · myeloid vs lymphoid · granulocyte maturation", "b": [{"lo": "1", "rr": true, "hy": true, "q": "Which marker identifies the pluripotent hematopoietic stem cell?", "a": "CD34", "o": ["CD3", "CD20", "CD138"], "n": ["T cells.", "B cells.", "Plasma cells."], "w": "The HSC in the marrow gives rise to the common myeloid and common lymphoid progenitors.", "p": "Stem cell = CD34+."}, {"lo": "1", "rr": true, "hy": true, "t": "m", "q": "Select ALL cells derived from the COMMON MYELOID progenitor.", "a": ["Neutrophils", "Eosinophils and basophils", "Monocytes", "RBCs", "Megakaryocytes/platelets"], "o": ["T cells", "NK cells"], "n": ["Lymphoid.", "Lymphoid."], "w": "The myeloid progenitor splits into granulocyte-monocyte and megakaryocyte-erythroid progenitors.", "p": "Myeloid = granulocytes, monocytes, RBCs, platelets."}, {"lo": "1", "rr": true, "q": "Where do T cells mature?", "a": "Thymus", "o": ["Bone marrow", "Spleen", "Liver"], "n": ["B cells mature in marrow.", "Secondary lymphoid organ.", "Fetal hematopoiesis site."], "w": "Common lymphoid progenitor → B cells (marrow → plasma cells), T cells (thymus), NK cells.", "p": "T = thymus."}, {"lo": "1", "rr": true, "hy": true, "t": "o", "q": "Put granulocyte maturation in order.", "a": ["Myeloblast", "Promyelocyte", "Myelocyte", "Metamyelocyte", "Band", "Segmented neutrophil"], "w": "Mnemonic: My Pretty Mama Makes Bread Sundays.", "p": "My Pretty Mama Makes Bread Sundays."}, {"lo": "1", "rr": true, "q": "At which stage do primary (azurophilic) granules first appear?", "a": "Promyelocyte", "o": ["Myeloblast", "Metamyelocyte", "Band"], "n": ["Few or no granules.", "Later stage.", "Later stage."], "w": "Secondary (specific) granules appear at the myelocyte stage.", "p": "Pro = primary granules."}, {"lo": "1", "rr": true, "q": "What is the LAST granulocyte stage that can divide?", "a": "Myelocyte", "o": ["Metamyelocyte", "Band", "Promyelocyte"], "n": ["Cannot divide; kidney-shaped nucleus.", "Cannot divide.", "Divides, but is not the last."], "w": "Myelocytes have secondary granules and are the last dividing stage.", "p": "Myelocyte = last to divide."}, {"lo": "1", "q": "Which granulocyte stage has a kidney-shaped (reniform) nucleus?", "a": "Metamyelocyte", "o": ["Myeloblast", "Promyelocyte", "Segmented neutrophil"], "n": ["Round nucleus, nucleoli.", "Round/oval nucleus.", "3–5 lobes."], "w": "Meta → band → segmented.", "p": "Meta = kidney nucleus."}]}, {"id": "gf", "lec": "F", "name": "Growth factor support", "sub": "EPO · TPO · G-CSF · ILs · SCF", "b": [{"lo": "1", "rr": true, "hy": true, "q": "Where is erythropoietin made, and what triggers it?", "a": "Kidney peritubular interstitial cells, in response to hypoxia", "o": ["Liver, in response to low platelets", "Bone marrow stroma, in response to infection", "Thymus, in response to antigen"], "n": ["Liver makes TPO, but constitutively (levels rise because fewer platelets clear it).", "Not EPO.", "Not EPO."], "w": "Low EPO causes the anemia of CKD; epoetin alfa replaces it.", "p": "EPO = kidney + hypoxia."}, {"lo": "1", "rr": true, "hy": true, "q": "Where is thrombopoietin (TPO) mainly made?", "a": "Liver", "o": ["Kidney", "Spleen", "Megakaryocytes themselves"], "n": ["EPO.", "Not the source.", "Not the source."], "w": "TPO agonists (romiplostim, eltrombopag) are used in ITP.", "p": "TPO = liver."}, {"lo": "1", "rr": true, "hy": true, "q": "Which growth factor drives neutrophil production and is given as filgrastim for chemotherapy neutropenia?", "a": "G-CSF", "o": ["M-CSF", "IL-5", "EPO"], "n": ["Monocytes/macrophages.", "Eosinophils.", "RBCs."], "w": "G-CSF also mobilizes stem cells for collection.", "p": "G-CSF = granulocytes (filgrastim)."}, {"lo": "1", "rr": true, "t": "m", "q": "Select ALL correct growth factor–target pairs.", "a": ["IL-5 → eosinophils", "IL-7 → lymphoid precursors", "M-CSF → monocytes/macrophages", "GM-CSF → granulocytes and monocytes", "IL-3 → early multilineage progenitors", "Stem cell factor (KIT ligand) → stem cell survival and mast cells"], "o": ["IL-5 → platelets", "TPO → neutrophils"], "n": ["IL-5 → eosinophils.", "TPO → megakaryocytes."], "w": "IL-5 explains eosinophilia in mixed cellularity Hodgkin and parasites; KIT mutation → mastocytosis. GM-CSF = sargramostim.", "p": "Match each factor to its lineage."}, {"lo": "1", "rr": true, "hy": true, "q": "Which kinase sits under the EPO, TPO and G-CSF receptors and is mutated in polycythemia vera?", "a": "JAK2 (V617F)", "o": ["BCR-ABL", "BRAF", "KIT"], "n": ["CML.", "Hairy cell.", "Mastocytosis."], "w": "JAK2 V617F makes cells grow without the hormone (PV, ET, myelofibrosis).", "p": "JAK2 = growth without the hormone."}]}, {"id": "niche", "lec": "F", "name": "The marrow niche & normal cells", "sub": "Stroma · cellularity · M:E · normal WBCs", "b": [{"lo": "1", "rr": true, "t": "m", "q": "Select ALL components of the marrow niche that support hematopoiesis.", "a": ["Stromal cells (fibroblasts, adipocytes, osteoblasts, endothelium)", "Extracellular matrix", "Sinusoids", "Nutrients: iron, B12, folate, protein"], "o": ["Lymph node germinal centers", "Thymic Hassall corpuscles"], "n": ["Not marrow.", "Not marrow."], "w": "When the niche fails (fibrosis, tumor, infection, radiation) → cytopenias and possibly extramedullary hematopoiesis.", "p": "Stroma, matrix, sinusoids, nutrients."}, {"lo": "1", "rr": true, "hy": true, "q": "What is the expected marrow cellularity of a 70-year-old?", "a": "≈30% (100 − age)", "o": ["≈90%", "≈70%", "≈5%"], "n": ["Hypercellular for age.", "That's 100 − 30.", "Hypocellular."], "w": "Normal cellularity ≈100 − age; a middle-aged adult ≈50%. A 90% marrow at 70 is hypercellular → think leukemia, MDS, MPN or reactive.", "p": "Cellularity ≈ 100 − age."}, {"lo": "1", "rr": true, "q": "What is the normal myeloid:erythroid ratio?", "a": "≈3:1", "o": ["≈1:3", "≈1:1", "≈10:1"], "n": ["Reversed (erythroid hyperplasia).", "Too low.", "Too high."], "w": "Granulocytic precursors outnumber erythroid precursors.", "p": "M:E ≈ 3:1."}, {"lo": "1", "rr": true, "q": "Where does hematopoiesis occur in the adult?", "a": "Axial skeleton (pelvis, sternum, vertebrae, ribs, skull) and proximal long bones", "o": ["Liver and spleen", "Yolk sac", "Distal long bones only"], "n": ["Fetal or extramedullary.", "Early fetal.", "Proximal, not distal."], "w": "Fetus: yolk sac → liver/spleen → marrow.", "p": "Adults: axial skeleton."}, {"lo": "1", "rr": true, "hy": true, "q": "What is the normal order of WBC types from most to least common?", "a": "Neutrophils > lymphocytes > monocytes > eosinophils > basophils", "o": ["Lymphocytes > neutrophils > eosinophils > monocytes > basophils", "Neutrophils > monocytes > lymphocytes > basophils > eosinophils", "Monocytes > neutrophils > lymphocytes > eosinophils > basophils"], "n": ["Neutrophils lead in adults.", "Lymphocytes are second.", "Neutrophils lead."], "w": "Never Let Monkeys Eat Bananas. Neutrophils ≈50–70%, lymphocytes ≈20–40%, monocytes ≈2–8%, eosinophils ≈1–4%, basophils <1%.", "p": "Never Let Monkeys Eat Bananas."}, {"lo": "1", "rr": true, "t": "m", "q": "Select ALL correct normal cell descriptions.", "a": ["Monocyte: largest WBC, folded nucleus, gray-blue cytoplasm", "Eosinophil: bilobed nucleus, orange-red granules", "Basophil: dark purple granules obscure the nucleus", "Plasma cell: eccentric clock-face nucleus and perinuclear hof"], "o": ["Lymphocyte: 3–5 nuclear lobes", "Neutrophil: round dark nucleus with thin rim of cytoplasm"], "n": ["That's a neutrophil.", "That's a lymphocyte."], "w": "A small lymphocyte is slightly larger than an RBC (RBC ≈2/3 its size).", "p": "Know the five + plasma cell."}, {"lo": "1", "rr": true, "q": "An iliac crest marrow from a middle-aged adult is about half cells, half fat, with large multinucleated cells among erythroid islands. Interpretation?", "a": "Normal marrow; the large cells are megakaryocytes", "o": ["Hypocellular aplastic marrow", "Myelofibrosis", "Metastatic carcinoma"], "n": ["≈50% is normal for age.", "No fibrosis described.", "No tumor clusters."], "w": "Megakaryocytes are the easiest normal cells to spot.", "p": "Big multinucleated marrow cell = megakaryocyte."}]}, {"id": "who", "lec": "F", "name": "WHO classification", "sub": "Myeloid · lymphoid · histiocytic", "b": [{"lo": "2", "rr": true, "hy": true, "q": "What is the current WHO classification of WBC neoplasms based on?", "a": "Morphology + immunophenotype + genetics + clinical features", "o": ["Morphology alone", "WBC count alone", "Patient age alone"], "n": ["Ancillary tests are required.", "Nonspecific.", "Not sufficient."], "w": "Ancillary studies are necessary for accurate diagnosis and treatment.", "p": "WHO = look + markers + genes + clinic."}, {"lo": "2", "rr": true, "hy": true, "q": "What is always the first question for a WBC abnormality or enlarged node?", "a": "Neoplastic or reactive?", "o": ["Acute or chronic?", "B or T?", "Hodgkin or non-Hodgkin?"], "n": ["Comes after.", "Comes after.", "Comes after."], "w": "Infections and reactive processes affect both marrow and nodes.", "p": "Rule out reactive first."}, {"lo": "2", "rr": true, "t": "m", "q": "Select ALL MYELOID neoplasm families in the WHO classification.", "a": ["Acute myeloid leukemia", "Myelodysplastic neoplasms", "Myeloproliferative neoplasms (CML, PV, ET, PMF)", "MDS/MPN overlap (e.g., CMML)"], "o": ["B-lymphoblastic leukemia", "Hodgkin lymphoma"], "n": ["Lymphoid precursor.", "Lymphoid."], "w": "Histiocytic/dendritic neoplasms (e.g., Langerhans cell histiocytosis) form a third group.", "p": "AML, MDS, MPN, MDS/MPN."}, {"lo": "2", "rr": true, "t": "m", "q": "Select ALL LYMPHOID neoplasm families in the WHO classification.", "a": ["Precursor B- and T-lymphoblastic leukemia/lymphoma", "Mature B-cell neoplasms (including plasma cell myeloma)", "Mature T/NK neoplasms", "Hodgkin lymphoma"], "o": ["Myelodysplastic neoplasms", "Langerhans cell histiocytosis"], "n": ["Myeloid.", "Histiocytic."], "w": "Mature B includes CLL/SLL, follicular, mantle, MZL, DLBCL, Burkitt, hairy cell, LPL and myeloma.", "p": "Precursor, mature B, mature T/NK, Hodgkin."}, {"lo": "2", "rr": true, "hy": true, "q": "Which WHO family is defined by ≥20% myeloblasts?", "a": "Acute myeloid leukemia", "o": ["Myelodysplastic neoplasm", "Myeloproliferative neoplasm", "Mature B-cell neoplasm"], "n": ["Blasts <20%.", "Mature cells, effective overproduction.", "Lymphoid."], "w": "Exception: AML with t(8;21), inv(16) or t(15;17) is AML regardless of blast count. MDS: ineffective dysplastic hematopoiesis with cytopenias, blasts <20%. MPN: effective overproduction with tyrosine kinase mutations.", "p": "≥20% blasts = AML."}, {"lo": "2", "rr": true, "hy": true, "q": "Which feature defines myeloproliferative neoplasms?", "a": "Effective overproduction of mature myeloid cells driven by tyrosine kinase mutations", "o": ["Ineffective dysplastic hematopoiesis with cytopenias", "≥20% blasts", "Clonal plasma cells"], "n": ["MDS.", "AML.", "Plasma cell neoplasm."], "w": "CML (BCR-ABL); PV, ET, PMF (JAK2).", "p": "MPN = too many good cells."}, {"lo": "2", "rr": true, "hy": true, "q": "Which two questions sort any leukemia by flow cytometry?", "a": "Which lineage (myeloid vs lymphoid) and how mature (blasts vs mature cells)?", "o": ["Which age group and which sex?", "Which chromosome and which exon?", "Which organ and which stage?"], "n": ["Not classification.", "Genetics come later.", "Staging, not lineage."], "w": "Myeloid: MPO, CD13, CD33, CD117. B: CD19/20. T: CD3. Blasts: TdT or CD34 (acute) vs mature (chronic).", "p": "Lineage + maturity."}]}, {"id": "term", "lec": "F", "name": "Key terms & reactive hyperplasia", "sub": "Hyperplasia patterns · Auer · Russell · Dutcher", "b": [{"lo": "2", "rr": true, "q": "What does lymphadenopathy mean?", "a": "Enlarged lymph node(s), which is nonspecific (neoplastic or not)", "o": ["Always lymphoma", "Always infection", "Absence of lymph nodes"], "n": ["Nonspecific.", "Nonspecific.", "Opposite."], "w": "Hyperplasia is a common cause and must be distinguished from lymphoma.", "p": "Big node ≠ lymphoma."}, {"lo": "2", "rr": true, "hy": true, "t": "m", "q": "Select ALL correct reactive hyperplasia pattern–cause pairs (standard references).", "a": ["Follicular (B-cell zone) → rheumatoid arthritis, early HIV", "Paracortical (T-cell zone) → viral infection (EBV), phenytoin", "Sinus histiocytosis → node draining a cancer"], "o": ["Paracortical → rheumatoid arthritis", "Follicular → phenytoin"], "n": ["RA expands follicles.", "Phenytoin expands paracortex."], "w": "Hyperplasia patterns are classified by architecture.", "p": "Follicle = B; paracortex = T/viral; sinus = draining cancer."}, {"lo": "2", "rr": true, "hy": true, "q": "A febrile 20-year-old with sore throat has tender cervical nodes; biopsy shows an expanded T-cell zone with immunoblasts. Most likely?", "a": "Reactive paracortical hyperplasia from EBV (infectious mononucleosis)", "o": ["Hodgkin lymphoma", "Follicular lymphoma", "Metastatic carcinoma"], "n": ["Immunoblasts can mimic RS cells, but the setting favors reactive.", "Not a follicular pattern.", "Not the setting."], "w": "Tender nodes in a febrile young patient favor reactive.", "p": "Tender + fever + young = reactive."}, {"lo": "2", "rr": true, "hy": true, "t": "m", "q": "Select ALL features favoring REACTIVE follicular hyperplasia over follicular lymphoma.", "a": ["Follicles of varied sizes and shapes, mostly in the cortex", "Polarized germinal centers with tingible-body macrophages", "Intact mantle zones", "BCL2-negative germinal centers", "Polyclonal (κ and λ)"], "o": ["Crowded back-to-back follicles beyond the capsule", "Monoclonal light-chain restriction"], "n": ["Follicular lymphoma.", "Follicular lymphoma."], "w": "Follicular lymphoma: monotonous, no polarity, few tingible-body macrophages, thin mantle, BCL2+ germinal centers.", "p": "BCL2 in germinal centers = lymphoma."}, {"lo": "2", "rr": true, "hy": true, "q": "What is an Auer rod?", "a": "A pink-red needle-like cytoplasmic rod of abnormal azurophilic granules in myeloid blasts (AML, especially APL)", "o": ["An intranuclear Ig inclusion in plasma cells", "A cytoplasmic Ig inclusion in plasma cells", "A nuclear remnant in RBCs"], "n": ["Dutcher body.", "Russell body.", "Howell-Jolly body."], "w": "Bundles of Auer rods (faggot cells) → APL.", "p": "Auer rod = myeloid blast."}, {"lo": "2", "rr": true, "hy": true, "q": "Russell body vs Dutcher body: which statement is correct?", "a": "Russell = cytoplasmic Ig (myeloma); Dutcher = nuclear Ig (Waldenström)", "o": ["Russell = nuclear; Dutcher = cytoplasmic", "Both are seen only in AML", "Both are RBC inclusions"], "n": ["Reversed.", "Plasma cell inclusions.", "Plasma cell inclusions."], "w": "Russell bodies are PAS+ retained Ig; also seen in reactive plasma cells.", "p": "Dutcher = in the nucleus."}]}, {"id": "ll", "lec": "D", "name": "Leukemia vs lymphoma", "sub": "Definitions · overlap diseases · traps", "b": [{"lo": "3", "rr": true, "hy": true, "q": "Which feature defines a LEUKEMIA?", "a": "Primary bone marrow involvement, often spilling into the blood", "o": ["A mass in a lymph node", "Lymphoid lineage only", "Few malignant cells in a reactive background"], "n": ["That's lymphoma.", "Leukemias can be myeloid or lymphoid.", "That's Hodgkin."], "w": "Leukemias are myeloid or lymphoid and acute (blasts) or chronic (mature cells).", "p": "Leukemia = marrow + blood."}, {"lo": "3", "rr": true, "hy": true, "q": "Which feature defines a LYMPHOMA?", "a": "A lymphoid tumor in lymph nodes, lymphoid tissue or solid organs", "o": ["Primary marrow origin with blood spill", "Can be myeloid or lymphoid", "Always has a high WBC"], "n": ["That's leukemia.", "Lymphomas are lymphoid only.", "Usually no leukemic phase."], "w": "Lymphomas: Hodgkin vs non-Hodgkin; NHL is B vs T; indolent vs aggressive. Lymphoma cells mimic a stage of lymphocyte differentiation.", "p": "Lymphoma = mass, lymphoid only."}, {"lo": "3", "rr": true, "t": "m", "q": "Select ALL leukemia–lymphoma pairs that are one disease in different places.", "a": ["CLL ↔ SLL", "B-/T-lymphoblastic leukemia ↔ lymphoblastic lymphoma", "Sézary syndrome ↔ mycosis fungoides", "Adult T-cell leukemia ↔ adult T-cell lymphoma (ATLL)"], "o": ["CML ↔ Hodgkin lymphoma", "APL ↔ Burkitt lymphoma"], "n": ["Unrelated diseases.", "Unrelated diseases."], "w": "Burkitt, mantle cell and follicular can spill into marrow and blood. Myeloid sarcoma is a tissue mass of AML blasts.", "p": "Name follows location, not biology."}, {"lo": "3", "rr": true, "hy": true, "q": "What determines whether the same neoplasm is called a “leukemia” or a “lymphoma”?", "a": "Where most of the tumor is when it is found", "o": ["The cell's lineage", "The patient's age", "The number of mutations"], "n": ["Same lineage either way.", "Not the rule.", "Not the rule."], "w": "Same cells in marrow/blood = leukemia; in a node = lymphoma.", "p": "Location names it."}, {"lo": "3", "rr": true, "q": "What is myeloid sarcoma?", "a": "A tissue mass of AML blasts", "o": ["A lymphoma of the bone", "A benign myeloid hyperplasia", "A plasma cell tumor"], "n": ["Myeloid lineage.", "Neoplastic.", "That's plasmacytoma."], "w": "The myeloid version of leukemia–lymphoma overlap.", "p": "AML as a mass."}, {"lo": "3", "rr": true, "hy": true, "q": "A 62-year-old with severe pneumonia has WBC 30,000 with mature neutrophils, toxic granulation, Döhle bodies and a HIGH LAP score. Diagnosis?", "a": "Leukemoid reaction (reactive)", "o": ["CML", "AML", "CLL"], "n": ["CML has a LOW LAP score and basophilia.", "No blasts described.", "Lymphoid."], "w": "High WBC does not always mean leukemia; leukemia can also be aleukemic (e.g., hairy cell with pancytopenia).", "p": "High LAP = reactive."}, {"lo": "3", "rr": true, "q": "Which statement about WBC count and leukemia is true?", "a": "Leukemia can be aleukemic (normal or low WBC), as in hairy cell leukemia with pancytopenia", "o": ["Leukemia always has a high WBC", "A WBC >25,000 always means leukemia", "Lymphomas always have a high WBC"], "n": ["Not always.", "Leukemoid reactions can do this.", "Usually not."], "w": "Look at the smear and marrow, not just the count.", "p": "Count ≠ diagnosis."}]}, {"id": "abc", "lec": "D", "name": "Marrow failure", "sub": "A-B-C: anemia, bleeding, contagion", "b": [{"lo": "4", "rr": true, "hy": true, "t": "m", "q": "Select ALL consequences of marrow failure from tumor replacement.", "a": ["Anemia → fatigue, pallor, dyspnea", "Thrombocytopenia → petechiae, purpura, gum bleeding", "Neutropenia → fever, infections, oral ulcers"], "o": ["Polycythemia", "Thrombocytosis"], "n": ["Opposite.", "Opposite."], "w": "A-B-C: Anemia, Bleeding, Contagion. Seen in acute leukemias, MDS, hairy cell leukemia, advanced myeloma and marrow-involving lymphomas.", "p": "A-B-C of marrow failure."}, {"lo": "4", "rr": true, "hy": true, "q": "Why does a child with ALL have cytopenias even though the marrow is ≈100% cellular?", "a": "Blasts replace and suppress normal hematopoiesis", "o": ["The spleen destroys all normal cells", "The marrow is actually empty", "Blasts make excess EPO"], "n": ["Not the main mechanism.", "It is packed.", "Not the mechanism."], "w": "Packed marrow, empty blood.", "p": "Full marrow, empty blood."}, {"lo": "4", "rr": true, "q": "A 5-year-old has fever, pallor, petechiae and leg pain; Hb 6.8, platelets 18k, WBC 3.1 with occasional blasts. Next step and key ancillary test?", "a": "Bone marrow aspirate and biopsy with flow cytometry (TdT, CD10, CD19 vs CD3) and cytogenetics", "o": ["Excisional lymph node biopsy", "Serum protein electrophoresis", "Observe and repeat CBC in 3 months"], "n": ["No mass described; marrow first.", "For plasma cell disorders.", "Delays diagnosis."], "w": "Likely B-ALL; lumbar puncture after diagnosis.", "p": "Kid + cytopenias + blasts → marrow + flow."}]}, {"id": "mass", "lec": "D", "name": "Mass effect & systemic signs", "sub": "Nodes · spleen · bone · mediastinum · B symptoms", "b": [{"lo": "4", "rr": true, "hy": true, "t": "m", "q": "Select ALL diseases classically causing SPLENOMEGALY.", "a": ["CML", "Hairy cell leukemia (massive)", "CLL", "Myelofibrosis", "Marginal zone lymphoma"], "o": ["Multiple myeloma", "Mycosis fungoides"], "n": ["Organomegaly is unusual.", "Skin disease."], "w": "Mechanism: infiltration or extramedullary hematopoiesis; causes early satiety and LUQ pain.", "p": "Big spleen: CML, hairy cell, MF, CLL."}, {"lo": "4", "rr": true, "hy": true, "q": "Which two disorders classically cause BONE PAIN?", "a": "ALL (children) and multiple myeloma (lytic lesions)", "o": ["CLL and follicular lymphoma", "ET and PV", "Mycosis fungoides and ATLL"], "n": ["Not typical.", "Not typical.", "ATLL causes hypercalcemia (lytic lesions in some), but these are not the classic bone-pain pair."], "w": "Marrow expansion (ALL) or bone destruction (myeloma).", "p": "Bone pain: kid ALL, old myeloma."}, {"lo": "4", "rr": true, "hy": true, "t": "m", "q": "Select ALL causes of a MEDIASTINAL MASS among WBC neoplasms.", "a": ["T-lymphoblastic leukemia/lymphoma", "Nodular sclerosis Hodgkin lymphoma", "Primary mediastinal large B-cell lymphoma"], "o": ["Hairy cell leukemia", "Multiple myeloma"], "n": ["Spleen/marrow disease.", "Marrow-based."], "w": "Symptoms: cough, stridor, SVC syndrome.", "p": "Mediastinum: T-ALL, NS Hodgkin."}, {"lo": "4", "rr": true, "hy": true, "q": "What are B symptoms and what causes them?", "a": "Fever, drenching night sweats, >10% weight loss; cytokines (TNF, IL-1, IL-6)", "o": ["Bone pain, bleeding, bruising; platelet loss", "Cough, chest pain, dyspnea; mediastinal mass", "Rash, itch, eczema; skin-homing T cells"], "n": ["Not B symptoms.", "Mass effect.", "Mycosis fungoides."], "w": "Classic in Hodgkin and aggressive NHL; pruritus may also occur.", "p": "Fever, sweats, weight loss."}, {"lo": "4", "rr": true, "t": "m", "q": "Select ALL correct sign–disease pairs.", "a": ["Hypercalcemia → myeloma, ATLL", "DIC → APL", "Hyperviscosity → Waldenström (or leukostasis with very high blasts)", "Gum hypertrophy and skin nodules → monocytic AML", "Scaly eczema-like rash → mycosis fungoides", "Autoimmune hemolysis → CLL"], "o": ["DIC → CLL", "Gum hypertrophy → Hodgkin"], "n": ["APL causes DIC.", "Monocytic AML."], "w": "CNS signs and testicular masses (sanctuary sites) → ALL, Burkitt, DLBCL.", "p": "Pair each sign with its disease."}, {"lo": "4", "rr": true, "hy": true, "q": "Which node features favor LYMPHOMA over reactive hyperplasia?", "a": "Painless, rubbery, progressive nodes >2 cm, especially supraclavicular, persisting >4–6 weeks", "o": ["Tender, rapidly enlarging nodes with fever", "Small mobile nodes after a sore throat", "Nodes that shrink within a week"], "n": ["Favors infection.", "Favors reactive.", "Favors reactive."], "w": "Supraclavicular nodes are never “just reactive” until proven otherwise → biopsy.", "p": "Painless + persistent + supraclavicular → biopsy."}, {"lo": "4", "rr": true, "q": "A 58-year-old has a painless 3-cm supraclavicular node for 2 months. Which biopsy, and why not FNA?", "a": "Excisional node biopsy, because lymphoma diagnosis needs architecture plus tissue for flow, IHC and cytogenetics", "o": ["FNA, because it is less invasive and sufficient", "No biopsy; observe for 6 months", "Bone marrow biopsy only"], "n": ["Gives scattered cells only, no architecture.", "Delays diagnosis.", "The node is the lesion."], "w": "Pattern matters: follicular vs diffuse, Hodgkin background.", "p": "Excise, don't aspirate."}]}, {"id": "work", "lec": "T", "name": "Step-by-step workup", "sub": "History → CBC/smear → marrow or node → ancillary", "b": [{"lo": "5", "rr": true, "hy": true, "t": "o", "q": "Put the workup of a suspected WBC disorder in order.", "a": ["History and exam (nodes, spleen, B symptoms, bleeding, infections)", "CBC with differential and smear review", "Marrow aspirate/core biopsy or excisional node biopsy", "Ancillary studies (flow, IHC, cytogenetics, molecular)", "WHO diagnosis → staging → risk → treatment"], "w": "If an M spike is suspected: SPEP + immunofixation, UPEP and free light chains, then marrow.", "p": "History → smear → tissue → ancillary → stage."}, {"lo": "5", "rr": true, "t": "m", "q": "Select ALL smear findings worth looking for in a WBC disorder workup.", "a": ["Blasts and Auer rods", "Smudge cells", "Hairy cells", "Left shift and basophilia", "Rouleaux", "Dysplasia"], "o": ["Normal RBCs only, so no smear is needed", "Target cells as the key to leukemia"], "n": ["Always look at the smear.", "Target cells point to liver disease or hemoglobinopathies."], "w": "Always review the peripheral smear.", "p": "Always look at the smear."}, {"lo": "5", "rr": true, "hy": true, "q": "Which chemistry tests reflect tumor turnover and tumor lysis risk?", "a": "LDH and uric acid", "o": ["Amylase and lipase", "AST and ALT", "Troponin and BNP"], "n": ["Pancreas.", "Liver.", "Heart."], "w": "Also check calcium, creatinine, liver tests, total protein/albumin and β2-microglobulin (myeloma, CLL).", "p": "LDH + urate = turnover."}, {"lo": "5", "rr": true, "q": "What does the marrow CORE biopsy show that the aspirate does not?", "a": "Cellularity, architecture, fibrosis and infiltrates such as paratrabecular aggregates", "o": ["Individual cell morphology and differential", "Flow cytometry immunophenotype", "Cytogenetics from live cells"], "n": ["Aspirate.", "Aspirate.", "Aspirate."], "w": "Aspirate = cell morphology, differential, flow, cytogenetics. Core = architecture.", "p": "Aspirate = cells; core = architecture."}, {"lo": "5", "rr": true, "q": "Which imaging stages lymphoma, and which images myeloma?", "a": "CT/PET for lymphoma; skeletal survey, MRI or PET-CT for myeloma", "o": ["Bone scan for both", "Ultrasound for both", "Chest X-ray only for both"], "n": ["Bone scan is often negative in myeloma.", "Not adequate.", "Not adequate."], "w": "Staging follows the WHO diagnosis.", "p": "PET for lymphoma; MRI/PET-CT for myeloma."}]}, {"id": "anc", "lec": "T", "name": "Ancillary tests", "sub": "Flow · IHC · cytochemistry · FISH · molecular", "b": [{"lo": "5", "rr": true, "hy": true, "q": "Which test answers lineage, maturity and clonality (κ vs λ) on cells in suspension?", "a": "Flow cytometry", "o": ["Immunohistochemistry", "Karyotype", "SPEP"], "n": ["Markers in tissue sections.", "Chromosomes.", "Serum proteins."], "w": "Examples: CLL (CD5/CD23), ALL (TdT), AML (CD13/33/MPO), hairy cell (CD103).", "p": "Flow = lineage, maturity, clonality."}, {"lo": "5", "rr": true, "q": "Which test shows markers IN PLACE within tissue architecture?", "a": "Immunohistochemistry", "o": ["Flow cytometry", "PCR", "Urine protein electrophoresis"], "n": ["Cells in suspension.", "No architecture.", "Proteins."], "w": "Examples: BCL2 in follicles, cyclin D1 (mantle), CD15/CD30 (Hodgkin), CD138 (myeloma).", "p": "IHC = markers in place."}, {"lo": "5", "rr": true, "hy": true, "t": "m", "q": "Select ALL correct cytochemistry uses.", "a": ["MPO / Sudan black → myeloid blasts (AML)", "Nonspecific esterase → monocytic cells", "TRAP → hairy cell leukemia", "LAP score → low in CML, high in leukemoid reaction"], "o": ["TRAP → CML", "PAS → hairy cell only"], "n": ["TRAP = hairy cell.", "PAS classically = block positivity in ALL (and erythroid leukemia)."], "w": "Cytochemistry separates myeloid from lymphoid blasts.", "p": "MPO, NSE, TRAP, LAP."}, {"lo": "5", "rr": true, "hy": true, "t": "m", "q": "Select ALL correct translocation–disease pairs.", "a": ["t(9;22) → CML (and some ALL)", "t(15;17) → APL", "t(14;18) → follicular lymphoma", "t(11;14) → mantle cell lymphoma", "t(8;14) → Burkitt lymphoma"], "o": ["t(14;18) → Burkitt", "t(15;17) → CML"], "n": ["Burkitt = t(8;14).", "APL."], "w": "del(17p) (TP53) is adverse across many diseases.", "p": "9;22 CML · 15;17 APL · 14;18 FL · 11;14 MCL · 8;14 Burkitt."}, {"lo": "5", "rr": true, "hy": true, "q": "A 52-year-old has WBC 85,000 with all granulocyte stages, basophilia and a palpable spleen. Which tests confirm the diagnosis?", "a": "Cytogenetics/FISH for t(9;22) and RT-PCR for BCR-ABL", "o": ["MYD88 mutation testing", "Cyclin D1 IHC", "SPEP and immunofixation"], "n": ["Waldenström.", "Mantle cell.", "Plasma cell disorders."], "w": "CML; BCR-ABL PCR also monitors response. LAP score would be low.", "p": "CML: FISH + BCR-ABL PCR."}, {"lo": "5", "rr": true, "t": "m", "q": "Select ALL correct molecular marker–disease pairs.", "a": ["JAK2 → PV, ET, myelofibrosis", "BRAF V600E → hairy cell leukemia", "MYD88 L265P → Waldenström", "FLT3, NPM1 → AML"], "o": ["BRAF → CML", "MYD88 → myeloma"], "n": ["BCR-ABL.", "MYD88 is absent in myeloma."], "w": "Molecular tests also detect clonal IG/TCR rearrangements and minimal residual disease.", "p": "JAK2, BRAF, MYD88, FLT3/NPM1."}, {"lo": "5", "rr": true, "t": "m", "q": "Select ALL correct virus–neoplasm pairs.", "a": ["EBV → Burkitt, Hodgkin, PTLD", "HTLV-1 → ATLL", "HHV-8 → primary effusion lymphoma"], "o": ["HPV → CLL", "HIV → hairy cell leukemia specifically"], "n": ["Not linked.", "Not linked."], "w": "Viral studies are part of the ancillary workup.", "p": "EBV, HTLV-1, HHV-8."}]}, {"id": "grid", "lec": "T", "name": "Small B-cell lymphoma grid", "sub": "CD5 · CD10 · CD23 · cyclin D1", "b": [{"lo": "5", "rr": true, "hy": true, "q": "Which antigens do ALL the small (low-grade) B-cell lymphomas express?", "a": "CD19, CD20, CD22", "o": ["CD3, CD5, CD7", "CD13, CD33, CD117", "CD15, CD30"], "n": ["T-cell.", "Myeloid.", "Hodgkin."], "w": "Separate them by pattern, CD5, CD10, CD23, cyclin D1 and genetics.", "p": "Pan-B: 19, 20, 22."}, {"lo": "5", "rr": true, "hy": true, "q": "A small B-cell lymphoma is CD5+, CD23+, cyclin D1−. Diagnosis?", "a": "CLL/SLL", "o": ["Mantle cell lymphoma", "Follicular lymphoma", "Marginal zone lymphoma"], "n": ["CD23−, cyclin D1+.", "CD5−, CD10+.", "CD5−, CD10−."], "w": "CLL: diffuse with proliferation centers; trisomy 12 in ≈30%.", "p": "CD5+ CD23+ = CLL."}, {"lo": "5", "rr": true, "hy": true, "q": "A 66-year-old's node shows small B cells that are CD5+, CD23−, CD43+. Which test confirms the diagnosis?", "a": "Cyclin D1 IHC (or FISH for t(11;14))", "o": ["BCL2 IHC", "MYD88 testing", "TRAP stain"], "n": ["Follicular.", "Waldenström.", "Hairy cell."], "w": "Mantle cell lymphoma: slightly more aggressive than other small B-cell lymphomas.", "p": "CD5+ CD23− → check cyclin D1."}, {"lo": "5", "rr": true, "hy": true, "q": "Which small B-cell lymphoma is CD10+ with t(14;18)?", "a": "Follicular lymphoma", "o": ["CLL/SLL", "Mantle cell lymphoma", "Lymphoplasmacytic lymphoma"], "n": ["CD5+ CD23+.", "CD5+ cyclin D1+.", "CD5− CD10−, IgM."], "w": "Follicular pattern ± diffuse areas; BCL2 overexpression.", "p": "CD10 + 14;18 = follicular."}, {"lo": "5", "rr": true, "hy": true, "q": "A small B-cell lymphoma is CD5− and CD10−. Which two diagnoses remain, and what separates them?", "a": "Marginal zone vs lymphoplasmacytic; an IgM spike (and MYD88) favors lymphoplasmacytic", "o": ["CLL vs mantle; CD23 separates them", "Follicular vs Burkitt; Ki-67 separates them", "Hairy cell vs myeloma; CD138 separates them"], "n": ["Those are CD5+.", "Those are CD10+.", "Not this branch."], "w": "Fast sort: CD5+ → CLL or mantle; CD10+ → follicular; neither → MZL or LPL. Boards key on MZL being CD5− and CD10−; the in-house grid lists MZL CD23 “+/−” and CD43 negative.", "p": "Neither 5 nor 10 → MZL or LPL."}, {"lo": "5", "rr": true, "t": "m", "q": "Select ALL correct genetics for the small B-cell lymphomas (in-house grid).", "a": ["CLL/SLL → trisomy 12 (≈30%)", "Mantle cell → t(11;14) cyclin D1", "Follicular → t(14;18) BCL2", "Marginal zone → trisomy 18, t(11;18)", "Lymphoplasmacytic → MYD88 L265P"], "o": ["Follicular → t(11;14)", "Mantle cell → t(14;18)"], "n": ["Mantle cell.", "Follicular."], "w": "Genetics confirm the marker-based diagnosis. Boards: MZL classically shows trisomy 3 (± trisomy 18) and t(11;18) API2-MALT1 in MALT lymphoma.", "p": "12, 11;14, 14;18, 11;18, MYD88."}]}, {"id": "out", "lec": "T", "name": "Outcomes at a glance", "sub": "Who is cured, who is not", "b": [{"lo": "5", "rr": true, "hy": true, "t": "m", "q": "Select ALL disorders that are generally CURABLE.", "a": ["Childhood ALL (≈90%)", "DLBCL (≈50% with chemo-immunotherapy)", "Burkitt lymphoma", "Hodgkin lymphoma (75–90% early stage)", "APL with ATRA"], "o": ["Follicular lymphoma", "Multiple myeloma"], "n": ["Indolent but incurable (7–9 y).", "Incurable."], "w": "Paradox: fast-growing tumors respond to chemo; indolent ones persist. (In-house DLBCL ≈50% cured; standard references ≈60–70% with R-CHOP.)", "p": "Fast = curable; slow = incurable."}, {"lo": "5", "rr": true, "hy": true, "q": "What is the outcome of CML treated with tyrosine kinase inhibitors?", "a": "Near-normal life expectancy", "o": ["Median survival ≈6 months", "Universal progression to blast crisis within a year", "Cure in all patients with no further therapy"], "n": ["Far too short.", "Untreated disease progresses; TKIs prevent it.", "Most need ongoing TKI."], "w": "Imatinib targets BCR-ABL.", "p": "CML + TKI ≈ normal lifespan."}, {"lo": "5", "rr": true, "q": "Which outcome fits mantle cell lymphoma?", "a": "Incurable; median 3–5 years; usually older men", "o": ["Cured in ≈90%", "Median survival 7–9 years", "Long remissions with cladribine"], "n": ["Not curable.", "That's follicular.", "That's hairy cell."], "w": "Worst of the small B-cell lymphomas.", "p": "Mantle: 3–5 years."}, {"lo": "5", "rr": true, "t": "m", "q": "Select ALL correct outcome pairs.", "a": ["MDS → weeks to years; 10–40% → AML", "CLL/SLL → indolent, median 4–10 y; Richter → DLBCL", "Hairy cell → long remissions with cladribine", "AML → remission 60–70%; cure mainly with transplant", "Myeloma → incurable (in-house median ≈3 y)"], "o": ["CLL → usually cured with chemotherapy", "Hairy cell → median survival 6 months"], "n": ["Indolent and incurable.", "Very good prognosis."], "w": "Know the typical patient for each: ALL child 2–10; AML ≈65; MDS ≈70; CLL ≈60+; myeloma ≈70.", "p": "Match disease to tempo."}]}, {"id": "atlas", "lec": "T", "name": "Slide atlas: lab practical", "sub": "Name the slide", "b": [{"lo": "5", "rr": true, "hy": true, "q": "Marrow between bony trabeculae is nearly 100% cellular with uniform blasts and no normal elements; a child has anemia, bleeding and infections. Diagnosis?", "a": "Acute lymphoblastic leukemia", "o": ["Normal pediatric marrow", "Aplastic anemia", "CML"], "n": ["Normal elements would be present.", "Aplastic marrow is empty.", "Mature granulocytes, adult."], "w": "Blasts replace/suppress normal hematopoiesis → peripheral cytopenias.", "p": "Packed with blasts in a child = ALL."}, {"lo": "5", "rr": true, "hy": true, "q": "Very large immature cells with several nucleoli; one has a linear red needle in its cytoplasm. Adult patient. Diagnosis?", "a": "Acute myeloid leukemia with an Auer rod", "o": ["ALL", "Hairy cell leukemia", "Plasma cell myeloma"], "n": ["Auer rods are never in lymphoblasts.", "Hairy projections, not rods.", "Different cells."], "w": "Many Auer rods in bundles → APL.", "p": "Red needle = Auer rod = AML."}, {"lo": "5", "rr": true, "q": "High-power marrow shows a sheet of blasts with only one lone megakaryocyte. What peripheral finding is expected?", "a": "Thrombocytopenia (megakaryocytes crowded out)", "o": ["Thrombocytosis", "Polycythemia", "Eosinophilia only"], "n": ["Opposite.", "Erythroid line is also suppressed.", "Not the expected finding."], "w": "AML marrow: blasts crowd out normal lineages.", "p": "No megakaryocytes → no platelets."}, {"lo": "5", "rr": true, "hy": true, "q": "A smear is crowded with granulocytes at every stage plus increased basophils and eosinophils; middle-aged adult with a big spleen. Diagnosis?", "a": "Chronic myeloid leukemia", "o": ["Leukemoid reaction", "AML", "CLL"], "n": ["No basophilia; high LAP.", "Few mature forms; ≥20% blasts.", "Small lymphocytes."], "w": "t(9;22) BCR-ABL; LAP score low. Basophilia is a classic clue.", "p": "All stages + basophils = CML."}, {"lo": "5", "rr": true, "q": "Liver portal tracts are infiltrated by sheets of small, round, mature-looking lymphocytes. Most likely?", "a": "CLL/SLL infiltrating the liver", "o": ["Acute viral hepatitis", "Hodgkin lymphoma", "Metastatic carcinoma"], "n": ["Not sheets of monotonous small lymphocytes.", "Would show RS cells.", "Epithelial cells, not lymphocytes."], "w": "Small mature B cells, CD5+ CD23+.", "p": "Sheets of small mature lymphocytes = CLL."}, {"lo": "5", "rr": true, "q": "Lymphocytes with indistinct cytoplasmic borders and fine projections in an older man with pancytopenia and a huge spleen. Which stain is positive?", "a": "TRAP (hairy cell leukemia)", "o": ["MPO", "Nonspecific esterase", "Congo red"], "n": ["Myeloid blasts.", "Monocytic cells.", "Amyloid."], "w": "Hairy cell: CD11c, CD25, CD103; BRAF V600E; dry tap.", "p": "Hairy projections + big spleen = TRAP+."}, {"lo": "5", "rr": true, "q": "A cut mesentery shows multiple enlarged nodes with solid, fleshy, tan cut surfaces and little necrosis. Favors which?", "a": "Lymphoma (over metastatic carcinoma)", "o": ["Metastatic carcinoma", "Tuberculosis", "Normal mesenteric nodes"], "n": ["Firmer, whiter, necrotic.", "Caseous necrosis.", "Not enlarged and fleshy."], "w": "“Fish-flesh” nodes = lymphoma.", "p": "Fish-flesh = lymphoma."}, {"lo": "5", "rr": true, "q": "A node shows capsular involvement with lymphoid cells extending into perinodal fat. What does this indicate?", "a": "Lymphoma (malignant behavior)", "o": ["Reactive follicular hyperplasia", "Normal node", "Sinus histiocytosis"], "n": ["Stays within the node.", "Not normal.", "Reactive."], "w": "Name the pattern: diffuse (sheets) or nodular/follicular.", "p": "Beyond the capsule = lymphoma."}, {"lo": "5", "rr": true, "hy": true, "q": "Sheets of very large lymphoid cells with prominent nucleoli and mitoses. Main differential and how to settle it?", "a": "DLBCL vs metastatic carcinoma; IHC (CD45/CD20 vs keratin)", "o": ["CLL vs SLL; flow cytometry", "Follicular vs reactive; BCL2", "Myeloma vs MGUS; SPEP"], "n": ["Small cells, same disease.", "Small-cell follicular question.", "Plasma cell question."], "w": "Both are large-cell tumors.", "p": "Large cells: lymphoma vs carcinoma → IHC."}, {"lo": "5", "rr": true, "hy": true, "q": "A marrow core shows a lymphoid aggregate hugging the bony trabecula. Interpretation?", "a": "Marrow involvement by lymphoma, classically follicular lymphoma", "o": ["Benign lymphoid aggregate", "Normal marrow finding in all adults", "Metastatic carcinoma"], "n": ["Benign aggregates are usually central and well circumscribed.", "Not normal.", "Not lymphoid."], "w": "Paratrabecular = malignant pattern.", "p": "Paratrabecular = lymphoma."}, {"lo": "5", "rr": true, "hy": true, "q": "A node is divided into nodules by broad bands of pink collagen. Which cell should you look for?", "a": "Lacunar cells (nodular sclerosis Hodgkin lymphoma)", "o": ["Popcorn (L&H) cells", "Smudge cells", "Hairy cells"], "n": ["NLPHL.", "CLL.", "Hairy cell leukemia."], "w": "Young adults, mediastinal mass.", "p": "Collagen bands → lacunar cells."}, {"lo": "5", "rr": true, "q": "A large cell with a multilobulated “popcorn” nucleus sits among small lymphocytes. Which immunophenotype?", "a": "CD20+, CD15−, CD30− (nodular lymphocyte predominant HL)", "o": ["CD15+, CD30+, CD20−", "CD5+, CD23+", "CD138+, CD56+"], "n": ["Classic RS cell.", "CLL.", "Myeloma."], "w": "L&H (popcorn) cell.", "p": "Popcorn = CD20+."}, {"lo": "5", "rr": true, "q": "Many Reed-Sternberg cells and bizarre variants with very few lymphocytes. Subtype and prognosis?", "a": "Lymphocyte-depleted HL; worst prognosis", "o": ["Nodular sclerosis; excellent", "Lymphocyte-rich; very good", "NLPHL; excellent"], "n": ["Collagen bands.", "Many lymphocytes.", "Popcorn cells."], "w": "Older/HIV patients, advanced stage.", "p": "Few lymphocytes = worst."}, {"lo": "5", "rr": true, "q": "Node with small lymphocytes, eosinophils and macrophages; immunoperoxidase lights up the large cells with CD15. Subtype?", "a": "Mixed cellularity Hodgkin lymphoma", "o": ["Nodular sclerosis HL", "NLPHL", "Follicular lymphoma"], "n": ["Collagen bands, lacunar cells.", "CD15−.", "CD15−, small B cells."], "w": "Classic RS cells CD15+ CD30+; eosinophils from IL-5; older men, B symptoms, EBV.", "p": "Eosinophils + CD15 = mixed cellularity."}, {"lo": "5", "rr": true, "q": "A spleen shows one large pale nodule and several smaller ones. Most likely cause?", "a": "Lymphoma (e.g., Hodgkin) involving the spleen", "o": ["Metastatic carcinoma", "Normal spleen", "Splenic infarcts from sickle cell"], "n": ["Hematopoietic diseases are far more likely than carcinoma to make splenic masses.", "Not normal.", "Wedge-shaped infarcts."], "w": "Splenic nodules matter for staging (>4 nodules is an adverse factor in HL).", "p": "Splenic mass → think lymphoma."}, {"lo": "5", "rr": true, "hy": true, "q": "Skull X-ray shows multiple round, sharply punched-out lucencies. Diagnosis?", "a": "Multiple myeloma", "o": ["Metastatic prostate cancer", "Paget disease", "Osteopetrosis"], "n": ["Blastic lesions.", "Thick, mixed lesions.", "Dense bone."], "w": "Osteoclast activation (RANKL, IL-6); bone scan typically negative.", "p": "Punched-out skull = myeloma."}, {"lo": "5", "rr": true, "q": "Marrow aspirate: many plasma cells with eccentric nuclei and a clear perinuclear halo; one has two nuclei. Interpretation?", "a": "Multiple myeloma with an abnormal binucleate plasma cell", "o": ["Normal marrow", "Hairy cell leukemia", "Hodgkin lymphoma"], "n": ["Sheets and binucleate forms are abnormal.", "No hairy projections.", "RS cells are not plasma cells."], "w": "The halo is the hof (Golgi). Look for Russell bodies; prove clonality with κ/λ.", "p": "Binucleate plasma cells = myeloma."}]}];
+
+
+(function(){
+"use strict";
+var KEY="hd-hem27-wbc-lab-builder-v1";
+var S={box:{},score:0,streak:0,best:0,tot:0,right:0,theme:"auto"};
+function load(){try{var j=JSON.parse(localStorage.getItem(KEY)||"null");if(j&&j.box)S=Object.assign(S,j);}catch(e){}}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}}
+load();
+
+var ALL=[]; E.forEach(function(e){e.b.forEach(function(b,i){b.id=e.id+"."+i;b.ent=e;ALL.push(b);});});
+function st(b){var r=S.box[b.id];return r?r.s:"u";}
+var rrOnly=false, mode="build", scope="all", loFilter=null, curEnt=null, idx=0, cur=null, answered=false, results={}, lastId=null, t0=0, tick=null;
+
+function shuffle(a){a=a.slice();for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=a[i];a[i]=a[j];a[j]=t;}return a;}
+function esc(s){return String(s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];});}
+function inScope(b){return (scope==="all"||b.ent.lec===scope)&&(!loFilter||b.lo===loFilter)&&(!rrOnly||b.rr);}
+
+/* ---------- theme ---------- */
+var themeBtn=document.getElementById("themeBtn");
+function applyTheme(){var r=document.documentElement;if(S.theme==="auto")r.removeAttribute("data-theme");else r.setAttribute("data-theme",S.theme);themeBtn.textContent="Theme: "+S.theme;}
+themeBtn.onclick=function(){S.theme={auto:"light",light:"dark",dark:"auto"}[S.theme];applyTheme();save();};
+applyTheme();
+document.getElementById("resetBtn").onclick=function(){
+  var b=this; if(b.dataset.confirm){S.box={};S.score=S.streak=S.tot=S.right=0;save();b.textContent="Reset progress";delete b.dataset.confirm;renderAll();next();return;}
+  b.dataset.confirm="1";b.textContent="Tap again to reset";setTimeout(function(){if(b.dataset.confirm){delete b.dataset.confirm;b.textContent="Reset progress";}},3000);
+};
+
+/* ---------- stats / side / map ---------- */
+function loStatus(lo){var bs=ALL.filter(function(b){return b.lo===lo;});var ss=bs.map(st);
+  var m=ss.filter(function(x){return x==="M";}).length;
+  if(m===bs.length)return{s:"M",m:m,n:bs.length};
+  if(ss.indexOf("m")>=0)return{s:"m",m:m,n:bs.length};
+  if(ss.some(function(x){return x!=="u";}))return{s:"o",m:m,n:bs.length};
+  return{s:"u",m:m,n:bs.length};}
+function renderStats(){
+  document.getElementById("sScore").textContent=S.score;
+  document.getElementById("sStreak").textContent=S.streak;
+  document.getElementById("sAcc").textContent=S.tot?Math.round(100*S.right/S.tot)+"%":"—";
+  document.getElementById("sBoxes").textContent=ALL.filter(function(b){return st(b)==="M";}).length+"/"+ALL.length;
+  var los=Object.keys(LOS);document.getElementById("sLos").textContent=los.filter(function(l){return loStatus(l).s==="M";}).length+"/"+los.length;
+}
+function renderSide(){
+  var h="";LECS.forEach(function(L){if(scope!=="all"&&scope!==L.k)return;
+    h+='<p class="lec-h l'+L.k+'" style="color:var(--lc)">HEM27 · '+esc(L.n)+'</p>';
+    E.filter(function(e){return e.lec===L.k;}).forEach(function(e){
+      var m=e.b.filter(function(b){return st(b)==="M";}).length,p=Math.round(100*m/e.b.length);
+      h+='<button type="button" class="ent l'+e.lec+'" data-ent="'+e.id+'"'+(curEnt===e&&mode==="build"?' aria-current="true"':'')+'><span class="n">'+esc(e.name)+'</span><span class="pct">'+m+'/'+e.b.length+'</span><span class="s">'+esc(e.sub)+'</span><span class="mini"><i style="width:'+p+'%"></i></span></button>';
+    });});
+  var el=document.getElementById("entList");el.innerHTML=h;
+  el.querySelectorAll(".ent").forEach(function(b){b.onclick=function(){setMode("build");startEnt(E.filter(function(e){return e.id===b.dataset.ent;})[0]);};});
+}
+function renderMap(){
+  var h="";Object.keys(LOS).forEach(function(lo){var lec=LOLEC[lo];if(scope!=="all"&&scope!==lec)return;var s=loStatus(lo);
+    h+='<button type="button" class="lo-tile l'+lec+'" data-lo="'+lo+'"'+(loFilter===lo?' style="border-color:var(--lc)"':'')+'><span class="id">'+(lo.slice(-1)==="X"?"Extra":"LO "+lo)+'</span><span class="t">'+esc(LOS[lo])+'</span><span class="dot s-'+s.s+'" title="'+s.m+'/'+s.n+' mastered"></span></button>';});
+  var g=document.getElementById("loGrid");g.innerHTML=h;
+  g.querySelectorAll(".lo-tile").forEach(function(b){b.onclick=function(){loFilter=(loFilter===b.dataset.lo?null:b.dataset.lo);setMode("drill");};});
+}
+function renderAll(){renderStats();renderSide();renderMap();}
+
+/* ---------- flow ---------- */
+function setMode(m){mode=m;document.querySelectorAll("[data-mode]").forEach(function(b){b.setAttribute("aria-pressed",String(b.dataset.mode===m));});
+  if(m==="build"){loFilter=null;if(rrOnly){rrOnly=false;setRR();}renderAll();if(!curEnt||!inScope(curEnt.b[0]))startEnt(firstEnt());else show();}
+  else{renderAll();next();}}
+function firstEnt(){var es=E.filter(function(e){return scope==="all"||e.lec===scope;});
+  for(var i=0;i<es.length;i++){if(es[i].b.some(function(b){return st(b)!=="M";}))return es[i];}return es[0];}
+document.querySelectorAll("[data-mode]").forEach(function(b){b.onclick=function(){setMode(b.dataset.mode);};});
+function setRR(){document.querySelectorAll("[data-rr]").forEach(function(x){x.setAttribute("aria-pressed",String((x.dataset.rr==="1")===rrOnly));});}
+document.querySelectorAll("[data-rr]").forEach(function(b){b.onclick=function(){rrOnly=b.dataset.rr==="1";setRR();setMode(rrOnly?"drill":mode);};});
+document.querySelectorAll("[data-scope]").forEach(function(b){b.onclick=function(){scope=b.dataset.scope;loFilter=null;
+  document.querySelectorAll("[data-scope]").forEach(function(x){x.setAttribute("aria-pressed",String(x===b));});
+  if(mode==="build"){curEnt=null;setMode("build");}else setMode("drill");};});
+
+function startEnt(e){curEnt=e;idx=0;results={};renderSide();cur=e.b[0];show();}
+function next(){
+  if(mode==="build"){idx++;if(idx>=curEnt.b.length){finishEnt();return;}cur=curEnt.b[idx];show();return;}
+  var pool=ALL.filter(inScope);if(!pool.length){cur=null;show();return;}
+  var rank={m:0,u:1,o:2,M:3};
+  pool=shuffle(pool).sort(function(a,b){return rank[st(a)]-rank[st(b)];});
+  var best=rank[st(pool[0])];var top=pool.filter(function(b){return rank[st(b)]===best&&b.id!==lastId;});
+  if(best===3)top=pool.filter(function(b){return b.id!==lastId;});
+  cur=(top.length?top:pool)[0];show();
+}
+function finishEnt(){
+  var ok=Object.keys(results).filter(function(k){return results[k];}).length,n=curEnt.b.length;
+  var i=E.indexOf(curEnt),nxt=null;for(var j=1;j<=E.length;j++){var c=E[(i+j)%E.length];if(scope==="all"||c.lec===scope){nxt=c;break;}}
+  var card=document.getElementById("card");card.className="card l"+curEnt.lec;
+  card.innerHTML='<div class="done"><p class="meta">Structure complete</p><h2>'+esc(curEnt.name)+': '+ok+' / '+n+' first try</h2>'+
+   '<p class="hint">'+(ok===n?"Clean build. It will count as mastered after one more clean pass.":"Missed boxes are queued first in Drill mode.")+'</p>'+
+   '<div class="actions"><button class="btn" type="button" id="again">Rebuild '+esc(curEnt.name)+'</button>'+(nxt?'<button class="btn primary" type="button" id="nextEnt">Next: '+esc(nxt.name)+' →</button>':'')+'</div></div>';
+  document.getElementById("again").onclick=function(){startEnt(curEnt);};
+  if(nxt)document.getElementById("nextEnt").onclick=function(){startEnt(nxt);};
+  var ne=document.getElementById("nextEnt");if(ne)ne.focus();
+}
+
+var picks=[];
+function show(){
+  answered=false;picks=[];clearInterval(tick);
+  var card=document.getElementById("card");
+  if(!cur){card.className="card";card.innerHTML='<p class="q">Nothing in this scope yet.</p>';return;}
+  var b=cur,e=b.ent;card.className="card l"+e.lec;
+  var head='<div class="card-top"><div><p class="meta">'+(mode==="build"?"Build · box "+(idx+1)+" of "+e.b.length:"Drill"+(rrOnly?" · Rapid Review":"")+(loFilter?" · LO "+loFilter:""))+'</p><h2>'+esc(e.name)+'</h2></div>'+
+    '<div style="display:flex;gap:6px;flex-wrap:wrap"><span class="tag lo">'+(b.lo.slice(-1)==="X"?"Extra":"LO "+b.lo)+'</span>'+(b.rr?'<span class="tag rr">Rapid Review</span>':'')+(b.hy?'<span class="tag hy">HY</span>':'')+'<span class="timer" id="timer">0.0s</span></div></div>';
+  if(mode==="build"){head+='<div class="boxes" aria-hidden="true">'+e.b.map(function(x,i){var c=i===idx?"cur":(x.id in results?(results[x.id]?"done-ok":"done-bad"):"");return '<i class="'+c+'"></i>';}).join("")+'</div>';}
+  var body='<p class="q">'+esc(b.q)+'</p>';
+  if(!b.t){b._opts=shuffle([b.a].concat(b.o));
+    body+='<div class="opts">'+b._opts.map(function(o,i){return '<button type="button" class="opt" data-i="'+i+'"><span class="k">'+(i+1)+'</span><span>'+esc(o)+'</span></button>';}).join("")+'</div>';}
+  else if(b.t==="m"){b._opts=shuffle(b.a.concat(b.o));
+    body+='<p class="hint">Select all that apply, then check.</p><div class="opts">'+b._opts.map(function(o,i){return '<button type="button" class="opt" aria-pressed="false" data-i="'+i+'"><span class="k">'+(i+1)+'</span><span>'+esc(o)+'</span></button>';}).join("")+'</div>';}
+  else{b._opts=shuffle(b.a);
+    body+='<p class="hint">Tap items in order. Tap a placed item to remove it.</p><ol class="ordered" id="ordList"><li class="empty" style="cursor:default">Your order appears here</li></ol><div class="opts">'+b._opts.map(function(o,i){return '<button type="button" class="opt" data-i="'+i+'"><span class="k">+</span><span>'+esc(o)+'</span></button>';}).join("")+'</div>';}
+  var act='<div id="fb"></div><div class="actions"><span class="hint">'+(b.t?"Enter to check":"Keys 1–"+b._opts.length+" to answer")+'</span><div style="display:flex;gap:8px">'+
+    (mode==="build"?'<button class="btn" type="button" id="skipBtn">Skip structure</button>':'')+
+    (b.t?'<button class="btn primary" type="button" id="checkBtn"'+(b.t==="o"?" disabled":"")+'>Check</button>':'')+
+    '<button class="btn primary" type="button" id="nextBtn" hidden>Next box →</button></div></div>';
+  card.innerHTML=head+body+act;
+  t0=Date.now();tick=setInterval(function(){var t=document.getElementById("timer");if(t)t.textContent=((Date.now()-t0)/1000).toFixed(1)+"s";},100);
+  var opts=card.querySelectorAll(".opt");
+  if(!b.t)opts.forEach(function(o){o.onclick=function(){if(!answered)grade([+o.dataset.i]);};});
+  else if(b.t==="m")opts.forEach(function(o){o.onclick=function(){if(answered)return;var on=o.getAttribute("aria-pressed")!=="true";o.setAttribute("aria-pressed",String(on));o.classList.toggle("sel",on);};});
+  else opts.forEach(function(o){o.onclick=function(){if(answered||o.disabled)return;picks.push(+o.dataset.i);o.disabled=true;o.style.opacity=".4";drawOrd();};});
+  var cb=document.getElementById("checkBtn");if(cb)cb.onclick=function(){if(answered)return;
+    if(b.t==="m"){var sel=[];opts.forEach(function(o){if(o.getAttribute("aria-pressed")==="true")sel.push(+o.dataset.i);});grade(sel);}else grade(picks);};
+  var sk=document.getElementById("skipBtn");if(sk)sk.onclick=function(){var i=E.indexOf(curEnt);for(var j=1;j<=E.length;j++){var c=E[(i+j)%E.length];if(scope==="all"||c.lec===scope){startEnt(c);return;}}};
+  document.getElementById("nextBtn").onclick=function(){lastId=cur.id;next();};
+}
+function drawOrd(){var b=cur,ol=document.getElementById("ordList");
+  ol.innerHTML=picks.length?picks.map(function(i,k){return '<li data-k="'+k+'">'+esc(b._opts[i])+'</li>';}).join(""):'<li class="empty" style="cursor:default">Your order appears here</li>';
+  ol.querySelectorAll("li[data-k]").forEach(function(li){li.onclick=function(){if(answered)return;var k=+li.dataset.k,i=picks[k];picks.splice(k,1);
+    var o=document.querySelector('.opt[data-i="'+i+'"]');o.disabled=false;o.style.opacity="";drawOrd();};});
+  document.getElementById("checkBtn").disabled=picks.length!==b.a.length;}
+
+function grade(sel){
+  answered=true;clearInterval(tick);var b=cur,ok,card=document.getElementById("card"),opts=card.querySelectorAll(".opt");
+  if(!b.t){ok=b._opts[sel[0]]===b.a;opts.forEach(function(o){var t=b._opts[+o.dataset.i];o.disabled=true;if(t===b.a)o.classList.add("right");else if(+o.dataset.i===sel[0])o.classList.add("wrong");});}
+  else if(b.t==="m"){var chosen=sel.map(function(i){return b._opts[i];});ok=chosen.length===b.a.length&&chosen.every(function(c){return b.a.indexOf(c)>=0;});
+    opts.forEach(function(o){var t=b._opts[+o.dataset.i],isA=b.a.indexOf(t)>=0,isS=chosen.indexOf(t)>=0;o.disabled=true;o.classList.remove("sel");
+      if(isA&&isS)o.classList.add("right");else if(isA)o.classList.add("missed");else if(isS)o.classList.add("wrong");});}
+  else{var got=sel.map(function(i){return b._opts[i];});ok=got.every(function(g,k){return g===b.a[k];});
+    document.querySelectorAll("#ordList li[data-k]").forEach(function(li,k){li.classList.add(got[k]===b.a[k]?"right":"wrong");});
+    opts.forEach(function(o){o.disabled=true;});}
+  var r=S.box[b.id]||{n:0,c:0,s:"u"};r.n++;
+  if(ok){r.c++;r.s=r.c>=2?"M":"o";S.streak++;S.best=Math.max(S.best,S.streak);S.right++;S.score+=10+Math.min(S.streak,10);}
+  else{r.c=0;r.s="m";S.streak=0;}
+  S.tot++;S.box[b.id]=r;if(!(b.id in results))results[b.id]=ok;save();
+  var fb='<div class="fb '+(ok?"ok":"bad")+'"><span class="v">'+(ok?"Correct":"Not quite")+'</span>';
+  if(!b.t)fb+='<span class="ans">Answer: <b>'+esc(b.a)+'</b></span>';
+  else if(b.t==="m")fb+='<span class="ans">Answer: <b>'+b.a.map(esc).join(" · ")+'</b></span>';
+  else fb+='<span class="ans">Correct order:</span><ol>'+b.a.map(function(x){return "<li>"+esc(x)+"</li>";}).join("")+'</ol>';
+  fb+='<div class="fbexp">'+String(b.w||"").split(/\n\n+/).filter(Boolean).map(function(t){return '<p>'+esc(t)+'</p>';}).join("")+'</div>';
+  if(b.n&&b.n.length&&b.o&&b.o.length){
+    var rows=b.o.map(function(x,i){return b.n[i]?'<li><b>'+esc(x)+'</b> — '+esc(b.n[i])+'</li>':"";}).join("");
+    if(rows)fb+='<ul class="fbnotes">'+rows+'</ul>';
+  }
+  if(b.p)fb+='<div class="fbpearl"><b>High-yield</b>'+esc(b.p)+'</div>';
+  fb+='</div>';
+  document.getElementById("fb").innerHTML=fb;
+  var cb=document.getElementById("checkBtn");if(cb)cb.hidden=true;
+  var nb=document.getElementById("nextBtn");nb.hidden=false;nb.textContent=(mode==="build"&&idx===curEnt.b.length-1)?"Finish structure →":"Next box →";nb.focus();
+  renderAll();
+}
+document.addEventListener("keydown",function(ev){
+  if(ev.target.tagName==="INPUT"||ev.metaKey||ev.ctrlKey||ev.altKey)return;
+  if(ev.key==="Enter"){var nb=document.getElementById("nextBtn"),cb=document.getElementById("checkBtn");
+    if(nb&&!nb.hidden){ev.preventDefault();nb.click();}else if(cb&&!cb.hidden&&!cb.disabled){ev.preventDefault();cb.click();}return;}
+  var n=parseInt(ev.key,10);if(!cur||answered||isNaN(n))return;var o=document.querySelector('.opt[data-i="'+(n-1)+'"]');if(o&&!o.disabled)o.click();
+});
+
+renderAll();startEnt(firstEnt());
+})();
+
+/* ---------- Review: the compiled version of everything the answers teach ---------- */
+var REVIEW = {"F": "<h3 class=\"rh\">LO1 · Normal hematopoiesis</h3>\n<p>HSC (<b>CD34+</b>) → <b>common myeloid progenitor</b> (granulocytes, monocytes, RBCs, platelets) and <b>common lymphoid progenitor</b> (B cells in marrow, T cells in <b>thymus</b>, NK cells).</p>\n<ol class=\"rseq\"><li>Myeloblast</li><li>Promyelocyte (primary/azurophilic granules)</li><li>Myelocyte (secondary granules; last to divide)</li><li>Metamyelocyte (kidney nucleus)</li><li>Band</li><li>Segmented neutrophil</li></ol>\n<div class=\"rmem\"><b>My Pretty Mama Makes Bread Sundays</b>Myeloblast · Promyelocyte · Myelocyte · Metamyelocyte · Band · Segmented.</div>\n<div class=\"rtbl\"><table><thead><tr><th>Factor</th><th>Source</th><th>Drives</th></tr></thead><tbody>\n<tr><td><b>EPO</b></td><td>Kidney (hypoxia)</td><td>RBCs</td></tr>\n<tr><td><b>TPO</b></td><td>Liver</td><td>Megakaryocytes</td></tr>\n<tr><td><b>G-CSF</b></td><td>Macrophages, endothelium, stroma</td><td>Neutrophils (filgrastim)</td></tr>\n<tr><td>GM-CSF</td><td>T cells, macrophages</td><td>Granulocytes + monocytes</td></tr>\n<tr><td>M-CSF</td><td>Stroma</td><td>Monocytes/macrophages</td></tr>\n<tr><td>IL-3</td><td>T cells</td><td>Early progenitors</td></tr>\n<tr><td>IL-5</td><td>Th2</td><td>Eosinophils</td></tr>\n<tr><td>IL-7</td><td>Marrow/thymic stroma</td><td>Lymphoid precursors</td></tr>\n<tr><td>SCF (KIT ligand)</td><td>Stroma</td><td>Stem cells, mast cells</td></tr></tbody></table></div>\n<div class=\"rhy\"><b>USMLE: JAK2</b>JAK2 sits under the EPO, TPO and G-CSF receptors. JAK2 V617F → growth without the hormone (PV, ET, myelofibrosis).</div>\n<ul class=\"rlist\"><li><b>Niche:</b> stroma, matrix, sinusoids, iron/B12/folate. Failure → cytopenias, extramedullary hematopoiesis.</li><li><b>Cellularity ≈ 100 − age</b> (≈50% middle age); <b>M:E ≈ 3:1</b>; adult marrow = axial skeleton.</li></ul>\n<div class=\"rmem\"><b>Never Let Monkeys Eat Bananas</b>Neutrophils (50–70%) &gt; Lymphocytes (20–40%) &gt; Monocytes (2–8%) &gt; Eosinophils (1–4%) &gt; Basophils (&lt;1%).</div>\n<h3 class=\"rh\">LO2 · WHO classification</h3>\n<p>WHO = morphology + immunophenotype + genetics + clinical features. <b>First question: neoplastic or reactive?</b></p>\n<div class=\"rtbl\"><table><thead><tr><th>Family</th><th>Defining idea</th></tr></thead><tbody>\n<tr><td>AML</td><td>≥20% myeloblasts</td></tr>\n<tr><td>MDS</td><td>Ineffective, dysplastic; cytopenias; blasts &lt;20%</td></tr>\n<tr><td>MPN</td><td>Effective overproduction; tyrosine kinase (BCR-ABL, JAK2)</td></tr>\n<tr><td>Precursor lymphoid</td><td>Lymphoblasts (TdT+)</td></tr>\n<tr><td>Mature B / T-NK</td><td>Mimic a stage of B/T development</td></tr>\n<tr><td>Hodgkin</td><td>Few RS cells in reactive background</td></tr></tbody></table></div>\n<div class=\"rhy\"><b>The two-question sort</b>Lineage: myeloid (MPO, CD13, CD33, CD117) vs B (CD19/20) vs T (CD3). Maturity: blasts (TdT/CD34, acute) vs mature (chronic).</div>\n<ul class=\"rlist\"><li>Reactive patterns: <b>follicular</b> (B; RA, early HIV) · <b>paracortical</b> (T; EBV, phenytoin) · <b>sinus histiocytosis</b> (draining cancer).</li><li><b>Auer rod</b> = myeloid blast (AML/APL) · <b>Russell body</b> = cytoplasmic Ig (myeloma) · <b>Dutcher body</b> = nuclear Ig (Waldenström).</li></ul>\n<div class=\"rtbl\"><table><thead><tr><th></th><th>Reactive follicular</th><th>Follicular lymphoma</th></tr></thead><tbody>\n<tr><td>Follicles</td><td>Varied, cortical</td><td>Back-to-back, beyond capsule</td></tr>\n<tr><td>Germinal centers</td><td>Polarized, tingible-body macrophages</td><td>Monotonous</td></tr>\n<tr><td>BCL2 in GC</td><td>Negative</td><td><b>Positive</b></td></tr>\n<tr><td>Clonality</td><td>κ + λ</td><td>Restricted</td></tr></tbody></table></div>\n", "D": "<h3 class=\"rh\">LO3 · Leukemia vs lymphoma</h3>\n<div class=\"rtbl\"><table><thead><tr><th></th><th>Leukemia</th><th>Lymphoma</th></tr></thead><tbody>\n<tr><td>Site</td><td>Marrow; spills into blood</td><td>Nodes, lymphoid tissue, extranodal organs</td></tr>\n<tr><td>Lineage</td><td>Myeloid or lymphoid</td><td>Lymphoid only</td></tr>\n<tr><td>Tempo</td><td>Acute vs chronic</td><td>Indolent vs aggressive</td></tr>\n<tr><td>Presents</td><td>Marrow failure ± high WBC</td><td>Mass, lymphadenopathy</td></tr></tbody></table></div>\n<div class=\"rmem\"><b>Location names it</b>Same cells in marrow/blood = leukemia; in a node = lymphoma. Overlaps: CLL/SLL · ALL/lymphoblastic lymphoma · Sézary/MF · ATLL · Burkitt, mantle, follicular spill · myeloid sarcoma.</div>\n<div class=\"rtrap\"><b>Count ≠ diagnosis</b>Leukemoid reaction: high WBC, left shift, <b>high LAP</b>, toxic granulation, Döhle bodies. Aleukemic leukemia: normal/low WBC (hairy cell → pancytopenia).</div>\n<h3 class=\"rh\">LO4 · Signs &amp; symptoms</h3>\n<div class=\"rmem\"><b>A-B-C of marrow failure</b><b>A</b>nemia (fatigue, pallor) · <b>B</b>leeding (petechiae, gums) · <b>C</b>ontagion (fever, infection). Even a packed ALL marrow causes cytopenias.</div>\n<div class=\"rtbl\"><table><thead><tr><th>Sign</th><th>Think</th></tr></thead><tbody>\n<tr><td>Painless lymphadenopathy</td><td>Lymphoma, CLL</td></tr>\n<tr><td>Splenomegaly</td><td>CML, hairy cell (massive), CLL, myelofibrosis, MZL</td></tr>\n<tr><td>Bone pain</td><td>ALL (kids), myeloma (lytic)</td></tr>\n<tr><td>Mediastinal mass</td><td>T-ALL, nodular sclerosis HL, PMBL</td></tr>\n<tr><td>Gum hypertrophy, skin nodules</td><td>Monocytic AML</td></tr>\n<tr><td>CNS, testis</td><td>ALL, Burkitt, DLBCL</td></tr>\n<tr><td>B symptoms</td><td>Hodgkin, aggressive NHL (TNF, IL-1, IL-6)</td></tr>\n<tr><td>Hypercalcemia</td><td>Myeloma, ATLL</td></tr>\n<tr><td>Hyperviscosity</td><td>Waldenström; leukostasis</td></tr>\n<tr><td>DIC</td><td>APL</td></tr>\n<tr><td>AIHA, hypogammaglobulinemia</td><td>CLL, myeloma</td></tr>\n<tr><td>Eczema-like rash</td><td>Mycosis fungoides</td></tr></tbody></table></div>\n<div class=\"rtrap\"><b>Painful vs painless nodes</b>Tender, fast, febrile → reactive. Painless, rubbery, &gt;2 cm, supraclavicular, &gt;4–6 weeks → <b>excisional biopsy</b>.</div>\n", "T": "<h3 class=\"rh\">LO5 · Workup</h3>\n<ol class=\"rseq\"><li>History and exam (nodes, spleen, liver, B symptoms, bleeding, infections, bone pain)</li><li>CBC + differential + <b>smear</b></li><li>Marrow aspirate + core, or <b>excisional</b> node biopsy (or SPEP/IFE/FLC for an M spike)</li><li>Flow · IHC · cytochemistry · cytogenetics/FISH · molecular</li><li>WHO diagnosis → staging (CT/PET; MRI/PET-CT for myeloma), LDH → risk → treatment</li></ol>\n<p>Chemistry: <b>LDH, uric acid</b> (turnover, tumor lysis), calcium, creatinine, albumin, β2-microglobulin. Aspirate = cells; core = cellularity, architecture, fibrosis, paratrabecular aggregates.</p>\n<div class=\"rtbl\"><table><thead><tr><th>Test</th><th>Answers</th><th>Classic use</th></tr></thead><tbody>\n<tr><td>Flow</td><td>Lineage, maturity, clonality</td><td>CLL, ALL, AML, hairy cell</td></tr>\n<tr><td>IHC</td><td>Markers in place</td><td>BCL2, cyclin D1, CD15/30, CD138</td></tr>\n<tr><td>Cytochemistry</td><td>Myeloid vs lymphoid</td><td>MPO, NSE, TRAP, LAP</td></tr>\n<tr><td>FISH</td><td>Translocations</td><td>9;22 · 15;17 · 14;18 · 11;14 · 8;14 · del17p</td></tr>\n<tr><td>Molecular</td><td>Mutations, MRD</td><td>BCR-ABL, JAK2, BRAF, MYD88, FLT3, NPM1</td></tr>\n<tr><td>Viral</td><td>Drivers</td><td>EBV, HTLV-1, HHV-8</td></tr></tbody></table></div>\n<h3 class=\"rh\">Small B-cell grid (all CD19/20/22+)</h3>\n<div class=\"rtbl\"><table><thead><tr><th></th><th>CD5</th><th>CD10</th><th>CD23</th><th>Cyclin D1</th><th>Genetics</th></tr></thead><tbody>\n<tr><td>CLL/SLL</td><td>+</td><td>−</td><td>+</td><td>−</td><td>+12</td></tr>\n<tr><td>Mantle</td><td>+</td><td>−</td><td>−</td><td>+</td><td>t(11;14)</td></tr>\n<tr><td>Follicular</td><td>−</td><td>+</td><td>−/+</td><td>−</td><td>t(14;18)</td></tr>\n<tr><td>Marginal zone</td><td>−</td><td>−</td><td>+/− (in-house)</td><td>−</td><td>+18, t(11;18)</td></tr>\n<tr><td>LPL (IgM)</td><td>−</td><td>−</td><td>−</td><td>−</td><td>MYD88</td></tr></tbody></table></div>\n<div class=\"rmem\"><b>Fast sort</b>CD5+ → CLL (CD23+) or mantle (cyclin D1+). CD10+ → follicular. Neither → MZL or LPL (IgM spike = LPL).</div>\n<h3 class=\"rh\">Outcomes</h3>\n<ul class=\"rlist\"><li><b>Curable:</b> childhood ALL ≈90% · DLBCL ≈50% · Burkitt · Hodgkin 75–90% · APL with ATRA.</li><li><b>CML:</b> near-normal life with TKIs.</li><li><b>Incurable/indolent:</b> CLL 4–10 y · follicular 7–9 y · mantle 3–5 y · myeloma (in-house ≈3 y) · MDS (10–40% → AML).</li><li>AML: remission 60–70%; cure mainly with transplant. Hairy cell: long remissions with cladribine.</li></ul>\n<h3 class=\"rh\">Slide atlas</h3>\n<div class=\"rtbl\"><table><thead><tr><th>Clue</th><th>Diagnosis</th></tr></thead><tbody>\n<tr><td>Half cells/half fat; big multinucleated cells</td><td>Normal marrow; megakaryocytes</td></tr>\n<tr><td>≈100% blasts, child, cytopenias</td><td>ALL</td></tr>\n<tr><td>Large blast with red needle</td><td>AML with Auer rod</td></tr>\n<tr><td>All granulocyte stages + basophils, big spleen</td><td>CML</td></tr>\n<tr><td>Sheets of small lymphocytes in portal tracts</td><td>CLL/SLL in liver</td></tr>\n<tr><td>Hairy projections, pancytopenia, huge spleen</td><td>Hairy cell (TRAP+)</td></tr>\n<tr><td>Fleshy tan nodes, little necrosis</td><td>Lymphoma (vs carcinoma)</td></tr>\n<tr><td>Cells through capsule into fat</td><td>Lymphoma</td></tr>\n<tr><td>Sheets of large cells, nucleoli</td><td>DLBCL (vs carcinoma → IHC)</td></tr>\n<tr><td>Aggregate hugging trabecula</td><td>Lymphoma (follicular)</td></tr>\n<tr><td>Collagen bands</td><td>Nodular sclerosis HL (lacunar cells)</td></tr>\n<tr><td>Popcorn cell</td><td>NLPHL (CD20+)</td></tr>\n<tr><td>Many RS cells, few lymphocytes</td><td>Lymphocyte-depleted HL</td></tr>\n<tr><td>Eosinophils + CD15+ large cells</td><td>Mixed cellularity HL</td></tr>\n<tr><td>Pale splenic nodules</td><td>Lymphoma (staging)</td></tr>\n<tr><td>Punched-out skull</td><td>Multiple myeloma</td></tr>\n<tr><td>Binucleate plasma cells, hof</td><td>Multiple myeloma</td></tr></tbody></table></div>\n"};
+var RVW_NAME = {"F":"LO1–2 Hematopoiesis & WHO","D":"LO3–4 Leukemia vs lymphoma","T":"LO5 Workup & slides"};
+(function(){
+  var panel=document.getElementById("rvw"), body=document.getElementById("rvwBody"),
+      toc=document.getElementById("rvwToc"), q=document.getElementById("rvwQ"),
+      cnt=document.getElementById("rvwCount"), empty=document.getElementById("rvwEmpty"),
+      btn=document.getElementById("reviewBtn"), lec="F", secs=[];
+  var TYPES={rrule:1,rtrap:1,rmem:1,rhy:1};
+  function collapse(sec){
+    [].slice.call(sec.querySelectorAll(".rrule,.rtrap,.rmem,.rhy")).forEach(function(d){
+      var type=d.className.trim(); if(!TYPES[type])return;
+      var lbl=d.querySelector("b"), label=lbl?lbl.textContent:"Note";
+      if(lbl)lbl.parentNode.removeChild(lbl);
+      var det=document.createElement("details"); det.className="cx "+type;
+      var sum=document.createElement("summary");
+      sum.innerHTML='<span class="lbl"></span><span class="pk"></span>';
+      sum.querySelector(".lbl").textContent=label;
+      sum.querySelector(".pk").textContent=d.textContent.replace(/\s+/g," ").trim().slice(0,110);
+      var cb=document.createElement("div"); cb.className="cbody";
+      while(d.firstChild)cb.appendChild(d.firstChild);
+      det.appendChild(sum); det.appendChild(cb);
+      d.parentNode.replaceChild(det,d);
+    });
+    var h=sec.querySelector(".rh"), hys=[].slice.call(sec.querySelectorAll("details.rhy"));
+    if(h&&hys.length){ var ref=h.nextSibling; hys.forEach(function(x){ sec.insertBefore(x,ref); }); }
+    var kids=[].slice.call(sec.children), i=0;
+    while(i<kids.length){
+      if(kids[i].tagName==="DETAILS"){
+        var run=[kids[i]], cls=kids[i].className, j=i+1;
+        while(j<kids.length&&kids[j].tagName==="DETAILS"&&kids[j].className===cls){run.push(kids[j]);j++;}
+        if(run.length>1){
+          var g=document.createElement("div"); g.className="cgrid";
+          sec.insertBefore(g,run[0]); run.forEach(function(x){g.appendChild(x);});
+        }
+        i=j;
+      } else i++;
+    }
+  }
+  function group(){
+    var kids=[].slice.call(body.childNodes), out=[], cur=null;
+    kids.forEach(function(n){
+      if(n.nodeType===1&&n.tagName==="H3"){cur=document.createElement("section");cur.className="rsec";out.push(cur);}
+      if(!cur){cur=document.createElement("section");cur.className="rsec";out.push(cur);}
+      cur.appendChild(n);
+    });
+    body.innerHTML="";
+    out.forEach(function(s,i){ s.id="rs"+i; collapse(s); s._t=s.textContent.toLowerCase(); body.appendChild(s); });
+    return out;
+  }
+  function setAll(open){
+    [].slice.call(body.querySelectorAll("details.cx")).forEach(function(d){d.open=open;});
+    var t=document.getElementById("rvwAll");
+    if(t){t.textContent=open?"Collapse all":"Expand all";t.setAttribute("aria-pressed",String(open));}
+  }
+  function buildToc(){
+    toc.innerHTML=secs.map(function(s){
+      var h=s.querySelector(".rh"); return h?'<a href="#'+s.id+'">'+h.textContent+'</a>':'';
+    }).join("");
+  }
+  function filter(){
+    var terms=q.value.toLowerCase().split(/\s+/).filter(Boolean), n=0;
+    secs.forEach(function(s){
+      var on=terms.every(function(t){return s._t.indexOf(t)!==-1;});
+      s.classList.toggle("hide",!on); if(on)n++;
+    });
+    empty.classList.toggle("on",n===0);
+    cnt.textContent = n===secs.length ? secs.length+" sections" : n+" of "+secs.length;
+    toc.style.display = q.value ? "none" : "";
+  }
+  function load(l){
+    lec=l; panel.setAttribute("data-lec",l);
+    body.innerHTML=REVIEW[l]||"";
+    secs=group(); buildToc(); q.value=""; filter();
+    var t=document.getElementById("rvwAll"); if(t){t.textContent="Expand all";t.setAttribute("aria-pressed","false");}
+  }
+  function open(){
+    document.querySelector(".bar").style.display="none";
+    document.querySelector(".main").style.display="none";
+    panel.hidden=false; if(!secs.length)load(lec);
+    btn.setAttribute("aria-pressed","true");
+    window.scrollTo(0,0); q.focus({preventScroll:true});
+  }
+  function close(){
+    panel.hidden=true;
+    document.querySelector(".bar").style.display="";
+    document.querySelector(".main").style.display="";
+    btn.setAttribute("aria-pressed","false");
+    window.scrollTo(0,0);
+  }
+  btn.onclick=function(){ panel.hidden?open():close(); };
+  document.getElementById("rvwClose").onclick=close;
+  document.getElementById("rvwPrint").onclick=function(){window.print();};
+  var allBtn=document.getElementById("rvwAll");
+  if(allBtn)allBtn.onclick=function(){ setAll(this.getAttribute("aria-pressed")!=="true"); };
+  var reclose=[];
+  window.addEventListener("beforeprint",function(){
+    reclose=[];
+    [].slice.call(body.querySelectorAll("details.cx")).forEach(function(d){ if(!d.open){reclose.push(d);d.open=true;} });
+  });
+  window.addEventListener("afterprint",function(){ reclose.forEach(function(d){d.open=false;}); reclose=[]; });
+  document.getElementById("rvwTabs").onclick=function(e){
+    var b=e.target.closest("button"); if(!b)return;
+    [].forEach.call(this.children,function(c){c.setAttribute("aria-pressed",String(c===b));});
+    load(b.dataset.l); window.scrollTo(0,0);
+  };
+  q.addEventListener("input",filter);
+  document.addEventListener("keydown",function(e){
+    if(e.key==="Escape"&&!panel.hidden){ if(document.activeElement===q&&q.value){q.value="";filter();} else close(); }
+  });
+})();
+
+</script>

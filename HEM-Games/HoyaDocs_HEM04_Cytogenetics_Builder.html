@@ -1,0 +1,556 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HEM04 Cytogenetics Builder</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,600;8..60,700&family=Public+Sans:wght@400;600;700&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+/* Layout: toolbar + stats on top; structure list | question card | LO mastery map. Stacks to one column on phones. */
+:root{
+  --bg:#f3f5f6; --surface:#ffffff; --ink:#18212b; --muted:#5a6570; --line:#dbe0e5; --chip:#eceff2;
+  --arch:#2c55a0; --face:#a3263f; --eye:#2c55a0; --accent:#a3263f;
+  --ok:#1d7a3e; --ok-bg:#e3f4e8; --bad:#b3261e; --bad-bg:#fbe7e5; --once:#b7791f; --once-bg:#fdf1dc; --mem:#c2621a;
+  --hy-bg:#fff6cc; --hy-line:#c9a227; --hy-ink:#4a3a00;
+  --f-display:"Source Serif 4", Georgia, serif; --f-body:"Public Sans", Arial, sans-serif; --f-mono:"IBM Plex Mono", ui-monospace, monospace;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#11161c; --surface:#19212a; --ink:#e6eaee; --muted:#9aa6b2; --line:#2c3642; --chip:#232c36;
+  --arch:#8fb1f0; --face:#f08a9b; --eye:#8fb1f0; --accent:#f08a9b;
+  --ok:#6fd08f; --ok-bg:#16301f; --bad:#f28b82; --bad-bg:#3a1b19; --once:#f0c070; --once-bg:#3a2e12; --mem:#f0a05c;
+  --hy-bg:#3a3110; --hy-line:#b8952a; --hy-ink:#f5e6a8; color-scheme:dark }}
+:root[data-theme="dark"]{
+  --bg:#11161c; --surface:#19212a; --ink:#e6eaee; --muted:#9aa6b2; --line:#2c3642; --chip:#232c36;
+  --arch:#8fb1f0; --face:#f08a9b; --eye:#8fb1f0; --accent:#f08a9b;
+  --ok:#6fd08f; --ok-bg:#16301f; --bad:#f28b82; --bad-bg:#3a1b19; --once:#f0c070; --once-bg:#3a2e12; --mem:#f0a05c;
+  --hy-bg:#3a3110; --hy-line:#b8952a; --hy-ink:#f5e6a8; color-scheme:dark }
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font:15px/1.5 var(--f-body);margin:0}
+.wrap{max-width:1180px;margin:0 auto;padding-inline:16px;padding-block:22px 48px;display:grid;gap:16px}
+h1,h2,h3{font-family:var(--f-display);margin:0;text-wrap:balance;line-height:1.2}
+.meta{font:500 .74rem var(--f-mono);letter-spacing:.07em;text-transform:uppercase;color:var(--muted);margin:0}
+header{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:end;gap:12px}
+header h1{font-size:1.9rem}
+header p.lede{margin:4px 0 0;color:var(--muted);max-width:62ch}
+.btn{font:600 .85rem var(--f-body);background:var(--chip);color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:7px 12px;cursor:pointer}
+.btn:hover{border-color:var(--ink)}
+.btn:focus-visible,.opt:focus-visible,.seg button:focus-visible,.ent:focus-visible,.lo-tile:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.btn.primary{background:var(--accent);color:var(--surface);border-color:var(--accent)}
+.btn[disabled]{opacity:.45;cursor:default}
+.hdr-actions{display:flex;gap:8px;flex-wrap:wrap}
+.wrap{grid-template-columns:minmax(0,1fr)} .rvw{min-width:0}
+
+.bar{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 12px}
+.seg{display:inline-flex;background:var(--chip);border-radius:10px;padding:3px;gap:2px;flex-wrap:wrap}
+.seg button{font:600 .82rem var(--f-body);border:0;background:transparent;color:var(--ink);padding:6px 11px;border-radius:8px;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--surface);box-shadow:0 1px 2px rgba(0,0,0,.12)}
+.seg .lab{font:500 .7rem var(--f-mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);align-self:center;padding:0 6px}
+.stats{display:flex;gap:18px;flex-wrap:wrap}
+.stat b{display:block;font:700 1.15rem var(--f-body);font-variant-numeric:tabular-nums}
+.stat span{font:500 .68rem var(--f-mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+
+.main{display:grid;grid-template-columns:250px minmax(0,1fr) 270px;gap:16px;align-items:start}
+@media (max-width:1000px){ .main{grid-template-columns:minmax(0,1fr)} .side{order:2} .map{order:3} }
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px;display:grid;gap:8px;min-width:0}
+.panel h2{font-size:1rem}
+.lec-h{font:700 .72rem var(--f-body);letter-spacing:.07em;text-transform:uppercase;margin-top:6px}
+.ent{display:grid;grid-template-columns:1fr auto;gap:2px 8px;text-align:left;width:100%;background:transparent;border:1px solid transparent;border-radius:8px;padding:7px 8px;cursor:pointer;color:var(--ink);font:inherit}
+.ent:hover{background:var(--chip)}
+.ent[aria-current="true"]{border-color:var(--lc);background:var(--chip)}
+.ent .n{font-weight:600;font-size:.9rem}
+.ent .s{grid-column:1;font-size:.75rem;color:var(--muted)}
+.ent .pct{grid-row:1/3;grid-column:2;align-self:center;font:500 .75rem var(--f-mono);color:var(--muted);font-variant-numeric:tabular-nums}
+.ent .mini{grid-column:1/3;height:4px;border-radius:2px;background:var(--line);overflow:hidden}
+.ent .mini i{display:block;height:100%;background:var(--lc)}
+.lF{--lc:var(--arch)} .lD{--lc:var(--face)} .lT{--lc:var(--tcol)}
+:root{--tcol:#1d7a5f} @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--tcol:#6fd0b0}} :root[data-theme="dark"]{--tcol:#6fd0b0}
+.tag.rr{background:var(--chip);color:var(--ink);border:1px solid var(--line)}
+
+.card{background:var(--surface);border:1px solid var(--line);border-top:5px solid var(--lc);border-radius:12px;padding:18px;display:grid;gap:14px;min-width:0}
+.card-top{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px;align-items:baseline}
+.card-top h2{font-size:1.35rem}
+.tag{font:500 .7rem var(--f-mono);letter-spacing:.06em;text-transform:uppercase;padding:3px 8px;border-radius:999px;background:var(--chip);color:var(--muted)}
+.tag.lo{color:var(--lc)}
+.tag.hy{background:var(--hy-bg);color:var(--hy-ink);border:1px solid var(--hy-line)}
+.boxes{display:flex;gap:4px;flex-wrap:wrap}
+.boxes i{width:18px;height:6px;border-radius:3px;background:var(--line)}
+.boxes i.done-ok{background:var(--ok)} .boxes i.done-bad{background:var(--bad)} .boxes i.cur{background:var(--lc)}
+.q{font:600 1.08rem/1.45 var(--f-body);margin:0}
+.hint{font-size:.8rem;color:var(--muted);margin:0}
+.opts{display:grid;gap:8px}
+.opt{display:grid;grid-template-columns:auto 1fr;gap:10px;align-items:start;text-align:left;width:100%;font:inherit;color:var(--ink);background:var(--bg);border:1.5px solid var(--line);border-radius:10px;padding:10px 12px;cursor:pointer}
+.opt:hover:not([disabled]){border-color:var(--lc)}
+.opt .k{font:500 .75rem var(--f-mono);color:var(--muted);border:1px solid var(--line);border-radius:5px;padding:1px 6px;margin-top:1px}
+.opt.sel{border-color:var(--lc);background:var(--chip)}
+.opt.right{border-color:var(--ok);background:var(--ok-bg)}
+.opt.wrong{border-color:var(--bad);background:var(--bad-bg)}
+.opt.missed{border-color:var(--ok);border-style:dashed}
+.opt[disabled]{cursor:default}
+.ordered{display:grid;gap:6px;counter-reset:ord;padding:0;margin:0;list-style:none;min-height:44px;border:1.5px dashed var(--line);border-radius:10px;padding:8px}
+.ordered li{counter-increment:ord;display:grid;grid-template-columns:auto 1fr;gap:8px;align-items:center;background:var(--chip);border-radius:8px;padding:7px 10px;cursor:pointer}
+.ordered li::before{content:counter(ord);font:500 .78rem var(--f-mono);color:var(--lc)}
+.ordered li.right{background:var(--ok-bg)} .ordered li.wrong{background:var(--bad-bg)}
+.ordered .empty{color:var(--muted);font-size:.85rem;padding:4px}
+/* ---------- Review ---------- */
+.rvw{margin-top:14px}
+.rvw-bar{position:sticky;top:0;z-index:8;background:var(--bg);border-bottom:1px solid var(--line);padding:10px 0;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.rvw-bar .seg{display:flex;gap:2px;background:var(--chip);border:1px solid var(--line);border-radius:9px;padding:3px}
+.rvw-bar .seg button{background:transparent;border:0;border-radius:7px;padding:6px 12px;font:inherit;font-size:13.5px;color:var(--muted);cursor:pointer}
+.rvw-bar .seg button[aria-pressed="true"]{background:var(--surface);color:var(--ink);font-weight:600;box-shadow:0 1px 2px rgba(0,0,0,.08)}
+#rvwQ{flex:1 1 180px;min-width:140px;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:7px 10px;font:inherit;font-size:14px;color:inherit}
+#rvwCount{font-family:var(--f-mono);font-size:11px;color:var(--muted);white-space:nowrap}
+.rvw-toc{display:flex;flex-wrap:wrap;gap:6px;margin:12px 0 2px}
+.rvw-toc a{font-size:12.5px;text-decoration:none;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:4px 10px}
+.rvw-toc a:hover{color:var(--ink);border-color:var(--muted)}
+.rvw-body{max-width:none}
+.rsec{padding:6px 0 10px;scroll-margin-top:64px}
+.rsec.hide{display:none}
+.rh{font-family:var(--f-display);font-size:1.5rem;font-weight:650;margin:26px 0 4px;padding-bottom:6px;border-bottom:2px solid var(--acc)}
+.rsh{font-family:var(--f-display);font-size:1.12rem;font-weight:650;margin:18px 0 4px}
+.rvw-body p{margin:8px 0;line-height:1.62}
+ul.rlist{margin:8px 0;padding-left:1.15em;display:grid;gap:5px}
+ul.rlist li{line-height:1.55}
+.rtbl{overflow-x:auto;margin:12px 0;border:1px solid var(--line);border-radius:10px;background:var(--surface)}
+.rtbl table{border-collapse:collapse;width:100%;font-size:14px}
+.rtbl th,.rtbl td{text-align:left;vertical-align:top;padding:8px 11px;border-bottom:1px solid var(--line)}
+.rtbl thead th{background:var(--chip);font-family:var(--f-mono);font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);white-space:nowrap}
+.rtbl tbody tr:last-child td{border-bottom:0}
+.rtbl td b{font-weight:600}
+.rseq{margin:12px 0;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 14px 12px 10px}
+.rseq ol{margin:0;padding-left:1.3em;display:grid;gap:7px}
+.rseq li{line-height:1.55;padding-left:2px}
+.rseq li b{color:var(--acc)}
+.cgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(330px,1fr));gap:10px;margin:12px 0;align-items:start}
+.cgrid>details{margin:0}
+details.cx{margin:11px 0;border-radius:9px;border:1px solid var(--line);background:var(--surface);overflow:hidden}
+details.cx>summary{list-style:none;cursor:pointer;display:flex;align-items:baseline;gap:9px;padding:9px 12px;border-left:3px solid var(--line);font-size:14px}
+details.cx>summary::-webkit-details-marker{display:none}
+details.cx>summary::after{content:"+";margin-left:auto;font-family:var(--f-mono);font-size:14px;color:var(--muted);line-height:1}
+details.cx[open]>summary::after{content:"\2013"}
+details.cx>summary .lbl{font-family:var(--f-mono);font-size:10px;letter-spacing:.11em;text-transform:uppercase;font-weight:700;white-space:nowrap}
+details.cx>summary .pk{color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1}
+details.cx[open]>summary .pk{display:none}
+details.cx .cbody{padding:2px 13px 12px;line-height:1.56;font-size:14.6px;border-left:3px solid var(--line)}
+details.cx .cbody b{font-weight:600}
+details.rrule>summary,details.rrule .cbody{border-left-color:var(--acc)}
+details.rtrap>summary,details.rtrap .cbody{border-left-color:var(--bad)}
+details.rmem>summary,details.rmem .cbody{border-left-color:var(--mem)}
+details.rrule>summary .lbl{color:var(--acc)} details.rtrap>summary .lbl{color:var(--bad)} details.rmem>summary .lbl{color:var(--mem)}
+details.rhy{background:var(--hy-bg);border-color:var(--hy-line);color:var(--hy-ink)}
+details.rhy>summary,details.rhy .cbody{border-left-color:var(--hy-line)}
+details.rhy>summary .lbl{color:var(--hy-ink);opacity:.9}
+details.rhy>summary .pk,details.rhy>summary::after{color:var(--hy-ink);opacity:.75}
+.rvw-empty{display:none;text-align:center;color:var(--muted);border:1px dashed var(--line);border-radius:10px;padding:28px;margin-top:16px}
+.rvw-empty.on{display:block}
+.rvw[data-lec="F"]{--acc:var(--arch)} .rvw[data-lec="D"]{--acc:var(--face)} .rvw[data-lec="T"]{--acc:var(--tcol)}
+@media print{
+  header,.bar,.main,.rvw-bar,.rvw-toc,.rvw-empty{display:none!important}
+  .rvw{margin:0}
+  body{background:#fff}
+  .rsec{break-before:page;break-inside:auto}
+  .rsec:first-of-type{break-before:auto}
+  .rtbl,.rseq,details.cx{break-inside:avoid}
+  details.cx>summary::after{display:none}
+  .cgrid{grid-template-columns:1fr 1fr}
+}
+.fb .ans{font-size:.95rem}
+.fbexp{display:grid;gap:8px}
+.fbexp p{margin:0;line-height:1.6}
+.fbnotes{list-style:none;margin:2px 0 0;padding:0;display:grid;gap:6px}
+.fbnotes li{font-size:.9rem;line-height:1.5;color:var(--muted);padding-left:10px;border-left:2px solid var(--line)}
+.fbnotes li b{color:var(--ink);font-weight:600}
+.fbpearl{margin-top:2px;background:var(--hy-bg);border:1px solid var(--hy-line);border-left-width:3px;border-radius:9px;padding:9px 12px;font-size:.92rem;line-height:1.5;color:var(--hy-ink)}
+.fbpearl b{display:block;font:700 .66rem var(--f-mono);letter-spacing:.14em;text-transform:uppercase;color:var(--hy-line);margin-bottom:3px}
+.fb{border-radius:10px;padding:12px 14px;display:grid;gap:6px}
+.fb.ok{background:var(--ok-bg)} .fb.bad{background:var(--bad-bg)}
+.fb .v{font-weight:700}
+.fb.ok .v{color:var(--ok)} .fb.bad .v{color:var(--bad)}
+.fb ol{margin:0;padding-left:1.2em}
+.actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:space-between;align-items:center}
+.timer{font:500 .8rem var(--f-mono);color:var(--muted);font-variant-numeric:tabular-nums}
+.done{display:grid;gap:10px;text-align:left}
+
+.lo-grid{display:grid;gap:6px}
+.lo-tile{display:grid;grid-template-columns:auto 1fr auto;gap:8px;align-items:center;text-align:left;width:100%;background:transparent;border:1px solid var(--line);border-radius:8px;padding:6px 8px;cursor:pointer;color:var(--ink);font:inherit}
+.lo-tile:hover{border-color:var(--lc)}
+.lo-tile .id{font:500 .72rem var(--f-mono);color:var(--lc);white-space:nowrap}
+.lo-tile .t{font-size:.78rem;line-height:1.3}
+.lo-tile .dot{width:12px;height:12px;border-radius:50%;background:var(--line)}
+.dot.s-o{background:var(--once)} .dot.s-m{background:var(--bad)} .dot.s-M{background:var(--ok)}
+.legend{display:flex;flex-wrap:wrap;gap:10px;font-size:.72rem;color:var(--muted)}
+.legend span{display:inline-flex;gap:5px;align-items:center}
+.legend i{width:10px;height:10px;border-radius:50%;display:inline-block;background:var(--line)}
+.legend i.o{background:var(--once)} .legend i.m{background:var(--bad)} .legend i.M{background:var(--ok)}
+footer{color:var(--muted);font-size:.8rem;border-top:1px solid var(--line);padding-top:12px}
+@media (prefers-reduced-motion: no-preference){ .opt,.ent,.lo-tile{transition:border-color .12s, background .12s} }
+</style>
+
+<div class="wrap">
+<header>
+  <div>
+    <p class="meta">HoyaDocs · Block 5 · Genetics · HEM04</p>
+    <h1>HEM04 Cytogenetics Builder</h1>
+    <p class="lede">Chromosomes, cell division and chromosome abnormalities, LO by LO: build each structure box by box, then drill what you miss. Boxes tagged Rapid Review test the LO Rapid Review and Master Review checklists.</p>
+  </div>
+  <div class="hdr-actions">
+    <button class="btn primary" id="reviewBtn" type="button" aria-pressed="false">Review</button>
+    <button class="btn" id="themeBtn" type="button">Theme: auto</button>
+    <button class="btn" id="resetBtn" type="button">Reset progress</button>
+  </div>
+</header>
+
+<div class="bar">
+  <div class="seg" role="group" aria-label="Mode">
+    <span class="lab">Mode</span>
+    <button type="button" data-mode="build" aria-pressed="true">Build</button>
+    <button type="button" data-mode="drill" aria-pressed="false">Drill</button>
+  </div>
+  <div class="seg" role="group" aria-label="Section scope" id="scopeSeg">
+    <span class="lab">Scope</span>
+    <button type="button" data-scope="all" aria-pressed="true">All</button>
+    <button type="button" data-scope="F" aria-pressed="false">LO1–2 Chromosomes &amp; division</button>
+    <button type="button" data-scope="D" aria-pressed="false">LO3 Aneuploidy</button>
+    <button type="button" data-scope="T" aria-pressed="false">LO4–5 Mosaicism &amp; structural</button>
+  </div>
+  <div class="seg" role="group" aria-label="Focus" id="focusSeg">
+    <span class="lab">Focus</span>
+    <button type="button" data-rr="0" aria-pressed="true">All boxes</button>
+    <button type="button" data-rr="1" aria-pressed="false">Rapid Review only</button>
+  </div>
+  <div class="stats" aria-live="polite">
+    <div class="stat"><b id="sScore">0</b><span>Score</span></div>
+    <div class="stat"><b id="sStreak">0</b><span>Streak</span></div>
+    <div class="stat"><b id="sAcc">—</b><span>Accuracy</span></div>
+    <div class="stat"><b id="sBoxes">0</b><span>Boxes mastered</span></div>
+    <div class="stat"><b id="sLos">0/5</b><span>LOs mastered</span></div>
+  </div>
+</div>
+
+<div class="main">
+  <aside class="panel side" aria-label="Structures">
+    <h2>Structures</h2>
+    <div id="entList"></div>
+  </aside>
+  <section class="card" id="card" aria-live="polite"></section>
+  <aside class="panel map" aria-label="Learning objective mastery map">
+    <h2>LO mastery map</h2>
+    <div class="legend"><span><i></i>untested</span><span><i class="m"></i>missed</span><span><i class="o"></i>got it once</span><span><i class="M"></i>mastered</span></div>
+
+    <p class="hint">Tap an LO to drill just that objective. Mastered = right twice in a row.</p>
+    <div class="lo-grid" id="loGrid"></div>
+  </aside>
+</div>
+
+<div class="rvw" id="rvw" data-lec="F" hidden>
+  <div class="rvw-bar">
+    <div class="seg" id="rvwTabs" role="group" aria-label="Section">
+      <button type="button" data-l="F" aria-pressed="true">LO1–2 Chromosomes &amp; division</button>
+      <button type="button" data-l="D" aria-pressed="false">LO3 Aneuploidy</button>
+      <button type="button" data-l="T" aria-pressed="false">LO4–5 Mosaicism &amp; structural</button>
+    </div>
+    <input id="rvwQ" type="search" placeholder="Search this review" autocomplete="off" aria-label="Search the review">
+    <span id="rvwCount"></span>
+    <button class="btn" type="button" id="rvwAll" aria-pressed="false">Expand all</button>
+    <button class="btn" type="button" id="rvwPrint">Print</button>
+    <button class="btn primary" type="button" id="rvwClose">Back to the game</button>
+  </div>
+  <nav class="rvw-toc" id="rvwToc" aria-label="Contents"></nav>
+  <div class="rvw-body" id="rvwBody"></div>
+  <div class="rvw-empty" id="rvwEmpty">Nothing in this section matches that search.</div>
+</div>
+
+
+<footer>HoyaDocs · HEM04 Cytogenetics Builder · Updated October 8, 2026 · Revision 1.0. Yellow “HY” tags mark high-yield points, including Step 1. “Rapid Review” tags mark boxes built from the LO Rapid Review checklists.</footer>
+</div>
+
+<script>
+/* ================= LEARNING OBJECTIVES ================= */
+var LOS = {"1": "Chromosome structure and the terminology and tests used to describe abnormalities", "2": "Mitosis vs meiosis, male vs female meiosis, and why each matters", "3": "Numerical abnormalities: aneuploidy, nondisjunction, maternal age, autosomal trisomies and sex chromosome aneuploidies", "4": "Mosaicism: how it arises, phenotype, confined placental mosaicism", "5": "Structural abnormalities: translocations, deletions and microdeletions, isochromosomes, rings and inversions"};
+var LOLEC = {"1": "F", "2": "F", "3": "D", "4": "T", "5": "T"};
+var LECS = [{"k": "F", "n": "LO1–2 Chromosomes & division", "c": "arch"}, {"k": "D", "n": "LO3 Aneuploidy", "c": "face"}, {"k": "T", "n": "LO4–5 Mosaicism & structural", "c": "eye"}];
+var E = [{"id": "struct", "lec": "F", "name": "Chromosome structure", "sub": "p/q · centromere · telomere · chromatin", "b": [{"lo": "1", "rr": true, "q": "How are the 46 human chromosomes organized?", "a": "22 pairs of autosomes + 1 pair of sex chromosomes", "o": ["23 pairs of autosomes", "21 pairs of autosomes + 2 pairs of sex chromosomes", "46 unpaired chromosomes"], "n": ["Sex chromosomes are the 23rd pair.", "Only one sex pair.", "They are paired."], "w": "≈20,000 genes across 400–1000 visible bands, depending on resolution.", "p": "22 + XX/XY."}, {"lo": "1", "rr": true, "hy": true, "q": "Why can even a “small” visible chromosome deletion be clinically severe?", "a": "One band holds many genes, so a visible deletion removes dozens of genes", "o": ["Each band is a single gene", "Deletions never remove genes", "Bands contain only noncoding DNA"], "n": ["One band ≠ one gene.", "They do.", "Bands contain genes."], "w": "≈20,000 genes across 400–1000 bands.", "p": "Band ≠ gene."}, {"lo": "1", "rr": true, "hy": true, "q": "Which arm is “p” and which is “q”?", "a": "p = short arm (petit); q = long arm", "o": ["p = long arm; q = short arm", "p = paternal; q = maternal", "p = proximal; q = distal"], "n": ["Reversed.", "Not the meaning.", "Not the meaning."], "w": "The centromere (primary constriction) joins the arms; telomeres cap each end.", "p": "p = petite."}, {"lo": "1", "rr": true, "hy": true, "t": "m", "q": "Select ALL acrocentric chromosomes.", "a": ["13", "14", "15", "21", "22"], "o": ["1", "X"], "n": ["Metacentric.", "Submetacentric."], "w": "Acrocentrics have tiny p arms carrying rRNA genes; they form Robertsonian translocations.", "p": "13, 14, 15, 21, 22."}, {"lo": "1", "rr": true, "hy": true, "t": "m", "q": "Select ALL features of EUCHROMATIN.", "a": ["Less condensed (open)", "Contains coding DNA", "Transcriptionally active", "Found on chromosome arms"], "o": ["Concentrated around centromeres", "Forms the Barr body"], "n": ["Heterochromatin.", "Heterochromatin (inactive X)."], "w": "Heterochromatin: condensed, mostly noncoding, around centromeres and the distal Yq.", "p": "Eu = open, active."}, {"lo": "1", "rr": true, "hy": true, "q": "What is the job and sequence of telomeres?", "a": "Cap chromosome ends to prevent fusion; TTAGGG repeated hundreds to thousands of times", "o": ["Anchor the spindle; unique sequence per chromosome", "Encode rRNA; CAG repeats", "Start DNA replication; random sequence"], "n": ["That's the centromere.", "Not telomeres.", "Not telomeres."], "w": "Telomerase (reverse transcriptase with an RNA template) maintains telomeres; it is upregulated in cancer and stem cells.", "p": "Telomere = TTAGGG cap."}, {"lo": "1", "rr": true, "q": "What is the role of the centromere?", "a": "Site where the spindle anchors (kinetochore) to pull chromatids to opposite poles; highly repetitive DNA unique to each chromosome", "o": ["Seals chromosome ends", "Contains TTAGGG repeats", "Site of crossing over only"], "n": ["Telomere.", "Telomere.", "Crossing over occurs along arms."], "w": "The centromere is the primary constriction.", "p": "Centromere = spindle anchor."}, {"lo": "1", "hy": true, "q": "Which enzyme maintains telomeres and is upregulated in cancer?", "a": "Telomerase (a reverse transcriptase with an RNA template)", "o": ["DNA ligase", "Topoisomerase II", "Primase"], "n": ["Seals nicks.", "Unwinds supercoils.", "Makes RNA primers."], "w": "Short telomeres → aging, dyskeratosis congenita.", "p": "Telomerase = RT + RNA template."}]}, {"id": "term", "lec": "F", "name": "Terminology & tests", "sub": "Ploidy · aneuploidy · ISCN · karyotype vs FISH vs microarray", "b": [{"lo": "1", "rr": true, "hy": true, "t": "m", "q": "Select ALL correct ploidy pairs.", "a": ["Haploid (n) = 23 (gametes)", "Diploid (2n) = 46", "Triploid (3n) = 69 (partial mole, miscarriage)", "Tetraploid (4n) = 92 (failed first cleavage)"], "o": ["Triploid = 47", "Aneuploid = exact multiple of 23"], "n": ["That's trisomy.", "Aneuploid is NOT an exact multiple."], "w": "Aneuploidy: trisomy (47) or monosomy (45).", "p": "n, 2n, 3n, 4n."}, {"lo": "1", "rr": true, "hy": true, "q": "A deletion and a duplication are also called what?", "a": "Deletion = partial monosomy; duplication = partial trisomy", "o": ["Deletion = partial trisomy; duplication = partial monosomy", "Both = triploidy", "Both = balanced rearrangements"], "n": ["Reversed.", "Not ploidy.", "They change copy number."], "w": "Examples: del(5p) cri-du-chat; dup(17p) CMT1A.", "p": "Lose part = partial monosomy."}, {"lo": "1", "rr": true, "q": "What does the karyotype 47,XX,+21 describe?", "a": "A female with trisomy 21", "o": ["A male with trisomy 21", "A female with monosomy 21", "A balanced translocation carrier"], "n": ["XX = female.", "+ means extra.", "Would show der()."], "w": "ISCN order: total number, sex chromosomes, then the abnormality.", "p": "Count, sex, abnormality."}, {"lo": "1", "rr": true, "t": "m", "q": "Select ALL correct ISCN notations.", "a": ["45,X = Turner", "46,XY,del(5)(p15) = male with a 5p deletion", "45,XY,der(14;21)(q10;q10) = balanced Robertsonian carrier", "mos 45,X/46,XX = mosaic"], "o": ["47,XY = trisomy 21", "46,XX,+21 = female with trisomy 21 by nondisjunction"], "n": ["No extra chromosome named.", "Nondisjunction trisomy has 47."], "w": "Translocation Down has 46 with a der chromosome.", "p": "Read ISCN left to right."}, {"lo": "1", "rr": true, "hy": true, "q": "Which test is first-line for a child with intellectual disability, autism or multiple anomalies?", "a": "Chromosomal microarray (genome-wide copy number)", "o": ["G-banded karyotype only", "FISH for a single locus", "Bone marrow aspirate"], "n": ["Lower resolution (≈5–10 Mb).", "Targeted, not genome-wide.", "Not a genetic screen."], "w": "Microarray detects kilobase gains/losses without dividing cells.", "p": "ID/autism → microarray."}, {"lo": "1", "rr": true, "hy": true, "q": "A couple has recurrent miscarriages. Which test finds a balanced translocation?", "a": "Karyotype of both parents", "o": ["Chromosomal microarray", "FISH for 22q11.2", "Exome sequencing"], "n": ["Misses balanced rearrangements (no copy change).", "Targeted microdeletion test.", "Not designed for this."], "w": "Karyotype needs dividing cells (metaphase) but sees balanced translocations and inversions.", "p": "Balanced? Karyotype."}, {"lo": "1", "rr": true, "q": "Which test does NOT need dividing cells and is best for a known microdeletion or fusion gene?", "a": "FISH", "o": ["G-banded karyotype", "High-resolution prometaphase karyotype", "Metaphase G-banding with colchicine"], "n": ["Needs metaphase.", "Needs prometaphase.", "Needs dividing cells."], "w": "FISH works on interphase or metaphase cells: 22q11.2, rapid aneuploidy screens, BCR-ABL.", "p": "FISH = targeted, any cell."}]}, {"id": "mit", "lec": "F", "name": "Mitosis", "sub": "PPMAT · metaphase for karyotypes", "b": [{"lo": "2", "rr": true, "hy": true, "t": "o", "q": "Put the phases of mitosis in order.", "a": ["Prophase", "Prometaphase", "Metaphase", "Anaphase", "Telophase / cytokinesis"], "w": "Interphase (G1 → S → G2) comes first. PPMAT.", "p": "PPMAT."}, {"lo": "2", "rr": true, "hy": true, "q": "Which stage of mitosis is used for chromosome analysis, and why?", "a": "Metaphase: chromosomes are most condensed and aligned (arrested with colchicine)", "o": ["Anaphase: chromatids are separating", "Prophase: chromosomes first appear", "Telophase: nuclei reform"], "n": ["Moving and separating.", "Less condensed.", "Decondensing."], "w": "Mitosis explains how chromosome preparations are made and how mosaicism occurs.", "p": "Metaphase = Microscope-ready."}, {"lo": "2", "rr": true, "t": "m", "q": "Select ALL correct phase–event pairs in mitosis.", "a": ["Prophase → chromosomes condense; spindle forms", "Prometaphase → nuclear membrane disappears; spindle attaches to kinetochores", "Anaphase → centromeres divide; chromatids move to opposite poles", "Telophase → nuclear membranes reform"], "o": ["Metaphase → crossing over", "Anaphase → DNA replication"], "n": ["Crossing over is meiosis I.", "Replication is S phase."], "w": "Purpose of mitosis: identical daughter cells.", "p": "Condense, attach, align, apart, two."}]}, {"id": "mei", "lec": "F", "name": "Meiosis", "sub": "MI reduction · MII like mitosis · male vs female", "b": [{"lo": "2", "rr": true, "hy": true, "q": "Which division of meiosis is the REDUCTION division?", "a": "Meiosis I: homologs pair, recombine and separate", "o": ["Meiosis II", "Mitosis", "S phase"], "n": ["Sister chromatids separate (like mitosis).", "Not reductional.", "Replication."], "w": "After MI: 2 cells with 23 chromosomes of 2 chromatids each. After MII: 4 cells with 23 single chromatids.", "p": "MI reduces; MII splits."}, {"lo": "2", "rr": true, "hy": true, "q": "When and where does crossing over happen?", "a": "Prophase I, via the synaptonemal complex (homologs stay linked at chiasmata)", "o": ["Metaphase II", "Anaphase of mitosis", "G2 of interphase"], "n": ["No homolog pairing.", "Somatic division.", "Before division."], "w": "Meiosis I also provides independent assortment.", "p": "Crossing over = prophase I."}, {"lo": "2", "rr": true, "t": "m", "q": "Select ALL features of MEIOSIS (vs mitosis).", "a": ["Two divisions", "Occurs in germ cells", "Homologs pair and recombine", "Haploid daughter cells", "New assortment of parental chromosomes"], "o": ["Identical daughter cells", "Diploid daughter cells"], "n": ["Mitosis.", "Mitosis."], "w": "Meiosis = “reduce”; mitosis = “split”.", "p": "Meiosis: 2 divisions, haploid, shuffled."}, {"lo": "2", "rr": true, "hy": true, "q": "How many functional gametes come from one primary oocyte vs one primary spermatocyte?", "a": "Oocyte: 1 egg + 2 polar bodies; spermatocyte: 4 sperm", "o": ["Both make 4", "Both make 1", "Oocyte makes 4; spermatocyte makes 1"], "n": ["Females lose polar bodies.", "Males make 4.", "Reversed."], "w": "Cytoplasm divides unequally in females, evenly in males.", "p": "1 egg vs 4 sperm."}, {"lo": "2", "rr": true, "hy": true, "q": "Where is the primary oocyte arrested, and when does meiosis II finish?", "a": "Arrested at the end of prophase I (from fetal life); meiosis II completes only after fertilization", "o": ["Arrested in metaphase II from birth; finishes at puberty", "Arrested in anaphase I; finishes at ovulation", "No arrest; finishes before birth"], "n": ["Arrest is prophase I; MII completes after fertilization.", "Not the arrest point.", "There is a decades-long arrest."], "w": "Female meiosis starts in fetal life with fewer mitoses; resumes with each cycle at ovulation.", "p": "Prophase I pause; MII after sperm."}, {"lo": "2", "rr": true, "hy": true, "q": "Which error type rises with PATERNAL age, and why?", "a": "New point mutations, because sperm precursors undergo many mitotic divisions", "o": ["Nondisjunction, because of prophase I arrest", "Triploidy, because of polyspermy", "Robertsonian translocations"], "n": ["That's the maternal age effect.", "Not age-related this way.", "Not age-related."], "w": "Classic paternal-age disorder: achondroplasia. Spermatogenesis starts at puberty and is continuous.", "p": "Old dads → point mutations."}, {"lo": "2", "rr": true, "hy": true, "q": "Why does maternal age raise the risk of trisomy?", "a": "The oocyte sits in prophase I for decades; cohesion weakens → nondisjunction in meiosis I", "o": ["Eggs undergo many mitoses before ovulation", "Maternal telomeres lengthen with age", "Older mothers make more polar bodies"], "n": ["That's the male pattern.", "Not the mechanism.", "Not the mechanism."], "w": "A 40-year-old's egg has been paused for 40 years.", "p": "Long pause → nondisjunction."}]}, {"id": "ndj", "lec": "D", "name": "Aneuploidy & nondisjunction", "sub": "Frequency · MI vs MII · maternal age", "b": [{"lo": "3", "rr": true, "hy": true, "q": "How common is aneuploidy?", "a": "The most common clinically significant chromosome disorder: >3–4% of recognized pregnancies", "o": ["<0.01% of pregnancies", "About 50% of live births", "Only in IVF pregnancies"], "n": ["Far too rare.", "Far too common.", "Not limited to IVF."], "w": "Trisomy can occur for any chromosome but is rarely viable (live births mainly 21, 18, 13 and sex chromosomes).", "p": ">3–4% of recognized pregnancies."}, {"lo": "3", "rr": true, "hy": true, "q": "Which whole-chromosome monosomy is compatible with life?", "a": "Monosomy X (Turner)", "o": ["Monosomy 21", "Monosomy 13", "Monosomy 18"], "n": ["Lethal.", "Lethal.", "Lethal."], "w": "Monosomy of any whole autosome is lethal. Even >99% of 45,X conceptions miscarry.", "p": "Only monosomy X survives."}, {"lo": "3", "rr": true, "hy": true, "q": "When does nondisjunction most often occur?", "a": "Maternal meiosis I", "o": ["Paternal meiosis II", "Mitosis after fertilization", "Maternal meiosis II"], "n": ["Classic for XYY only.", "Causes mosaicism.", "Less common than MI."], "w": "Risk rises with maternal age.", "p": "Mom, meiosis I."}, {"lo": "3", "rr": true, "hy": true, "q": "How do the gametes differ after nondisjunction in meiosis I vs meiosis II?", "a": "MI: all 4 abnormal (2 disomic, 2 nullisomic); MII: 2 normal, 1 disomic, 1 nullisomic", "o": ["MI: 2 normal; MII: all abnormal", "Both produce only normal gametes", "Both produce triploid gametes"], "n": ["Reversed.", "Nondisjunction makes abnormal gametes.", "Not triploidy."], "w": "MI: homologs fail to separate. MII: sister chromatids fail to separate.", "p": "MI ruins all four."}, {"lo": "3", "rr": true, "hy": true, "q": "A child with trisomy 21 has an extra chromosome 21 containing two DIFFERENT maternal homologs. When did the error occur?", "a": "Maternal meiosis I", "o": ["Maternal meiosis II", "Paternal meiosis II", "Postzygotic mitosis"], "n": ["MII gives two copies of the same homolog.", "Not maternal.", "Would give mosaicism."], "w": "MI nondisjunction: disomic gamete carries both homologs (one from each grandparent).", "p": "Different homologs = MI."}, {"lo": "3", "rr": true, "hy": true, "q": "What causes most Down syndrome?", "a": "Meiotic nondisjunction (≈95%), mostly maternal meiosis I", "o": ["Robertsonian translocation (≈95%)", "Mosaicism (≈95%)", "Paternal point mutation"], "n": ["≈4%.", "≈1–2%.", "Not a chromosome cause."], "w": "Standard references: risk ≈1/1,500 at 20 → ≈1/100 at 40 → ≈1/30 at 45.", "p": "95% NDJ, 4% Robertsonian, 1–2% mosaic."}]}, {"id": "tri", "lec": "D", "name": "Autosomal trisomies", "sub": "21 · 18 · 13", "b": [{"lo": "3", "rr": true, "t": "m", "q": "Select ALL general features of autosomal chromosome abnormalities.", "a": ["Developmental delay / intellectual disability", "Facial features more like the syndrome than like family members", "Growth delay", "Congenital malformations"], "o": ["Always normal intelligence", "Always tall stature"], "n": ["ID is typical.", "Growth delay is typical."], "w": "Autosomal abnormalities are more severe than sex chromosome aneuploidies.", "p": "ID, face, growth, malformations."}, {"lo": "3", "rr": true, "hy": true, "t": "m", "q": "Select ALL features of trisomy 21 (Down syndrome).", "a": ["Low nasal root and upslanting palpebral fissures", "Short neck and flat occiput", "≈40% congenital heart defect (AV canal)", "15–20× increased leukemia risk", "Duodenal atresia and Hirschsprung disease", "Early-onset Alzheimer disease"], "o": ["Rocker-bottom feet", "Polydactyly with cleft lip"], "n": ["Trisomy 18.", "Trisomy 13."], "w": "Also hypotonia, single palmar crease, Brushfield spots, hypothyroidism; Alzheimer link from APP on chromosome 21. Survival into adulthood (≈60 y).", "p": "Down: face, heart, gut, leukemia, Alzheimer."}, {"lo": "3", "rr": true, "hy": true, "q": "A newborn has clenched fists with overlapping fingers, rocker-bottom feet, micrognathia, prenatal growth deficiency and a VSD. Diagnosis and prognosis?", "a": "Trisomy 18 (Edwards): ≈50% die in the first weeks; ≈5% survive to 1 year", "o": ["Trisomy 21; survival to adulthood", "Trisomy 13; normal life span", "Turner; normal life span"], "n": ["Different features.", "Midline defects instead.", "Not these features."], "w": "95% of trisomy 18 conceptions miscarry; profound ID.", "p": "Edwards = Extremities."}, {"lo": "3", "rr": true, "hy": true, "q": "A newborn has cleft lip/palate, microphthalmia, polydactyly and an omphalocele. Diagnosis?", "a": "Trisomy 13 (Patau)", "o": ["Trisomy 18", "Trisomy 21", "DiGeorge syndrome"], "n": ["Clenched fists, rocker-bottom feet.", "Different face.", "Conotruncal heart, hypocalcemia."], "w": "Midline defects (holoprosencephaly); ≈5% of liveborn survive to 1 year; profound ID.", "p": "Patau = Palate + Polydactyly."}, {"lo": "3", "rr": true, "q": "Which memory tool links trisomy number to syndrome?", "a": "21 = Drinking age (Down); 18 = Election age (Edwards); 13 = Puberty (Patau)", "o": ["21 = Edwards; 18 = Down; 13 = Patau", "21 = Patau; 18 = Edwards; 13 = Down", "All three are trisomy 21 variants"], "n": ["Mismatched.", "Mismatched.", "Different chromosomes."], "w": "Edwards = Extremities; Patau = Palate and Polydactyly.", "p": "Drink 21, vote 18, puberty 13."}, {"lo": "3", "hy": true, "q": "Which quad/first-trimester screen pattern fits trisomy 21 (standard references)?", "a": "↑ hCG, ↑ inhibin A, ↓ AFP, ↓ estriol, ↓ PAPP-A, ↑ nuchal translucency", "o": ["Everything decreased; inhibin normal", "↑ AFP alone", "↓ hCG with ↑ estriol"], "n": ["Trisomy 18.", "Neural tube defect.", "Not a classic pattern."], "w": "Trisomy 13: ↓ PAPP-A, ↓ hCG, ↑ nuchal translucency.", "p": "Down: HI (hCG, inhibin) up."}, {"lo": "3", "hy": true, "q": "Which screen pattern fits trisomy 18?", "a": "hCG, AFP, estriol and PAPP-A all decreased; inhibin normal", "o": ["↑ hCG and ↑ inhibin A", "↑ AFP", "↑ estriol"], "n": ["Trisomy 21.", "Neural tube defect.", "Not the pattern."], "w": "Edwards = everything down.", "p": "18 = all low."}]}, {"id": "sex", "lec": "D", "name": "Sex chromosome aneuploidies", "sub": "Turner · Klinefelter · XXX · XYY", "b": [{"lo": "3", "rr": true, "hy": true, "t": "m", "q": "Select ALL reasons sex chromosome aneuploidies are milder than autosomal aneuploidies.", "a": ["The Y has few active genes (mostly gonadal/genital)", "X inactivation (Lyon hypothesis): all but one X are inactivated"], "o": ["Sex chromosomes contain no genes", "Sex chromosome aneuploidies are always mosaic"], "n": ["The X carries many genes.", "Not always mosaic."], "w": "Inactive X = Barr body.", "p": "Few Y genes + Lyonization."}, {"lo": "3", "rr": true, "hy": true, "q": "How many Barr bodies does a 47,XXY male have?", "a": "One (number of X − 1)", "o": ["Zero", "Two", "Three"], "n": ["Only for one X.", "Would need XXX.", "Would need XXXX."], "w": "Barr bodies = X − 1.", "p": "Barr = X − 1."}, {"lo": "3", "rr": true, "hy": true, "t": "m", "q": "Select ALL features of Turner syndrome (45,X).", "a": ["Proportionate short stature (SHOX loss)", "Ovarian dysgenesis (streak ovaries), primary amenorrhea", "Webbed neck and low hairline", "Broad shield chest", "Lymphedema of hands and feet in the newborn", "Bicuspid aortic valve and coarctation"], "o": ["Tall stature with long limbs", "Small testes"], "n": ["Klinefelter.", "Klinefelter."], "w": "Also horseshoe kidney; cognition usually normal (visuospatial weakness). Cystic hygroma prenatally.", "p": "Turner: short, streak, webbed, heart."}, {"lo": "3", "rr": true, "hy": true, "q": "A 16-year-old girl is 4'8\" with primary amenorrhea, a webbed neck and a widely spaced chest. Which heart lesions should be screened for?", "a": "Bicuspid aortic valve and coarctation of the aorta", "o": ["Endocardial cushion defect", "Truncus arteriosus", "Supravalvular aortic stenosis"], "n": ["Down.", "DiGeorge.", "Williams."], "w": "Also renal ultrasound for horseshoe kidney.", "p": "Turner heart: bicuspid + coarctation."}, {"lo": "3", "rr": true, "hy": true, "t": "m", "q": "Select ALL features of Klinefelter syndrome (47,XXY).", "a": ["Tall with disproportionately long arms and legs", "Small testes and sterility", "Gynecomastia in about one-third", "Low testosterone with ↑ LH/FSH", "IQ 10–15 points lower than siblings"], "o": ["Short stature", "Normal fertility"], "n": ["Turner.", "Sterile (seminiferous tubule atrophy)."], "w": "Also ↑ breast cancer, osteoporosis and autoimmune risk; sperm retrieval possible.", "p": "Tall, small testes, gynecomastia."}, {"lo": "3", "rr": true, "q": "Which sex chromosome aneuploidy causes premature ovarian failure but usually chromosomally normal offspring?", "a": "47,XXX", "o": ["45,X", "47,XXY", "47,XYY"], "n": ["Streak ovaries; infertile.", "Male.", "Male."], "w": "Taller than average; lower IQ than siblings.", "p": "XXX → early ovarian failure."}, {"lo": "3", "rr": true, "hy": true, "q": "A tall man with ADHD, learning problems and normal fertility. Karyotype and origin?", "a": "47,XYY from paternal meiosis II nondisjunction", "o": ["47,XXY from maternal meiosis I", "45,X from paternal loss", "46,XY normal"], "n": ["Klinefelter is sterile.", "Turner is female.", "Phenotype points to XYY."], "w": "Usually chromosomally normal offspring.", "p": "XYY = paternal MII."}, {"lo": "3", "rr": true, "hy": true, "q": "A 45,X/46,XY mosaic patient with Turner features needs which intervention?", "a": "Gonadectomy (gonadoblastoma risk from Y material)", "o": ["Growth hormone only, no other action", "Thyroidectomy", "Splenectomy"], "n": ["Y material requires gonadectomy.", "Not indicated.", "Not indicated."], "w": "Turner is often from loss of the paternal X; not related to maternal age.", "p": "Y in Turner → remove gonads."}]}, {"id": "mos", "lec": "T", "name": "Mosaicism", "sub": "Mechanisms · phenotype · CPM", "b": [{"lo": "4", "rr": true, "hy": true, "q": "What is mosaicism?", "a": "Two or more cell lines with different karyotypes in one person or tissue, derived from a single zygote", "o": ["Cell lines from two different zygotes", "Identical karyotype in all cells", "A balanced translocation"], "n": ["That's chimerism.", "Not mosaic.", "Structural, not mosaic."], "w": "Mitosis errors after fertilization explain how mosaicism occurs.", "p": "One zygote, two lines."}, {"lo": "4", "rr": true, "hy": true, "t": "m", "q": "Select ALL mechanisms that produce mosaicism.", "a": ["Mitotic nondisjunction after fertilization", "Anaphase lag (a chromosome is left behind and lost)", "Trisomy rescue of a trisomic zygote"], "o": ["Robertsonian translocation in a parent", "Meiotic nondisjunction alone without rescue"], "n": ["Gives a constitutional (non-mosaic) change.", "Gives full trisomy in every cell."], "w": "Anaphase lag classically gives 45,X/46,XX. Trisomy rescue risks uniparental disomy if the wrong copy is lost.", "p": "Mitotic NDJ, lag, rescue."}, {"lo": "4", "rr": true, "q": "Which mechanism classically gives 46,XX/45,X mosaicism?", "a": "Anaphase lag", "o": ["Trisomy rescue", "Robertsonian translocation", "Isochromosome formation"], "n": ["Gives 47/46.", "Not mosaic.", "Structural."], "w": "A chromosome fails to reach the pole and is lost from one cell line.", "p": "Lag → lost X."}, {"lo": "4", "rr": true, "hy": true, "t": "m", "q": "Select ALL typical phenotypic effects of mosaicism.", "a": ["Milder phenotype than full trisomy", "Asymmetric body shape (hemihypertrophy)", "Hypo- or hyperpigmented streaks along lines of Blaschko"], "o": ["Always more severe than full trisomy", "Always undetectable phenotype"], "n": ["Usually milder.", "Effects depend on proportion and distribution."], "w": "Blood may miss tissue-restricted mosaicism → test skin fibroblasts or buccal cells.", "p": "Milder, asymmetric, streaky."}, {"lo": "4", "rr": true, "q": "A girl with mild short stature and normal puberty has 45,X/46,XX. Why is she milder than classic Turner?", "a": "Mosaicism: a normal 46,XX line supports ovarian function and growth", "o": ["She has two Y chromosomes", "Her X is an isochromosome", "Turner never affects puberty"], "n": ["Not the karyotype.", "That's i(Xq).", "Classic Turner causes amenorrhea."], "w": "Proportion and distribution of abnormal cells set severity.", "p": "Normal line = milder."}, {"lo": "4", "rr": true, "q": "A child with mild Down features and normal intelligence has 46,XX/47,XX,+21 in blood. Diagnosis?", "a": "Mosaic trisomy 21", "o": ["Translocation Down syndrome", "Full trisomy 21", "Confined placental mosaicism"], "n": ["Would show 46 with a der chromosome in all cells.", "All cells 47.", "Placenta only."], "w": "From mitotic nondisjunction or trisomy rescue.", "p": "Two lines in blood = mosaic."}, {"lo": "4", "rr": true, "hy": true, "q": "What is confined placental mosaicism, and how often is it seen?", "a": "An abnormal cell line in the placenta but not the fetus (or the reverse); in 1–2% of CVS samples", "o": ["Mosaicism in every fetal tissue; in 50% of pregnancies", "A placental tumor", "Chimerism from twins"], "n": ["Not confined.", "Not a tumor.", "Two zygotes."], "w": "Can cause placental dysfunction → IUGR; a rescued trisomy can leave uniparental disomy in the fetus.", "p": "CPM = placenta-only; 1–2% of CVS."}, {"lo": "4", "rr": true, "hy": true, "q": "CVS shows trisomy 16 in all cells, but amniocentesis is normal and fetal anatomy is normal on ultrasound, but the fetus is growth restricted. Explanation and lesson?", "a": "Confined placental mosaicism; CVS samples placenta (trophoblast), so confirm abnormal CVS by amniocentesis (fetal cells)", "o": ["Full fetal trisomy 16; terminate", "Lab error; ignore", "Maternal cell contamination proves fetal normality"], "n": ["Fetus is normal on amnio.", "CPM is real.", "Not the explanation."], "w": "CPM can still cause IUGR through placental dysfunction.", "p": "Abnormal CVS → amnio."}]}, {"id": "rob", "lec": "T", "name": "Robertsonian translocations", "sub": "Acrocentric fusion · 45 vs 46", "b": [{"lo": "5", "rr": true, "hy": true, "q": "What is a Robertsonian translocation?", "a": "Whole-arm exchange between two acrocentric chromosomes: long arms fuse at the centromere and the short arms are lost", "o": ["Swap of segments between any two chromosomes", "Loss of both chromosome ends forming a ring", "A mirror-image chromosome with two identical arms"], "n": ["Reciprocal.", "Ring.", "Isochromosome."], "w": "Losing the short arms is harmless (only repeated rRNA genes).", "p": "Two acrocentric q arms fuse."}, {"lo": "5", "rr": true, "hy": true, "q": "What is the most common Robertsonian translocation, and which is clinically key?", "a": "Most common t(13;14); clinically key t(14;21) and t(21;21)", "o": ["Most common t(9;22)", "Most common t(14;18)", "Most common t(11;22)"], "n": ["Reciprocal (CML).", "Reciprocal (follicular lymphoma).", "Reciprocal."], "w": "Acrocentrics: 13, 14, 15, 21, 22.", "p": "t(13;14) most common."}, {"lo": "5", "rr": true, "hy": true, "q": "How many chromosomes do a balanced Robertsonian carrier and a person with translocation Down syndrome have?", "a": "Carrier 45; translocation Down 46", "o": ["Carrier 46; Down 47", "Carrier 47; Down 46", "Both 46"], "n": ["Carrier has 45.", "Reversed.", "Carrier has 45."], "w": "Translocation Down: the fused chromosome plus two normal 21s.", "p": "Carrier 45, affected 46."}, {"lo": "5", "rr": true, "hy": true, "q": "A 24-year-old has a child with Down syndrome whose karyotype has 46 chromosomes, including a 14q;21q chromosome. Next test?", "a": "Karyotype both parents (one may be a balanced 45,XX,der(14;21) or 45,XY,der(14;21) carrier)", "o": ["No testing; recurrence is ≈1%", "Chromosomal microarray of the child", "FISH for 22q11.2"], "n": ["Recurrence is much higher for translocations.", "Karyotype already shows it; parents need testing.", "Unrelated."], "w": "Down in a child of a young mother or recurrent Down in a family → think translocation. Maternal carrier recurrence ≈10–15%.", "p": "Translocation Down → karyotype parents."}, {"lo": "5", "rr": true, "hy": true, "q": "Which carrier has the higher risk of an affected child with t(14;21)?", "a": "Carrier mother (≈10–15%) vs carrier father (≈1–2%)", "o": ["Carrier father (≈50%)", "Risk is identical", "Neither has increased risk"], "n": ["Lower for fathers.", "Female carriers have higher risk.", "Risk is increased."], "w": "Standard references give these figures.", "p": "Mom carrier = higher risk."}, {"lo": "5", "rr": true, "hy": true, "q": "What fraction of liveborn children of a t(21;21) carrier have Down syndrome?", "a": "≈100%", "o": ["≈1%", "≈10–15%", "≈50%"], "n": ["Nondisjunction recurrence.", "t(14;21) maternal carrier.", "Too low."], "w": "Every gamete has either the fused 21;21 (trisomy) or no 21 (monosomy, lethal).", "p": "21;21 → all Down."}]}, {"id": "rec", "lec": "T", "name": "Reciprocal translocations", "sub": "Balanced 46 · partial trisomy + monosomy", "b": [{"lo": "5", "rr": true, "hy": true, "q": "What is a reciprocal translocation?", "a": "Exchange of segments between two (usually nonhomologous) chromosomes; any translocation that is not Robertsonian", "o": ["Fusion of two acrocentric long arms", "Flip of a segment within one chromosome", "Gain of an entire chromosome"], "n": ["Robertsonian.", "Inversion.", "Trisomy."], "w": "Most are private to a family (not recurrent).", "p": "Two pieces swap."}, {"lo": "5", "rr": true, "hy": true, "q": "How many chromosomes does a balanced reciprocal translocation carrier have, and how is it usually acquired?", "a": "46; ≈70% are inherited", "o": ["45; always de novo", "47; always inherited", "44; from triploidy"], "n": ["45 = Robertsonian.", "Not the count.", "Not the count."], "w": "The carrier is healthy unless a breakpoint disrupts a gene.", "p": "Reciprocal carrier = 46."}, {"lo": "5", "rr": true, "hy": true, "q": "A couple has had three miscarriages; the father is 46,XY,t(2;11)(q31;p13). Why the miscarriages?", "a": "His gametes can carry unbalanced combinations → partial trisomy plus partial monosomy", "o": ["He has trisomy 2", "He has a Robertsonian translocation", "The mother must have a deletion"], "n": ["46 chromosomes, balanced.", "Non-acrocentric swap = reciprocal.", "No evidence."], "w": "Offer genetic counseling and prenatal diagnosis/PGT.", "p": "Balanced parent → unbalanced embryo."}, {"lo": "5", "rr": true, "t": "m", "q": "Select ALL factors that determine the phenotype of an unbalanced reciprocal translocation.", "a": ["Size of the unbalanced segment", "Genes involved", "Whether the imbalance is mainly monosomic (usually worse) or trisomic"], "o": ["Sex of the parent only", "Blood type"], "n": ["Not the main determinant.", "Irrelevant."], "w": "Example: mother 46,XX,t(7;21) balanced; fetus with der(21) has extra 7q and missing part of 21.", "p": "Size, genes, mono vs tri."}, {"lo": "5", "t": "m", "q": "Select ALL acquired (somatic) reciprocal translocations that drive cancer.", "a": ["t(9;22) → CML", "t(14;18) → follicular lymphoma", "t(8;14) → Burkitt lymphoma", "t(15;17) → APL"], "o": ["t(13;14) → Burkitt", "t(21;21) → CML"], "n": ["Robertsonian, constitutional.", "Robertsonian, Down."], "w": "Somatic translocations create fusion genes or move oncogenes next to active promoters.", "p": "Cancer translocations are reciprocal."}, {"lo": "5", "rr": true, "q": "Robertsonian vs reciprocal in one line?", "a": "Robertsonian: two acrocentric long arms fuse (carrier 45); reciprocal: two pieces swap between any chromosomes (carrier 46)", "o": ["Both have carrier counts of 46", "Both involve only acrocentrics", "Robertsonian carriers have 47"], "n": ["Robertsonian carrier has 45.", "Reciprocal involves any chromosomes.", "Not 47."], "w": "Both cause recurrent miscarriage in carriers.", "p": "Fuse (45) vs swap (46)."}]}, {"id": "del", "lec": "T", "name": "Deletions, rings & microdeletions", "sub": "Terminal · interstitial · ring · <5 Mb", "b": [{"lo": "5", "rr": true, "hy": true, "t": "m", "q": "Select ALL correct deletion type–break pairs.", "a": ["Terminal deletion → 1 break (loss of the end)", "Interstitial deletion → 2 breaks in one arm", "Ring chromosome → 2 breaks, one in each arm, ends lost and rejoined"], "o": ["Terminal deletion → 2 breaks", "Ring → 1 break"], "n": ["Terminal needs 1.", "Ring needs 2."], "w": "Rings are unstable in mitosis and often mosaic.", "p": "Terminal 1; interstitial 2; ring 2."}, {"lo": "5", "rr": true, "q": "An infant has a high-pitched cat-like cry, microcephaly and visible loss of the end of 5p. Diagnosis?", "a": "Cri-du-chat (terminal 5p deletion)", "o": ["Wolf-Hirschhorn (4p)", "Williams (7q11.23)", "DiGeorge (22q11.2)"], "n": ["4p, not 5p.", "Microdeletion; elfin face.", "Microdeletion; heart, calcium."], "w": "Also ID and VSD.", "p": "Cat cry = 5p−."}, {"lo": "5", "rr": true, "q": "A chromosome has lost both ends and its arms have joined. What is it and how many breaks?", "a": "Ring chromosome; 2 breaks", "o": ["Isochromosome; 1 break", "Paracentric inversion; 2 breaks", "Robertsonian translocation; 2 breaks"], "n": ["Two identical arms.", "Segment flipped, not ring.", "Two acrocentrics fuse."], "w": "Loss of both p and q termini.", "p": "No ends + joined = ring."}, {"lo": "5", "rr": true, "hy": true, "q": "Why are microdeletion syndromes missed by routine G-banding, and how are they detected?", "a": "Usually <5 Mb, below karyotype resolution; detect with FISH or chromosomal microarray (sometimes high-resolution karyotype)", "o": ["They are always balanced", "They only occur in mitochondria", "They require bone marrow for karyotype"], "n": ["They are deletions (copy loss).", "Nuclear.", "Not the issue."], "w": "G-banding resolves ≈5–10 Mb.", "p": "Small deletion → FISH/array."}, {"lo": "5", "rr": true, "hy": true, "q": "A newborn with interrupted aortic arch has hypocalcemic seizures, recurrent infections and a normal G-banded karyotype. Test and diagnosis?", "a": "FISH or microarray for 22q11.2 → DiGeorge / velocardiofacial syndrome", "o": ["Repeat karyotype for trisomy 21", "Microarray for 7q11.23 (Williams)", "Methylation for 15q11–q13"], "n": ["Not the features.", "Supravalvular aortic stenosis, hypercalcemia.", "Prader-Willi/Angelman."], "w": "CATCH-22: Cardiac (conotruncal), Abnormal face, Thymic hypoplasia, Cleft palate, Hypocalcemia; psychiatric illness later.", "p": "CATCH-22."}, {"lo": "5", "hy": true, "t": "m", "q": "Select ALL correct microdeletion–feature pairs (standard references).", "a": ["22q11.2 → conotruncal heart defects, thymic hypoplasia, hypocalcemia", "7q11.23 (Williams) → elfin face, supravalvular aortic stenosis, hypercalcemia, very friendly", "15q11–q13 paternal deletion → Prader-Willi (hyperphagia, obesity, hypotonia)", "15q11–q13 maternal deletion → Angelman (happy puppet, seizures, ataxia)"], "o": ["15q11–q13 maternal deletion → Prader-Willi", "7q11.23 → hypocalcemia"], "n": ["Maternal = Angelman.", "Williams has HYPERcalcemia."], "w": "Prader-Willi/Angelman reflect imprinting.", "p": "Paternal PW; maternal Angelman."}]}, {"id": "iso", "lec": "T", "name": "Isochromosomes & inversions", "sub": "i(Xq) · pericentric vs paracentric", "b": [{"lo": "5", "rr": true, "hy": true, "q": "What is an isochromosome?", "a": "A mirror-image chromosome with two copies of the same arm, from centromere misdivision (transverse instead of longitudinal)", "o": ["A chromosome with both ends lost", "Two acrocentric long arms fused", "A segment flipped 180°"], "n": ["Ring.", "Robertsonian.", "Inversion."], "w": "Result: trisomy of one arm plus monosomy of the other.", "p": "Iso = same arm twice."}, {"lo": "5", "rr": true, "hy": true, "q": "A woman with Turner features has 46 chromosomes; one X has two long arms. Name and phenotype explanation?", "a": "46,X,i(Xq): no Xp → loss of SHOX (short stature) and ovarian genes", "o": ["Ring X with extra Xp", "Robertsonian X;21", "Normal karyotype"], "n": ["Not the description.", "X is not acrocentric.", "i(Xq) is abnormal."], "w": "i(Xq) is the most common isochromosome. Others: i(21q) Down, i(12p) germ cell tumors / Pallister-Killian (mosaic).", "p": "i(Xq) = Turner variant."}, {"lo": "5", "rr": true, "q": "How do pericentric and paracentric inversions differ?", "a": "Pericentric includes the centromere; paracentric stays within one arm", "o": ["Pericentric involves two chromosomes", "Paracentric includes the centromere", "They are the same"], "n": ["Inversions involve one chromosome.", "Reversed.", "They differ."], "w": "Both need 2 breaks in one chromosome; segment flipped 180°.", "p": "Peri = around the centromere."}, {"lo": "5", "rr": true, "hy": true, "q": "Why are inversion carriers at reproductive risk if they are healthy?", "a": "Crossing over within the inversion loop in meiosis I creates unbalanced recombinant gametes", "o": ["Inversions always cause trisomy", "Inversions delete genes in every cell", "Inversion carriers cannot make gametes"], "n": ["Not directly.", "Carriers are balanced.", "They can."], "w": "Pericentric → duplications/deletions; paracentric → dicentric/acentric chromosomes (usually nonviable).", "p": "Loop + crossover = unbalanced gametes."}]}];
+
+
+(function(){
+"use strict";
+var KEY="hd-hem04-cytogenetics-builder-v1";
+var S={box:{},score:0,streak:0,best:0,tot:0,right:0,theme:"auto"};
+function load(){try{var j=JSON.parse(localStorage.getItem(KEY)||"null");if(j&&j.box)S=Object.assign(S,j);}catch(e){}}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}}
+load();
+
+var ALL=[]; E.forEach(function(e){e.b.forEach(function(b,i){b.id=e.id+"."+i;b.ent=e;ALL.push(b);});});
+function st(b){var r=S.box[b.id];return r?r.s:"u";}
+var rrOnly=false, mode="build", scope="all", loFilter=null, curEnt=null, idx=0, cur=null, answered=false, results={}, lastId=null, t0=0, tick=null;
+
+function shuffle(a){a=a.slice();for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=a[i];a[i]=a[j];a[j]=t;}return a;}
+function esc(s){return String(s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];});}
+function inScope(b){return (scope==="all"||b.ent.lec===scope)&&(!loFilter||b.lo===loFilter)&&(!rrOnly||b.rr);}
+
+/* ---------- theme ---------- */
+var themeBtn=document.getElementById("themeBtn");
+function applyTheme(){var r=document.documentElement;if(S.theme==="auto")r.removeAttribute("data-theme");else r.setAttribute("data-theme",S.theme);themeBtn.textContent="Theme: "+S.theme;}
+themeBtn.onclick=function(){S.theme={auto:"light",light:"dark",dark:"auto"}[S.theme];applyTheme();save();};
+applyTheme();
+document.getElementById("resetBtn").onclick=function(){
+  var b=this; if(b.dataset.confirm){S.box={};S.score=S.streak=S.tot=S.right=0;save();b.textContent="Reset progress";delete b.dataset.confirm;renderAll();next();return;}
+  b.dataset.confirm="1";b.textContent="Tap again to reset";setTimeout(function(){if(b.dataset.confirm){delete b.dataset.confirm;b.textContent="Reset progress";}},3000);
+};
+
+/* ---------- stats / side / map ---------- */
+function loStatus(lo){var bs=ALL.filter(function(b){return b.lo===lo;});var ss=bs.map(st);
+  var m=ss.filter(function(x){return x==="M";}).length;
+  if(m===bs.length)return{s:"M",m:m,n:bs.length};
+  if(ss.indexOf("m")>=0)return{s:"m",m:m,n:bs.length};
+  if(ss.some(function(x){return x!=="u";}))return{s:"o",m:m,n:bs.length};
+  return{s:"u",m:m,n:bs.length};}
+function renderStats(){
+  document.getElementById("sScore").textContent=S.score;
+  document.getElementById("sStreak").textContent=S.streak;
+  document.getElementById("sAcc").textContent=S.tot?Math.round(100*S.right/S.tot)+"%":"—";
+  document.getElementById("sBoxes").textContent=ALL.filter(function(b){return st(b)==="M";}).length+"/"+ALL.length;
+  var los=Object.keys(LOS);document.getElementById("sLos").textContent=los.filter(function(l){return loStatus(l).s==="M";}).length+"/"+los.length;
+}
+function renderSide(){
+  var h="";LECS.forEach(function(L){if(scope!=="all"&&scope!==L.k)return;
+    h+='<p class="lec-h l'+L.k+'" style="color:var(--lc)">HEM04 · '+esc(L.n)+'</p>';
+    E.filter(function(e){return e.lec===L.k;}).forEach(function(e){
+      var m=e.b.filter(function(b){return st(b)==="M";}).length,p=Math.round(100*m/e.b.length);
+      h+='<button type="button" class="ent l'+e.lec+'" data-ent="'+e.id+'"'+(curEnt===e&&mode==="build"?' aria-current="true"':'')+'><span class="n">'+esc(e.name)+'</span><span class="pct">'+m+'/'+e.b.length+'</span><span class="s">'+esc(e.sub)+'</span><span class="mini"><i style="width:'+p+'%"></i></span></button>';
+    });});
+  var el=document.getElementById("entList");el.innerHTML=h;
+  el.querySelectorAll(".ent").forEach(function(b){b.onclick=function(){setMode("build");startEnt(E.filter(function(e){return e.id===b.dataset.ent;})[0]);};});
+}
+function renderMap(){
+  var h="";Object.keys(LOS).forEach(function(lo){var lec=LOLEC[lo];if(scope!=="all"&&scope!==lec)return;var s=loStatus(lo);
+    h+='<button type="button" class="lo-tile l'+lec+'" data-lo="'+lo+'"'+(loFilter===lo?' style="border-color:var(--lc)"':'')+'><span class="id">'+(lo.slice(-1)==="X"?"Extra":"LO "+lo)+'</span><span class="t">'+esc(LOS[lo])+'</span><span class="dot s-'+s.s+'" title="'+s.m+'/'+s.n+' mastered"></span></button>';});
+  var g=document.getElementById("loGrid");g.innerHTML=h;
+  g.querySelectorAll(".lo-tile").forEach(function(b){b.onclick=function(){loFilter=(loFilter===b.dataset.lo?null:b.dataset.lo);setMode("drill");};});
+}
+function renderAll(){renderStats();renderSide();renderMap();}
+
+/* ---------- flow ---------- */
+function setMode(m){mode=m;document.querySelectorAll("[data-mode]").forEach(function(b){b.setAttribute("aria-pressed",String(b.dataset.mode===m));});
+  if(m==="build"){loFilter=null;if(rrOnly){rrOnly=false;setRR();}renderAll();if(!curEnt||!inScope(curEnt.b[0]))startEnt(firstEnt());else show();}
+  else{renderAll();next();}}
+function firstEnt(){var es=E.filter(function(e){return scope==="all"||e.lec===scope;});
+  for(var i=0;i<es.length;i++){if(es[i].b.some(function(b){return st(b)!=="M";}))return es[i];}return es[0];}
+document.querySelectorAll("[data-mode]").forEach(function(b){b.onclick=function(){setMode(b.dataset.mode);};});
+function setRR(){document.querySelectorAll("[data-rr]").forEach(function(x){x.setAttribute("aria-pressed",String((x.dataset.rr==="1")===rrOnly));});}
+document.querySelectorAll("[data-rr]").forEach(function(b){b.onclick=function(){rrOnly=b.dataset.rr==="1";setRR();setMode(rrOnly?"drill":mode);};});
+document.querySelectorAll("[data-scope]").forEach(function(b){b.onclick=function(){scope=b.dataset.scope;loFilter=null;
+  document.querySelectorAll("[data-scope]").forEach(function(x){x.setAttribute("aria-pressed",String(x===b));});
+  if(mode==="build"){curEnt=null;setMode("build");}else setMode("drill");};});
+
+function startEnt(e){curEnt=e;idx=0;results={};renderSide();cur=e.b[0];show();}
+function next(){
+  if(mode==="build"){idx++;if(idx>=curEnt.b.length){finishEnt();return;}cur=curEnt.b[idx];show();return;}
+  var pool=ALL.filter(inScope);if(!pool.length){cur=null;show();return;}
+  var rank={m:0,u:1,o:2,M:3};
+  pool=shuffle(pool).sort(function(a,b){return rank[st(a)]-rank[st(b)];});
+  var best=rank[st(pool[0])];var top=pool.filter(function(b){return rank[st(b)]===best&&b.id!==lastId;});
+  if(best===3)top=pool.filter(function(b){return b.id!==lastId;});
+  cur=(top.length?top:pool)[0];show();
+}
+function finishEnt(){
+  var ok=Object.keys(results).filter(function(k){return results[k];}).length,n=curEnt.b.length;
+  var i=E.indexOf(curEnt),nxt=null;for(var j=1;j<=E.length;j++){var c=E[(i+j)%E.length];if(scope==="all"||c.lec===scope){nxt=c;break;}}
+  var card=document.getElementById("card");card.className="card l"+curEnt.lec;
+  card.innerHTML='<div class="done"><p class="meta">Structure complete</p><h2>'+esc(curEnt.name)+': '+ok+' / '+n+' first try</h2>'+
+   '<p class="hint">'+(ok===n?"Clean build. It will count as mastered after one more clean pass.":"Missed boxes are queued first in Drill mode.")+'</p>'+
+   '<div class="actions"><button class="btn" type="button" id="again">Rebuild '+esc(curEnt.name)+'</button>'+(nxt?'<button class="btn primary" type="button" id="nextEnt">Next: '+esc(nxt.name)+' →</button>':'')+'</div></div>';
+  document.getElementById("again").onclick=function(){startEnt(curEnt);};
+  if(nxt)document.getElementById("nextEnt").onclick=function(){startEnt(nxt);};
+  var ne=document.getElementById("nextEnt");if(ne)ne.focus();
+}
+
+var picks=[];
+function show(){
+  answered=false;picks=[];clearInterval(tick);
+  var card=document.getElementById("card");
+  if(!cur){card.className="card";card.innerHTML='<p class="q">Nothing in this scope yet.</p>';return;}
+  var b=cur,e=b.ent;card.className="card l"+e.lec;
+  var head='<div class="card-top"><div><p class="meta">'+(mode==="build"?"Build · box "+(idx+1)+" of "+e.b.length:"Drill"+(rrOnly?" · Rapid Review":"")+(loFilter?" · LO "+loFilter:""))+'</p><h2>'+esc(e.name)+'</h2></div>'+
+    '<div style="display:flex;gap:6px;flex-wrap:wrap"><span class="tag lo">'+(b.lo.slice(-1)==="X"?"Extra":"LO "+b.lo)+'</span>'+(b.rr?'<span class="tag rr">Rapid Review</span>':'')+(b.hy?'<span class="tag hy">HY</span>':'')+'<span class="timer" id="timer">0.0s</span></div></div>';
+  if(mode==="build"){head+='<div class="boxes" aria-hidden="true">'+e.b.map(function(x,i){var c=i===idx?"cur":(x.id in results?(results[x.id]?"done-ok":"done-bad"):"");return '<i class="'+c+'"></i>';}).join("")+'</div>';}
+  var body='<p class="q">'+esc(b.q)+'</p>';
+  if(!b.t){b._opts=shuffle([b.a].concat(b.o));
+    body+='<div class="opts">'+b._opts.map(function(o,i){return '<button type="button" class="opt" data-i="'+i+'"><span class="k">'+(i+1)+'</span><span>'+esc(o)+'</span></button>';}).join("")+'</div>';}
+  else if(b.t==="m"){b._opts=shuffle(b.a.concat(b.o));
+    body+='<p class="hint">Select all that apply, then check.</p><div class="opts">'+b._opts.map(function(o,i){return '<button type="button" class="opt" aria-pressed="false" data-i="'+i+'"><span class="k">'+(i+1)+'</span><span>'+esc(o)+'</span></button>';}).join("")+'</div>';}
+  else{b._opts=shuffle(b.a);
+    body+='<p class="hint">Tap items in order. Tap a placed item to remove it.</p><ol class="ordered" id="ordList"><li class="empty" style="cursor:default">Your order appears here</li></ol><div class="opts">'+b._opts.map(function(o,i){return '<button type="button" class="opt" data-i="'+i+'"><span class="k">+</span><span>'+esc(o)+'</span></button>';}).join("")+'</div>';}
+  var act='<div id="fb"></div><div class="actions"><span class="hint">'+(b.t?"Enter to check":"Keys 1–"+b._opts.length+" to answer")+'</span><div style="display:flex;gap:8px">'+
+    (mode==="build"?'<button class="btn" type="button" id="skipBtn">Skip structure</button>':'')+
+    (b.t?'<button class="btn primary" type="button" id="checkBtn"'+(b.t==="o"?" disabled":"")+'>Check</button>':'')+
+    '<button class="btn primary" type="button" id="nextBtn" hidden>Next box →</button></div></div>';
+  card.innerHTML=head+body+act;
+  t0=Date.now();tick=setInterval(function(){var t=document.getElementById("timer");if(t)t.textContent=((Date.now()-t0)/1000).toFixed(1)+"s";},100);
+  var opts=card.querySelectorAll(".opt");
+  if(!b.t)opts.forEach(function(o){o.onclick=function(){if(!answered)grade([+o.dataset.i]);};});
+  else if(b.t==="m")opts.forEach(function(o){o.onclick=function(){if(answered)return;var on=o.getAttribute("aria-pressed")!=="true";o.setAttribute("aria-pressed",String(on));o.classList.toggle("sel",on);};});
+  else opts.forEach(function(o){o.onclick=function(){if(answered||o.disabled)return;picks.push(+o.dataset.i);o.disabled=true;o.style.opacity=".4";drawOrd();};});
+  var cb=document.getElementById("checkBtn");if(cb)cb.onclick=function(){if(answered)return;
+    if(b.t==="m"){var sel=[];opts.forEach(function(o){if(o.getAttribute("aria-pressed")==="true")sel.push(+o.dataset.i);});grade(sel);}else grade(picks);};
+  var sk=document.getElementById("skipBtn");if(sk)sk.onclick=function(){var i=E.indexOf(curEnt);for(var j=1;j<=E.length;j++){var c=E[(i+j)%E.length];if(scope==="all"||c.lec===scope){startEnt(c);return;}}};
+  document.getElementById("nextBtn").onclick=function(){lastId=cur.id;next();};
+}
+function drawOrd(){var b=cur,ol=document.getElementById("ordList");
+  ol.innerHTML=picks.length?picks.map(function(i,k){return '<li data-k="'+k+'">'+esc(b._opts[i])+'</li>';}).join(""):'<li class="empty" style="cursor:default">Your order appears here</li>';
+  ol.querySelectorAll("li[data-k]").forEach(function(li){li.onclick=function(){if(answered)return;var k=+li.dataset.k,i=picks[k];picks.splice(k,1);
+    var o=document.querySelector('.opt[data-i="'+i+'"]');o.disabled=false;o.style.opacity="";drawOrd();};});
+  document.getElementById("checkBtn").disabled=picks.length!==b.a.length;}
+
+function grade(sel){
+  answered=true;clearInterval(tick);var b=cur,ok,card=document.getElementById("card"),opts=card.querySelectorAll(".opt");
+  if(!b.t){ok=b._opts[sel[0]]===b.a;opts.forEach(function(o){var t=b._opts[+o.dataset.i];o.disabled=true;if(t===b.a)o.classList.add("right");else if(+o.dataset.i===sel[0])o.classList.add("wrong");});}
+  else if(b.t==="m"){var chosen=sel.map(function(i){return b._opts[i];});ok=chosen.length===b.a.length&&chosen.every(function(c){return b.a.indexOf(c)>=0;});
+    opts.forEach(function(o){var t=b._opts[+o.dataset.i],isA=b.a.indexOf(t)>=0,isS=chosen.indexOf(t)>=0;o.disabled=true;o.classList.remove("sel");
+      if(isA&&isS)o.classList.add("right");else if(isA)o.classList.add("missed");else if(isS)o.classList.add("wrong");});}
+  else{var got=sel.map(function(i){return b._opts[i];});ok=got.every(function(g,k){return g===b.a[k];});
+    document.querySelectorAll("#ordList li[data-k]").forEach(function(li,k){li.classList.add(got[k]===b.a[k]?"right":"wrong");});
+    opts.forEach(function(o){o.disabled=true;});}
+  var r=S.box[b.id]||{n:0,c:0,s:"u"};r.n++;
+  if(ok){r.c++;r.s=r.c>=2?"M":"o";S.streak++;S.best=Math.max(S.best,S.streak);S.right++;S.score+=10+Math.min(S.streak,10);}
+  else{r.c=0;r.s="m";S.streak=0;}
+  S.tot++;S.box[b.id]=r;if(!(b.id in results))results[b.id]=ok;save();
+  var fb='<div class="fb '+(ok?"ok":"bad")+'"><span class="v">'+(ok?"Correct":"Not quite")+'</span>';
+  if(!b.t)fb+='<span class="ans">Answer: <b>'+esc(b.a)+'</b></span>';
+  else if(b.t==="m")fb+='<span class="ans">Answer: <b>'+b.a.map(esc).join(" · ")+'</b></span>';
+  else fb+='<span class="ans">Correct order:</span><ol>'+b.a.map(function(x){return "<li>"+esc(x)+"</li>";}).join("")+'</ol>';
+  fb+='<div class="fbexp">'+String(b.w||"").split(/\n\n+/).filter(Boolean).map(function(t){return '<p>'+esc(t)+'</p>';}).join("")+'</div>';
+  if(b.n&&b.n.length&&b.o&&b.o.length){
+    var rows=b.o.map(function(x,i){return b.n[i]?'<li><b>'+esc(x)+'</b> — '+esc(b.n[i])+'</li>':"";}).join("");
+    if(rows)fb+='<ul class="fbnotes">'+rows+'</ul>';
+  }
+  if(b.p)fb+='<div class="fbpearl"><b>High-yield</b>'+esc(b.p)+'</div>';
+  fb+='</div>';
+  document.getElementById("fb").innerHTML=fb;
+  var cb=document.getElementById("checkBtn");if(cb)cb.hidden=true;
+  var nb=document.getElementById("nextBtn");nb.hidden=false;nb.textContent=(mode==="build"&&idx===curEnt.b.length-1)?"Finish structure →":"Next box →";nb.focus();
+  renderAll();
+}
+document.addEventListener("keydown",function(ev){
+  if(ev.target.tagName==="INPUT"||ev.metaKey||ev.ctrlKey||ev.altKey)return;
+  if(ev.key==="Enter"){var nb=document.getElementById("nextBtn"),cb=document.getElementById("checkBtn");
+    if(nb&&!nb.hidden){ev.preventDefault();nb.click();}else if(cb&&!cb.hidden&&!cb.disabled){ev.preventDefault();cb.click();}return;}
+  var n=parseInt(ev.key,10);if(!cur||answered||isNaN(n))return;var o=document.querySelector('.opt[data-i="'+(n-1)+'"]');if(o&&!o.disabled)o.click();
+});
+
+renderAll();startEnt(firstEnt());
+})();
+
+/* ---------- Review: the compiled version of everything the answers teach ---------- */
+var REVIEW = {"F": "<h3 class=\"rh\">LO1 · Chromosome structure</h3>\n<p>46 chromosomes = 22 autosome pairs + XX/XY; ≈20,000 genes across 400–1000 bands (<b>band ≠ gene</b>). <b>p</b> = short (petit), <b>q</b> = long. Acrocentrics: <b>13, 14, 15, 21, 22</b>.</p>\n<div class=\"rtbl\"><table><thead><tr><th></th><th>Euchromatin</th><th>Heterochromatin</th></tr></thead><tbody>\n<tr><td>Condensation</td><td>Open</td><td>Condensed</td></tr>\n<tr><td>Content</td><td>Coding, active</td><td>Mostly noncoding, inactive</td></tr>\n<tr><td>Where</td><td>Arms</td><td>Centromeres, distal Yq, Barr body</td></tr></tbody></table></div>\n<div class=\"rtbl\"><table><thead><tr><th></th><th>Telomere</th><th>Centromere</th></tr></thead><tbody>\n<tr><td>Job</td><td>Caps ends; prevents fusion</td><td>Spindle anchor (kinetochore)</td></tr>\n<tr><td>Sequence</td><td>TTAGGG repeats</td><td>Repetitive, unique per chromosome</td></tr></tbody></table></div>\n<div class=\"rhy\"><b>USMLE: telomerase</b>Reverse transcriptase with an RNA template; upregulated in cancer and stem cells. Short telomeres → aging, dyskeratosis congenita.</div>\n<h3 class=\"rh\">Terminology &amp; tests</h3>\n<ul class=\"rlist\"><li>n = 23 · 2n = 46 · 3n = 69 (partial mole) · 4n = 92. Aneuploid = trisomy (47) or monosomy (45).</li><li>Deletion = partial monosomy; duplication = partial trisomy.</li><li>ISCN: count, sex, abnormality: 47,XX,+21 · 45,X · 46,XY,del(5)(p15) · 45,XY,der(14;21)(q10;q10) · mos 45,X/46,XX.</li></ul>\n<div class=\"rtbl\"><table><thead><tr><th>Test</th><th>Dividing cells?</th><th>Best for</th></tr></thead><tbody>\n<tr><td>G-banded karyotype</td><td>Yes (≈5–10 Mb)</td><td>Aneuploidy, <b>balanced</b> translocations</td></tr>\n<tr><td>FISH</td><td>No</td><td>Microdeletions, rapid screens, fusion genes</td></tr>\n<tr><td>Microarray</td><td>No (kb, genome-wide)</td><td>Copy number; first-line for ID/autism; <b>misses balanced</b></td></tr></tbody></table></div>\n<div class=\"rtrap\"><b>Recurrent miscarriage</b>Karyotype the parents; microarray can't see balanced rearrangements.</div>\n<h3 class=\"rh\">LO2 · Mitosis &amp; meiosis</h3>\n<div class=\"rmem\"><b>PPMAT</b>Prophase · Prometaphase · Metaphase (Middle, Microscope-ready; colchicine) · Anaphase (Apart) · Telophase (Two nuclei).</div>\n<div class=\"rtbl\"><table><thead><tr><th>Meiosis</th><th>Mitosis</th></tr></thead><tbody>\n<tr><td>2 divisions; germ cells</td><td>1 division; somatic</td></tr>\n<tr><td>Homologs pair + recombine (prophase I)</td><td>Homologs independent</td></tr>\n<tr><td>Haploid, shuffled</td><td>Diploid, identical</td></tr></tbody></table></div>\n<p>MI = reduction (homologs separate); MII = like mitosis (chromatids separate).</p>\n<div class=\"rtbl\"><table><thead><tr><th></th><th>Male</th><th>Female</th></tr></thead><tbody>\n<tr><td>Products</td><td>4 sperm</td><td>1 egg + 2 polar bodies</td></tr>\n<tr><td>Timing</td><td>From puberty, many mitoses</td><td>Fetal start; arrested end of prophase I; MII after fertilization</td></tr>\n<tr><td>Age effect</td><td>Point mutations (achondroplasia)</td><td>Nondisjunction (trisomies)</td></tr></tbody></table></div>\n", "D": "<h3 class=\"rh\">LO3 · Aneuploidy &amp; nondisjunction</h3>\n<p>Aneuploidy: &gt;3–4% of recognized pregnancies. Whole monosomy lethal except X; viable trisomies mainly 21, 18, 13 and sex chromosomes. Nondisjunction is mostly <b>maternal meiosis I</b> and rises with maternal age.</p>\n<div class=\"rtbl\"><table><thead><tr><th></th><th>MI nondisjunction</th><th>MII nondisjunction</th></tr></thead><tbody>\n<tr><td>Fails</td><td>Homologs</td><td>Sister chromatids</td></tr>\n<tr><td>Gametes</td><td>All 4 abnormal</td><td>2 normal, 1 disomic, 1 nullisomic</td></tr>\n<tr><td>Disomic gamete</td><td>Two <b>different</b> homologs</td><td>Two copies of the <b>same</b> homolog</td></tr></tbody></table></div>\n<div class=\"rhy\"><b>USMLE: Down syndrome causes</b>≈95% nondisjunction (mostly maternal MI) · ≈4% Robertsonian · ≈1–2% mosaic. Risk ≈1/1,500 at 20 → 1/100 at 40 → 1/30 at 45.</div>\n<h3 class=\"rh\">Autosomal trisomies</h3>\n<div class=\"rtbl\"><table><thead><tr><th></th><th>21 Down</th><th>18 Edwards</th><th>13 Patau</th></tr></thead><tbody>\n<tr><td>Face</td><td>Low nasal root, upslanting fissures, epicanthal folds</td><td>Micrognathia, prominent occiput</td><td>Cleft lip/palate, microphthalmia</td></tr>\n<tr><td>Body</td><td>Short neck, flat occiput, hypotonia, single crease</td><td>Growth deficiency, clenched fists, rocker-bottom feet</td><td>Polydactyly, omphalocele</td></tr>\n<tr><td>Heart</td><td>≈40% (AV canal)</td><td>VSD</td><td>CHD</td></tr>\n<tr><td>Other</td><td>15–20× leukemia, duodenal atresia, Hirschsprung, Alzheimer</td><td>—</td><td>Holoprosencephaly</td></tr>\n<tr><td>Survival</td><td>Adulthood (≈60)</td><td>50% die in weeks; 5% to 1 y</td><td>5% to 1 y</td></tr></tbody></table></div>\n<div class=\"rmem\"><b>Voting ages</b>21 Drinking (Down) · 18 Election (Edwards = Extremities) · 13 Puberty (Patau = Palate + Polydactyly).</div>\n<div class=\"rhy\"><b>USMLE: prenatal screens</b>T21: ↑hCG, ↑inhibin A, ↓AFP, ↓estriol, ↓PAPP-A. T18: everything ↓, inhibin normal. T13: ↓PAPP-A, ↓hCG, ↑NT.</div>\n<h3 class=\"rh\">Sex chromosome aneuploidies</h3>\n<p>Milder because the Y has few genes and extra X's are inactivated (Barr bodies = X − 1).</p>\n<div class=\"rtbl\"><table><thead><tr><th></th><th>Turner 45,X</th><th>Klinefelter 47,XXY</th><th>47,XXX</th><th>47,XYY</th></tr></thead><tbody>\n<tr><td>Height</td><td>Short (SHOX)</td><td>Tall, long limbs</td><td>Tall</td><td>Tall</td></tr>\n<tr><td>Gonads</td><td>Streak ovaries</td><td>Small testes, sterile; gynecomastia 1/3</td><td>Premature ovarian failure</td><td>Usually fertile</td></tr>\n<tr><td>Other</td><td>Webbed neck, shield chest, bicuspid AV, coarctation, horseshoe kidney</td><td>↑LH/FSH; ↓IQ 10–15</td><td>↓IQ vs sibs</td><td>ADHD, learning issues</td></tr>\n<tr><td>Origin</td><td>Often paternal X lost</td><td>~50% paternal MI</td><td>Maternal</td><td>Paternal MII</td></tr></tbody></table></div>\n<div class=\"rtrap\"><b>Turner traps</b>&gt;99% of 45,X conceptions miscarry; cystic hygroma prenatally. Y material (45,X/46,XY) → gonadectomy for gonadoblastoma risk.</div>\n", "T": "<h3 class=\"rh\">LO4 · Mosaicism</h3>\n<p>≥2 karyotypes from <b>one zygote</b> (chimerism = two zygotes). Mechanisms: <b>mitotic nondisjunction</b>, <b>anaphase lag</b> (45,X/46,XX), <b>trisomy rescue</b> (± uniparental disomy).</p>\n<ul class=\"rlist\"><li>Milder than full trisomy; asymmetry; pigment streaks along lines of Blaschko.</li><li>Blood may miss it → test skin fibroblasts or buccal cells.</li></ul>\n<div class=\"rtrap\"><b>Confined placental mosaicism</b>In 1–2% of CVS. CVS samples placenta; amniocentesis samples fetal cells → confirm abnormal CVS by amnio. CPM can cause IUGR or UPD.</div>\n<h3 class=\"rh\">LO5 · Translocations</h3>\n<div class=\"rtbl\"><table><thead><tr><th></th><th>Robertsonian</th><th>Reciprocal</th></tr></thead><tbody>\n<tr><td>What</td><td>Two acrocentric long arms fuse; p arms lost</td><td>Segments swap between any chromosomes</td></tr>\n<tr><td>Balanced carrier</td><td><b>45</b></td><td><b>46</b> (≈70% inherited)</td></tr>\n<tr><td>Unbalanced</td><td><b>46</b> (e.g., translocation Down)</td><td>Partial trisomy + partial monosomy</td></tr>\n<tr><td>Examples</td><td>t(13;14) most common; t(14;21), t(21;21)</td><td>Familial; cancers: t(9;22), t(14;18), t(8;14), t(15;17)</td></tr></tbody></table></div>\n<div class=\"rhy\"><b>USMLE: translocation Down</b>Young mother or recurrent Down → karyotype child, then parents. t(14;21) recurrence ≈10–15% if mother carries vs ≈1–2% if father; t(21;21) ≈100%.</div>\n<p>Unbalanced phenotype depends on segment size, genes, and monosomy (worse) vs trisomy.</p>\n<h3 class=\"rh\">Deletions &amp; microdeletions</h3>\n<div class=\"rtbl\"><table><thead><tr><th>Type</th><th>Breaks</th><th>Example</th></tr></thead><tbody>\n<tr><td>Terminal</td><td>1</td><td>5p− cri-du-chat, 4p− Wolf-Hirschhorn</td></tr>\n<tr><td>Interstitial</td><td>2 in one arm</td><td>Interstitial 1q</td></tr>\n<tr><td>Ring</td><td>2 (one per arm)</td><td>Ends lost, rejoined; unstable</td></tr></tbody></table></div>\n<div class=\"rtbl\"><table><thead><tr><th>Microdeletion (&lt;5 Mb)</th><th>Clues</th></tr></thead><tbody>\n<tr><td>22q11.2 DiGeorge</td><td>CATCH-22: conotruncal heart, face, thymus, cleft, hypocalcemia</td></tr>\n<tr><td>7q11.23 Williams</td><td>Elfin face, supravalvular AS, hypercalcemia, friendly</td></tr>\n<tr><td>15q11–q13</td><td>Paternal → Prader-Willi; maternal → Angelman</td></tr></tbody></table></div>\n<div class=\"rrule\"><b>Detecting microdeletions</b>Missed by G-banding → FISH or microarray.</div>\n<h3 class=\"rh\">Isochromosomes &amp; inversions</h3>\n<ul class=\"rlist\"><li><b>Isochromosome:</b> two copies of one arm (centromere misdivision) → trisomy of one arm, monosomy of the other. Most common <b>i(Xq)</b> = Turner variant (no SHOX). Also i(21q), i(12p).</li><li><b>Inversion:</b> pericentric (includes centromere) vs paracentric (one arm). Carriers healthy; crossover in the MI loop → unbalanced gametes (dup/del or dicentric/acentric).</li></ul>\n"};
+var RVW_NAME = {"F":"LO1–2 Chromosomes & division","D":"LO3 Aneuploidy","T":"LO4–5 Mosaicism & structural"};
+(function(){
+  var panel=document.getElementById("rvw"), body=document.getElementById("rvwBody"),
+      toc=document.getElementById("rvwToc"), q=document.getElementById("rvwQ"),
+      cnt=document.getElementById("rvwCount"), empty=document.getElementById("rvwEmpty"),
+      btn=document.getElementById("reviewBtn"), lec="F", secs=[];
+  var TYPES={rrule:1,rtrap:1,rmem:1,rhy:1};
+  function collapse(sec){
+    [].slice.call(sec.querySelectorAll(".rrule,.rtrap,.rmem,.rhy")).forEach(function(d){
+      var type=d.className.trim(); if(!TYPES[type])return;
+      var lbl=d.querySelector("b"), label=lbl?lbl.textContent:"Note";
+      if(lbl)lbl.parentNode.removeChild(lbl);
+      var det=document.createElement("details"); det.className="cx "+type;
+      var sum=document.createElement("summary");
+      sum.innerHTML='<span class="lbl"></span><span class="pk"></span>';
+      sum.querySelector(".lbl").textContent=label;
+      sum.querySelector(".pk").textContent=d.textContent.replace(/\s+/g," ").trim().slice(0,110);
+      var cb=document.createElement("div"); cb.className="cbody";
+      while(d.firstChild)cb.appendChild(d.firstChild);
+      det.appendChild(sum); det.appendChild(cb);
+      d.parentNode.replaceChild(det,d);
+    });
+    var h=sec.querySelector(".rh"), hys=[].slice.call(sec.querySelectorAll("details.rhy"));
+    if(h&&hys.length){ var ref=h.nextSibling; hys.forEach(function(x){ sec.insertBefore(x,ref); }); }
+    var kids=[].slice.call(sec.children), i=0;
+    while(i<kids.length){
+      if(kids[i].tagName==="DETAILS"){
+        var run=[kids[i]], cls=kids[i].className, j=i+1;
+        while(j<kids.length&&kids[j].tagName==="DETAILS"&&kids[j].className===cls){run.push(kids[j]);j++;}
+        if(run.length>1){
+          var g=document.createElement("div"); g.className="cgrid";
+          sec.insertBefore(g,run[0]); run.forEach(function(x){g.appendChild(x);});
+        }
+        i=j;
+      } else i++;
+    }
+  }
+  function group(){
+    var kids=[].slice.call(body.childNodes), out=[], cur=null;
+    kids.forEach(function(n){
+      if(n.nodeType===1&&n.tagName==="H3"){cur=document.createElement("section");cur.className="rsec";out.push(cur);}
+      if(!cur){cur=document.createElement("section");cur.className="rsec";out.push(cur);}
+      cur.appendChild(n);
+    });
+    body.innerHTML="";
+    out.forEach(function(s,i){ s.id="rs"+i; collapse(s); s._t=s.textContent.toLowerCase(); body.appendChild(s); });
+    return out;
+  }
+  function setAll(open){
+    [].slice.call(body.querySelectorAll("details.cx")).forEach(function(d){d.open=open;});
+    var t=document.getElementById("rvwAll");
+    if(t){t.textContent=open?"Collapse all":"Expand all";t.setAttribute("aria-pressed",String(open));}
+  }
+  function buildToc(){
+    toc.innerHTML=secs.map(function(s){
+      var h=s.querySelector(".rh"); return h?'<a href="#'+s.id+'">'+h.textContent+'</a>':'';
+    }).join("");
+  }
+  function filter(){
+    var terms=q.value.toLowerCase().split(/\s+/).filter(Boolean), n=0;
+    secs.forEach(function(s){
+      var on=terms.every(function(t){return s._t.indexOf(t)!==-1;});
+      s.classList.toggle("hide",!on); if(on)n++;
+    });
+    empty.classList.toggle("on",n===0);
+    cnt.textContent = n===secs.length ? secs.length+" sections" : n+" of "+secs.length;
+    toc.style.display = q.value ? "none" : "";
+  }
+  function load(l){
+    lec=l; panel.setAttribute("data-lec",l);
+    body.innerHTML=REVIEW[l]||"";
+    secs=group(); buildToc(); q.value=""; filter();
+    var t=document.getElementById("rvwAll"); if(t){t.textContent="Expand all";t.setAttribute("aria-pressed","false");}
+  }
+  function open(){
+    document.querySelector(".bar").style.display="none";
+    document.querySelector(".main").style.display="none";
+    panel.hidden=false; if(!secs.length)load(lec);
+    btn.setAttribute("aria-pressed","true");
+    window.scrollTo(0,0); q.focus({preventScroll:true});
+  }
+  function close(){
+    panel.hidden=true;
+    document.querySelector(".bar").style.display="";
+    document.querySelector(".main").style.display="";
+    btn.setAttribute("aria-pressed","false");
+    window.scrollTo(0,0);
+  }
+  btn.onclick=function(){ panel.hidden?open():close(); };
+  document.getElementById("rvwClose").onclick=close;
+  document.getElementById("rvwPrint").onclick=function(){window.print();};
+  var allBtn=document.getElementById("rvwAll");
+  if(allBtn)allBtn.onclick=function(){ setAll(this.getAttribute("aria-pressed")!=="true"); };
+  var reclose=[];
+  window.addEventListener("beforeprint",function(){
+    reclose=[];
+    [].slice.call(body.querySelectorAll("details.cx")).forEach(function(d){ if(!d.open){reclose.push(d);d.open=true;} });
+  });
+  window.addEventListener("afterprint",function(){ reclose.forEach(function(d){d.open=false;}); reclose=[]; });
+  document.getElementById("rvwTabs").onclick=function(e){
+    var b=e.target.closest("button"); if(!b)return;
+    [].forEach.call(this.children,function(c){c.setAttribute("aria-pressed",String(c===b));});
+    load(b.dataset.l); window.scrollTo(0,0);
+  };
+  q.addEventListener("input",filter);
+  document.addEventListener("keydown",function(e){
+    if(e.key==="Escape"&&!panel.hidden){ if(document.activeElement===q&&q.value){q.value="";filter();} else close(); }
+  });
+})();
+
+</script>

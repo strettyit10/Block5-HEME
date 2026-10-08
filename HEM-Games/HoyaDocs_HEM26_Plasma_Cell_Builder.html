@@ -1,0 +1,556 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HEM26 Plasma Cell Builder</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,600;8..60,700&family=Public+Sans:wght@400;600;700&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+/* Layout: toolbar + stats on top; structure list | question card | LO mastery map. Stacks to one column on phones. */
+:root{
+  --bg:#f3f5f6; --surface:#ffffff; --ink:#18212b; --muted:#5a6570; --line:#dbe0e5; --chip:#eceff2;
+  --arch:#2c55a0; --face:#a3263f; --eye:#2c55a0; --accent:#a3263f;
+  --ok:#1d7a3e; --ok-bg:#e3f4e8; --bad:#b3261e; --bad-bg:#fbe7e5; --once:#b7791f; --once-bg:#fdf1dc; --mem:#c2621a;
+  --hy-bg:#fff6cc; --hy-line:#c9a227; --hy-ink:#4a3a00;
+  --f-display:"Source Serif 4", Georgia, serif; --f-body:"Public Sans", Arial, sans-serif; --f-mono:"IBM Plex Mono", ui-monospace, monospace;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#11161c; --surface:#19212a; --ink:#e6eaee; --muted:#9aa6b2; --line:#2c3642; --chip:#232c36;
+  --arch:#8fb1f0; --face:#f08a9b; --eye:#8fb1f0; --accent:#f08a9b;
+  --ok:#6fd08f; --ok-bg:#16301f; --bad:#f28b82; --bad-bg:#3a1b19; --once:#f0c070; --once-bg:#3a2e12; --mem:#f0a05c;
+  --hy-bg:#3a3110; --hy-line:#b8952a; --hy-ink:#f5e6a8; color-scheme:dark }}
+:root[data-theme="dark"]{
+  --bg:#11161c; --surface:#19212a; --ink:#e6eaee; --muted:#9aa6b2; --line:#2c3642; --chip:#232c36;
+  --arch:#8fb1f0; --face:#f08a9b; --eye:#8fb1f0; --accent:#f08a9b;
+  --ok:#6fd08f; --ok-bg:#16301f; --bad:#f28b82; --bad-bg:#3a1b19; --once:#f0c070; --once-bg:#3a2e12; --mem:#f0a05c;
+  --hy-bg:#3a3110; --hy-line:#b8952a; --hy-ink:#f5e6a8; color-scheme:dark }
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font:15px/1.5 var(--f-body);margin:0}
+.wrap{max-width:1180px;margin:0 auto;padding-inline:16px;padding-block:22px 48px;display:grid;gap:16px}
+h1,h2,h3{font-family:var(--f-display);margin:0;text-wrap:balance;line-height:1.2}
+.meta{font:500 .74rem var(--f-mono);letter-spacing:.07em;text-transform:uppercase;color:var(--muted);margin:0}
+header{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:end;gap:12px}
+header h1{font-size:1.9rem}
+header p.lede{margin:4px 0 0;color:var(--muted);max-width:62ch}
+.btn{font:600 .85rem var(--f-body);background:var(--chip);color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:7px 12px;cursor:pointer}
+.btn:hover{border-color:var(--ink)}
+.btn:focus-visible,.opt:focus-visible,.seg button:focus-visible,.ent:focus-visible,.lo-tile:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.btn.primary{background:var(--accent);color:var(--surface);border-color:var(--accent)}
+.btn[disabled]{opacity:.45;cursor:default}
+.hdr-actions{display:flex;gap:8px;flex-wrap:wrap}
+.wrap{grid-template-columns:minmax(0,1fr)} .rvw{min-width:0}
+
+.bar{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 12px}
+.seg{display:inline-flex;background:var(--chip);border-radius:10px;padding:3px;gap:2px;flex-wrap:wrap}
+.seg button{font:600 .82rem var(--f-body);border:0;background:transparent;color:var(--ink);padding:6px 11px;border-radius:8px;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--surface);box-shadow:0 1px 2px rgba(0,0,0,.12)}
+.seg .lab{font:500 .7rem var(--f-mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);align-self:center;padding:0 6px}
+.stats{display:flex;gap:18px;flex-wrap:wrap}
+.stat b{display:block;font:700 1.15rem var(--f-body);font-variant-numeric:tabular-nums}
+.stat span{font:500 .68rem var(--f-mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+
+.main{display:grid;grid-template-columns:250px minmax(0,1fr) 270px;gap:16px;align-items:start}
+@media (max-width:1000px){ .main{grid-template-columns:minmax(0,1fr)} .side{order:2} .map{order:3} }
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px;display:grid;gap:8px;min-width:0}
+.panel h2{font-size:1rem}
+.lec-h{font:700 .72rem var(--f-body);letter-spacing:.07em;text-transform:uppercase;margin-top:6px}
+.ent{display:grid;grid-template-columns:1fr auto;gap:2px 8px;text-align:left;width:100%;background:transparent;border:1px solid transparent;border-radius:8px;padding:7px 8px;cursor:pointer;color:var(--ink);font:inherit}
+.ent:hover{background:var(--chip)}
+.ent[aria-current="true"]{border-color:var(--lc);background:var(--chip)}
+.ent .n{font-weight:600;font-size:.9rem}
+.ent .s{grid-column:1;font-size:.75rem;color:var(--muted)}
+.ent .pct{grid-row:1/3;grid-column:2;align-self:center;font:500 .75rem var(--f-mono);color:var(--muted);font-variant-numeric:tabular-nums}
+.ent .mini{grid-column:1/3;height:4px;border-radius:2px;background:var(--line);overflow:hidden}
+.ent .mini i{display:block;height:100%;background:var(--lc)}
+.lF{--lc:var(--arch)} .lD{--lc:var(--face)} .lT{--lc:var(--tcol)}
+:root{--tcol:#1d7a5f} @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--tcol:#6fd0b0}} :root[data-theme="dark"]{--tcol:#6fd0b0}
+.tag.rr{background:var(--chip);color:var(--ink);border:1px solid var(--line)}
+
+.card{background:var(--surface);border:1px solid var(--line);border-top:5px solid var(--lc);border-radius:12px;padding:18px;display:grid;gap:14px;min-width:0}
+.card-top{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px;align-items:baseline}
+.card-top h2{font-size:1.35rem}
+.tag{font:500 .7rem var(--f-mono);letter-spacing:.06em;text-transform:uppercase;padding:3px 8px;border-radius:999px;background:var(--chip);color:var(--muted)}
+.tag.lo{color:var(--lc)}
+.tag.hy{background:var(--hy-bg);color:var(--hy-ink);border:1px solid var(--hy-line)}
+.boxes{display:flex;gap:4px;flex-wrap:wrap}
+.boxes i{width:18px;height:6px;border-radius:3px;background:var(--line)}
+.boxes i.done-ok{background:var(--ok)} .boxes i.done-bad{background:var(--bad)} .boxes i.cur{background:var(--lc)}
+.q{font:600 1.08rem/1.45 var(--f-body);margin:0}
+.hint{font-size:.8rem;color:var(--muted);margin:0}
+.opts{display:grid;gap:8px}
+.opt{display:grid;grid-template-columns:auto 1fr;gap:10px;align-items:start;text-align:left;width:100%;font:inherit;color:var(--ink);background:var(--bg);border:1.5px solid var(--line);border-radius:10px;padding:10px 12px;cursor:pointer}
+.opt:hover:not([disabled]){border-color:var(--lc)}
+.opt .k{font:500 .75rem var(--f-mono);color:var(--muted);border:1px solid var(--line);border-radius:5px;padding:1px 6px;margin-top:1px}
+.opt.sel{border-color:var(--lc);background:var(--chip)}
+.opt.right{border-color:var(--ok);background:var(--ok-bg)}
+.opt.wrong{border-color:var(--bad);background:var(--bad-bg)}
+.opt.missed{border-color:var(--ok);border-style:dashed}
+.opt[disabled]{cursor:default}
+.ordered{display:grid;gap:6px;counter-reset:ord;padding:0;margin:0;list-style:none;min-height:44px;border:1.5px dashed var(--line);border-radius:10px;padding:8px}
+.ordered li{counter-increment:ord;display:grid;grid-template-columns:auto 1fr;gap:8px;align-items:center;background:var(--chip);border-radius:8px;padding:7px 10px;cursor:pointer}
+.ordered li::before{content:counter(ord);font:500 .78rem var(--f-mono);color:var(--lc)}
+.ordered li.right{background:var(--ok-bg)} .ordered li.wrong{background:var(--bad-bg)}
+.ordered .empty{color:var(--muted);font-size:.85rem;padding:4px}
+/* ---------- Review ---------- */
+.rvw{margin-top:14px}
+.rvw-bar{position:sticky;top:0;z-index:8;background:var(--bg);border-bottom:1px solid var(--line);padding:10px 0;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.rvw-bar .seg{display:flex;gap:2px;background:var(--chip);border:1px solid var(--line);border-radius:9px;padding:3px}
+.rvw-bar .seg button{background:transparent;border:0;border-radius:7px;padding:6px 12px;font:inherit;font-size:13.5px;color:var(--muted);cursor:pointer}
+.rvw-bar .seg button[aria-pressed="true"]{background:var(--surface);color:var(--ink);font-weight:600;box-shadow:0 1px 2px rgba(0,0,0,.08)}
+#rvwQ{flex:1 1 180px;min-width:140px;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:7px 10px;font:inherit;font-size:14px;color:inherit}
+#rvwCount{font-family:var(--f-mono);font-size:11px;color:var(--muted);white-space:nowrap}
+.rvw-toc{display:flex;flex-wrap:wrap;gap:6px;margin:12px 0 2px}
+.rvw-toc a{font-size:12.5px;text-decoration:none;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:4px 10px}
+.rvw-toc a:hover{color:var(--ink);border-color:var(--muted)}
+.rvw-body{max-width:none}
+.rsec{padding:6px 0 10px;scroll-margin-top:64px}
+.rsec.hide{display:none}
+.rh{font-family:var(--f-display);font-size:1.5rem;font-weight:650;margin:26px 0 4px;padding-bottom:6px;border-bottom:2px solid var(--acc)}
+.rsh{font-family:var(--f-display);font-size:1.12rem;font-weight:650;margin:18px 0 4px}
+.rvw-body p{margin:8px 0;line-height:1.62}
+ul.rlist{margin:8px 0;padding-left:1.15em;display:grid;gap:5px}
+ul.rlist li{line-height:1.55}
+.rtbl{overflow-x:auto;margin:12px 0;border:1px solid var(--line);border-radius:10px;background:var(--surface)}
+.rtbl table{border-collapse:collapse;width:100%;font-size:14px}
+.rtbl th,.rtbl td{text-align:left;vertical-align:top;padding:8px 11px;border-bottom:1px solid var(--line)}
+.rtbl thead th{background:var(--chip);font-family:var(--f-mono);font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);white-space:nowrap}
+.rtbl tbody tr:last-child td{border-bottom:0}
+.rtbl td b{font-weight:600}
+.rseq{margin:12px 0;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 14px 12px 10px}
+.rseq ol{margin:0;padding-left:1.3em;display:grid;gap:7px}
+.rseq li{line-height:1.55;padding-left:2px}
+.rseq li b{color:var(--acc)}
+.cgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(330px,1fr));gap:10px;margin:12px 0;align-items:start}
+.cgrid>details{margin:0}
+details.cx{margin:11px 0;border-radius:9px;border:1px solid var(--line);background:var(--surface);overflow:hidden}
+details.cx>summary{list-style:none;cursor:pointer;display:flex;align-items:baseline;gap:9px;padding:9px 12px;border-left:3px solid var(--line);font-size:14px}
+details.cx>summary::-webkit-details-marker{display:none}
+details.cx>summary::after{content:"+";margin-left:auto;font-family:var(--f-mono);font-size:14px;color:var(--muted);line-height:1}
+details.cx[open]>summary::after{content:"\2013"}
+details.cx>summary .lbl{font-family:var(--f-mono);font-size:10px;letter-spacing:.11em;text-transform:uppercase;font-weight:700;white-space:nowrap}
+details.cx>summary .pk{color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1}
+details.cx[open]>summary .pk{display:none}
+details.cx .cbody{padding:2px 13px 12px;line-height:1.56;font-size:14.6px;border-left:3px solid var(--line)}
+details.cx .cbody b{font-weight:600}
+details.rrule>summary,details.rrule .cbody{border-left-color:var(--acc)}
+details.rtrap>summary,details.rtrap .cbody{border-left-color:var(--bad)}
+details.rmem>summary,details.rmem .cbody{border-left-color:var(--mem)}
+details.rrule>summary .lbl{color:var(--acc)} details.rtrap>summary .lbl{color:var(--bad)} details.rmem>summary .lbl{color:var(--mem)}
+details.rhy{background:var(--hy-bg);border-color:var(--hy-line);color:var(--hy-ink)}
+details.rhy>summary,details.rhy .cbody{border-left-color:var(--hy-line)}
+details.rhy>summary .lbl{color:var(--hy-ink);opacity:.9}
+details.rhy>summary .pk,details.rhy>summary::after{color:var(--hy-ink);opacity:.75}
+.rvw-empty{display:none;text-align:center;color:var(--muted);border:1px dashed var(--line);border-radius:10px;padding:28px;margin-top:16px}
+.rvw-empty.on{display:block}
+.rvw[data-lec="F"]{--acc:var(--arch)} .rvw[data-lec="D"]{--acc:var(--face)} .rvw[data-lec="T"]{--acc:var(--tcol)}
+@media print{
+  header,.bar,.main,.rvw-bar,.rvw-toc,.rvw-empty{display:none!important}
+  .rvw{margin:0}
+  body{background:#fff}
+  .rsec{break-before:page;break-inside:auto}
+  .rsec:first-of-type{break-before:auto}
+  .rtbl,.rseq,details.cx{break-inside:avoid}
+  details.cx>summary::after{display:none}
+  .cgrid{grid-template-columns:1fr 1fr}
+}
+.fb .ans{font-size:.95rem}
+.fbexp{display:grid;gap:8px}
+.fbexp p{margin:0;line-height:1.6}
+.fbnotes{list-style:none;margin:2px 0 0;padding:0;display:grid;gap:6px}
+.fbnotes li{font-size:.9rem;line-height:1.5;color:var(--muted);padding-left:10px;border-left:2px solid var(--line)}
+.fbnotes li b{color:var(--ink);font-weight:600}
+.fbpearl{margin-top:2px;background:var(--hy-bg);border:1px solid var(--hy-line);border-left-width:3px;border-radius:9px;padding:9px 12px;font-size:.92rem;line-height:1.5;color:var(--hy-ink)}
+.fbpearl b{display:block;font:700 .66rem var(--f-mono);letter-spacing:.14em;text-transform:uppercase;color:var(--hy-line);margin-bottom:3px}
+.fb{border-radius:10px;padding:12px 14px;display:grid;gap:6px}
+.fb.ok{background:var(--ok-bg)} .fb.bad{background:var(--bad-bg)}
+.fb .v{font-weight:700}
+.fb.ok .v{color:var(--ok)} .fb.bad .v{color:var(--bad)}
+.fb ol{margin:0;padding-left:1.2em}
+.actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:space-between;align-items:center}
+.timer{font:500 .8rem var(--f-mono);color:var(--muted);font-variant-numeric:tabular-nums}
+.done{display:grid;gap:10px;text-align:left}
+
+.lo-grid{display:grid;gap:6px}
+.lo-tile{display:grid;grid-template-columns:auto 1fr auto;gap:8px;align-items:center;text-align:left;width:100%;background:transparent;border:1px solid var(--line);border-radius:8px;padding:6px 8px;cursor:pointer;color:var(--ink);font:inherit}
+.lo-tile:hover{border-color:var(--lc)}
+.lo-tile .id{font:500 .72rem var(--f-mono);color:var(--lc);white-space:nowrap}
+.lo-tile .t{font-size:.78rem;line-height:1.3}
+.lo-tile .dot{width:12px;height:12px;border-radius:50%;background:var(--line)}
+.dot.s-o{background:var(--once)} .dot.s-m{background:var(--bad)} .dot.s-M{background:var(--ok)}
+.legend{display:flex;flex-wrap:wrap;gap:10px;font-size:.72rem;color:var(--muted)}
+.legend span{display:inline-flex;gap:5px;align-items:center}
+.legend i{width:10px;height:10px;border-radius:50%;display:inline-block;background:var(--line)}
+.legend i.o{background:var(--once)} .legend i.m{background:var(--bad)} .legend i.M{background:var(--ok)}
+footer{color:var(--muted);font-size:.8rem;border-top:1px solid var(--line);padding-top:12px}
+@media (prefers-reduced-motion: no-preference){ .opt,.ent,.lo-tile{transition:border-color .12s, background .12s} }
+</style>
+
+<div class="wrap">
+<header>
+  <div>
+    <p class="meta">HoyaDocs · Block 5 · Hematology · HEM26</p>
+    <h1>HEM26 Plasma Cell Builder</h1>
+    <p class="lede">MGUS, multiple myeloma and Waldenström macroglobulinemia, LO by LO: build each structure box by box, then drill what you miss. Boxes tagged Rapid Review test the LO Rapid Review and Master Review checklists.</p>
+  </div>
+  <div class="hdr-actions">
+    <button class="btn primary" id="reviewBtn" type="button" aria-pressed="false">Review</button>
+    <button class="btn" id="themeBtn" type="button">Theme: auto</button>
+    <button class="btn" id="resetBtn" type="button">Reset progress</button>
+  </div>
+</header>
+
+<div class="bar">
+  <div class="seg" role="group" aria-label="Mode">
+    <span class="lab">Mode</span>
+    <button type="button" data-mode="build" aria-pressed="true">Build</button>
+    <button type="button" data-mode="drill" aria-pressed="false">Drill</button>
+  </div>
+  <div class="seg" role="group" aria-label="Section scope" id="scopeSeg">
+    <span class="lab">Scope</span>
+    <button type="button" data-scope="all" aria-pressed="true">All</button>
+    <button type="button" data-scope="F" aria-pressed="false">LO1–3 Ig &amp; M protein</button>
+    <button type="button" data-scope="D" aria-pressed="false">LO4 Myeloma</button>
+    <button type="button" data-scope="T" aria-pressed="false">LO5 Waldenström</button>
+  </div>
+  <div class="seg" role="group" aria-label="Focus" id="focusSeg">
+    <span class="lab">Focus</span>
+    <button type="button" data-rr="0" aria-pressed="true">All boxes</button>
+    <button type="button" data-rr="1" aria-pressed="false">Rapid Review only</button>
+  </div>
+  <div class="stats" aria-live="polite">
+    <div class="stat"><b id="sScore">0</b><span>Score</span></div>
+    <div class="stat"><b id="sStreak">0</b><span>Streak</span></div>
+    <div class="stat"><b id="sAcc">—</b><span>Accuracy</span></div>
+    <div class="stat"><b id="sBoxes">0</b><span>Boxes mastered</span></div>
+    <div class="stat"><b id="sLos">0/5</b><span>LOs mastered</span></div>
+  </div>
+</div>
+
+<div class="main">
+  <aside class="panel side" aria-label="Structures">
+    <h2>Structures</h2>
+    <div id="entList"></div>
+  </aside>
+  <section class="card" id="card" aria-live="polite"></section>
+  <aside class="panel map" aria-label="Learning objective mastery map">
+    <h2>LO mastery map</h2>
+    <div class="legend"><span><i></i>untested</span><span><i class="m"></i>missed</span><span><i class="o"></i>got it once</span><span><i class="M"></i>mastered</span></div>
+
+    <p class="hint">Tap an LO to drill just that objective. Mastered = right twice in a row.</p>
+    <div class="lo-grid" id="loGrid"></div>
+  </aside>
+</div>
+
+<div class="rvw" id="rvw" data-lec="F" hidden>
+  <div class="rvw-bar">
+    <div class="seg" id="rvwTabs" role="group" aria-label="Section">
+      <button type="button" data-l="F" aria-pressed="true">LO1–3 Ig &amp; M protein</button>
+      <button type="button" data-l="D" aria-pressed="false">LO4 Myeloma</button>
+      <button type="button" data-l="T" aria-pressed="false">LO5 Waldenström</button>
+    </div>
+    <input id="rvwQ" type="search" placeholder="Search this review" autocomplete="off" aria-label="Search the review">
+    <span id="rvwCount"></span>
+    <button class="btn" type="button" id="rvwAll" aria-pressed="false">Expand all</button>
+    <button class="btn" type="button" id="rvwPrint">Print</button>
+    <button class="btn primary" type="button" id="rvwClose">Back to the game</button>
+  </div>
+  <nav class="rvw-toc" id="rvwToc" aria-label="Contents"></nav>
+  <div class="rvw-body" id="rvwBody"></div>
+  <div class="rvw-empty" id="rvwEmpty">Nothing in this section matches that search.</div>
+</div>
+
+
+<footer>HoyaDocs · HEM26 Plasma Cell Builder · Updated October 8, 2026 · Revision 1.0. Yellow “HY” tags mark high-yield points, including Step 1. “Rapid Review” tags mark boxes built from the LO Rapid Review checklists.</footer>
+</div>
+
+<script>
+/* ================= LEARNING OBJECTIVES ================= */
+var LOS = {"1": "Normal production of immunoglobulins", "2": "Classification of plasma cell neoplasms and their subtypes", "3": "The M protein and its use in diagnosis", "4": "Multiple myeloma: definition, etiology, imaging, morphology, clinical and lab findings, cytogenetics, prognosis and treatment", "5": "Waldenström macroglobulinemia: clinical, marrow and ancillary findings; comparison with lymphomas and plasma cell disorders"};
+var LOLEC = {"1": "F", "2": "F", "3": "F", "4": "D", "5": "T"};
+var LECS = [{"k": "F", "n": "LO1–3 Ig & M protein", "c": "arch"}, {"k": "D", "n": "LO4 Myeloma", "c": "face"}, {"k": "T", "n": "LO5 Waldenström", "c": "eye"}];
+var E = [{"id": "ig", "lec": "F", "name": "Normal immunoglobulin production", "sub": "B cell → plasma cell · Ig structure · polyclonal", "b": [{"lo": "1", "rr": true, "hy": true, "q": "What is a plasma cell?", "a": "A terminally differentiated B lymphocyte whose job is to secrete immunoglobulin", "o": ["A T cell that secretes cytokines", "An immature B-cell precursor in the thymus", "A macrophage that presents antigen"], "n": ["Plasma cells are B-lineage.", "B cells mature in marrow; plasma cells are end-stage.", "Different lineage."], "w": "Naïve B cell meets antigen → germinal center (Tfh help) → somatic hypermutation and class switching → memory B cell or long-lived plasma cell that homes to the marrow.", "p": "Plasma cell = end-stage B cell."}, {"lo": "1", "rr": true, "t": "o", "q": "Put the path from naïve B cell to plasma cell in order.", "a": ["Naïve B cell meets antigen", "Enters a germinal center with T follicular helper cell help", "Somatic hypermutation and class switching", "Becomes a long-lived plasma cell that homes to the marrow"], "w": "Some germinal center cells become memory B cells instead.", "p": "Antigen → GC → mutate/switch → marrow."}, {"lo": "1", "rr": true, "t": "m", "q": "Select ALL morphologic features of a normal plasma cell.", "a": ["Eccentric “clock-face” (cartwheel) nucleus", "Abundant blue cytoplasm", "Pale perinuclear hof (Golgi)"], "o": ["Reniform nucleus with fine chromatin", "Cytoplasmic Auer rods"], "n": ["Monocyte.", "Myeloblast (AML)."], "w": "The hof is the Golgi zone where Ig is processed.", "p": "Clock face + hof."}, {"lo": "1", "rr": true, "hy": true, "q": "Which heavy chain class forms a PENTAMER?", "a": "IgM (μ)", "o": ["IgG (γ)", "IgA (α)", "IgE (ε)"], "n": ["Monomer.", "Dimer.", "Monomer."], "w": "IgM is huge (≈900 kDa) and stays in vessels, which is why IgM paraproteins cause hyperviscosity.", "p": "IgM pentamer → hyperviscosity."}, {"lo": "1", "rr": true, "q": "Which immunoglobulin is a DIMER?", "a": "IgA", "o": ["IgG", "IgM", "IgD"], "n": ["Monomer.", "Pentamer.", "Monomer."], "w": "IgA dimers can also cause hyperviscosity in IgA myeloma.", "p": "IgA = dimer."}, {"lo": "1", "rr": true, "hy": true, "q": "What does a single plasma cell clone produce?", "a": "One heavy chain class and one light chain type (κ or λ) for its whole life", "o": ["Both κ and λ light chains", "All five heavy chain classes at once", "Only light chains, never heavy chains"], "n": ["Never both on one cell.", "One class per clone.", "Normal clones make whole Ig."], "w": "Every Ig = 2 identical heavy + 2 identical light chains.", "p": "One clone, one heavy, one light."}, {"lo": "1", "rr": true, "hy": true, "q": "Marrow shows many plasma cells with a κ:λ ratio of 2:1. Reactive or neoplastic?", "a": "Reactive (polyclonal)", "o": ["Neoplastic (monoclonal)", "Myeloma, because plasma cells are increased", "Cannot be judged by light chains"], "n": ["A clone would be κ-only or λ-only.", "Number alone doesn't prove a clone.", "Light-chain restriction is the key test."], "w": "Normal κ:λ ≈2:1. A neoplasm shows light-chain restriction.", "p": "Mixed κ/λ = polyclonal."}, {"lo": "1", "rr": true, "q": "How much free polyclonal light chain is normally excreted in urine?", "a": "Small amounts, ≤40 mg/24 h", "o": ["None", "≥500 mg/24 h", "Several grams daily"], "n": ["Plasma cells make a slight excess of light chains.", "That level defines significant urine M protein.", "Far too much."], "w": "Normal polyclonal light-chain excretion is small. Monoclonal free light chains in urine = Bence Jones protein.", "p": "Normal urine FLC ≤40 mg/day."}, {"lo": "1", "rr": true, "q": "How does polyclonal Ig look on serum protein electrophoresis compared with a monoclonal protein?", "a": "Polyclonal: broad, diffuse γ band; monoclonal: tall, narrow spike", "o": ["Polyclonal: narrow spike; monoclonal: broad band", "Both look identical", "Monoclonal protein runs in the albumin region only"], "n": ["Reversed.", "They differ.", "Usually the γ region."], "w": "Thousands of clones blur into a band; one clone runs to one spot.", "p": "Choir hum vs one loud note."}]}, {"id": "cls", "lec": "F", "name": "Classification of plasma cell neoplasms", "sub": "WHO categories · MGUS → smoldering → myeloma", "b": [{"lo": "2", "rr": true, "hy": true, "q": "What defines a plasma cell dyscrasia?", "a": "Expansion of a single clone of terminally differentiated B cells secreting one homogeneous Ig or Ig fragment (M protein)", "o": ["Polyclonal increase in plasma cells after infection", "Loss of all plasma cells", "A T-cell clone secreting cytokines"], "n": ["Reactive.", "That's immunodeficiency.", "Wrong lineage."], "w": "The M protein is a tumor marker and can itself cause disease (kidney, amyloid, viscosity). Rarely transient (drug hypersensitivity, viral infection, after cardiac surgery).", "p": "One clone, one protein."}, {"lo": "2", "rr": true, "hy": true, "q": "What does the “M” in M protein stand for?", "a": "Myeloma or macroglobulinemia (monoclonal)", "o": ["Mutated", "Membrane", "Mitochondrial"], "n": ["Not the meaning.", "Not the meaning.", "Not the meaning."], "w": "Most M proteins are normal Ig molecules made in excess; some have antibody activity.", "p": "M = myeloma/macroglobulinemia."}, {"lo": "2", "rr": true, "t": "m", "q": "Select ALL entities in the WHO classification of plasma cell neoplasms and related disorders.", "a": ["Non-IgM and IgM MGUS", "Plasma cell myeloma and its variants", "Solitary and extraosseous plasmacytoma", "Primary (AL) amyloidosis", "POEMS syndrome", "Lymphoplasmacytic lymphoma (Waldenström)", "Heavy chain diseases"], "o": ["Reactive AA amyloidosis", "Hairy cell leukemia"], "n": ["No M protein; from chronic inflammation.", "A B-cell leukemia without plasma cell differentiation."], "w": "Myeloma variants: smoldering, non-secretory, plasma cell leukemia.", "p": "Precursor · myeloma · plasmacytoma · deposition · paraneoplastic · LPL · HCD."}, {"lo": "2", "rr": true, "hy": true, "q": "IgM MGUS can progress to which disease?", "a": "Waldenström macroglobulinemia", "o": ["Multiple myeloma (usually)", "Hodgkin lymphoma", "CML"], "n": ["Non-IgM (IgG/IgA) MGUS → myeloma.", "Not linked.", "Not linked."], "w": "WHO splits MGUS into non-IgM (→ myeloma) and IgM (→ WM/lymphoma).", "p": "IgM MGUS → WM; IgG/IgA MGUS → myeloma."}, {"lo": "2", "rr": true, "hy": true, "q": "A 48-year-old has an IgG κ spike of 2.1 g/dL, 4% marrow plasma cells, and normal calcium, Hb, creatinine and bones. Diagnosis?", "a": "MGUS", "o": ["Smoldering myeloma", "Multiple myeloma", "Waldenström macroglobulinemia"], "n": ["Needs ≥3 g/dL or 10–60% cells.", "Needs ≥10% cells + CRAB/SLiM.", "Would be IgM."], "w": "MGUS: <3 g/dL, <10% clonal plasma cells, no CRAB → observe with periodic SPEP, CBC, calcium, creatinine.", "p": "Small spike, few cells, no CRAB = MGUS."}, {"lo": "2", "rr": true, "hy": true, "q": "How is MGUS managed?", "a": "Observation with periodic monitoring; no treatment", "o": ["Bortezomib-based induction", "Autologous stem cell transplant", "Plasmapheresis"], "n": ["Only for myeloma.", "Only for myeloma.", "For hyperviscosity."], "w": "≈1%/year progress to myeloma or a related disorder (≈20% over 10–15+ years). Most myelomas arise from MGUS.", "p": "MGUS: watch, 1%/year."}, {"lo": "2", "rr": true, "q": "A 66-year-old has an IgG spike of 3.8 g/dL, 22% marrow plasma cells, no CRAB, FLC ratio 20 and a normal MRI. Diagnosis?", "a": "Smoldering myeloma", "o": ["MGUS", "Active multiple myeloma", "Solitary plasmacytoma"], "n": ["Spike and cells are too high.", "No CRAB or SLiM.", "No single mass."], "w": "Smoldering: M ≥3 g/dL (or urine ≥500 mg/24 h) or 10–60% clonal cells, with no CRAB/SLiM. Monitor; survival ≈10 years.", "p": "Big numbers, no damage = smoldering."}, {"lo": "2", "rr": true, "hy": true, "t": "m", "q": "Select ALL in-house MGUS risk factors for progression.", "a": ["Abnormal serum free light chain ratio", "IgA- or IgM-type MGUS", "M protein >1.5 g/dL"], "o": ["IgG type", "Male sex"], "n": ["IgG is lower risk.", "Not one of the three."], "w": "All three → 50–60% risk at 20 years; none → ≈5%.", "p": "FLC ratio, non-IgG, >1.5 g/dL."}, {"lo": "2", "rr": true, "q": "A 55-year-old has one lytic femur lesion of κ-restricted plasma cells; marrow elsewhere is normal and there is no CRAB. Diagnosis?", "a": "Solitary plasmacytoma of bone", "o": ["Multiple myeloma", "MGUS", "Extramedullary plasmacytoma"], "n": ["No marrow disease or CRAB.", "MGUS has no mass.", "Extramedullary = soft tissue, usually upper airway."], "w": "Treat with radiation; many progress to myeloma.", "p": "One bone lesion = solitary plasmacytoma."}, {"lo": "2", "rr": true, "q": "Where does extramedullary (extraosseous) plasmacytoma usually arise?", "a": "Upper respiratory tract (nasopharynx, sinuses)", "o": ["Femur", "Spleen", "Skin of the legs"], "n": ["Bone = solitary plasmacytoma of bone.", "Not typical.", "Not typical."], "w": "A soft-tissue plasma cell tumor.", "p": "Extramedullary = upper airway."}, {"lo": "2", "hy": true, "t": "m", "q": "Select ALL features of primary (AL) amyloidosis (standard references).", "a": ["Misfolded light chains, usually λ", "Nephrotic syndrome", "Restrictive cardiomyopathy", "Macroglossia", "Congo red apple-green birefringence"], "o": ["Derived from serum amyloid A", "Lytic bone lesions are required"], "n": ["That's AA (reactive) amyloid.", "Not required."], "w": "Also neuropathy and periorbital “pinch purpura.” Occurs in ≈10% of myeloma.", "p": "AL = light chains, λ, Congo red."}, {"lo": "2", "q": "A patient has polyneuropathy, hepatosplenomegaly, hypothyroidism, a λ M protein, skin hyperpigmentation and sclerotic bone lesions. Diagnosis?", "a": "POEMS syndrome", "o": ["Waldenström macroglobulinemia", "Multiple myeloma", "AL amyloidosis"], "n": ["No IgM or hyperviscosity.", "Myeloma lesions are lytic.", "No sclerotic lesions."], "w": "POEMS: Polyneuropathy, Organomegaly, Endocrinopathy, M protein, Skin changes; ↑VEGF.", "p": "Sclerotic lesions + neuropathy = POEMS."}, {"lo": "2", "rr": true, "q": "Which is true of non-secretory myeloma?", "a": "No M protein in serum or urine; diagnosis is by marrow (<1% of myelomas)", "o": ["Always secretes IgM", "Has the largest M spike", "Is the most common myeloma type"], "n": ["IgM points to WM.", "No spike at all.", "IgG is most common."], "w": "Plasma cell leukemia (many circulating clonal plasma cells) is another aggressive variant.", "p": "Non-secretory: no protein, marrow diagnosis."}, {"lo": "2", "q": "Which heavy chain disease is most common?", "a": "α heavy chain disease (GI, Mediterranean)", "o": ["γ heavy chain disease", "μ heavy chain disease", "ε heavy chain disease"], "n": ["Less common.", "Less common.", "Not a recognized entity."], "w": "The clone secretes only truncated heavy chains.", "p": "α HCD = gut."}]}, {"id": "mp", "lec": "F", "name": "The M protein", "sub": "When to look · SPEP · immunofixation · UPEP · FLC", "b": [{"lo": "3", "rr": true, "t": "m", "q": "Select ALL findings that should prompt a search for a plasma cell neoplasm.", "a": ["Unexplained anemia", "Proteinuria", "Hypercalcemia", "Kidney failure", "Persistent back pain or unexplained fracture", "“Sausaging” of retinal vessels"], "o": ["Isolated thrombocytosis", "Microcytic anemia with low ferritin"], "n": ["Points to MPN or reactive cause.", "Iron deficiency."], "w": "First test: serum protein electrophoresis.", "p": "Anemia, kidney, calcium, back."}, {"lo": "3", "rr": true, "hy": true, "q": "What is the most important first test when a plasma cell neoplasm is suspected?", "a": "Serum protein electrophoresis (SPEP)", "o": ["Bone scan", "Peripheral blood flow cytometry", "Urine dipstick"], "n": ["Usually negative in myeloma.", "Not the first test.", "Misses light chains."], "w": "SPEP screens for and quantifies the M spike.", "p": "SPEP first."}, {"lo": "3", "rr": true, "hy": true, "q": "SPEP shows a spike. Which test tells you whether it is IgG κ or IgA λ?", "a": "Immunofixation (or immunoelectrophoresis)", "o": ["Repeat SPEP", "Urine dipstick", "Bone marrow aspirate morphology"], "n": ["SPEP quantifies but does not type.", "Detects albumin.", "Morphology does not predict Ig class."], "w": "Monospecific antisera (anti-γ, α, μ, κ, λ) type the heavy and light chains; more sensitive than SPEP.", "p": "SPEP = how much; IFE = which."}, {"lo": "3", "rr": true, "hy": true, "q": "What is Bence Jones protein?", "a": "Monoclonal free light chains (κ or λ) in the urine", "o": ["Intact IgM in the serum", "Albumin in the urine", "Tamm-Horsfall protein"], "n": ["That's macroglobulin.", "Detected by dipstick.", "Combines with light chains to form casts."], "w": "Detected by UPEP on 24-h urine or serum free light chain assay.", "p": "Bence Jones = free light chains."}, {"lo": "3", "rr": true, "hy": true, "q": "A myeloma patient has heavy Bence Jones proteinuria but a negative urine dipstick for protein. Why?", "a": "The dipstick detects albumin, not light chains", "o": ["Light chains are not filtered", "Bence Jones protein is only in serum", "The dipstick detects only IgM"], "n": ["They are small and filtered.", "It is urinary by definition.", "Dipstick detects albumin."], "w": "Use UPEP, sulfosalicylic acid test or serum FLC. Significant albuminuria in myeloma suggests amyloidosis or light chain deposition disease.", "p": "Dipstick-negative ≠ no protein."}, {"lo": "3", "rr": true, "hy": true, "q": "A 70-year-old has back pain, Hb 8.5 and creatinine 2.9. SPEP shows hypogammaglobulinemia and NO spike. Most likely?", "a": "Light-chain (Bence Jones) myeloma", "o": ["MGUS", "Waldenström macroglobulinemia", "Excludes myeloma"], "n": ["MGUS has a spike and no CRAB.", "Would have an IgM spike.", "No serum spike ≠ no myeloma."], "w": "≈15–20% of myelomas make only light chains, which are filtered into the urine; UPEP or serum FLC shows the clone.", "p": "No spike + CRAB → check urine/FLC."}, {"lo": "3", "rr": true, "q": "What does an abnormal serum κ:λ free light chain ratio indicate?", "a": "A clonal plasma cell population", "o": ["Normal immune response", "Iron deficiency", "Liver failure"], "n": ["Normal ratio is balanced.", "Unrelated.", "Unrelated."], "w": "An involved/uninvolved FLC ratio ≥100 is a myeloma-defining (SLiM) biomarker.", "p": "Skewed FLC ratio = clone."}, {"lo": "3", "rr": true, "hy": true, "t": "o", "q": "Put the standard myeloma workup in order.", "a": ["SPEP to find the spike", "Immunofixation to type it", "UPEP / serum free light chains", "Bone marrow biopsy (% clonal plasma cells, cytogenetics)", "Skeletal imaging for lytic lesions"], "w": "Classic supporting labs: ↑ total protein with normal/low albumin (protein–albumin gap), rouleaux, ↑ESR.", "p": "Find → type → light chains → marrow → bones."}, {"lo": "3", "q": "Significant ALBUMINURIA in a patient with a plasma cell neoplasm suggests what?", "a": "AL amyloidosis or light chain deposition disease (glomerular damage)", "o": ["Cast nephropathy alone", "Hypercalcemia alone", "Normal finding in myeloma"], "n": ["Casts are tubular; light chains, not albumin.", "Not glomerular.", "Myeloma proteinuria is mostly light chains."], "w": "Glomerular disease lets albumin leak; cast nephropathy spills light chains.", "p": "Albumin leak → think amyloid."}]}, {"id": "epi", "lec": "D", "name": "Definition, epidemiology & etiology", "sub": "Who · M protein types · MGUS origin", "b": [{"lo": "4", "rr": true, "hy": true, "q": "What is multiple myeloma?", "a": "A marrow-based, multifocal plasma cell neoplasm with M protein, skeletal destruction, hypercalcemia, anemia, renal damage and infections", "o": ["A nodal B-cell lymphoma secreting IgM", "A solitary plasma cell tumor of bone", "An asymptomatic small M spike"], "n": ["That's Waldenström.", "That's solitary plasmacytoma.", "That's MGUS."], "w": "≈1% of all cancers and ≈15% of hematologic malignancies.", "p": "Marrow + M protein + damage."}, {"lo": "4", "rr": true, "hy": true, "t": "m", "q": "Select ALL epidemiologic features of multiple myeloma.", "a": ["Median age ≈69–70", "Men > women", "Most common lymphoid malignancy in Black patients in the U.S.", "Rare before 40"], "o": ["Peak in children", "Women > men"], "n": ["Older adults.", "Men are affected more (1.6:1)."], "w": "Black patients have ≈2× the incidence.", "p": "Older Black men."}, {"lo": "4", "rr": true, "hy": true, "q": "What is the most common M protein type in myeloma?", "a": "IgG (≈55%)", "o": ["IgA (≈20%)", "Light chain only (≈15–20%)", "IgM"], "n": ["Second most common.", "Third.", "IgM spike usually = Waldenström."], "w": "κ is more common than λ; ≈40% of IgG/IgA myelomas also have Bence Jones proteinuria. IgD ≈1–2% (mostly λ); non-secretory <1%.", "p": "G > A > light chain."}, {"lo": "4", "rr": true, "t": "m", "q": "Select ALL features of light-chain-only (Bence Jones) myeloma.", "a": ["No serum M spike", "More lytic lesions", "More hypercalcemia", "More renal failure", "More amyloidosis"], "o": ["Large IgM spike", "Hyperviscosity is typical"], "n": ["Waldenström.", "Light chains are small; viscosity stays normal."], "w": "≈15–20% of myelomas.", "p": "Light chains hurt kidneys, not viscosity."}, {"lo": "4", "rr": true, "t": "m", "q": "Select ALL exposures associated with myeloma.", "a": ["Pesticides", "Asbestos", "Petroleum products", "Radiation", "Chronic antigenic stimulation"], "o": ["Smoking is the main cause", "H. pylori infection"], "n": ["Not a listed cause.", "Linked to MALT lymphoma."], "w": "Postulated viruses: HHV-8 (IL-6 homolog), EBV (IL-10 homolog), HIV. Most myelomas arise from MGUS.", "p": "Pesticides, petroleum, radiation."}, {"lo": "4", "rr": true, "hy": true, "q": "What is the cell of origin of multiple myeloma?", "a": "Post-germinal center B cell (Ig genes show somatic hypermutation)", "o": ["Naïve pre-germinal center B cell", "T follicular helper cell", "Myeloid stem cell"], "n": ["Myeloma Ig genes are hypermutated.", "Wrong lineage.", "Wrong lineage."], "w": "Model: antigen stimulation → many benign clones → mutagenic hit → transformation.", "p": "Post-GC B cell."}]}, {"id": "path", "lec": "D", "name": "Pathophysiology: cytokines & bone", "sub": "IL-6 · RANKL · CRAB-I", "b": [{"lo": "4", "rr": true, "hy": true, "q": "Which cytokines do myeloma cells depend on for growth and survival?", "a": "IL-6 and IL-10", "o": ["IL-2 and IL-4", "IL-5 and TGF-β", "IFN-γ and IL-12"], "n": ["Not the myeloma growth factors.", "Hodgkin eosinophils/fibrosis.", "Th1 cytokines."], "w": "High serum IL-6 = poor prognosis.", "p": "IL-6 feeds myeloma."}, {"lo": "4", "rr": true, "hy": true, "q": "What mainly causes the lytic bone lesions of myeloma?", "a": "RANKL and osteoclast-activating factors (IL-1β, IL-6, TNF) activating osteoclasts while osteoblasts are suppressed", "o": ["Osteoblast overactivity", "Direct digestion of bone by plasma cells", "PTH secretion by myeloma cells"], "n": ["Osteoblasts are suppressed.", "Osteoclasts do the resorption.", "Not the mechanism."], "w": "Myeloma cells bind marrow stroma → release RANKL, IL-1β, IL-6, TNF-β and VEGF → punched-out lesions, osteoporosis, hypercalcemia.", "p": "RANKL → osteoclasts chew bone."}, {"lo": "4", "rr": true, "hy": true, "t": "m", "q": "Select ALL components of CRAB.", "a": ["Calcium elevated", "Renal failure", "Anemia", "Bone lesions"], "o": ["Raised platelets", "Adenopathy"], "n": ["Platelets usually normal.", "Lymphadenopathy is unusual in myeloma."], "w": "Add “I” for infection (CRAB-I) from loss of normal antibodies.", "p": "CRAB-I."}, {"lo": "4", "rr": true, "hy": true, "q": "Why do myeloma patients get recurrent infections with S. pneumoniae, S. aureus and E. coli?", "a": "Decreased normal polyclonal Ig (functional hypogammaglobulinemia) and marrow suppression", "o": ["Neutrophilia", "Excess complement", "T-cell lymphocytosis"], "n": ["WBC is usually normal.", "Not the mechanism.", "Not the mechanism."], "w": "The clone crowds out normal plasma cells; poor opsonization leaves patients open to encapsulated bacteria. Pneumonia and pyelonephritis are common.", "p": "One clone up, all others down."}, {"lo": "4", "rr": true, "q": "Why is anemia common in myeloma?", "a": "Marrow replacement plus renal insufficiency (↓ EPO)", "o": ["Iron deficiency from GI bleeding", "B12 deficiency", "Hypersplenism"], "n": ["Not the usual cause.", "Not the usual cause.", "Splenomegaly is unusual."], "w": "Normocytic normochromic anemia with rouleaux.", "p": "Crowded marrow + sick kidney."}]}, {"id": "xray", "lec": "D", "name": "X-ray & imaging", "sub": "Punched-out lesions · negative bone scan", "b": [{"lo": "4", "rr": true, "hy": true, "q": "What is the classic radiographic finding in myeloma?", "a": "Punched-out osteolytic lesions (skull, vertebrae, ribs, pelvis)", "o": ["Osteoblastic (sclerotic) lesions", "Periosteal “onion-skin” reaction", "Sunburst pattern"], "n": ["Prostate metastases or POEMS.", "Ewing sarcoma.", "Osteosarcoma."], "w": "Seen with diffuse osteoporosis or fractures in ≈80% at diagnosis; “raindrop” skull; vertebral compression fractures.", "p": "Punched-out = myeloma."}, {"lo": "4", "rr": true, "hy": true, "q": "Why is a radionuclide bone scan usually negative in myeloma?", "a": "Myeloma lesions are purely lytic; bone scans detect osteoblast activity", "o": ["Myeloma does not involve bone", "Scans detect only soft-tissue disease", "Lesions are too large to see"], "n": ["It destroys bone.", "Scans detect bone formation.", "Not the reason."], "w": "Alkaline phosphatase is typically normal for the same reason. Contrast metastatic prostate cancer: blastic, hot scan, high ALP.", "p": "No osteoblasts → cold scan, normal ALP."}, {"lo": "4", "rr": true, "q": "Which imaging is most sensitive and prognostic in myeloma?", "a": "MRI (>1 focal lesion is myeloma-defining)", "o": ["Plain radiograph", "Radionuclide bone scan", "Ultrasound"], "n": ["Less sensitive.", "Usually negative.", "Not used for bone."], "w": "Whole-body low-dose CT or PET-CT finds ≈20% more subtle lesions than X-ray.", "p": "MRI is most sensitive."}, {"lo": "4", "rr": true, "hy": true, "q": "A 69-year-old woman has back pain, T10 collapse and multiple “soap-bubble” lytic spinal lesions; marrow shows sheets of plasma cells. Most likely lab finding?", "a": "Bence Jones proteins in the urine", "o": ["Markedly decreased alkaline phosphatase", "t(9;22)", "Extreme leukocytosis with basophilia"], "n": ["ALP is normal or ↑ with remodeling.", "CML.", "CML/MPN."], "w": "Bone destruction comes from RANKL-activated osteoclasts; IL-6 drives plasma cell growth.", "p": "Lytic spine + plasma cells → Bence Jones."}]}, {"id": "morph", "lec": "D", "name": "Morphology & immunophenotype", "sub": "Sheets of plasma cells · CD138/38/56", "b": [{"lo": "4", "rr": true, "hy": true, "q": "Which marrow finding is diagnostic of myeloma?", "a": "Sheets and clusters of clonal plasma cells", "o": ["Scattered mature plasma cells with mixed κ/λ", "Increased myeloblasts", "Granulomas"], "n": ["Reactive plasmacytosis.", "AML.", "Infection/sarcoid."], "w": "Disease is patchy; early biopsies may show only mild plasmacytosis, so prove clonality (κ or λ only).", "p": "Sheets + restriction."}, {"lo": "4", "rr": true, "t": "m", "q": "Select ALL morphologic features of neoplastic plasma cells.", "a": ["Immature/plasmablastic or multinucleated forms", "Mott cells (cytoplasm stuffed with Ig globules / Russell bodies)", "Intranuclear Ig inclusions (Dutcher bodies)"], "o": ["Auer rods", "Smudge cells"], "n": ["AML.", "CLL."], "w": "Morphology does not predict the Ig class. Plasmablastic morphology = worse; small/lymphoplasmacytic look often goes with t(11;14).", "p": "Mott, Russell, Dutcher."}, {"lo": "4", "hy": true, "q": "Russell bodies and Dutcher bodies differ in location. Which is correct (standard usage)?", "a": "Russell bodies (Mott cells) = cytoplasmic Ig; Dutcher bodies = intranuclear Ig", "o": ["Russell = intranuclear; Dutcher = cytoplasmic", "Both are cytoplasmic", "Both are intranuclear"], "n": ["Reversed.", "Dutcher bodies are intranuclear.", "Russell bodies are cytoplasmic."], "w": "In-house material groups intranuclear inclusions under “Mott cell.” Dutcher bodies are classic for Waldenström.", "p": "Dutcher = in the nucleus."}, {"lo": "4", "rr": true, "hy": true, "t": "m", "q": "Select ALL typical myeloma immunophenotype findings.", "a": ["CD138+", "CD38+", "CD56+ (aberrant)", "CD19− and CD20− (most cases)", "CD45 dim/negative", "Cytoplasmic Ig with light-chain restriction"], "o": ["Surface IgM strongly positive", "CD5+ CD23+"], "n": ["Waldenström lymphocytes.", "CLL."], "w": "≈20% are CD20+, often with t(11;14). Also CD28, CD117; loss of CD27, CD81.", "p": "138, 38, 56 positive; 19/20 negative."}, {"lo": "4", "hy": true, "q": "Which antigen does daratumumab target?", "a": "CD38", "o": ["CD20", "CD319 (SLAMF7)", "BCMA"], "n": ["Rituximab.", "Elotuzumab.", "CAR T and newer agents."], "w": "Treated patients can show CD38-negative myeloma cells on flow.", "p": "Dara = CD38."}]}, {"id": "clin", "lec": "D", "name": "Clinical presentation & kidney", "sub": "Bone pain · hypercalcemia · cast nephropathy", "b": [{"lo": "4", "rr": true, "hy": true, "q": "A 61-year-old with 5 months of back pain has pneumococcal pneumonia, creatinine 3.7 and punched-out skull lesions. Marrow will show increased numbers of what?", "a": "Atypical plasma cells", "o": ["Myeloblasts", "Reed-Sternberg cells", "Small mature lymphocytes"], "n": ["AML.", "Hodgkin.", "CLL."], "w": "Encapsulated infection from ↓ normal IgG; renal failure from light-chain cast nephropathy.", "p": "Back + bugs + kidney = myeloma."}, {"lo": "4", "rr": true, "hy": true, "q": "What is myeloma cast nephropathy?", "a": "Filtered light chains + Tamm-Horsfall protein form large waxy casts that obstruct distal tubules and collecting ducts", "o": ["Glomerular IgA deposits", "Immune-complex crescentic glomerulonephritis", "Uric acid crystal deposition alone"], "n": ["IgA nephropathy.", "Not the mechanism.", "Urate can contribute, but casts are the classic lesion."], "w": "Casts are surrounded by multinucleated giant cells, with tubular atrophy and interstitial fibrosis. In-house: >50% of myeloma patients die with renal failure.", "p": "Light chains + Tamm-Horsfall = casts."}, {"lo": "4", "rr": true, "t": "m", "q": "Select ALL mechanisms of kidney injury in myeloma.", "a": ["Light-chain cast nephropathy", "Hypercalcemia (nephrocalcinosis)", "AL amyloidosis", "Light chain deposition disease", "Urate nephropathy", "Infection (pyelonephritis)"], "o": ["Renal vein thrombosis from polycythemia", "IgA mesangial deposition"], "n": ["Not a myeloma mechanism.", "IgA nephropathy."], "w": "AL amyloidosis occurs in ≈10% of myeloma, especially with Bence Jones proteinuria.", "p": "Casts, calcium, amyloid, deposits, urate, infection."}, {"lo": "4", "rr": true, "t": "m", "q": "Select ALL symptoms of hypercalcemia in myeloma.", "a": ["Confusion", "Weakness", "Constipation", "Polyuria"], "o": ["Tetany", "Diarrhea"], "n": ["Hypocalcemia.", "Hypercalcemia causes constipation."], "w": "Bones, stones, groans, psychiatric overtones.", "p": "Moans, groans, constipation, confusion."}, {"lo": "4", "rr": true, "q": "Which physical exam finding is UNUSUAL in myeloma?", "a": "Lymphadenopathy and hepatosplenomegaly", "o": ["Bone tenderness", "Pallor", "A normal exam"], "n": ["Common.", "From anemia.", "The exam is often normal."], "w": "Myeloma is marrow-based. Organomegaly and nodes suggest Waldenström or lymphoma.", "p": "Nodes/spleen → think WM."}, {"lo": "4", "rr": true, "q": "What neurologic emergency can vertebral collapse cause in myeloma?", "a": "Spinal cord compression → paraplegia", "o": ["Bing-Neel syndrome", "Guillain-Barré syndrome", "Subarachnoid hemorrhage"], "n": ["CNS infiltration in Waldenström.", "Not the mechanism.", "Not the mechanism."], "w": "Bone pain (back, chest) and pathologic fractures are the most common symptoms.", "p": "Collapse → cord compression."}]}, {"id": "lab", "lec": "D", "name": "Labs & diagnostic criteria", "sub": "Rouleaux · β2M · SLiM CRAB", "b": [{"lo": "4", "rr": true, "hy": true, "t": "m", "q": "Select ALL classic blood findings in myeloma.", "a": ["Normocytic anemia with rouleaux", "Very high ESR (often >100)", "↑ BUN, creatinine, uric acid", "Low anion gap", "↑ β2-microglobulin", "↑ total protein with normal/low albumin"], "o": ["Marked thrombocytosis", "Elevated alkaline phosphatase as a rule"], "n": ["Platelets usually normal.", "ALP is typically normal."], "w": "Rouleaux = stacked RBCs coated with Ig. Low anion gap from cationic IgG. β2-microglobulin tracks tumor mass.", "p": "Rouleaux, ESR, gap."}, {"lo": "4", "rr": true, "q": "In-house, about what percentage of myeloma patients are hypercalcemic at diagnosis?", "a": "≈10%", "o": ["≈1%", "≈75%", "100%"], "n": ["Too low.", "Too high.", "Not universal."], "w": "Standard references quote ≈25–30%.", "p": "In-house 10%; boards ≈25–30%."}, {"lo": "4", "rr": true, "q": "What does serum β2-microglobulin reflect in myeloma?", "a": "Tumor mass (an independent prognostic factor used in ISS staging)", "o": ["Iron stores", "Liver synthetic function", "Platelet activity"], "n": ["Not related.", "That's albumin.", "Not related."], "w": "Rises with tumor burden and with renal failure.", "p": "β2M = tumor burden."}, {"lo": "4", "rr": true, "hy": true, "q": "What are the WHO diagnostic criteria for plasma cell myeloma?", "a": "Clonal marrow plasma cells ≥10% or biopsy-proven plasmacytoma, plus ≥1 myeloma-defining event (CRAB or SLiM)", "o": ["Any M spike >1 g/dL", "≥5% plasma cells with any symptom", "An IgM spike with lymphadenopathy"], "n": ["Spike alone may be MGUS.", "Threshold is ≥10% plus a defining event.", "That's Waldenström."], "w": "In-house wording: “>10%.” Standard: ≥10%.", "p": "≥10% + CRAB or SLiM."}, {"lo": "4", "rr": true, "hy": true, "t": "m", "q": "Select ALL SLiM myeloma-defining biomarkers.", "a": ["Clonal marrow plasma cells ≥60%", "Involved/uninvolved serum free light chain ratio ≥100", "More than 1 focal lesion on MRI"], "o": ["Serum M protein ≥1.5 g/dL", "Any plasma cells in blood"], "n": ["An MGUS risk factor.", "Not a SLiM criterion."], "w": "SLiM = Sixty, Light chain, MRI. Without CRAB or SLiM but with ≥10% cells or ≥3 g/dL = smoldering.", "p": "SLiM CRAB → treat."}, {"lo": "4", "rr": true, "hy": true, "q": "A new patient has 65% clonal plasma cells but normal Ca, creatinine and Hb, and no bone lesions. Smoldering or active myeloma?", "a": "Active myeloma (≥60% clonal plasma cells is a SLiM biomarker) → treat", "o": ["Smoldering myeloma", "MGUS", "Solitary plasmacytoma"], "n": ["SLiM criteria make it active.", "Far above MGUS limits.", "Marrow is diffusely involved."], "w": "A biomarker alone is enough even without CRAB.", "p": "≥60% = treat."}, {"lo": "4", "rr": true, "q": "A 72-year-old has confusion, Ca 13.8, creatinine 2.4, Hb 9.1, total protein 10.2 with albumin 3.0 and rouleaux. First treatment step?", "a": "IV saline, then a bisphosphonate (± calcitonin)", "o": ["Thiazide diuretic", "Oral calcium supplement", "Immediate stem cell transplant"], "n": ["Thiazides raise calcium.", "Worsens hypercalcemia.", "Stabilize first."], "w": "Then work up with SPEP/immunofixation, FLC, marrow biopsy and skeletal imaging.", "p": "Fluids first."}]}, {"id": "cyto", "lec": "D", "name": "Cytogenetics & prognosis", "sub": "Cyclin D1/D3 good · 4-16-20 bad · ISS", "b": [{"lo": "4", "rr": true, "q": "Why are cytogenetic abnormalities found in ≈30% of myelomas by karyotype but ≈90% by FISH?", "a": "Plasma cells divide slowly, so few metaphases are available for karyotyping", "o": ["FISH detects only normal chromosomes", "Karyotype is more sensitive than FISH", "Myeloma has no chromosomal changes"], "n": ["FISH detects abnormalities.", "Reversed.", "Changes are common."], "w": "Common: del 13 (≈50%), trisomies, 14q32 (IGH) translocations in 55–70%, KRAS/NRAS and TP53 mutations.", "p": "Slow cells → use FISH."}, {"lo": "4", "rr": true, "hy": true, "t": "m", "q": "Select ALL FAVORABLE cytogenetic findings in myeloma.", "a": ["Hyperdiploidy", "t(11;14) (CCND1)", "t(6;14) (CCND3)"], "o": ["t(4;14) (FGFR3/MMSET)", "del(17p) (TP53)", "t(14;16) (c-MAF)"], "n": ["Unfavorable.", "Unfavorable.", "Unfavorable."], "w": "Cyclin D1 and D3 = good; D2 = bad.", "p": "D1/D3 good; more chromosomes good."}, {"lo": "4", "rr": true, "hy": true, "t": "m", "q": "Select ALL UNFAVORABLE cytogenetic findings in myeloma.", "a": ["t(4;14)", "t(14;16)", "t(14;20)", "del(17p13) (TP53)", "Hypodiploidy", "Gain of 1q21"], "o": ["t(11;14)", "Hyperdiploidy"], "n": ["Favorable.", "Favorable."], "w": "Bad partners of 14: 4, 16, 20 (“4-16-20 are bad numbers”); all drive cyclin D2. Del 13 by metaphase and del(1p) are also adverse.", "p": "4-16-20 + 17p = bad."}, {"lo": "4", "rr": true, "hy": true, "q": "t(11;14) carries what prognosis in myeloma vs lymphoma?", "a": "Favorable in myeloma; defines mantle cell lymphoma (poor) in lymphoma", "o": ["Poor in both", "Favorable in both", "Not seen in myeloma"], "n": ["Favorable in myeloma.", "Mantle cell is poor.", "It is common in myeloma."], "w": "Same translocation, different disease.", "p": "11;14: good myeloma, bad mantle."}, {"lo": "4", "rr": true, "q": "FISH: patient A has t(11;14); patient B has t(4;14) and del(17p). Who has the better risk profile?", "a": "Patient A", "o": ["Patient B", "Equal risk", "Cannot be determined"], "n": ["Two high-risk lesions.", "Different risk.", "Cytogenetics stratify risk."], "w": "t(11;14) → cyclin D1 (favorable).", "p": "Count the bad numbers."}, {"lo": "4", "rr": true, "hy": true, "q": "Which two labs define the International Staging System (ISS)?", "a": "Serum β2-microglobulin and albumin", "o": ["Calcium and creatinine", "LDH and hemoglobin", "M protein size and platelet count"], "n": ["Prognostic but not ISS.", "Not ISS criteria.", "Not ISS criteria."], "w": "Stage I: β2M <3.5 mg/L and albumin ≥3.5 g/dL (62 mo); III: β2M ≥5.5 mg/L (29 mo); II: neither (44 mo). The in-house table lists albumin as “mg/L”; the cutoff is g/dL.", "p": "ISS = β2M + albumin."}, {"lo": "4", "rr": true, "t": "m", "q": "Select ALL poor-prognosis factors in myeloma.", "a": ["High tumor burden (stage)", "Low hemoglobin", "Renal dysfunction", "High calcium", "Plasmablastic morphology", "↑ IL-6", "Minimal residual disease after therapy"], "o": ["Hyperdiploid karyotype", "t(11;14)"], "n": ["Favorable.", "Favorable."], "w": "Also extensive lytic lesions, high labeling index and circulating tumor cells.", "p": "Big, anemic, kidney-sick, blastic = bad."}, {"lo": "4", "rr": true, "q": "In-house, what is the outcome of multiple myeloma?", "a": "Incurable; median survival ≈3 years (smoldering ≈10 years); death usually from infection or renal failure", "o": ["Usually cured by chemotherapy", "Median survival ≈30 years", "Most patients die of hyperviscosity"], "n": ["No cure.", "Far too long.", "Infection and renal failure are typical."], "w": "Modern therapy has extended median survival well beyond this (often quoted 6–10 years). Use the in-house number for in-house exams.", "p": "In-house: incurable, ≈3 years."}, {"lo": "4", "t": "o", "q": "Order MRD detection methods from LEAST to MOST sensitive (in-house order).", "a": ["Morphology / IHC", "Flow cytometry", "Cytogenetics / FISH", "Molecular (PCR / NGS of IGH/IGK)"], "w": "In-house order shown. Standard references rank FISH below flow cytometry (FISH ≈10⁻², flow 10⁻⁴–10⁻⁶, NGS 10⁻⁵–10⁻⁶). NGS tracks the original clone's Ig rearrangement.", "p": "Look → flow → FISH → sequence."}]}, {"id": "tx", "lec": "D", "name": "Treatment & pathways", "sub": "Proteasome · IMiDs · anti-CD38 · bone", "b": [{"lo": "4", "rr": true, "hy": true, "q": "How does bortezomib work?", "a": "Proteasome inhibition → misfolded Ig accumulates → ER stress and apoptosis (also blocks NF-κB)", "o": ["Anti-CD38 antibody", "Inhibits osteoclasts", "DNA crosslinking"], "n": ["Daratumumab.", "Bisphosphonates/denosumab.", "Melphalan."], "w": "Plasma cells make so much protein that they are especially vulnerable. Adverse effects: peripheral neuropathy, zoster reactivation → acyclovir prophylaxis.", "p": "Bortezomib = proteasome; protein factories jam."}, {"lo": "4", "rr": true, "hy": true, "q": "Which drug class do thalidomide and lenalidomide belong to, and what are their key risks?", "a": "Immunomodulators (IMiDs); teratogenicity and venous thromboembolism", "o": ["Proteasome inhibitors; neuropathy only", "Alkylators; hemorrhagic cystitis", "Anti-CD38 antibodies; infusion reactions only"], "n": ["That's bortezomib.", "That's cyclophosphamide.", "That's daratumumab."], "w": "Mechanism: anti-angiogenic (↓VEGF), immune activation, cereblon-mediated degradation of IKZF1/3. Give aspirin or anticoagulation for VTE prophylaxis.", "p": "IMiDs: birth defects + clots."}, {"lo": "4", "rr": true, "t": "m", "q": "Select ALL correct myeloma drug–mechanism pairs.", "a": ["Melphalan → DNA crosslinking (alkylator)", "Dexamethasone → plasma cell apoptosis", "Daratumumab → anti-CD38", "Elotuzumab → anti-CD319 (SLAMF7)", "Zoledronic acid → inhibits osteoclasts", "Denosumab → anti-RANKL"], "o": ["Rituximab → anti-CD38", "Imatinib → proteasome inhibitor"], "n": ["Rituximab is anti-CD20.", "Imatinib inhibits BCR-ABL."], "w": "Traditional therapy: melphalan + prednisone. CAR T (BCMA-targeted) is emerging for relapsed disease.", "p": "Know each target."}, {"lo": "4", "rr": true, "q": "Which patients are candidates for autologous stem cell transplant in myeloma?", "a": "Eligible younger (<65) fit patients, after high-dose melphalan conditioning", "o": ["All patients regardless of age", "Only patients with MGUS", "Only those with IgM spikes"], "n": ["Fitness and age matter.", "MGUS isn't treated.", "IgM = WM."], "w": "Complete response 20–40%; ≈50% 5-year survival. No therapy is curative. In-house cutoff <65; in practice eligibility is based on fitness (often up to ≈70–75).", "p": "Young + fit → autologous transplant."}, {"lo": "4", "rr": true, "q": "What is the role of bisphosphonates in myeloma?", "a": "Inhibit osteoclast bone resorption to reduce skeletal events and treat hypercalcemia", "o": ["Kill plasma cells directly as first-line therapy", "Prevent VTE", "Treat hyperviscosity"], "n": ["Supportive, not cytotoxic first line.", "Aspirin/anticoagulants.", "Plasmapheresis."], "w": "Denosumab (anti-RANKL) is an alternative.", "p": "Bisphosphonates protect bone."}]}, {"id": "wmdef", "lec": "T", "name": "Waldenström: definition & clinical", "sub": "LPL · IgM · hyperviscosity", "b": [{"lo": "5", "rr": true, "hy": true, "q": "What is lymphoplasmacytic lymphoma (LPL)?", "a": "A B-cell neoplasm of small lymphocytes, plasmacytoid lymphocytes and plasma cells involving marrow, nodes and spleen, producing monoclonal IgM", "o": ["A pure plasma cell neoplasm making IgG", "A T-cell lymphoma of the skin", "A germinal center lymphoma with t(14;18)"], "n": ["That's myeloma.", "That's mycosis fungoides.", "That's follicular lymphoma."], "w": "Waldenström macroglobulinemia = LPL in the marrow with an IgM paraprotein (synonym: immunocytoma). Clinically it behaves like a lymphoma, not myeloma.", "p": "LPL = spectrum of cells + IgM."}, {"lo": "5", "rr": true, "t": "m", "q": "Select ALL epidemiologic features of Waldenström macroglobulinemia.", "a": ["Rare (<5% of nodal lymphomas)", "Median age ≈63–65", "Men > women", "Possible association with hepatitis C"], "o": ["Peak in children", "Most common lymphoma overall"], "n": ["Older adults.", "It is rare."], "w": "≈12% of monoclonal gammopathies are macroglobulinemia. IL-21 promotes growth.", "p": "Rare, older men."}, {"lo": "5", "rr": true, "hy": true, "q": "Why does IgM cause hyperviscosity more often than IgG?", "a": "IgM is a large pentamer (≈900 kDa) that stays in the vessels", "o": ["IgM is a monomer that leaks out of vessels", "IgM is made in smaller amounts", "IgG is a pentamer"], "n": ["It's a pentamer and stays intravascular.", "Not the reason.", "IgG is a monomer."], "w": "Sludging and rouleaux result. IgA dimers can also cause it in myeloma.", "p": "Big IgM sludges blood."}, {"lo": "5", "rr": true, "hy": true, "t": "m", "q": "Select ALL features of hyperviscosity syndrome in Waldenström.", "a": ["Visual disturbances", "Headache and dizziness", "Skin and mucosal bleeding (gums, nosebleeds)", "Stroke or changing neurologic signs", "“Sausage-link” retinal veins", "Heart failure from expanded plasma volume"], "o": ["Lytic bone lesions", "Hypercalcemia"], "n": ["Not in WM.", "Not in WM."], "w": "Occurs in 10–30%, usually with IgM >3 g/dL (in-house; standard ≈>4 g/dL or viscosity >4 cP). Late fundus findings: hemorrhages, exudates, papilledema.", "p": "Eyes, head, bleeding, sausage veins."}, {"lo": "5", "rr": true, "hy": true, "q": "A 67-year-old man has blurred vision, headaches, nosebleeds and cervical nodes; fundi show sausage-link retinal veins; skeletal survey is normal. Immunofixation and mutation?", "a": "IgM (usually κ) and MYD88 L265P", "o": ["IgG κ and t(4;14)", "IgA λ and del(17p)", "Light chain only and t(11;14)"], "n": ["Myeloma.", "Myeloma.", "Myeloma."], "w": "Waldenström with hyperviscosity → urgent plasmapheresis.", "p": "Sausage veins + IgM = WM."}, {"lo": "5", "rr": true, "hy": true, "q": "What is the emergency treatment for hyperviscosity in Waldenström?", "a": "Plasmapheresis", "o": ["Red cell transfusion", "IV bisphosphonate", "Phlebotomy"], "n": ["Raises viscosity further.", "For hypercalcemia.", "For polycythemia vera."], "w": "Plasmapheresis rapidly removes intravascular IgM, reversing bleeding and neurologic signs; often repeated.", "p": "Too much IgM → remove plasma."}, {"lo": "5", "rr": true, "q": "A WM patient's fingers turn white then blue in the cold, and his sample gels at room temperature. Explanation?", "a": "Cryoglobulinemia: monoclonal IgM precipitates in the cold", "o": ["Cold agglutinin hemolysis only", "Iron deficiency", "Hypercalcemia"], "n": ["Cold agglutinins clump RBCs and cause hemolysis; gelling of the serum itself = cryoglobulin.", "Unrelated.", "Not in WM."], "w": "Causes Raynaud phenomenon and purpura. Draw and transport samples warm; results can be spurious.", "p": "Cold IgM gels → keep it warm."}, {"lo": "5", "rr": true, "t": "m", "q": "Select ALL IgM paraprotein effects in Waldenström.", "a": ["Cryoglobulinemia (Raynaud, purpura)", "Cold agglutinins (anti-I) → hemolysis", "Rheumatoid factor activity", "Peripheral neuropathy (anti-MAG IgM)", "Amyloidosis (≈5%)"], "o": ["Cast nephropathy as the main renal lesion", "Punched-out skull lesions"], "n": ["Renal failure is uncommon in WM.", "No lytic lesions."], "w": "Organ infiltration also causes lymphadenopathy, hepatosplenomegaly and Bing-Neel syndrome (CNS).", "p": "IgM misbehaves: cryo, cold agglutinin, RF, anti-MAG."}, {"lo": "5", "rr": true, "q": "What is Bing-Neel syndrome?", "a": "CNS infiltration by Waldenström lymphoplasmacytic cells", "o": ["Cord compression from vertebral collapse in myeloma", "Peripheral neuropathy from bortezomib", "Hyperviscosity stroke"], "n": ["Myeloma.", "Drug toxicity.", "Viscosity, not infiltration."], "w": "A rare neurologic complication of WM.", "p": "Bing-Neel = WM in the brain."}, {"lo": "5", "rr": true, "hy": true, "q": "Which pair of findings is ABSENT in Waldenström but typical of myeloma?", "a": "Lytic bone lesions and hypercalcemia", "o": ["Anemia and fatigue", "M spike and rouleaux", "High ESR and weight loss"], "n": ["Both diseases.", "Both diseases.", "Both diseases."], "w": "WM may have osteoporosis but no lytic lesions; lymphadenopathy and organomegaly are present instead.", "p": "WM: no bone holes, no high calcium."}]}, {"id": "wmdx", "lec": "T", "name": "Marrow & ancillary tests", "sub": "Dutcher bodies · mast cells · MYD88", "b": [{"lo": "5", "rr": true, "hy": true, "t": "m", "q": "Select ALL classic marrow findings in Waldenström.", "a": ["Diffuse infiltrate of small lymphocytes, plasmacytoid lymphocytes and plasma cells", "Dutcher bodies (PAS+ intranuclear Ig inclusions)", "Increased mast cells"], "o": ["Sheets of pure plasma cells", "Starry-sky pattern"], "n": ["Myeloma.", "Burkitt."], "w": "The same cells infiltrate lymph nodes (“immunocytoma”) and sometimes blood.", "p": "Spectrum + Dutcher + mast cells."}, {"lo": "5", "rr": true, "hy": true, "q": "Which mutation is found in ≈90% of Waldenström and separates it from myeloma?", "a": "MYD88 L265P", "o": ["BRAF V600E", "JAK2 V617F", "CALR"], "n": ["Hairy cell leukemia.", "MPNs.", "MPNs."], "w": "MYD88 is an adaptor in Toll-like/IL-1 receptor signaling → NF-κB. Not specific (some DLBCL, rarely CLL/MZL) but not seen in myeloma. CXCR4 mutations often accompany it and predict treatment response.", "p": "MYD88 = WM, not myeloma."}, {"lo": "5", "rr": true, "q": "Which mutation accompanying MYD88 predicts treatment response in Waldenström?", "a": "CXCR4", "o": ["TP53", "KRAS", "FGFR3"], "n": ["Not the listed predictor.", "Seen in myeloma.", "t(4;14) myeloma."], "w": "CXCR4 mutations affect response to BTK inhibitors.", "p": "CXCR4 predicts response."}, {"lo": "5", "rr": true, "hy": true, "q": "What is the typical immunophenotype of the lymphocytes in Waldenström?", "a": "CD19+, CD20+, surface IgM+, CD5−, CD10−, CD23−", "o": ["CD5+ CD23+", "CD10+ BCL6+", "CD138+ CD56+ CD20−"], "n": ["CLL.", "Germinal center lymphoma.", "Myeloma plasma cells."], "w": "The plasma cell component is CD138+ but differs from myeloma plasma cells (often CD19+, CD45+, CD56−).", "p": "CD20+, IgM+, CD5−, CD10−."}, {"lo": "5", "rr": true, "t": "m", "q": "Select ALL typical blood and urine findings in Waldenström.", "a": ["Moderate anemia", "Marked rouleaux", "Very high ESR", "Cryoglobulins, rheumatoid factor or cold agglutinins", "Often a small monoclonal urine light chain (usually κ)"], "o": ["Gross Bence Jones proteinuria as a rule", "Hypercalcemia"], "n": ["Unusual in WM.", "Absent in WM."], "w": "Normal Igs are ↓ in half; coagulation and platelet function abnormalities can occur.", "p": "Rouleaux + high ESR + cold proteins."}, {"lo": "5", "rr": true, "q": "Marrow shows small lymphocytes, plasmacytoid lymphocytes and plasma cells with PAS+ intranuclear inclusions and many mast cells. Which feature argues most strongly AGAINST myeloma?", "a": "IgM spike with CD20+ lymphocytes, MYD88 mutation and no lytic lesions", "o": ["Presence of an M spike", "Presence of plasma cells", "Anemia"], "n": ["Both have a spike.", "Both have plasma cells.", "Both have anemia."], "w": "This is lymphoplasmacytic lymphoma.", "p": "IgM + CD20 + MYD88 ≠ myeloma."}]}, {"id": "wmvs", "lec": "T", "name": "WM vs myeloma vs other lymphomas", "sub": "Compare · prognosis · treatment", "b": [{"lo": "5", "rr": true, "hy": true, "t": "m", "q": "Select ALL features that favor WALDENSTRÖM over multiple myeloma.", "a": ["IgM M protein", "CD20+ lymphocytes and plasmacytoid cells", "Lymphadenopathy and hepatosplenomegaly", "Common hyperviscosity", "MYD88 L265P", "Dutcher bodies and mast cells"], "o": ["Punched-out lytic lesions", "Cast nephropathy"], "n": ["Myeloma.", "Myeloma."], "w": "Myeloma: IgG/IgA/light chain, pure plasma cells (CD138+, CD56+, CD20−), CRAB, renal failure common.", "p": "WM = lymphoma behavior with IgM."}, {"lo": "5", "rr": true, "hy": true, "q": "A small B-cell lymphoma with an IgM spike is CD5+ and CD23+. Most likely?", "a": "CLL/SLL", "o": ["Waldenström macroglobulinemia", "Mantle cell lymphoma", "Follicular lymphoma"], "n": ["WM is CD5−.", "Mantle is CD23−, cyclin D1+.", "Follicular is CD10+."], "w": "A small IgM spike occurs in ≈5% of B-cell NHL and in CLL. Marked IgM + plasmacytoid cells + MYD88 = WM. Marginal zone lymphoma usually lacks MYD88 and has less IgM.", "p": "CD5+ CD23+ = CLL even with IgM."}, {"lo": "5", "rr": true, "q": "How does the course of Waldenström compare with myeloma?", "a": "Indolent; median survival ≈5 years (in-house 4–7); many need no treatment for years", "o": ["More aggressive than myeloma", "Always curable", "Median survival <6 months"], "n": ["WM is more benign.", "Not curable.", "Far too short."], "w": "In-house myeloma median ≈3 years. WM rarely transforms to DLBCL. With modern therapy, standard references quote WM median survival ≈8–10+ years; use the in-house number for in-house exams.", "p": "WM is the slow cousin."}, {"lo": "5", "rr": true, "t": "m", "q": "Select ALL poor-outcome factors in Waldenström.", "a": ["Age >60", "Anemia/cytopenias", "Cryoglobulinemia", "Neuropathy", "Weight loss"], "o": ["MYD88 L265P alone", "Female sex"], "n": ["Present in ≈90%; not a listed adverse factor.", "Not listed."], "w": "Rarely transforms to DLBCL. In-house list shown; the standard prognostic score (IPSS-WM) uses age >65, Hb ≤11.5, platelets ≤100k, β2M >3 mg/L, IgM >7 g/dL.", "p": "Old, anemic, cryo = worse."}, {"lo": "5", "rr": true, "q": "What is the chemotherapy for symptomatic Waldenström?", "a": "Alkylating agents (chlorambucil, cyclophosphamide, melphalan) ± prednisone; modern regimens add rituximab and BTK inhibitors", "o": ["All-trans retinoic acid", "Imatinib", "Hydroxyurea alone"], "n": ["APL.", "CML.", "MPNs."], "w": "Hyperviscosity is treated first with plasmapheresis. Interferon was used historically.", "p": "Alkylator ± steroid; rituximab, ibrutinib."}, {"lo": "5", "rr": true, "q": "A 68-year-old has an IgM spike, lymphadenopathy, nosebleeds and blurred vision, with no bone lesions. Diagnosis and immediate step?", "a": "Waldenström macroglobulinemia → plasmapheresis", "o": ["Multiple myeloma → bisphosphonate", "MGUS → observe", "AL amyloidosis → Congo red biopsy only"], "n": ["No lytic lesions; IgM.", "Symptomatic hyperviscosity is not MGUS.", "Doesn't explain hyperviscosity."], "w": "Then start disease-directed therapy.", "p": "IgM + bleeding + vision = plasmapheresis."}]}];
+
+
+(function(){
+"use strict";
+var KEY="hd-hem26-plasma-cell-builder-v1";
+var S={box:{},score:0,streak:0,best:0,tot:0,right:0,theme:"auto"};
+function load(){try{var j=JSON.parse(localStorage.getItem(KEY)||"null");if(j&&j.box)S=Object.assign(S,j);}catch(e){}}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}}
+load();
+
+var ALL=[]; E.forEach(function(e){e.b.forEach(function(b,i){b.id=e.id+"."+i;b.ent=e;ALL.push(b);});});
+function st(b){var r=S.box[b.id];return r?r.s:"u";}
+var rrOnly=false, mode="build", scope="all", loFilter=null, curEnt=null, idx=0, cur=null, answered=false, results={}, lastId=null, t0=0, tick=null;
+
+function shuffle(a){a=a.slice();for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=a[i];a[i]=a[j];a[j]=t;}return a;}
+function esc(s){return String(s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];});}
+function inScope(b){return (scope==="all"||b.ent.lec===scope)&&(!loFilter||b.lo===loFilter)&&(!rrOnly||b.rr);}
+
+/* ---------- theme ---------- */
+var themeBtn=document.getElementById("themeBtn");
+function applyTheme(){var r=document.documentElement;if(S.theme==="auto")r.removeAttribute("data-theme");else r.setAttribute("data-theme",S.theme);themeBtn.textContent="Theme: "+S.theme;}
+themeBtn.onclick=function(){S.theme={auto:"light",light:"dark",dark:"auto"}[S.theme];applyTheme();save();};
+applyTheme();
+document.getElementById("resetBtn").onclick=function(){
+  var b=this; if(b.dataset.confirm){S.box={};S.score=S.streak=S.tot=S.right=0;save();b.textContent="Reset progress";delete b.dataset.confirm;renderAll();next();return;}
+  b.dataset.confirm="1";b.textContent="Tap again to reset";setTimeout(function(){if(b.dataset.confirm){delete b.dataset.confirm;b.textContent="Reset progress";}},3000);
+};
+
+/* ---------- stats / side / map ---------- */
+function loStatus(lo){var bs=ALL.filter(function(b){return b.lo===lo;});var ss=bs.map(st);
+  var m=ss.filter(function(x){return x==="M";}).length;
+  if(m===bs.length)return{s:"M",m:m,n:bs.length};
+  if(ss.indexOf("m")>=0)return{s:"m",m:m,n:bs.length};
+  if(ss.some(function(x){return x!=="u";}))return{s:"o",m:m,n:bs.length};
+  return{s:"u",m:m,n:bs.length};}
+function renderStats(){
+  document.getElementById("sScore").textContent=S.score;
+  document.getElementById("sStreak").textContent=S.streak;
+  document.getElementById("sAcc").textContent=S.tot?Math.round(100*S.right/S.tot)+"%":"—";
+  document.getElementById("sBoxes").textContent=ALL.filter(function(b){return st(b)==="M";}).length+"/"+ALL.length;
+  var los=Object.keys(LOS);document.getElementById("sLos").textContent=los.filter(function(l){return loStatus(l).s==="M";}).length+"/"+los.length;
+}
+function renderSide(){
+  var h="";LECS.forEach(function(L){if(scope!=="all"&&scope!==L.k)return;
+    h+='<p class="lec-h l'+L.k+'" style="color:var(--lc)">HEM26 · '+esc(L.n)+'</p>';
+    E.filter(function(e){return e.lec===L.k;}).forEach(function(e){
+      var m=e.b.filter(function(b){return st(b)==="M";}).length,p=Math.round(100*m/e.b.length);
+      h+='<button type="button" class="ent l'+e.lec+'" data-ent="'+e.id+'"'+(curEnt===e&&mode==="build"?' aria-current="true"':'')+'><span class="n">'+esc(e.name)+'</span><span class="pct">'+m+'/'+e.b.length+'</span><span class="s">'+esc(e.sub)+'</span><span class="mini"><i style="width:'+p+'%"></i></span></button>';
+    });});
+  var el=document.getElementById("entList");el.innerHTML=h;
+  el.querySelectorAll(".ent").forEach(function(b){b.onclick=function(){setMode("build");startEnt(E.filter(function(e){return e.id===b.dataset.ent;})[0]);};});
+}
+function renderMap(){
+  var h="";Object.keys(LOS).forEach(function(lo){var lec=LOLEC[lo];if(scope!=="all"&&scope!==lec)return;var s=loStatus(lo);
+    h+='<button type="button" class="lo-tile l'+lec+'" data-lo="'+lo+'"'+(loFilter===lo?' style="border-color:var(--lc)"':'')+'><span class="id">'+(lo.slice(-1)==="X"?"Extra":"LO "+lo)+'</span><span class="t">'+esc(LOS[lo])+'</span><span class="dot s-'+s.s+'" title="'+s.m+'/'+s.n+' mastered"></span></button>';});
+  var g=document.getElementById("loGrid");g.innerHTML=h;
+  g.querySelectorAll(".lo-tile").forEach(function(b){b.onclick=function(){loFilter=(loFilter===b.dataset.lo?null:b.dataset.lo);setMode("drill");};});
+}
+function renderAll(){renderStats();renderSide();renderMap();}
+
+/* ---------- flow ---------- */
+function setMode(m){mode=m;document.querySelectorAll("[data-mode]").forEach(function(b){b.setAttribute("aria-pressed",String(b.dataset.mode===m));});
+  if(m==="build"){loFilter=null;if(rrOnly){rrOnly=false;setRR();}renderAll();if(!curEnt||!inScope(curEnt.b[0]))startEnt(firstEnt());else show();}
+  else{renderAll();next();}}
+function firstEnt(){var es=E.filter(function(e){return scope==="all"||e.lec===scope;});
+  for(var i=0;i<es.length;i++){if(es[i].b.some(function(b){return st(b)!=="M";}))return es[i];}return es[0];}
+document.querySelectorAll("[data-mode]").forEach(function(b){b.onclick=function(){setMode(b.dataset.mode);};});
+function setRR(){document.querySelectorAll("[data-rr]").forEach(function(x){x.setAttribute("aria-pressed",String((x.dataset.rr==="1")===rrOnly));});}
+document.querySelectorAll("[data-rr]").forEach(function(b){b.onclick=function(){rrOnly=b.dataset.rr==="1";setRR();setMode(rrOnly?"drill":mode);};});
+document.querySelectorAll("[data-scope]").forEach(function(b){b.onclick=function(){scope=b.dataset.scope;loFilter=null;
+  document.querySelectorAll("[data-scope]").forEach(function(x){x.setAttribute("aria-pressed",String(x===b));});
+  if(mode==="build"){curEnt=null;setMode("build");}else setMode("drill");};});
+
+function startEnt(e){curEnt=e;idx=0;results={};renderSide();cur=e.b[0];show();}
+function next(){
+  if(mode==="build"){idx++;if(idx>=curEnt.b.length){finishEnt();return;}cur=curEnt.b[idx];show();return;}
+  var pool=ALL.filter(inScope);if(!pool.length){cur=null;show();return;}
+  var rank={m:0,u:1,o:2,M:3};
+  pool=shuffle(pool).sort(function(a,b){return rank[st(a)]-rank[st(b)];});
+  var best=rank[st(pool[0])];var top=pool.filter(function(b){return rank[st(b)]===best&&b.id!==lastId;});
+  if(best===3)top=pool.filter(function(b){return b.id!==lastId;});
+  cur=(top.length?top:pool)[0];show();
+}
+function finishEnt(){
+  var ok=Object.keys(results).filter(function(k){return results[k];}).length,n=curEnt.b.length;
+  var i=E.indexOf(curEnt),nxt=null;for(var j=1;j<=E.length;j++){var c=E[(i+j)%E.length];if(scope==="all"||c.lec===scope){nxt=c;break;}}
+  var card=document.getElementById("card");card.className="card l"+curEnt.lec;
+  card.innerHTML='<div class="done"><p class="meta">Structure complete</p><h2>'+esc(curEnt.name)+': '+ok+' / '+n+' first try</h2>'+
+   '<p class="hint">'+(ok===n?"Clean build. It will count as mastered after one more clean pass.":"Missed boxes are queued first in Drill mode.")+'</p>'+
+   '<div class="actions"><button class="btn" type="button" id="again">Rebuild '+esc(curEnt.name)+'</button>'+(nxt?'<button class="btn primary" type="button" id="nextEnt">Next: '+esc(nxt.name)+' →</button>':'')+'</div></div>';
+  document.getElementById("again").onclick=function(){startEnt(curEnt);};
+  if(nxt)document.getElementById("nextEnt").onclick=function(){startEnt(nxt);};
+  var ne=document.getElementById("nextEnt");if(ne)ne.focus();
+}
+
+var picks=[];
+function show(){
+  answered=false;picks=[];clearInterval(tick);
+  var card=document.getElementById("card");
+  if(!cur){card.className="card";card.innerHTML='<p class="q">Nothing in this scope yet.</p>';return;}
+  var b=cur,e=b.ent;card.className="card l"+e.lec;
+  var head='<div class="card-top"><div><p class="meta">'+(mode==="build"?"Build · box "+(idx+1)+" of "+e.b.length:"Drill"+(rrOnly?" · Rapid Review":"")+(loFilter?" · LO "+loFilter:""))+'</p><h2>'+esc(e.name)+'</h2></div>'+
+    '<div style="display:flex;gap:6px;flex-wrap:wrap"><span class="tag lo">'+(b.lo.slice(-1)==="X"?"Extra":"LO "+b.lo)+'</span>'+(b.rr?'<span class="tag rr">Rapid Review</span>':'')+(b.hy?'<span class="tag hy">HY</span>':'')+'<span class="timer" id="timer">0.0s</span></div></div>';
+  if(mode==="build"){head+='<div class="boxes" aria-hidden="true">'+e.b.map(function(x,i){var c=i===idx?"cur":(x.id in results?(results[x.id]?"done-ok":"done-bad"):"");return '<i class="'+c+'"></i>';}).join("")+'</div>';}
+  var body='<p class="q">'+esc(b.q)+'</p>';
+  if(!b.t){b._opts=shuffle([b.a].concat(b.o));
+    body+='<div class="opts">'+b._opts.map(function(o,i){return '<button type="button" class="opt" data-i="'+i+'"><span class="k">'+(i+1)+'</span><span>'+esc(o)+'</span></button>';}).join("")+'</div>';}
+  else if(b.t==="m"){b._opts=shuffle(b.a.concat(b.o));
+    body+='<p class="hint">Select all that apply, then check.</p><div class="opts">'+b._opts.map(function(o,i){return '<button type="button" class="opt" aria-pressed="false" data-i="'+i+'"><span class="k">'+(i+1)+'</span><span>'+esc(o)+'</span></button>';}).join("")+'</div>';}
+  else{b._opts=shuffle(b.a);
+    body+='<p class="hint">Tap items in order. Tap a placed item to remove it.</p><ol class="ordered" id="ordList"><li class="empty" style="cursor:default">Your order appears here</li></ol><div class="opts">'+b._opts.map(function(o,i){return '<button type="button" class="opt" data-i="'+i+'"><span class="k">+</span><span>'+esc(o)+'</span></button>';}).join("")+'</div>';}
+  var act='<div id="fb"></div><div class="actions"><span class="hint">'+(b.t?"Enter to check":"Keys 1–"+b._opts.length+" to answer")+'</span><div style="display:flex;gap:8px">'+
+    (mode==="build"?'<button class="btn" type="button" id="skipBtn">Skip structure</button>':'')+
+    (b.t?'<button class="btn primary" type="button" id="checkBtn"'+(b.t==="o"?" disabled":"")+'>Check</button>':'')+
+    '<button class="btn primary" type="button" id="nextBtn" hidden>Next box →</button></div></div>';
+  card.innerHTML=head+body+act;
+  t0=Date.now();tick=setInterval(function(){var t=document.getElementById("timer");if(t)t.textContent=((Date.now()-t0)/1000).toFixed(1)+"s";},100);
+  var opts=card.querySelectorAll(".opt");
+  if(!b.t)opts.forEach(function(o){o.onclick=function(){if(!answered)grade([+o.dataset.i]);};});
+  else if(b.t==="m")opts.forEach(function(o){o.onclick=function(){if(answered)return;var on=o.getAttribute("aria-pressed")!=="true";o.setAttribute("aria-pressed",String(on));o.classList.toggle("sel",on);};});
+  else opts.forEach(function(o){o.onclick=function(){if(answered||o.disabled)return;picks.push(+o.dataset.i);o.disabled=true;o.style.opacity=".4";drawOrd();};});
+  var cb=document.getElementById("checkBtn");if(cb)cb.onclick=function(){if(answered)return;
+    if(b.t==="m"){var sel=[];opts.forEach(function(o){if(o.getAttribute("aria-pressed")==="true")sel.push(+o.dataset.i);});grade(sel);}else grade(picks);};
+  var sk=document.getElementById("skipBtn");if(sk)sk.onclick=function(){var i=E.indexOf(curEnt);for(var j=1;j<=E.length;j++){var c=E[(i+j)%E.length];if(scope==="all"||c.lec===scope){startEnt(c);return;}}};
+  document.getElementById("nextBtn").onclick=function(){lastId=cur.id;next();};
+}
+function drawOrd(){var b=cur,ol=document.getElementById("ordList");
+  ol.innerHTML=picks.length?picks.map(function(i,k){return '<li data-k="'+k+'">'+esc(b._opts[i])+'</li>';}).join(""):'<li class="empty" style="cursor:default">Your order appears here</li>';
+  ol.querySelectorAll("li[data-k]").forEach(function(li){li.onclick=function(){if(answered)return;var k=+li.dataset.k,i=picks[k];picks.splice(k,1);
+    var o=document.querySelector('.opt[data-i="'+i+'"]');o.disabled=false;o.style.opacity="";drawOrd();};});
+  document.getElementById("checkBtn").disabled=picks.length!==b.a.length;}
+
+function grade(sel){
+  answered=true;clearInterval(tick);var b=cur,ok,card=document.getElementById("card"),opts=card.querySelectorAll(".opt");
+  if(!b.t){ok=b._opts[sel[0]]===b.a;opts.forEach(function(o){var t=b._opts[+o.dataset.i];o.disabled=true;if(t===b.a)o.classList.add("right");else if(+o.dataset.i===sel[0])o.classList.add("wrong");});}
+  else if(b.t==="m"){var chosen=sel.map(function(i){return b._opts[i];});ok=chosen.length===b.a.length&&chosen.every(function(c){return b.a.indexOf(c)>=0;});
+    opts.forEach(function(o){var t=b._opts[+o.dataset.i],isA=b.a.indexOf(t)>=0,isS=chosen.indexOf(t)>=0;o.disabled=true;o.classList.remove("sel");
+      if(isA&&isS)o.classList.add("right");else if(isA)o.classList.add("missed");else if(isS)o.classList.add("wrong");});}
+  else{var got=sel.map(function(i){return b._opts[i];});ok=got.every(function(g,k){return g===b.a[k];});
+    document.querySelectorAll("#ordList li[data-k]").forEach(function(li,k){li.classList.add(got[k]===b.a[k]?"right":"wrong");});
+    opts.forEach(function(o){o.disabled=true;});}
+  var r=S.box[b.id]||{n:0,c:0,s:"u"};r.n++;
+  if(ok){r.c++;r.s=r.c>=2?"M":"o";S.streak++;S.best=Math.max(S.best,S.streak);S.right++;S.score+=10+Math.min(S.streak,10);}
+  else{r.c=0;r.s="m";S.streak=0;}
+  S.tot++;S.box[b.id]=r;if(!(b.id in results))results[b.id]=ok;save();
+  var fb='<div class="fb '+(ok?"ok":"bad")+'"><span class="v">'+(ok?"Correct":"Not quite")+'</span>';
+  if(!b.t)fb+='<span class="ans">Answer: <b>'+esc(b.a)+'</b></span>';
+  else if(b.t==="m")fb+='<span class="ans">Answer: <b>'+b.a.map(esc).join(" · ")+'</b></span>';
+  else fb+='<span class="ans">Correct order:</span><ol>'+b.a.map(function(x){return "<li>"+esc(x)+"</li>";}).join("")+'</ol>';
+  fb+='<div class="fbexp">'+String(b.w||"").split(/\n\n+/).filter(Boolean).map(function(t){return '<p>'+esc(t)+'</p>';}).join("")+'</div>';
+  if(b.n&&b.n.length&&b.o&&b.o.length){
+    var rows=b.o.map(function(x,i){return b.n[i]?'<li><b>'+esc(x)+'</b> — '+esc(b.n[i])+'</li>':"";}).join("");
+    if(rows)fb+='<ul class="fbnotes">'+rows+'</ul>';
+  }
+  if(b.p)fb+='<div class="fbpearl"><b>High-yield</b>'+esc(b.p)+'</div>';
+  fb+='</div>';
+  document.getElementById("fb").innerHTML=fb;
+  var cb=document.getElementById("checkBtn");if(cb)cb.hidden=true;
+  var nb=document.getElementById("nextBtn");nb.hidden=false;nb.textContent=(mode==="build"&&idx===curEnt.b.length-1)?"Finish structure →":"Next box →";nb.focus();
+  renderAll();
+}
+document.addEventListener("keydown",function(ev){
+  if(ev.target.tagName==="INPUT"||ev.metaKey||ev.ctrlKey||ev.altKey)return;
+  if(ev.key==="Enter"){var nb=document.getElementById("nextBtn"),cb=document.getElementById("checkBtn");
+    if(nb&&!nb.hidden){ev.preventDefault();nb.click();}else if(cb&&!cb.hidden&&!cb.disabled){ev.preventDefault();cb.click();}return;}
+  var n=parseInt(ev.key,10);if(!cur||answered||isNaN(n))return;var o=document.querySelector('.opt[data-i="'+(n-1)+'"]');if(o&&!o.disabled)o.click();
+});
+
+renderAll();startEnt(firstEnt());
+})();
+
+/* ---------- Review: the compiled version of everything the answers teach ---------- */
+var REVIEW = {"F": "<h3 class=\"rh\">LO1 · Normal immunoglobulin production</h3>\n<ol class=\"rseq\"><li>Naïve B cell meets antigen</li><li>Germinal center with T follicular helper cells: somatic hypermutation, class switching</li><li>Memory B cell or long-lived <b>plasma cell</b> that homes to the marrow</li></ol>\n<p>Plasma cell: eccentric <b>clock-face</b> nucleus, blue cytoplasm, perinuclear <b>hof</b>.</p>\n<div class=\"rtbl\"><table><thead><tr><th>Heavy chain</th><th>Class</th><th>Form</th></tr></thead><tbody>\n<tr><td>γ</td><td>IgG</td><td>Monomer</td></tr><tr><td>α</td><td>IgA</td><td><b>Dimer</b></td></tr><tr><td>μ</td><td>IgM</td><td><b>Pentamer</b> → hyperviscosity</td></tr><tr><td>δ / ε</td><td>IgD / IgE</td><td>Monomer</td></tr></tbody></table></div>\n<div class=\"rmem\"><b>The choir</b>Normal = polyclonal: thousands of voices, a broad γ hum, κ:λ ≈2:1. Myeloma: one singer grabs the mic (tall narrow <b>M spike</b>, light-chain restriction) while the others go quiet (↓ normal Ig → infections).</div>\n<p>One clone = one heavy chain + one light chain (κ or λ) for life. Normal urine free light chains ≤40 mg/24 h.</p>\n<h3 class=\"rh\">LO2 · Classification</h3>\n<div class=\"rtbl\"><table><thead><tr><th>Category</th><th>Entities</th></tr></thead><tbody>\n<tr><td>Precursor</td><td>Non-IgM MGUS (→ myeloma) · IgM MGUS (→ Waldenström)</td></tr>\n<tr><td>Myeloma + variants</td><td>Smoldering · non-secretory · plasma cell leukemia</td></tr>\n<tr><td>Plasmacytoma</td><td>Solitary of bone · extraosseous (upper airway)</td></tr>\n<tr><td>Deposition</td><td>AL amyloidosis · light/heavy chain deposition</td></tr>\n<tr><td>Paraneoplastic</td><td>POEMS · TEMPI · AESOP</td></tr>\n<tr><td>B-cell lymphoma</td><td>Lymphoplasmacytic (WM) · heavy chain diseases (α most common)</td></tr></tbody></table></div>\n<div class=\"rtbl\"><table><thead><tr><th></th><th>MGUS</th><th>Smoldering</th><th>Myeloma</th></tr></thead><tbody>\n<tr><td>Serum M</td><td>&lt;3 g/dL</td><td>≥3 g/dL (or urine ≥500 mg/24 h)</td><td>Any</td></tr>\n<tr><td>Clonal marrow PCs</td><td>&lt;10%</td><td>10–60%</td><td>≥10% or plasmacytoma</td></tr>\n<tr><td>CRAB / SLiM</td><td>None</td><td>None</td><td><b>Present</b></td></tr>\n<tr><td>Course</td><td>≈1%/yr progression; observe</td><td>Higher risk; ≈10 y</td><td>Treat</td></tr></tbody></table></div>\n<div class=\"rrule\"><b>MGUS risk factors (in-house)</b>Abnormal FLC ratio · IgA/IgM type · M &gt;1.5 g/dL. All three → 50–60% at 20 years; none → ≈5%.</div>\n<div class=\"rhy\"><b>USMLE: AL amyloid &amp; POEMS</b>AL = light chains (usually λ): nephrotic syndrome, restrictive cardiomyopathy, macroglossia, Congo red apple-green. POEMS: Polyneuropathy, Organomegaly, Endocrinopathy, M protein, Skin; <b>sclerotic</b> bone lesions, ↑VEGF.</div>\n<h3 class=\"rh\">LO3 · The M protein</h3>\n<div class=\"rtbl\"><table><thead><tr><th>Test</th><th>Job</th></tr></thead><tbody>\n<tr><td><b>SPEP</b> (first)</td><td>Finds and quantifies the spike; doesn't type it</td></tr>\n<tr><td>Immunofixation</td><td>Types heavy + light chain (e.g., IgG κ)</td></tr>\n<tr><td>UPEP (24-h)</td><td>Bence Jones protein = free monoclonal light chains</td></tr>\n<tr><td>Serum FLC</td><td>κ:λ ratio; involved/uninvolved ≥100 = myeloma-defining</td></tr></tbody></table></div>\n<div class=\"rtrap\"><b>No serum spike ≠ no myeloma</b>Light-chain myeloma (15–20%): SPEP shows hypogammaglobulinemia only. Urine dipstick detects albumin, not light chains. Significant albuminuria → think amyloid or light chain deposition disease.</div>\n", "D": "<h3 class=\"rh\">LO4 · Who gets myeloma</h3>\n<p>Marrow-based, multifocal plasma cell neoplasm. Median age ≈70; men &gt; women; most common lymphoid cancer in Black patients (≈2× incidence). Arises from MGUS; post-germinal center B cell. Links: pesticides, asbestos, petroleum, radiation, chronic antigen stimulation.</p>\n<div class=\"rtbl\"><table><thead><tr><th>M protein</th><th>Share</th><th>Note</th></tr></thead><tbody>\n<tr><td>IgG</td><td>≈55%</td><td>Most common</td></tr><tr><td>IgA</td><td>≈20%</td><td>Dimer; hyperviscosity possible</td></tr><tr><td>Light chain only</td><td>15–20%</td><td>No serum spike; more lytic lesions, Ca, renal failure, amyloid</td></tr><tr><td>IgD / non-secretory</td><td>1–2% / &lt;1%</td><td>IgM spike usually = WM</td></tr></tbody></table></div>\n<h3 class=\"rh\">Pathophysiology</h3>\n<p>IL-6 and IL-10 feed the clone (high IL-6 = poor). Stromal binding → <b>RANKL</b>, IL-1β, IL-6, TNF → osteoclasts on, osteoblasts off → lytic lesions, hypercalcemia.</p>\n<div class=\"rmem\"><b>CRAB-I</b><b>C</b>alcium ↑ · <b>R</b>enal failure · <b>A</b>nemia · <b>B</b>one lesions · <b>I</b>nfection (↓ normal Ig; S. pneumoniae, S. aureus, E. coli).</div>\n<div class=\"rtrap\"><b>Bone scan &amp; ALP</b>Pure destruction, no new bone → <b>bone scan negative, ALP normal</b>. X-ray: punched-out lesions (skull, spine, ribs, pelvis) in ≈80%. MRI most sensitive (&gt;1 focal lesion = myeloma-defining).</div>\n<h3 class=\"rh\">Morphology &amp; markers</h3>\n<p>Sheets of clonal plasma cells; plasmablastic or multinucleated forms; Mott cells/Russell bodies (cytoplasmic Ig); Dutcher bodies (intranuclear). Morphology doesn't predict Ig class.</p>\n<div class=\"rhy\"><b>USMLE: markers</b>CD138+, CD38+, <b>CD56+</b> (aberrant), CD19−/CD20−, CD45 dim, cytoplasmic Ig with light-chain restriction. Daratumumab = anti-CD38; elotuzumab = anti-SLAMF7.</div>\n<h3 class=\"rh\">Kidney &amp; labs</h3>\n<ul class=\"rlist\"><li><b>Cast nephropathy:</b> light chains + Tamm-Horsfall → waxy casts in distal tubules/collecting ducts with giant cells. In-house: &gt;50% die with renal failure. Also hypercalcemia, AL amyloid (≈10%), deposition disease, urate, infection.</li><li>Blood: normocytic anemia with <b>rouleaux</b>, ESR &gt;100, ↑BUN/creatinine/urate, <b>low anion gap</b>, ↑β2-microglobulin, protein–albumin gap. Hypercalcemia ≈10% in-house (boards ≈25–30%).</li><li>Exam often normal; nodes and spleen unusual.</li></ul>\n<div class=\"rrule\"><b>Diagnosis: “SLiM CRAB”</b>Clonal marrow PCs ≥10% (in-house “&gt;10%”) or plasmacytoma <b>plus</b> CRAB or SLiM: <b>S</b>ixty % PCs · <b>Li</b>ght-chain ratio ≥100 · <b>M</b>RI &gt;1 lesion.</div>\n<h3 class=\"rh\">Cytogenetics &amp; prognosis</h3>\n<div class=\"rtbl\"><table><thead><tr><th>Favorable</th><th>Unfavorable</th></tr></thead><tbody>\n<tr><td>Hyperdiploidy · t(11;14) CCND1 · t(6;14) CCND3</td><td>t(4;14) FGFR3 · t(14;16) c-MAF · t(14;20) MAFB · del(17p) TP53 · hypodiploid · 1q gain · del 13 (metaphase)</td></tr></tbody></table></div>\n<div class=\"rmem\"><b>Cyclin D1/D3 good, D2 bad</b>“4-16-20 are bad numbers”; 17p is always bad; more chromosomes = good. FISH (≈90%) beats karyotype (≈30%) because plasma cells divide slowly.</div>\n<div class=\"rtrap\"><b>t(11;14)</b>Favorable in myeloma; defines mantle cell lymphoma (poor) in lymphoma.</div>\n<div class=\"rtbl\"><table><thead><tr><th>ISS</th><th>Criteria</th><th>Median survival (in-house)</th></tr></thead><tbody>\n<tr><td>I</td><td>β2M &lt;3.5 mg/L and albumin ≥3.5 g/dL</td><td>62 mo</td></tr><tr><td>II</td><td>Neither</td><td>44 mo</td></tr><tr><td>III</td><td>β2M ≥5.5 mg/L</td><td>29 mo</td></tr></tbody></table></div>\n<p>In-house: incurable, median ≈3 years (smoldering ≈10); death from infection or renal failure. Modern therapy extends this (often 6–10 years).</p>\n<h3 class=\"rh\">Treatment</h3>\n<div class=\"rtbl\"><table><thead><tr><th>Class</th><th>Drug</th><th>Key point</th></tr></thead><tbody>\n<tr><td>Alkylator + steroid</td><td>Melphalan + prednisone</td><td>Traditional</td></tr>\n<tr><td>Proteasome inhibitor</td><td>Bortezomib</td><td>ER stress; neuropathy, zoster (acyclovir)</td></tr>\n<tr><td>IMiDs</td><td>Thalidomide, lenalidomide</td><td>Teratogenic; VTE (aspirin)</td></tr>\n<tr><td>Antibodies</td><td>Daratumumab, elotuzumab</td><td>CD38, SLAMF7</td></tr>\n<tr><td>Bone</td><td>Bisphosphonates, denosumab</td><td>Block osteoclasts</td></tr>\n<tr><td>Transplant</td><td>Autologous after melphalan</td><td>Fit, &lt;65</td></tr></tbody></table></div>\n<div class=\"rhy\"><b>Acute hypercalcemia</b>IV saline first, then bisphosphonate (± calcitonin).</div>\n", "T": "<h3 class=\"rh\">LO5 · Waldenström macroglobulinemia</h3>\n<p>Lymphoplasmacytic lymphoma: small lymphocytes, plasmacytoid lymphocytes and plasma cells in marrow, nodes and spleen, making <b>IgM</b>. Rare; median age ≈63–65; men. Behaves like a lymphoma.</p>\n<div class=\"rmem\"><b>Why IgM thickens blood</b>IgM is a ≈900 kDa pentamer that stays in vessels → sludging, rouleaux, hyperviscosity (usually IgM &gt;3 g/dL).</div>\n<ul class=\"rlist\"><li><b>Hyperviscosity (10–30%):</b> blurred vision, headache, dizziness, stroke, gum/nose bleeding, heart failure; <b>sausage-link retinal veins</b>.</li><li><b>IgM effects:</b> cryoglobulins (Raynaud, purpura), cold agglutinins (anti-I), RF activity, anti-MAG neuropathy, amyloid ≈5%.</li><li><b>Infiltration:</b> lymphadenopathy, hepatosplenomegaly, Bing-Neel (CNS), cytopenias.</li><li><b>No lytic lesions, no hypercalcemia.</b></li></ul>\n<h3 class=\"rh\">Diagnosis</h3>\n<ul class=\"rlist\"><li>Marrow: lymphoplasmacytic spectrum, <b>Dutcher bodies</b> (PAS+ intranuclear), <b>mast cells</b>.</li><li>SPEP → immunofixation <b>IgM</b> (usually κ). <b>MYD88 L265P</b> ≈90% (absent in myeloma); CXCR4 predicts response.</li><li>CD19/CD20+, surface IgM+, CD5−, CD10−, CD23−.</li><li>Marked rouleaux, high ESR; keep samples warm (cryoglobulins).</li></ul>\n<h3 class=\"rh\">WM vs myeloma vs MGUS</h3>\n<div class=\"rtbl\"><table><thead><tr><th></th><th>Waldenström</th><th>Myeloma</th><th>MGUS</th></tr></thead><tbody>\n<tr><td>M protein</td><td>IgM</td><td>IgG, IgA, light chain</td><td>Any, &lt;3 g/dL</td></tr>\n<tr><td>Cells</td><td>Lymphoplasmacytic, CD20+</td><td>Pure plasma cells, CD138/56+</td><td>&lt;10% PCs</td></tr>\n<tr><td>Bone lesions / Ca</td><td>No</td><td>Yes</td><td>No</td></tr>\n<tr><td>Nodes / spleen</td><td>Yes</td><td>Unusual</td><td>No</td></tr>\n<tr><td>Hyperviscosity</td><td>Common</td><td>Less common</td><td>No</td></tr>\n<tr><td>Renal failure</td><td>Uncommon</td><td>Common</td><td>No</td></tr>\n<tr><td>Mutation</td><td>MYD88 L265P</td><td>IGH translocations, del13, del17p</td><td>—</td></tr>\n<tr><td>Course</td><td>Indolent, ≈5 y (in-house 4–7)</td><td>In-house ≈3 y</td><td>≈1%/y</td></tr></tbody></table></div>\n<div class=\"rtrap\"><b>Other small B-cell lymphomas</b>CLL CD5+ CD23+ · mantle CD5+ cyclin D1+ · follicular CD10+ · marginal zone usually MYD88−. A small IgM spike occurs in ≈5% of B-NHL.</div>\n<div class=\"rhy\"><b>USMLE: Waldenström</b>Older man, IgM spike, hyperviscosity, nodes/spleen, Raynaud, no lytic lesions, Dutcher bodies, MYD88 → emergency <b>plasmapheresis</b>. Then alkylator ± prednisone; rituximab, BTK inhibitors. Poor: age &gt;60, anemia, cryoglobulins.</div>\n"};
+var RVW_NAME = {"F":"LO1–3 Ig & M protein","D":"LO4 Myeloma","T":"LO5 Waldenström"};
+(function(){
+  var panel=document.getElementById("rvw"), body=document.getElementById("rvwBody"),
+      toc=document.getElementById("rvwToc"), q=document.getElementById("rvwQ"),
+      cnt=document.getElementById("rvwCount"), empty=document.getElementById("rvwEmpty"),
+      btn=document.getElementById("reviewBtn"), lec="F", secs=[];
+  var TYPES={rrule:1,rtrap:1,rmem:1,rhy:1};
+  function collapse(sec){
+    [].slice.call(sec.querySelectorAll(".rrule,.rtrap,.rmem,.rhy")).forEach(function(d){
+      var type=d.className.trim(); if(!TYPES[type])return;
+      var lbl=d.querySelector("b"), label=lbl?lbl.textContent:"Note";
+      if(lbl)lbl.parentNode.removeChild(lbl);
+      var det=document.createElement("details"); det.className="cx "+type;
+      var sum=document.createElement("summary");
+      sum.innerHTML='<span class="lbl"></span><span class="pk"></span>';
+      sum.querySelector(".lbl").textContent=label;
+      sum.querySelector(".pk").textContent=d.textContent.replace(/\s+/g," ").trim().slice(0,110);
+      var cb=document.createElement("div"); cb.className="cbody";
+      while(d.firstChild)cb.appendChild(d.firstChild);
+      det.appendChild(sum); det.appendChild(cb);
+      d.parentNode.replaceChild(det,d);
+    });
+    var h=sec.querySelector(".rh"), hys=[].slice.call(sec.querySelectorAll("details.rhy"));
+    if(h&&hys.length){ var ref=h.nextSibling; hys.forEach(function(x){ sec.insertBefore(x,ref); }); }
+    var kids=[].slice.call(sec.children), i=0;
+    while(i<kids.length){
+      if(kids[i].tagName==="DETAILS"){
+        var run=[kids[i]], cls=kids[i].className, j=i+1;
+        while(j<kids.length&&kids[j].tagName==="DETAILS"&&kids[j].className===cls){run.push(kids[j]);j++;}
+        if(run.length>1){
+          var g=document.createElement("div"); g.className="cgrid";
+          sec.insertBefore(g,run[0]); run.forEach(function(x){g.appendChild(x);});
+        }
+        i=j;
+      } else i++;
+    }
+  }
+  function group(){
+    var kids=[].slice.call(body.childNodes), out=[], cur=null;
+    kids.forEach(function(n){
+      if(n.nodeType===1&&n.tagName==="H3"){cur=document.createElement("section");cur.className="rsec";out.push(cur);}
+      if(!cur){cur=document.createElement("section");cur.className="rsec";out.push(cur);}
+      cur.appendChild(n);
+    });
+    body.innerHTML="";
+    out.forEach(function(s,i){ s.id="rs"+i; collapse(s); s._t=s.textContent.toLowerCase(); body.appendChild(s); });
+    return out;
+  }
+  function setAll(open){
+    [].slice.call(body.querySelectorAll("details.cx")).forEach(function(d){d.open=open;});
+    var t=document.getElementById("rvwAll");
+    if(t){t.textContent=open?"Collapse all":"Expand all";t.setAttribute("aria-pressed",String(open));}
+  }
+  function buildToc(){
+    toc.innerHTML=secs.map(function(s){
+      var h=s.querySelector(".rh"); return h?'<a href="#'+s.id+'">'+h.textContent+'</a>':'';
+    }).join("");
+  }
+  function filter(){
+    var terms=q.value.toLowerCase().split(/\s+/).filter(Boolean), n=0;
+    secs.forEach(function(s){
+      var on=terms.every(function(t){return s._t.indexOf(t)!==-1;});
+      s.classList.toggle("hide",!on); if(on)n++;
+    });
+    empty.classList.toggle("on",n===0);
+    cnt.textContent = n===secs.length ? secs.length+" sections" : n+" of "+secs.length;
+    toc.style.display = q.value ? "none" : "";
+  }
+  function load(l){
+    lec=l; panel.setAttribute("data-lec",l);
+    body.innerHTML=REVIEW[l]||"";
+    secs=group(); buildToc(); q.value=""; filter();
+    var t=document.getElementById("rvwAll"); if(t){t.textContent="Expand all";t.setAttribute("aria-pressed","false");}
+  }
+  function open(){
+    document.querySelector(".bar").style.display="none";
+    document.querySelector(".main").style.display="none";
+    panel.hidden=false; if(!secs.length)load(lec);
+    btn.setAttribute("aria-pressed","true");
+    window.scrollTo(0,0); q.focus({preventScroll:true});
+  }
+  function close(){
+    panel.hidden=true;
+    document.querySelector(".bar").style.display="";
+    document.querySelector(".main").style.display="";
+    btn.setAttribute("aria-pressed","false");
+    window.scrollTo(0,0);
+  }
+  btn.onclick=function(){ panel.hidden?open():close(); };
+  document.getElementById("rvwClose").onclick=close;
+  document.getElementById("rvwPrint").onclick=function(){window.print();};
+  var allBtn=document.getElementById("rvwAll");
+  if(allBtn)allBtn.onclick=function(){ setAll(this.getAttribute("aria-pressed")!=="true"); };
+  var reclose=[];
+  window.addEventListener("beforeprint",function(){
+    reclose=[];
+    [].slice.call(body.querySelectorAll("details.cx")).forEach(function(d){ if(!d.open){reclose.push(d);d.open=true;} });
+  });
+  window.addEventListener("afterprint",function(){ reclose.forEach(function(d){d.open=false;}); reclose=[]; });
+  document.getElementById("rvwTabs").onclick=function(e){
+    var b=e.target.closest("button"); if(!b)return;
+    [].forEach.call(this.children,function(c){c.setAttribute("aria-pressed",String(c===b));});
+    load(b.dataset.l); window.scrollTo(0,0);
+  };
+  q.addEventListener("input",filter);
+  document.addEventListener("keydown",function(e){
+    if(e.key==="Escape"&&!panel.hidden){ if(document.activeElement===q&&q.value){q.value="";filter();} else close(); }
+  });
+})();
+
+</script>
