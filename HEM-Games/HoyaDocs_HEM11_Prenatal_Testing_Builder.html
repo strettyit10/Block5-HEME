@@ -1,0 +1,556 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HEM11 Prenatal Testing Builder</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,600;8..60,700&family=Public+Sans:wght@400;600;700&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+/* Layout: toolbar + stats on top; structure list | question card | LO mastery map. Stacks to one column on phones. */
+:root{
+  --bg:#f3f5f6; --surface:#ffffff; --ink:#18212b; --muted:#5a6570; --line:#dbe0e5; --chip:#eceff2;
+  --arch:#2c55a0; --face:#a3263f; --eye:#2c55a0; --accent:#a3263f;
+  --ok:#1d7a3e; --ok-bg:#e3f4e8; --bad:#b3261e; --bad-bg:#fbe7e5; --once:#b7791f; --once-bg:#fdf1dc; --mem:#c2621a;
+  --hy-bg:#fff6cc; --hy-line:#c9a227; --hy-ink:#4a3a00;
+  --f-display:"Source Serif 4", Georgia, serif; --f-body:"Public Sans", Arial, sans-serif; --f-mono:"IBM Plex Mono", ui-monospace, monospace;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#11161c; --surface:#19212a; --ink:#e6eaee; --muted:#9aa6b2; --line:#2c3642; --chip:#232c36;
+  --arch:#8fb1f0; --face:#f08a9b; --eye:#8fb1f0; --accent:#f08a9b;
+  --ok:#6fd08f; --ok-bg:#16301f; --bad:#f28b82; --bad-bg:#3a1b19; --once:#f0c070; --once-bg:#3a2e12; --mem:#f0a05c;
+  --hy-bg:#3a3110; --hy-line:#b8952a; --hy-ink:#f5e6a8; color-scheme:dark }}
+:root[data-theme="dark"]{
+  --bg:#11161c; --surface:#19212a; --ink:#e6eaee; --muted:#9aa6b2; --line:#2c3642; --chip:#232c36;
+  --arch:#8fb1f0; --face:#f08a9b; --eye:#8fb1f0; --accent:#f08a9b;
+  --ok:#6fd08f; --ok-bg:#16301f; --bad:#f28b82; --bad-bg:#3a1b19; --once:#f0c070; --once-bg:#3a2e12; --mem:#f0a05c;
+  --hy-bg:#3a3110; --hy-line:#b8952a; --hy-ink:#f5e6a8; color-scheme:dark }
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font:15px/1.5 var(--f-body);margin:0}
+.wrap{max-width:1180px;margin:0 auto;padding-inline:16px;padding-block:22px 48px;display:grid;gap:16px}
+h1,h2,h3{font-family:var(--f-display);margin:0;text-wrap:balance;line-height:1.2}
+.meta{font:500 .74rem var(--f-mono);letter-spacing:.07em;text-transform:uppercase;color:var(--muted);margin:0}
+header{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:end;gap:12px}
+header h1{font-size:1.9rem}
+header p.lede{margin:4px 0 0;color:var(--muted);max-width:62ch}
+.btn{font:600 .85rem var(--f-body);background:var(--chip);color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:7px 12px;cursor:pointer}
+.btn:hover{border-color:var(--ink)}
+.btn:focus-visible,.opt:focus-visible,.seg button:focus-visible,.ent:focus-visible,.lo-tile:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.btn.primary{background:var(--accent);color:var(--surface);border-color:var(--accent)}
+.btn[disabled]{opacity:.45;cursor:default}
+.hdr-actions{display:flex;gap:8px;flex-wrap:wrap}
+.wrap{grid-template-columns:minmax(0,1fr)} .rvw{min-width:0}
+
+.bar{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 12px}
+.seg{display:inline-flex;background:var(--chip);border-radius:10px;padding:3px;gap:2px;flex-wrap:wrap}
+.seg button{font:600 .82rem var(--f-body);border:0;background:transparent;color:var(--ink);padding:6px 11px;border-radius:8px;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--surface);box-shadow:0 1px 2px rgba(0,0,0,.12)}
+.seg .lab{font:500 .7rem var(--f-mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);align-self:center;padding:0 6px}
+.stats{display:flex;gap:18px;flex-wrap:wrap}
+.stat b{display:block;font:700 1.15rem var(--f-body);font-variant-numeric:tabular-nums}
+.stat span{font:500 .68rem var(--f-mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+
+.main{display:grid;grid-template-columns:250px minmax(0,1fr) 270px;gap:16px;align-items:start}
+@media (max-width:1000px){ .main{grid-template-columns:minmax(0,1fr)} .side{order:2} .map{order:3} }
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px;display:grid;gap:8px;min-width:0}
+.panel h2{font-size:1rem}
+.lec-h{font:700 .72rem var(--f-body);letter-spacing:.07em;text-transform:uppercase;margin-top:6px}
+.ent{display:grid;grid-template-columns:1fr auto;gap:2px 8px;text-align:left;width:100%;background:transparent;border:1px solid transparent;border-radius:8px;padding:7px 8px;cursor:pointer;color:var(--ink);font:inherit}
+.ent:hover{background:var(--chip)}
+.ent[aria-current="true"]{border-color:var(--lc);background:var(--chip)}
+.ent .n{font-weight:600;font-size:.9rem}
+.ent .s{grid-column:1;font-size:.75rem;color:var(--muted)}
+.ent .pct{grid-row:1/3;grid-column:2;align-self:center;font:500 .75rem var(--f-mono);color:var(--muted);font-variant-numeric:tabular-nums}
+.ent .mini{grid-column:1/3;height:4px;border-radius:2px;background:var(--line);overflow:hidden}
+.ent .mini i{display:block;height:100%;background:var(--lc)}
+.lF{--lc:var(--arch)} .lD{--lc:var(--face)} .lT{--lc:var(--tcol)}
+:root{--tcol:#1d7a5f} @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--tcol:#6fd0b0}} :root[data-theme="dark"]{--tcol:#6fd0b0}
+.tag.rr{background:var(--chip);color:var(--ink);border:1px solid var(--line)}
+
+.card{background:var(--surface);border:1px solid var(--line);border-top:5px solid var(--lc);border-radius:12px;padding:18px;display:grid;gap:14px;min-width:0}
+.card-top{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px;align-items:baseline}
+.card-top h2{font-size:1.35rem}
+.tag{font:500 .7rem var(--f-mono);letter-spacing:.06em;text-transform:uppercase;padding:3px 8px;border-radius:999px;background:var(--chip);color:var(--muted)}
+.tag.lo{color:var(--lc)}
+.tag.hy{background:var(--hy-bg);color:var(--hy-ink);border:1px solid var(--hy-line)}
+.boxes{display:flex;gap:4px;flex-wrap:wrap}
+.boxes i{width:18px;height:6px;border-radius:3px;background:var(--line)}
+.boxes i.done-ok{background:var(--ok)} .boxes i.done-bad{background:var(--bad)} .boxes i.cur{background:var(--lc)}
+.q{font:600 1.08rem/1.45 var(--f-body);margin:0}
+.hint{font-size:.8rem;color:var(--muted);margin:0}
+.opts{display:grid;gap:8px}
+.opt{display:grid;grid-template-columns:auto 1fr;gap:10px;align-items:start;text-align:left;width:100%;font:inherit;color:var(--ink);background:var(--bg);border:1.5px solid var(--line);border-radius:10px;padding:10px 12px;cursor:pointer}
+.opt:hover:not([disabled]){border-color:var(--lc)}
+.opt .k{font:500 .75rem var(--f-mono);color:var(--muted);border:1px solid var(--line);border-radius:5px;padding:1px 6px;margin-top:1px}
+.opt.sel{border-color:var(--lc);background:var(--chip)}
+.opt.right{border-color:var(--ok);background:var(--ok-bg)}
+.opt.wrong{border-color:var(--bad);background:var(--bad-bg)}
+.opt.missed{border-color:var(--ok);border-style:dashed}
+.opt[disabled]{cursor:default}
+.ordered{display:grid;gap:6px;counter-reset:ord;padding:0;margin:0;list-style:none;min-height:44px;border:1.5px dashed var(--line);border-radius:10px;padding:8px}
+.ordered li{counter-increment:ord;display:grid;grid-template-columns:auto 1fr;gap:8px;align-items:center;background:var(--chip);border-radius:8px;padding:7px 10px;cursor:pointer}
+.ordered li::before{content:counter(ord);font:500 .78rem var(--f-mono);color:var(--lc)}
+.ordered li.right{background:var(--ok-bg)} .ordered li.wrong{background:var(--bad-bg)}
+.ordered .empty{color:var(--muted);font-size:.85rem;padding:4px}
+/* ---------- Review ---------- */
+.rvw{margin-top:14px}
+.rvw-bar{position:sticky;top:0;z-index:8;background:var(--bg);border-bottom:1px solid var(--line);padding:10px 0;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.rvw-bar .seg{display:flex;gap:2px;background:var(--chip);border:1px solid var(--line);border-radius:9px;padding:3px}
+.rvw-bar .seg button{background:transparent;border:0;border-radius:7px;padding:6px 12px;font:inherit;font-size:13.5px;color:var(--muted);cursor:pointer}
+.rvw-bar .seg button[aria-pressed="true"]{background:var(--surface);color:var(--ink);font-weight:600;box-shadow:0 1px 2px rgba(0,0,0,.08)}
+#rvwQ{flex:1 1 180px;min-width:140px;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:7px 10px;font:inherit;font-size:14px;color:inherit}
+#rvwCount{font-family:var(--f-mono);font-size:11px;color:var(--muted);white-space:nowrap}
+.rvw-toc{display:flex;flex-wrap:wrap;gap:6px;margin:12px 0 2px}
+.rvw-toc a{font-size:12.5px;text-decoration:none;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:4px 10px}
+.rvw-toc a:hover{color:var(--ink);border-color:var(--muted)}
+.rvw-body{max-width:none}
+.rsec{padding:6px 0 10px;scroll-margin-top:64px}
+.rsec.hide{display:none}
+.rh{font-family:var(--f-display);font-size:1.5rem;font-weight:650;margin:26px 0 4px;padding-bottom:6px;border-bottom:2px solid var(--acc)}
+.rsh{font-family:var(--f-display);font-size:1.12rem;font-weight:650;margin:18px 0 4px}
+.rvw-body p{margin:8px 0;line-height:1.62}
+ul.rlist{margin:8px 0;padding-left:1.15em;display:grid;gap:5px}
+ul.rlist li{line-height:1.55}
+.rtbl{overflow-x:auto;margin:12px 0;border:1px solid var(--line);border-radius:10px;background:var(--surface)}
+.rtbl table{border-collapse:collapse;width:100%;font-size:14px}
+.rtbl th,.rtbl td{text-align:left;vertical-align:top;padding:8px 11px;border-bottom:1px solid var(--line)}
+.rtbl thead th{background:var(--chip);font-family:var(--f-mono);font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);white-space:nowrap}
+.rtbl tbody tr:last-child td{border-bottom:0}
+.rtbl td b{font-weight:600}
+.rseq{margin:12px 0;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 14px 12px 10px}
+.rseq ol{margin:0;padding-left:1.3em;display:grid;gap:7px}
+.rseq li{line-height:1.55;padding-left:2px}
+.rseq li b{color:var(--acc)}
+.cgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(330px,1fr));gap:10px;margin:12px 0;align-items:start}
+.cgrid>details{margin:0}
+details.cx{margin:11px 0;border-radius:9px;border:1px solid var(--line);background:var(--surface);overflow:hidden}
+details.cx>summary{list-style:none;cursor:pointer;display:flex;align-items:baseline;gap:9px;padding:9px 12px;border-left:3px solid var(--line);font-size:14px}
+details.cx>summary::-webkit-details-marker{display:none}
+details.cx>summary::after{content:"+";margin-left:auto;font-family:var(--f-mono);font-size:14px;color:var(--muted);line-height:1}
+details.cx[open]>summary::after{content:"\2013"}
+details.cx>summary .lbl{font-family:var(--f-mono);font-size:10px;letter-spacing:.11em;text-transform:uppercase;font-weight:700;white-space:nowrap}
+details.cx>summary .pk{color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1}
+details.cx[open]>summary .pk{display:none}
+details.cx .cbody{padding:2px 13px 12px;line-height:1.56;font-size:14.6px;border-left:3px solid var(--line)}
+details.cx .cbody b{font-weight:600}
+details.rrule>summary,details.rrule .cbody{border-left-color:var(--acc)}
+details.rtrap>summary,details.rtrap .cbody{border-left-color:var(--bad)}
+details.rmem>summary,details.rmem .cbody{border-left-color:var(--mem)}
+details.rrule>summary .lbl{color:var(--acc)} details.rtrap>summary .lbl{color:var(--bad)} details.rmem>summary .lbl{color:var(--mem)}
+details.rhy{background:var(--hy-bg);border-color:var(--hy-line);color:var(--hy-ink)}
+details.rhy>summary,details.rhy .cbody{border-left-color:var(--hy-line)}
+details.rhy>summary .lbl{color:var(--hy-ink);opacity:.9}
+details.rhy>summary .pk,details.rhy>summary::after{color:var(--hy-ink);opacity:.75}
+.rvw-empty{display:none;text-align:center;color:var(--muted);border:1px dashed var(--line);border-radius:10px;padding:28px;margin-top:16px}
+.rvw-empty.on{display:block}
+.rvw[data-lec="F"]{--acc:var(--arch)} .rvw[data-lec="D"]{--acc:var(--face)} .rvw[data-lec="T"]{--acc:var(--tcol)}
+@media print{
+  header,.bar,.main,.rvw-bar,.rvw-toc,.rvw-empty{display:none!important}
+  .rvw{margin:0}
+  body{background:#fff}
+  .rsec{break-before:page;break-inside:auto}
+  .rsec:first-of-type{break-before:auto}
+  .rtbl,.rseq,details.cx{break-inside:avoid}
+  details.cx>summary::after{display:none}
+  .cgrid{grid-template-columns:1fr 1fr}
+}
+.fb .ans{font-size:.95rem}
+.fbexp{display:grid;gap:8px}
+.fbexp p{margin:0;line-height:1.6}
+.fbnotes{list-style:none;margin:2px 0 0;padding:0;display:grid;gap:6px}
+.fbnotes li{font-size:.9rem;line-height:1.5;color:var(--muted);padding-left:10px;border-left:2px solid var(--line)}
+.fbnotes li b{color:var(--ink);font-weight:600}
+.fbpearl{margin-top:2px;background:var(--hy-bg);border:1px solid var(--hy-line);border-left-width:3px;border-radius:9px;padding:9px 12px;font-size:.92rem;line-height:1.5;color:var(--hy-ink)}
+.fbpearl b{display:block;font:700 .66rem var(--f-mono);letter-spacing:.14em;text-transform:uppercase;color:var(--hy-line);margin-bottom:3px}
+.fb{border-radius:10px;padding:12px 14px;display:grid;gap:6px}
+.fb.ok{background:var(--ok-bg)} .fb.bad{background:var(--bad-bg)}
+.fb .v{font-weight:700}
+.fb.ok .v{color:var(--ok)} .fb.bad .v{color:var(--bad)}
+.fb ol{margin:0;padding-left:1.2em}
+.actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:space-between;align-items:center}
+.timer{font:500 .8rem var(--f-mono);color:var(--muted);font-variant-numeric:tabular-nums}
+.done{display:grid;gap:10px;text-align:left}
+
+.lo-grid{display:grid;gap:6px}
+.lo-tile{display:grid;grid-template-columns:auto 1fr auto;gap:8px;align-items:center;text-align:left;width:100%;background:transparent;border:1px solid var(--line);border-radius:8px;padding:6px 8px;cursor:pointer;color:var(--ink);font:inherit}
+.lo-tile:hover{border-color:var(--lc)}
+.lo-tile .id{font:500 .72rem var(--f-mono);color:var(--lc);white-space:nowrap}
+.lo-tile .t{font-size:.78rem;line-height:1.3}
+.lo-tile .dot{width:12px;height:12px;border-radius:50%;background:var(--line)}
+.dot.s-o{background:var(--once)} .dot.s-m{background:var(--bad)} .dot.s-M{background:var(--ok)}
+.legend{display:flex;flex-wrap:wrap;gap:10px;font-size:.72rem;color:var(--muted)}
+.legend span{display:inline-flex;gap:5px;align-items:center}
+.legend i{width:10px;height:10px;border-radius:50%;display:inline-block;background:var(--line)}
+.legend i.o{background:var(--once)} .legend i.m{background:var(--bad)} .legend i.M{background:var(--ok)}
+footer{color:var(--muted);font-size:.8rem;border-top:1px solid var(--line);padding-top:12px}
+@media (prefers-reduced-motion: no-preference){ .opt,.ent,.lo-tile{transition:border-color .12s, background .12s} }
+</style>
+
+<div class="wrap">
+<header>
+  <div>
+    <p class="meta">HoyaDocs · Block 5 · Genetics · HEM11</p>
+    <h1>HEM11 Prenatal Testing Builder</h1>
+    <p class="lede">Prenatal genetic screening and diagnosis, LO by LO, including the 2×2 math: build each structure box by box, then drill what you miss. Boxes tagged Rapid Review test the LO Rapid Review and Master Review checklists.</p>
+  </div>
+  <div class="hdr-actions">
+    <button class="btn primary" id="reviewBtn" type="button" aria-pressed="false">Review</button>
+    <button class="btn" id="themeBtn" type="button">Theme: auto</button>
+    <button class="btn" id="resetBtn" type="button">Reset progress</button>
+  </div>
+</header>
+
+<div class="bar">
+  <div class="seg" role="group" aria-label="Mode">
+    <span class="lab">Mode</span>
+    <button type="button" data-mode="build" aria-pressed="true">Build</button>
+    <button type="button" data-mode="drill" aria-pressed="false">Drill</button>
+  </div>
+  <div class="seg" role="group" aria-label="Section scope" id="scopeSeg">
+    <span class="lab">Scope</span>
+    <button type="button" data-scope="all" aria-pressed="true">All</button>
+    <button type="button" data-scope="F" aria-pressed="false">LO1 Screen vs diagnose</button>
+    <button type="button" data-scope="D" aria-pressed="false">LO2 Screening tests</button>
+    <button type="button" data-scope="T" aria-pressed="false">LO3 Diagnostic testing</button>
+  </div>
+  <div class="seg" role="group" aria-label="Focus" id="focusSeg">
+    <span class="lab">Focus</span>
+    <button type="button" data-rr="0" aria-pressed="true">All boxes</button>
+    <button type="button" data-rr="1" aria-pressed="false">Rapid Review only</button>
+  </div>
+  <div class="stats" aria-live="polite">
+    <div class="stat"><b id="sScore">0</b><span>Score</span></div>
+    <div class="stat"><b id="sStreak">0</b><span>Streak</span></div>
+    <div class="stat"><b id="sAcc">—</b><span>Accuracy</span></div>
+    <div class="stat"><b id="sBoxes">0</b><span>Boxes mastered</span></div>
+    <div class="stat"><b id="sLos">0/3</b><span>LOs mastered</span></div>
+  </div>
+</div>
+
+<div class="main">
+  <aside class="panel side" aria-label="Structures">
+    <h2>Structures</h2>
+    <div id="entList"></div>
+  </aside>
+  <section class="card" id="card" aria-live="polite"></section>
+  <aside class="panel map" aria-label="Learning objective mastery map">
+    <h2>LO mastery map</h2>
+    <div class="legend"><span><i></i>untested</span><span><i class="m"></i>missed</span><span><i class="o"></i>got it once</span><span><i class="M"></i>mastered</span></div>
+
+    <p class="hint">Tap an LO to drill just that objective. Mastered = right twice in a row.</p>
+    <div class="lo-grid" id="loGrid"></div>
+  </aside>
+</div>
+
+<div class="rvw" id="rvw" data-lec="F" hidden>
+  <div class="rvw-bar">
+    <div class="seg" id="rvwTabs" role="group" aria-label="Section">
+      <button type="button" data-l="F" aria-pressed="true">LO1 Screen vs diagnose</button>
+      <button type="button" data-l="D" aria-pressed="false">LO2 Screening tests</button>
+      <button type="button" data-l="T" aria-pressed="false">LO3 Diagnostic testing</button>
+    </div>
+    <input id="rvwQ" type="search" placeholder="Search this review" autocomplete="off" aria-label="Search the review">
+    <span id="rvwCount"></span>
+    <button class="btn" type="button" id="rvwAll" aria-pressed="false">Expand all</button>
+    <button class="btn" type="button" id="rvwPrint">Print</button>
+    <button class="btn primary" type="button" id="rvwClose">Back to the game</button>
+  </div>
+  <nav class="rvw-toc" id="rvwToc" aria-label="Contents"></nav>
+  <div class="rvw-body" id="rvwBody"></div>
+  <div class="rvw-empty" id="rvwEmpty">Nothing in this section matches that search.</div>
+</div>
+
+
+<footer>HoyaDocs · HEM11 Prenatal Testing Builder · Updated October 8, 2026 · Revision 1.0. Yellow “HY” tags mark high-yield points, including Step 1. “Rapid Review” tags mark boxes built from the LO Rapid Review checklists.</footer>
+</div>
+
+<script>
+/* ================= LEARNING OBJECTIVES ================= */
+var LOS = {"1": "Prenatal genetic screening vs diagnostic tests", "2": "DNA vs non-DNA prenatal screening tests for single-gene disorders and aneuploidies", "3": "Prenatal diagnostic testing: indications, methods and laboratory studies"};
+var LOLEC = {"1": "F", "2": "D", "3": "T"};
+var LECS = [{"k": "F", "n": "LO1 Screen vs diagnose", "c": "arch"}, {"k": "D", "n": "LO2 Screening tests", "c": "face"}, {"k": "T", "n": "LO3 Diagnostic testing", "c": "eye"}];
+var E = [{"id": "why", "lec": "F", "name": "Why test, and screening vs diagnosis", "sub": "Purpose · ACOG · attitudes", "b": [{"lo": "1", "rr": true, "t": "m", "q": "Select ALL reasons for prenatal genetic testing.", "a": ["Reassurance for families at risk", "Preparation for the birth of an affected baby", "Planning timing and mode of delivery", "Risk information for couples for whom termination is an option", "Future in utero treatment for some disorders"], "o": ["Guaranteeing a healthy baby", "Replacing newborn screening"], "n": ["No test guarantees this.", "Newborn screening is separate."], "w": "Example: delivering at a center with pediatric cardiac surgery.", "p": "Reassure, prepare, plan, decide, treat."}, {"lo": "1", "rr": true, "hy": true, "q": "What is the purpose of a SCREENING test?", "a": "To examine low-risk individuals and identify those at high risk", "o": ["To determine whether disease is present in a high-risk person", "To treat the disease", "To confirm a positive diagnostic test"], "n": ["That's diagnosis.", "Not testing.", "That's not screening."], "w": "Screens are inexpensive and noninvasive and give a risk, never a diagnosis.", "p": "Screen = find the high-risk."}, {"lo": "1", "rr": true, "hy": true, "q": "What is the purpose of a DIAGNOSTIC test?", "a": "To determine whether the disease is present in a high-risk population, giving a yes/no answer", "o": ["To give a risk estimate", "To screen all low-risk women", "To estimate gestational age"], "n": ["That's screening.", "That's screening.", "Not the purpose."], "w": "Usually invasive: amniocentesis, CVS or embryo biopsy (PGT), with karyotype, microarray or DNA testing.", "p": "Diagnose = yes or no."}, {"lo": "1", "rr": true, "t": "m", "q": "Select ALL prenatal SCREENING tests.", "a": ["Maternal age", "Maternal serum markers", "Nuchal translucency", "Cell-free DNA", "Carrier screening"], "o": ["Amniocentesis karyotype", "CVS microarray"], "n": ["Diagnostic.", "Diagnostic."], "w": "Screens carry no miscarriage risk.", "p": "Blood, ultrasound, history = screens."}, {"lo": "1", "rr": true, "hy": true, "q": "What does ACOG recommend about prenatal genetic testing?", "a": "Offer both screening and diagnostic testing to ALL pregnant women, regardless of age or risk", "o": ["Offer diagnostic testing only to women over 35", "Offer screening only to high-risk women", "Require testing before 10 weeks"], "n": ["Outdated age-based approach.", "Offered to all.", "Not a requirement."], "w": "Based on respect for patient autonomy.", "p": "Offer both to everyone."}, {"lo": "1", "rr": true, "hy": true, "q": "A 38-year-old's cfDNA is “high risk for trisomy 21.” She asks whether to terminate. Best next step?", "a": "Genetic counseling and diagnostic testing (amniocentesis or CVS) before any decision", "o": ["Proceed with termination; cfDNA is diagnostic", "Repeat cfDNA and decide on the second result", "Reassure her; cfDNA is usually wrong"], "n": ["cfDNA is a screen.", "Still a screen.", "PPV is high but not 100%."], "w": "PPV of cfDNA for T21 is ≈60–90% depending on age.", "p": "Positive screen → diagnostic test."}, {"lo": "1", "rr": true, "hy": true, "q": "What is the most important determinant of whether a woman has prenatal genetic screening?", "a": "Her attitude toward prenatal diagnosis", "o": ["Her age alone", "Her insurance status alone", "Her gestational age"], "n": ["Not the main determinant.", "Not the main determinant.", "Not the main determinant."], "w": "Types: anxious, balance, content.", "p": "Attitude drives uptake."}, {"lo": "1", "rr": true, "t": "m", "q": "Select ALL correct patient attitude–approach pairs.", "a": ["Anxious → wants testing irrespective of risk (diagnostic test directly)", "Balance → wants a risk assessment first (best candidate for screening)", "Content → refuses screening and diagnosis (respect the decision)"], "o": ["Content → best candidate for screening", "Anxious → refuses all testing"], "n": ["Content declines.", "Anxious wants testing."], "w": "Match the offer to the patient's values.", "p": "Anxious, balance, content."}, {"lo": "1", "q": "A 26-year-old low-risk woman wants to know her baby's Down syndrome risk without any procedure risk. Which approach fits?", "a": "Screening (cfDNA or first-trimester/quad screen)", "o": ["Amniocentesis", "CVS", "PGT"], "n": ["Procedure risk.", "Procedure risk.", "Requires IVF."], "w": "She fits the “balance” attitude.", "p": "No procedure risk → screen."}]}, {"id": "two", "lec": "F", "name": "Screening accuracy: the 2×2", "sub": "DR · FPR · PPV · NPV · prevalence", "b": [{"lo": "1", "rr": true, "hy": true, "q": "In a 2×2 table (a = true positive, b = false negative, c = false positive, d = true negative), what is the detection rate?", "a": "a / (a + b) (sensitivity)", "o": ["a / (a + c)", "c / (c + d)", "d / (b + d)"], "n": ["PPV.", "False positive rate.", "NPV."], "w": "Of all affected fetuses, the fraction the screen catches.", "p": "DR = a/(a+b)."}, {"lo": "1", "rr": true, "hy": true, "q": "What is the false positive rate?", "a": "c / (c + d) (= 1 − specificity)", "o": ["a / (a + b)", "b / (a + b)", "a / (a + c)"], "n": ["Detection rate.", "False negative rate.", "PPV."], "w": "Of all normal fetuses, the fraction wrongly flagged.", "p": "FPR = c/(c+d)."}, {"lo": "1", "rr": true, "hy": true, "q": "What is the positive predictive value?", "a": "a / (a + c): of all screen positives, the fraction truly affected", "o": ["a / (a + b)", "d / (b + d)", "c / (c + d)"], "n": ["Detection rate.", "NPV.", "FPR."], "w": "Predictive values describe what a result means for the patient.", "p": "PPV = a/(a+c)."}, {"lo": "1", "rr": true, "q": "What is the negative predictive value?", "a": "d / (b + d): of all screen negatives, the fraction truly normal", "o": ["a / (a + c)", "c / (c + d)", "b / (a + b)"], "n": ["PPV.", "FPR.", "False negative rate."], "w": "Also depends on prevalence.", "p": "NPV = d/(b+d)."}, {"lo": "1", "rr": true, "hy": true, "q": "Which measures change with disease prevalence?", "a": "Predictive values (PPV and NPV)", "o": ["Detection rate and false positive rate", "All four measures equally", "None of them"], "n": ["Properties of the test.", "Not all.", "PPV/NPV do change."], "w": "Detection rate and false positive rate describe the test; predictive values describe a result for a patient.", "p": "Prevalence moves PPV."}, {"lo": "1", "rr": true, "hy": true, "q": "T21 prevalence is 1/500; a screen has 99% detection and 0.1% false positive rate; 1,000 women are tested. What is the PPV?", "a": "≈66% (2 true positives, ≈1 false positive)", "o": ["99%", "0.1%", "100%"], "n": ["That's the detection rate.", "That's the false positive rate.", "False positives still occur."], "w": "Affected 2 → caught 2; unaffected 998 → ≈1 false positive. PPV = 2/3. Even near-perfect detection leaves 1 in 3 positives wrong.", "p": "Rare disease → lower PPV."}, {"lo": "1", "rr": true, "q": "A screen has the same sensitivity and specificity in populations with T21 prevalence 1/100 and 1/1,000. Which has the higher PPV?", "a": "The 1/100 population", "o": ["The 1/1,000 population", "They are equal", "Cannot be compared"], "n": ["Lower prevalence → lower PPV.", "PPV depends on prevalence.", "It can."], "w": "That is why cfDNA PPV is lower in younger women and for rarer trisomies.", "p": "Higher prevalence → higher PPV."}, {"lo": "1", "rr": true, "hy": true, "q": "Screening: 300 affected and 9,700 unaffected; 270 affected and 485 unaffected test positive. Detection rate, FPR and PPV?", "a": "Detection 90%; FPR 5%; PPV ≈36%", "o": ["Detection 36%; FPR 90%; PPV 5%", "Detection 90%; FPR 36%; PPV 5%", "Detection 5%; FPR 90%; PPV 36%"], "n": ["Mixed up.", "Mixed up.", "Mixed up."], "w": "DR = 270/300; FPR = 485/9,700; PPV = 270/(270 + 485) = 270/755.", "p": "Do the 2×2 by hand."}]}, {"id": "grid", "lec": "D", "name": "The screening grid & single-gene screens", "sub": "Family history · ethnicity · expanded carrier screening", "b": [{"lo": "2", "rr": true, "hy": true, "t": "m", "q": "Select ALL correct placements in the prenatal screening grid.", "a": ["Single-gene, non-DNA → family history, ethnicity", "Single-gene, DNA → carrier screening of both parents", "Chromosome, non-DNA → maternal age, serum markers, nuchal translucency", "Chromosome, DNA → cell-free DNA (NIPT)"], "o": ["Chromosome, DNA → maternal age", "Single-gene, DNA → nuchal translucency"], "n": ["Maternal age is non-DNA.", "NT is a non-DNA chromosome screen."], "w": "Two axes: single-gene vs chromosome; DNA vs non-DNA.", "p": "2×2 grid of screens."}, {"lo": "2", "rr": true, "hy": true, "t": "m", "q": "Select ALL family-history clues to screen for fragile X premutation.", "a": ["Female infertility / premature ovarian failure", "Unexplained intellectual disability or developmental delay", "Autism"], "o": ["Recurrent DVT", "Early hearing loss only"], "n": ["Not fragile X.", "Not the classic clue."], "w": "Test FMR1 CGG repeat carrier status.", "p": "POF + ID/autism in family → FMR1."}, {"lo": "2", "rr": true, "q": "A woman's sister has premature ovarian failure and a nephew has autism and ID. What should she be screened for?", "a": "Fragile X premutation (FMR1 CGG repeat)", "o": ["Cystic fibrosis only", "Tay-Sachs", "Trisomy 21 by cfDNA"], "n": ["Not the clue.", "Not the clue.", "Not a single-gene screen."], "w": "Premutation carriers have POF; full mutations cause ID/autism.", "p": "POF + autism = fragile X."}, {"lo": "2", "rr": true, "hy": true, "q": "Which single-gene disorders does ACOG screen for in ALL ethnicities?", "a": "Cystic fibrosis and spinal muscular atrophy (plus a hemoglobinopathy screen with the CBC)", "o": ["Tay-Sachs and Canavan", "Huntington and myotonic dystrophy", "Fragile X only"], "n": ["Ashkenazi panel.", "Adult-onset dominant; not routine carrier screens.", "Only with suggestive history."], "w": "Ashkenazi Jewish: panel including Tay-Sachs, Canavan, familial dysautonomia, Gaucher.", "p": "Everyone: CF + SMA."}, {"lo": "2", "rr": true, "hy": true, "t": "m", "q": "Select ALL features of NGS expanded carrier screening.", "a": ["Tests >100 single-gene disorders at once", "Done preconceptionally or in early pregnancy", "Saliva or blood from both parents", "Applicable to all ethnic groups"], "o": ["Requires amniotic fluid", "Diagnoses fetal aneuploidy"], "n": ["Parental sample.", "It screens carriers, not aneuploidy."], "w": "Detects ≈3× as many carriers as ethnicity-based screening.", "p": "Expanded panel: >100 genes, both parents."}, {"lo": "2", "rr": true, "hy": true, "q": "Both partners are carriers of cystic fibrosis. Fetal risk and next step?", "a": "25% affected; offer counseling and diagnostic testing (CVS/amniocentesis) or PGT", "o": ["50%; no testing needed", "100%; terminate", "0%; carriers can't have affected children"], "n": ["AR risk is 25%.", "Not 100%.", "Two carriers → 25%."], "w": "Autosomal recessive inheritance.", "p": "Two carriers → 25%."}, {"lo": "2", "rr": true, "hy": true, "t": "m", "q": "Select ALL findings from expanded carrier screening studies.", "a": ["Many “ethnicity-specific” disorders are widely distributed", "≈Half of Tay-Sachs carriers had no Jewish ancestry", "Expanded screens find ≈3× as many carriers", "24% carry ≥1 non-mild condition", "<1% of couples carry the same condition"], "o": ["Ethnicity reliably predicts carrier status", "Most couples are carriers of the same condition"], "n": ["Ethnicity is misleading.", "<1%."], "w": "Common positives: α1-antitrypsin, CF, GJB2 deafness, SMA, FMF, Smith-Lemli-Opitz, sickle/β-thal, Gaucher, factor XI.", "p": "Ethnicity misleads."}, {"lo": "2", "rr": true, "t": "m", "q": "Select ALL ACOG/ACMG criteria for including a condition on a carrier panel.", "a": ["Carrier frequency ≥1:100", "Well-defined, severe phenotype", "Onset in early life", "Detrimental effect on quality of life", "Detection rate ≥70%"], "o": ["Adult onset only", "Carrier frequency ≤1:100,000"], "n": ["Early onset is required.", "Too rare."], "w": "Only ≈27% of conditions on commercial panels meet these criteria.", "p": "Common, severe, early, ≥70% detected."}]}, {"id": "serum", "lec": "D", "name": "Chromosome screens without DNA", "sub": "Maternal age · serum markers · NT", "b": [{"lo": "2", "rr": true, "t": "m", "q": "Select ALL non-DNA screens for chromosome anomalies.", "a": ["Family history (prior affected child, parental balanced translocation)", "Maternal age", "Maternal serum markers", "Nuchal translucency on ultrasound"], "o": ["Cell-free DNA", "Expanded carrier screening"], "n": ["DNA-based.", "Single-gene, DNA-based."], "w": "Maternal age is the oldest screen (≈30% detection at 5% FPR).", "p": "History, age, serum, NT."}, {"lo": "2", "rr": true, "hy": true, "q": "What is nuchal translucency and what does a thick NT suggest?", "a": "Fluid space at the back of the fetal neck (11–14 wk); thick NT → aneuploidy and heart defects", "o": ["Fluid around the brain; thick NT → hydrocephalus only", "Placental thickness; thick NT → abruption", "Amniotic fluid volume; thick NT → polyhydramnios"], "n": ["Not NT.", "Not NT.", "Not NT."], "w": "Combined with PAPP-A and free β-hCG in the first-trimester screen.", "p": "Thick NT → aneuploidy, heart."}, {"lo": "2", "rr": true, "hy": true, "q": "What are maternal serum markers?", "a": "Proteins made by the fetus and/or placenta whose levels differ in aneuploid pregnancies", "o": ["Maternal antibodies against the fetus", "Fetal cells in maternal blood", "Maternal DNA fragments"], "n": ["Not the basis.", "Not used clinically.", "That's cfDNA (maternal part)."], "w": "Measured in the 1st or 2nd trimester.", "p": "Serum markers = fetal/placental proteins."}, {"lo": "2", "rr": true, "hy": true, "q": "Which quad screen pattern fits trisomy 21 (standard references)?", "a": "↓ AFP, ↑ hCG, ↓ estriol, ↑ inhibin A", "o": ["↓ AFP, ↓ hCG, ↓ estriol, normal inhibin", "↑ AFP only", "↑ AFP, ↑ estriol, ↓ hCG"], "n": ["Trisomy 18.", "Neural tube defect.", "Not a classic pattern."], "w": "“HI” goes high: hCG and Inhibin ↑.", "p": "Down: HI up."}, {"lo": "2", "rr": true, "hy": true, "q": "Quad screen: low AFP, low hCG, low estriol, normal inhibin. Which pattern?", "a": "Trisomy 18 → counsel and offer diagnostic testing", "o": ["Trisomy 21", "Neural tube defect", "Normal pregnancy"], "n": ["hCG and inhibin would be ↑.", "AFP would be ↑.", "Abnormal."], "w": "Trisomy 18: everything low.", "p": "18 = all low."}, {"lo": "2", "rr": true, "hy": true, "q": "Quad screen shows an isolated HIGH AFP. Most likely?", "a": "Neural tube defect or abdominal wall defect (or dating error/twins) → targeted ultrasound", "o": ["Trisomy 21", "Trisomy 18", "Turner syndrome"], "n": ["AFP low.", "AFP low.", "Not the pattern."], "w": "AFP leaks from open defects.", "p": "High AFP → open defect."}, {"lo": "2", "rr": true, "q": "Which first-trimester combined screen pattern fits trisomy 21?", "a": "↑ NT, ↓ PAPP-A, ↑ free β-hCG", "o": ["↓ NT, ↑ PAPP-A, ↓ hCG", "↑ NT, ↓ PAPP-A, ↓ hCG", "Normal NT, normal PAPP-A, normal hCG"], "n": ["Opposite.", "Trisomy 18 (or 13).", "Normal."], "w": "Done at 11–14 weeks.", "p": "T21: thick NT, low PAPP-A, high hCG."}, {"lo": "2", "rr": true, "t": "o", "q": "Order Down syndrome screens from LOWEST to HIGHEST detection rate (non-DNA screens compared at a 5% false positive rate).", "a": ["Maternal age", "AFP only", "Quad screen", "Full integrated screen", "Cell-free DNA"], "w": "cfDNA >99% detection at ≈0.1–0.2% FPR. The first-trimester screen sits between the quad and integrated screens.", "p": "Age → AFP → quad → integrated → cfDNA."}]}, {"id": "cfdna", "lec": "D", "name": "Cell-free DNA (NIPT)", "sub": "Placental origin · performance · false positives", "b": [{"lo": "2", "rr": true, "hy": true, "q": "Where does fetal cell-free DNA in maternal blood come from?", "a": "Placental (trophoblast) apoptosis", "o": ["Fetal blood cells crossing the placenta", "Fetal liver", "Amniotic fluid"], "n": ["Not the main source.", "Not the source.", "Not the source."], "w": "Fetal fraction ≈10%; cleared within hours of birth.", "p": "“Fetal” DNA is placental."}, {"lo": "2", "rr": true, "q": "What is the typical fetal fraction of cfDNA, and how fast is it cleared after birth?", "a": "≈10%; cleared within hours", "o": ["≈90%; persists for years", "≈1%; cleared after months", "≈50%; never cleared"], "n": ["Most is maternal.", "Not the figures.", "Not the figures."], "w": "No carryover between pregnancies.", "p": "10% fetal, gone in hours."}, {"lo": "2", "rr": true, "hy": true, "q": "How does cfDNA testing detect trisomy 21?", "a": "Massively parallel sequencing counts fragments per chromosome; T21 adds a slight excess of chr21 fragments", "o": ["Karyotyping fetal cells from maternal blood", "Measuring maternal hCG", "Ultrasound of the nuchal fold"], "n": ["No cells are cultured.", "Serum marker.", "Ultrasound."], "w": "Millions of fragments are read and mapped.", "p": "Count the chr21 reads."}, {"lo": "2", "rr": true, "hy": true, "q": "What are the in-house cfDNA detection rate, false positive rate and PPV (30-year-old) for trisomy 21?", "a": ">99%; 0.2%; 58%", "o": ["88%; 1%; 13%", "97%; 0.4%; 19%", "50%; 5%; 99%"], "n": ["Trisomy 13.", "Trisomy 18.", "Not the figures."], "w": "T18: 97%, 0.4%, PPV 19%. T13: 88%, <1%, PPV 13%. Monosomy X: 95%, 1%.", "p": "T21 cfDNA PPV ≈58% at 30."}, {"lo": "2", "rr": true, "hy": true, "t": "m", "q": "Select ALL causes of a FALSE POSITIVE cfDNA result.", "a": ["Confined placental mosaicism", "Vanishing twin", "Maternal mosaicism or chromosome abnormality", "Maternal organ transplant", "Maternal tumor"], "o": ["High fetal fraction", "Correct gestational dating"], "n": ["Low fetal fraction causes no-calls.", "Not a cause."], "w": "No result / false negative: low fetal fraction (obesity, early gestation), mosaicism.", "p": "Placenta, twin, mom, donor, tumor."}, {"lo": "2", "rr": true, "hy": true, "q": "cfDNA is high risk for trisomy 13; ultrasound is normal; one twin was lost at 8 weeks. Explanation and next step?", "a": "Vanishing twin DNA causing a false positive; confirm with amniocentesis", "o": ["True trisomy 13; terminate", "Lab error; ignore", "Maternal trisomy 13; karyotype mother only"], "n": ["Must confirm.", "Explainable.", "Not the likely cause."], "w": "The demised twin's placenta can still shed DNA.", "p": "Lost twin → false cfDNA."}, {"lo": "2", "rr": true, "q": "A woman with a kidney from her brother has cfDNA showing a Y chromosome, but a single female fetus is seen on ultrasound and confirmed on amnio. Explanation?", "a": "Donor-derived cfDNA from the male transplant", "o": ["Fetal XY sex reversal", "Maternal Y chromosome", "Twin pregnancy"], "n": ["Amnio shows XX.", "Not the explanation.", "Single fetus on ultrasound."], "w": "Transplants are a known cause of false cfDNA results.", "p": "Transplant donor DNA."}, {"lo": "2", "rr": true, "hy": true, "q": "After a positive cfDNA, why is amniocentesis preferred over CVS for confirmation?", "a": "cfDNA is placental; CVS samples the same placenta, while amniocentesis samples fetal cells", "o": ["CVS is never available after cfDNA", "Amniocentesis is always earlier", "CVS cannot detect trisomies"], "n": ["CVS is available.", "CVS is earlier.", "It can."], "w": "Confined placental mosaicism would fool both cfDNA and CVS.", "p": "Placenta screen → fetal confirm."}]}, {"id": "ind", "lec": "T", "name": "Indications for diagnostic testing", "sub": "Who gets offered", "b": [{"lo": "3", "rr": true, "hy": true, "t": "m", "q": "Select ALL indications for prenatal diagnostic testing.", "a": ["Structural chromosome abnormality in a parent (e.g., balanced translocation)", "Previous child with a de novo aneuploidy", "Genetic disorder amenable to diagnosis (family history, positive screen, abnormal ultrasound)", "Maternal desire to rule out genetic conditions"], "o": ["Normal cfDNA in a low-risk woman with no concerns", "Advanced paternal age alone"], "n": ["No indication, though it may still be offered.", "Not a listed indication."], "w": "ACOG offers testing to all, but these are the classic indications.", "p": "Parent rearrangement, prior aneuploidy, risk, desire."}, {"lo": "3", "rr": true, "hy": true, "q": "A couple's first child has nondisjunction trisomy 21 (47,XX,+21). Recurrence risk?", "a": "≈1/100 for any chromosome abnormality (or the age-related risk if higher)", "o": ["≈25%", "≈50%", "≈100%"], "n": ["AR risk.", "Not the figure.", "That's t(21;21)."], "w": "Offer cfDNA and/or CVS/amniocentesis.", "p": "Prior de novo aneuploidy → ≈1%."}, {"lo": "3", "rr": true, "q": "What sets the fetal risk when a parent carries a balanced translocation?", "a": "Type of rearrangement and parent of origin", "o": ["Maternal age only", "Fetal sex only", "Blood type"], "n": ["Not the main factor.", "Not the main factor.", "Irrelevant."], "w": "e.g., t(14;21): higher risk when the mother carries it.", "p": "Type + which parent."}, {"lo": "3", "rr": true, "q": "A 30-year-old's husband is a balanced 14;21 Robertsonian carrier. Best approach?", "a": "Diagnostic testing (CVS/amniocentesis with karyotype) or PGT with IVF", "o": ["cfDNA alone is sufficient", "No testing; risk is background", "Microarray of the husband"], "n": ["Still a screen.", "Risk is increased.", "Husband already characterized."], "w": "Indication: parental structural rearrangement.", "p": "Parental translocation → diagnose."}]}, {"id": "meth", "lec": "T", "name": "CVS vs amniocentesis vs PGT", "sub": "Sample · timing · risk · pitfalls", "b": [{"lo": "3", "rr": true, "hy": true, "q": "What does chorionic villus sampling sample, and when?", "a": "Chorion frondosum (placental villi, trophoblast) at 10–14 weeks, transcervical or transabdominal", "o": ["Amniotic fluid at 15–20 weeks", "Fetal blood at 20 weeks", "Trophectoderm of a blastocyst"], "n": ["Amniocentesis.", "Cordocentesis (not covered).", "PGT."], "w": "Advantage: earliest results.", "p": "CVS = placenta, 10–14 wk."}, {"lo": "3", "rr": true, "hy": true, "q": "What does amniocentesis sample, and when?", "a": "Amniotic fluid with fetal cells (amniocytes), from ≈15 weeks, by transabdominal needle", "o": ["Placental villi at 10–14 weeks", "Maternal blood at 10 weeks", "Embryo cells on day 5"], "n": ["CVS.", "cfDNA.", "PGT."], "w": "Truly fetal cells; preferred to confirm abnormal CVS or cfDNA.", "p": "Amnio = fetal cells, ≥15 wk."}, {"lo": "3", "rr": true, "hy": true, "q": "What are the in-house procedure-related fetal loss rates above background?", "a": "CVS 0.2–0.3%; amniocentesis 1/300–1/500", "o": ["CVS 10%; amniocentesis 5%", "Both 0%", "CVS 1/300; amniocentesis 2–5%"], "n": ["Far too high.", "Small risk exists.", "Mixed up (2–5% is CVS-age background)."], "w": "Background loss: 2–5% at CVS age; 1–2% at amnio age.", "p": "Small added risk."}, {"lo": "3", "rr": true, "hy": true, "q": "Why are about 1% of CVS results ambiguous?", "a": "Placental (confined) mosaicism; confirm with amniocentesis", "o": ["Maternal blood contamination always", "Fetal cells cannot be cultured", "CVS cannot detect trisomies"], "n": ["Not the main reason.", "They can.", "It can."], "w": "CVS samples trophoblast, which can differ from the fetus.", "p": "Ambiguous CVS → amnio."}, {"lo": "3", "rr": true, "q": "CVS at 11 weeks shows 46,XX/47,XX,+16 mosaicism; ultrasound is normal. Next step?", "a": "Amniocentesis (likely confined placental mosaicism); monitor growth and consider UPD testing", "o": ["Terminate", "Repeat CVS", "No follow-up"], "n": ["Not confirmed fetal.", "Samples the same placenta.", "CPM can cause growth restriction."], "w": "Trisomy rescue can leave uniparental disomy.", "p": "CVS mosaic → amnio."}, {"lo": "3", "rr": true, "t": "m", "q": "Select ALL rare complications of amniocentesis.", "a": ["Fetomaternal hemorrhage (give anti-D if Rh−)", "Amniotic fluid leakage", "Infection"], "o": ["Limb reduction defects from early sampling", "Ovarian hyperstimulation"], "n": ["Early CVS (<10 wk), standard references.", "IVF/PGT."], "w": "Fetal loss 1/300–1/500 above background.", "p": "Bleed, leak, infect."}, {"lo": "3", "hy": true, "q": "Why is CVS done at 10–14 weeks rather than earlier (standard references)?", "a": "Early CVS (<10 weeks) has been linked to limb reduction defects", "o": ["Villi do not exist before 14 weeks", "It increases chromosomal errors", "It requires a full bladder"], "n": ["They exist earlier.", "Not the reason.", "Not the reason."], "w": "Timing balances early results with safety.", "p": "Too early CVS → limb defects."}, {"lo": "3", "rr": true, "hy": true, "q": "What is preimplantation genetic testing (PGT)?", "a": "Biopsy of 5–8 trophectoderm cells from a blastocyst (or a blastomere) after IVF, before pregnancy", "o": ["Amniocentesis before 15 weeks", "Maternal blood test in early pregnancy", "Biopsy of the chorion frondosum"], "n": ["Not PGT.", "cfDNA.", "CVS."], "w": "Only unaffected embryos are transferred, avoiding termination.", "p": "PGT = embryo biopsy after IVF."}, {"lo": "3", "rr": true, "t": "m", "q": "Select ALL indications for PGT.", "a": ["Single-gene disorder when both parents are carriers", "HLA matching to a sick sibling", "Balanced translocation in a parent", "Screening for de novo aneuploidy (PGT-A)"], "o": ["Routine screening of all spontaneous pregnancies", "Confirming a positive cfDNA in an ongoing pregnancy"], "n": ["Requires IVF.", "Pregnancy already established → amnio."], "w": "The value of PGT-A for IVF has yet to be determined.", "p": "Genes, HLA, translocations, aneuploidy."}, {"lo": "3", "rr": true, "t": "m", "q": "Select ALL causes of PGT FALSE NEGATIVES (abnormal embryo transferred).", "a": ["Contaminating DNA", "Allele drop-out (one allele fails to amplify)", "Partial amplification", "Human error (wrong embryo)", "Post-zygotic mitotic changes"], "o": ["Embryo mosaicism causing a normal embryo to be discarded", "Self-correction of mosaic embryos"], "n": ["That causes false positives.", "Relates to false positives."], "w": "Unprotected intercourse during IVF can also cause a misleading result.", "p": "Contamination, drop-out, error."}, {"lo": "3", "rr": true, "hy": true, "q": "Why can PGT give FALSE POSITIVES (normal embryos discarded)?", "a": "Embryo mosaicism (≈16%); mosaic embryos with 20–50% abnormal cells can still give healthy children", "o": ["Allele drop-out", "Maternal contamination", "Twin pregnancy"], "n": ["Causes false negatives.", "Causes false negatives.", "Not related."], "w": "Transferring only euploid blastocysts can waste up to 30% of embryos. Overall error 2–5%.", "p": "Mosaic embryo ≠ abnormal baby."}, {"lo": "3", "rr": true, "q": "Both partners carry sickle cell trait and want to avoid any chance of termination. Best option?", "a": "IVF with PGT-M, then confirmatory amniocentesis/CVS in the pregnancy", "o": ["cfDNA in each pregnancy", "No testing; risk is 0%", "CVS in each pregnancy"], "n": ["Screen; doesn't avoid termination decisions.", "Risk is 25%.", "Diagnosis after conception may lead to termination decisions."], "w": "Ongoing PGT pregnancies still get routine prenatal screening or diagnosis.", "p": "Avoid termination → PGT."}, {"lo": "3", "t": "m", "q": "Select ALL issues with IVF/PGT.", "a": ["Expense and intrusiveness", "Ovarian hyperstimulation", "Multiple gestation", "Embryo loss with extended culture", "Monozygotic twinning with late transfer"], "o": ["Increased congenital anomalies to age 5", "Limb reduction defects"], "n": ["No increase shown to 5 years.", "Early CVS."], "w": "In-house: ≈50% of embryos survive to day 3, 25% to day 8.", "p": "IVF has its own costs."}]}, {"id": "lab", "lec": "T", "name": "Laboratory studies", "sub": "Karyotype · FISH · microarray · exome", "b": [{"lo": "3", "rr": true, "hy": true, "q": "What is the karyotype's role and turnaround in prenatal diagnosis?", "a": "Standard for aneuploidies and gross rearrangements, including balanced ones; 10–14 days (cells must be cultured)", "o": ["Rapid 48–72-hour aneuploidy check without culture", "Best for single-gene mutations", "Detects CNVs below 1 Mb"], "n": ["That's interphase FISH (13, 18, 21, X, Y).", "Exome.", "Microarray."], "w": "Used after a positive Down screen.", "p": "Karyotype: 10–14 d, sees balanced."}, {"lo": "3", "rr": true, "hy": true, "q": "What is interphase FISH used for prenatally?", "a": "Rapid check of chromosomes 13, 18, 21, X and Y in 48–72 hours; confirm with karyotype", "o": ["Genome-wide CNV detection", "Whole-exome sequencing", "Carrier screening"], "n": ["Microarray.", "Exome.", "Parental test."], "w": "No culture needed.", "p": "FISH = fast."}, {"lo": "3", "rr": true, "hy": true, "q": "When is chromosomal microarray the preferred test?", "a": "Fetuses with structural anomalies on ultrasound and fetal deaths; adds 5–10% yield when the karyotype is normal", "o": ["Parent with a balanced translocation", "Confirming a balanced inversion", "Single-gene mutation testing"], "n": ["Karyotype sees balanced forms.", "Microarray misses balanced changes.", "Exome/targeted test."], "w": "May be offered instead of karyotype for any invasive test.", "p": "Anomaly on ultrasound → microarray."}, {"lo": "3", "rr": true, "hy": true, "q": "A 20-week fetus has a heart defect and cleft lip; amniocentesis karyotype is normal. Next test?", "a": "Chromosomal microarray; if normal with multiple anomalies → exome sequencing", "o": ["Repeat karyotype", "Maternal cfDNA", "No further testing"], "n": ["Already normal.", "Screen; won't add.", "Yield remains."], "w": "Microarray +5–10%; exome 20–30% yield.", "p": "Karyotype → array → exome."}, {"lo": "3", "rr": true, "hy": true, "q": "When is prenatal exome sequencing indicated, and what is its yield?", "a": "Multiple anomalies with normal karyotype and microarray (or a pattern suggesting a genetic disorder, or a prior undiagnosed affected child); 20–30% yield", "o": ["Every low-risk pregnancy; 90% yield", "Only for balanced translocations; 50% yield", "First-line before karyotype; 5% yield"], "n": ["Not routine.", "Exome misses balanced changes.", "Not first-line."], "w": "Requires pretest and post-test counseling.", "p": "Exome yield 20–30%."}, {"lo": "3", "rr": true, "t": "m", "q": "Select ALL counseling issues before microarray or exome.", "a": ["CNVs of uncertain significance", "SNP arrays can reveal non-paternity or consanguinity", "Option to receive incidental/secondary findings", "Re-analysis over time", "Turnaround and types of results"], "o": ["Guarantee of a diagnosis", "No consent needed"], "n": ["No test guarantees a diagnosis.", "Informed consent is essential."], "w": "Counseling and informed consent are essential.", "p": "VUS, paternity, incidental findings."}, {"lo": "3", "rr": true, "t": "m", "q": "Select ALL single-gene disorders already reported with NIPT (emerging).", "a": ["Huntington disease and achondroplasia (AD)", "Cystic fibrosis, sickle cell, β-thalassemia (AR)", "Hemophilia A and B (X-linked)"], "o": ["Trisomy 21 only", "Lead poisoning"], "n": ["Chromosomal, not single-gene.", "Not genetic."], "w": "Also myotonic dystrophy, Apert, thanatophoric dysplasia, Crouzon, propionic acidemia, Leber congenital amaurosis. NIPT beyond T21/18/13 has low PPV.", "p": "NIPT is expanding to single genes."}]}];
+
+
+(function(){
+"use strict";
+var KEY="hd-hem11-prenatal-builder-v1";
+var S={box:{},score:0,streak:0,best:0,tot:0,right:0,theme:"auto"};
+function load(){try{var j=JSON.parse(localStorage.getItem(KEY)||"null");if(j&&j.box)S=Object.assign(S,j);}catch(e){}}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}}
+load();
+
+var ALL=[]; E.forEach(function(e){e.b.forEach(function(b,i){b.id=e.id+"."+i;b.ent=e;ALL.push(b);});});
+function st(b){var r=S.box[b.id];return r?r.s:"u";}
+var rrOnly=false, mode="build", scope="all", loFilter=null, curEnt=null, idx=0, cur=null, answered=false, results={}, lastId=null, t0=0, tick=null;
+
+function shuffle(a){a=a.slice();for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=a[i];a[i]=a[j];a[j]=t;}return a;}
+function esc(s){return String(s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];});}
+function inScope(b){return (scope==="all"||b.ent.lec===scope)&&(!loFilter||b.lo===loFilter)&&(!rrOnly||b.rr);}
+
+/* ---------- theme ---------- */
+var themeBtn=document.getElementById("themeBtn");
+function applyTheme(){var r=document.documentElement;if(S.theme==="auto")r.removeAttribute("data-theme");else r.setAttribute("data-theme",S.theme);themeBtn.textContent="Theme: "+S.theme;}
+themeBtn.onclick=function(){S.theme={auto:"light",light:"dark",dark:"auto"}[S.theme];applyTheme();save();};
+applyTheme();
+document.getElementById("resetBtn").onclick=function(){
+  var b=this; if(b.dataset.confirm){S.box={};S.score=S.streak=S.tot=S.right=0;save();b.textContent="Reset progress";delete b.dataset.confirm;renderAll();next();return;}
+  b.dataset.confirm="1";b.textContent="Tap again to reset";setTimeout(function(){if(b.dataset.confirm){delete b.dataset.confirm;b.textContent="Reset progress";}},3000);
+};
+
+/* ---------- stats / side / map ---------- */
+function loStatus(lo){var bs=ALL.filter(function(b){return b.lo===lo;});var ss=bs.map(st);
+  var m=ss.filter(function(x){return x==="M";}).length;
+  if(m===bs.length)return{s:"M",m:m,n:bs.length};
+  if(ss.indexOf("m")>=0)return{s:"m",m:m,n:bs.length};
+  if(ss.some(function(x){return x!=="u";}))return{s:"o",m:m,n:bs.length};
+  return{s:"u",m:m,n:bs.length};}
+function renderStats(){
+  document.getElementById("sScore").textContent=S.score;
+  document.getElementById("sStreak").textContent=S.streak;
+  document.getElementById("sAcc").textContent=S.tot?Math.round(100*S.right/S.tot)+"%":"—";
+  document.getElementById("sBoxes").textContent=ALL.filter(function(b){return st(b)==="M";}).length+"/"+ALL.length;
+  var los=Object.keys(LOS);document.getElementById("sLos").textContent=los.filter(function(l){return loStatus(l).s==="M";}).length+"/"+los.length;
+}
+function renderSide(){
+  var h="";LECS.forEach(function(L){if(scope!=="all"&&scope!==L.k)return;
+    h+='<p class="lec-h l'+L.k+'" style="color:var(--lc)">HEM11 · '+esc(L.n)+'</p>';
+    E.filter(function(e){return e.lec===L.k;}).forEach(function(e){
+      var m=e.b.filter(function(b){return st(b)==="M";}).length,p=Math.round(100*m/e.b.length);
+      h+='<button type="button" class="ent l'+e.lec+'" data-ent="'+e.id+'"'+(curEnt===e&&mode==="build"?' aria-current="true"':'')+'><span class="n">'+esc(e.name)+'</span><span class="pct">'+m+'/'+e.b.length+'</span><span class="s">'+esc(e.sub)+'</span><span class="mini"><i style="width:'+p+'%"></i></span></button>';
+    });});
+  var el=document.getElementById("entList");el.innerHTML=h;
+  el.querySelectorAll(".ent").forEach(function(b){b.onclick=function(){setMode("build");startEnt(E.filter(function(e){return e.id===b.dataset.ent;})[0]);};});
+}
+function renderMap(){
+  var h="";Object.keys(LOS).forEach(function(lo){var lec=LOLEC[lo];if(scope!=="all"&&scope!==lec)return;var s=loStatus(lo);
+    h+='<button type="button" class="lo-tile l'+lec+'" data-lo="'+lo+'"'+(loFilter===lo?' style="border-color:var(--lc)"':'')+'><span class="id">'+(lo.slice(-1)==="X"?"Extra":"LO "+lo)+'</span><span class="t">'+esc(LOS[lo])+'</span><span class="dot s-'+s.s+'" title="'+s.m+'/'+s.n+' mastered"></span></button>';});
+  var g=document.getElementById("loGrid");g.innerHTML=h;
+  g.querySelectorAll(".lo-tile").forEach(function(b){b.onclick=function(){loFilter=(loFilter===b.dataset.lo?null:b.dataset.lo);setMode("drill");};});
+}
+function renderAll(){renderStats();renderSide();renderMap();}
+
+/* ---------- flow ---------- */
+function setMode(m){mode=m;document.querySelectorAll("[data-mode]").forEach(function(b){b.setAttribute("aria-pressed",String(b.dataset.mode===m));});
+  if(m==="build"){loFilter=null;if(rrOnly){rrOnly=false;setRR();}renderAll();if(!curEnt||!inScope(curEnt.b[0]))startEnt(firstEnt());else show();}
+  else{renderAll();next();}}
+function firstEnt(){var es=E.filter(function(e){return scope==="all"||e.lec===scope;});
+  for(var i=0;i<es.length;i++){if(es[i].b.some(function(b){return st(b)!=="M";}))return es[i];}return es[0];}
+document.querySelectorAll("[data-mode]").forEach(function(b){b.onclick=function(){setMode(b.dataset.mode);};});
+function setRR(){document.querySelectorAll("[data-rr]").forEach(function(x){x.setAttribute("aria-pressed",String((x.dataset.rr==="1")===rrOnly));});}
+document.querySelectorAll("[data-rr]").forEach(function(b){b.onclick=function(){rrOnly=b.dataset.rr==="1";setRR();setMode(rrOnly?"drill":mode);};});
+document.querySelectorAll("[data-scope]").forEach(function(b){b.onclick=function(){scope=b.dataset.scope;loFilter=null;
+  document.querySelectorAll("[data-scope]").forEach(function(x){x.setAttribute("aria-pressed",String(x===b));});
+  if(mode==="build"){curEnt=null;setMode("build");}else setMode("drill");};});
+
+function startEnt(e){curEnt=e;idx=0;results={};renderSide();cur=e.b[0];show();}
+function next(){
+  if(mode==="build"){idx++;if(idx>=curEnt.b.length){finishEnt();return;}cur=curEnt.b[idx];show();return;}
+  var pool=ALL.filter(inScope);if(!pool.length){cur=null;show();return;}
+  var rank={m:0,u:1,o:2,M:3};
+  pool=shuffle(pool).sort(function(a,b){return rank[st(a)]-rank[st(b)];});
+  var best=rank[st(pool[0])];var top=pool.filter(function(b){return rank[st(b)]===best&&b.id!==lastId;});
+  if(best===3)top=pool.filter(function(b){return b.id!==lastId;});
+  cur=(top.length?top:pool)[0];show();
+}
+function finishEnt(){
+  var ok=Object.keys(results).filter(function(k){return results[k];}).length,n=curEnt.b.length;
+  var i=E.indexOf(curEnt),nxt=null;for(var j=1;j<=E.length;j++){var c=E[(i+j)%E.length];if(scope==="all"||c.lec===scope){nxt=c;break;}}
+  var card=document.getElementById("card");card.className="card l"+curEnt.lec;
+  card.innerHTML='<div class="done"><p class="meta">Structure complete</p><h2>'+esc(curEnt.name)+': '+ok+' / '+n+' first try</h2>'+
+   '<p class="hint">'+(ok===n?"Clean build. It will count as mastered after one more clean pass.":"Missed boxes are queued first in Drill mode.")+'</p>'+
+   '<div class="actions"><button class="btn" type="button" id="again">Rebuild '+esc(curEnt.name)+'</button>'+(nxt?'<button class="btn primary" type="button" id="nextEnt">Next: '+esc(nxt.name)+' →</button>':'')+'</div></div>';
+  document.getElementById("again").onclick=function(){startEnt(curEnt);};
+  if(nxt)document.getElementById("nextEnt").onclick=function(){startEnt(nxt);};
+  var ne=document.getElementById("nextEnt");if(ne)ne.focus();
+}
+
+var picks=[];
+function show(){
+  answered=false;picks=[];clearInterval(tick);
+  var card=document.getElementById("card");
+  if(!cur){card.className="card";card.innerHTML='<p class="q">Nothing in this scope yet.</p>';return;}
+  var b=cur,e=b.ent;card.className="card l"+e.lec;
+  var head='<div class="card-top"><div><p class="meta">'+(mode==="build"?"Build · box "+(idx+1)+" of "+e.b.length:"Drill"+(rrOnly?" · Rapid Review":"")+(loFilter?" · LO "+loFilter:""))+'</p><h2>'+esc(e.name)+'</h2></div>'+
+    '<div style="display:flex;gap:6px;flex-wrap:wrap"><span class="tag lo">'+(b.lo.slice(-1)==="X"?"Extra":"LO "+b.lo)+'</span>'+(b.rr?'<span class="tag rr">Rapid Review</span>':'')+(b.hy?'<span class="tag hy">HY</span>':'')+'<span class="timer" id="timer">0.0s</span></div></div>';
+  if(mode==="build"){head+='<div class="boxes" aria-hidden="true">'+e.b.map(function(x,i){var c=i===idx?"cur":(x.id in results?(results[x.id]?"done-ok":"done-bad"):"");return '<i class="'+c+'"></i>';}).join("")+'</div>';}
+  var body='<p class="q">'+esc(b.q)+'</p>';
+  if(!b.t){b._opts=shuffle([b.a].concat(b.o));
+    body+='<div class="opts">'+b._opts.map(function(o,i){return '<button type="button" class="opt" data-i="'+i+'"><span class="k">'+(i+1)+'</span><span>'+esc(o)+'</span></button>';}).join("")+'</div>';}
+  else if(b.t==="m"){b._opts=shuffle(b.a.concat(b.o));
+    body+='<p class="hint">Select all that apply, then check.</p><div class="opts">'+b._opts.map(function(o,i){return '<button type="button" class="opt" aria-pressed="false" data-i="'+i+'"><span class="k">'+(i+1)+'</span><span>'+esc(o)+'</span></button>';}).join("")+'</div>';}
+  else{b._opts=shuffle(b.a);
+    body+='<p class="hint">Tap items in order. Tap a placed item to remove it.</p><ol class="ordered" id="ordList"><li class="empty" style="cursor:default">Your order appears here</li></ol><div class="opts">'+b._opts.map(function(o,i){return '<button type="button" class="opt" data-i="'+i+'"><span class="k">+</span><span>'+esc(o)+'</span></button>';}).join("")+'</div>';}
+  var act='<div id="fb"></div><div class="actions"><span class="hint">'+(b.t?"Enter to check":"Keys 1–"+b._opts.length+" to answer")+'</span><div style="display:flex;gap:8px">'+
+    (mode==="build"?'<button class="btn" type="button" id="skipBtn">Skip structure</button>':'')+
+    (b.t?'<button class="btn primary" type="button" id="checkBtn"'+(b.t==="o"?" disabled":"")+'>Check</button>':'')+
+    '<button class="btn primary" type="button" id="nextBtn" hidden>Next box →</button></div></div>';
+  card.innerHTML=head+body+act;
+  t0=Date.now();tick=setInterval(function(){var t=document.getElementById("timer");if(t)t.textContent=((Date.now()-t0)/1000).toFixed(1)+"s";},100);
+  var opts=card.querySelectorAll(".opt");
+  if(!b.t)opts.forEach(function(o){o.onclick=function(){if(!answered)grade([+o.dataset.i]);};});
+  else if(b.t==="m")opts.forEach(function(o){o.onclick=function(){if(answered)return;var on=o.getAttribute("aria-pressed")!=="true";o.setAttribute("aria-pressed",String(on));o.classList.toggle("sel",on);};});
+  else opts.forEach(function(o){o.onclick=function(){if(answered||o.disabled)return;picks.push(+o.dataset.i);o.disabled=true;o.style.opacity=".4";drawOrd();};});
+  var cb=document.getElementById("checkBtn");if(cb)cb.onclick=function(){if(answered)return;
+    if(b.t==="m"){var sel=[];opts.forEach(function(o){if(o.getAttribute("aria-pressed")==="true")sel.push(+o.dataset.i);});grade(sel);}else grade(picks);};
+  var sk=document.getElementById("skipBtn");if(sk)sk.onclick=function(){var i=E.indexOf(curEnt);for(var j=1;j<=E.length;j++){var c=E[(i+j)%E.length];if(scope==="all"||c.lec===scope){startEnt(c);return;}}};
+  document.getElementById("nextBtn").onclick=function(){lastId=cur.id;next();};
+}
+function drawOrd(){var b=cur,ol=document.getElementById("ordList");
+  ol.innerHTML=picks.length?picks.map(function(i,k){return '<li data-k="'+k+'">'+esc(b._opts[i])+'</li>';}).join(""):'<li class="empty" style="cursor:default">Your order appears here</li>';
+  ol.querySelectorAll("li[data-k]").forEach(function(li){li.onclick=function(){if(answered)return;var k=+li.dataset.k,i=picks[k];picks.splice(k,1);
+    var o=document.querySelector('.opt[data-i="'+i+'"]');o.disabled=false;o.style.opacity="";drawOrd();};});
+  document.getElementById("checkBtn").disabled=picks.length!==b.a.length;}
+
+function grade(sel){
+  answered=true;clearInterval(tick);var b=cur,ok,card=document.getElementById("card"),opts=card.querySelectorAll(".opt");
+  if(!b.t){ok=b._opts[sel[0]]===b.a;opts.forEach(function(o){var t=b._opts[+o.dataset.i];o.disabled=true;if(t===b.a)o.classList.add("right");else if(+o.dataset.i===sel[0])o.classList.add("wrong");});}
+  else if(b.t==="m"){var chosen=sel.map(function(i){return b._opts[i];});ok=chosen.length===b.a.length&&chosen.every(function(c){return b.a.indexOf(c)>=0;});
+    opts.forEach(function(o){var t=b._opts[+o.dataset.i],isA=b.a.indexOf(t)>=0,isS=chosen.indexOf(t)>=0;o.disabled=true;o.classList.remove("sel");
+      if(isA&&isS)o.classList.add("right");else if(isA)o.classList.add("missed");else if(isS)o.classList.add("wrong");});}
+  else{var got=sel.map(function(i){return b._opts[i];});ok=got.every(function(g,k){return g===b.a[k];});
+    document.querySelectorAll("#ordList li[data-k]").forEach(function(li,k){li.classList.add(got[k]===b.a[k]?"right":"wrong");});
+    opts.forEach(function(o){o.disabled=true;});}
+  var r=S.box[b.id]||{n:0,c:0,s:"u"};r.n++;
+  if(ok){r.c++;r.s=r.c>=2?"M":"o";S.streak++;S.best=Math.max(S.best,S.streak);S.right++;S.score+=10+Math.min(S.streak,10);}
+  else{r.c=0;r.s="m";S.streak=0;}
+  S.tot++;S.box[b.id]=r;if(!(b.id in results))results[b.id]=ok;save();
+  var fb='<div class="fb '+(ok?"ok":"bad")+'"><span class="v">'+(ok?"Correct":"Not quite")+'</span>';
+  if(!b.t)fb+='<span class="ans">Answer: <b>'+esc(b.a)+'</b></span>';
+  else if(b.t==="m")fb+='<span class="ans">Answer: <b>'+b.a.map(esc).join(" · ")+'</b></span>';
+  else fb+='<span class="ans">Correct order:</span><ol>'+b.a.map(function(x){return "<li>"+esc(x)+"</li>";}).join("")+'</ol>';
+  fb+='<div class="fbexp">'+String(b.w||"").split(/\n\n+/).filter(Boolean).map(function(t){return '<p>'+esc(t)+'</p>';}).join("")+'</div>';
+  if(b.n&&b.n.length&&b.o&&b.o.length){
+    var rows=b.o.map(function(x,i){return b.n[i]?'<li><b>'+esc(x)+'</b> — '+esc(b.n[i])+'</li>':"";}).join("");
+    if(rows)fb+='<ul class="fbnotes">'+rows+'</ul>';
+  }
+  if(b.p)fb+='<div class="fbpearl"><b>High-yield</b>'+esc(b.p)+'</div>';
+  fb+='</div>';
+  document.getElementById("fb").innerHTML=fb;
+  var cb=document.getElementById("checkBtn");if(cb)cb.hidden=true;
+  var nb=document.getElementById("nextBtn");nb.hidden=false;nb.textContent=(mode==="build"&&idx===curEnt.b.length-1)?"Finish structure →":"Next box →";nb.focus();
+  renderAll();
+}
+document.addEventListener("keydown",function(ev){
+  if(ev.target.tagName==="INPUT"||ev.metaKey||ev.ctrlKey||ev.altKey)return;
+  if(ev.key==="Enter"){var nb=document.getElementById("nextBtn"),cb=document.getElementById("checkBtn");
+    if(nb&&!nb.hidden){ev.preventDefault();nb.click();}else if(cb&&!cb.hidden&&!cb.disabled){ev.preventDefault();cb.click();}return;}
+  var n=parseInt(ev.key,10);if(!cur||answered||isNaN(n))return;var o=document.querySelector('.opt[data-i="'+(n-1)+'"]');if(o&&!o.disabled)o.click();
+});
+
+renderAll();startEnt(firstEnt());
+})();
+
+/* ---------- Review: the compiled version of everything the answers teach ---------- */
+var REVIEW = {"F": "<h3 class=\"rh\">LO1 · Screening vs diagnosis</h3>\n<div class=\"rtbl\"><table><thead><tr><th></th><th>Screening</th><th>Diagnostic</th></tr></thead><tbody>\n<tr><td>Purpose</td><td>Find high-risk among low-risk</td><td>Is disease present in a high-risk person?</td></tr>\n<tr><td>Test</td><td>Cheap, noninvasive (blood, ultrasound, history)</td><td>Invasive: CVS, amniocentesis, PGT</td></tr>\n<tr><td>Result</td><td>A <b>risk</b></td><td>A <b>yes/no answer</b></td></tr>\n<tr><td>Miscarriage risk</td><td>None</td><td>Small</td></tr>\n<tr><td>Examples</td><td>Age, serum markers, NT, cfDNA, carrier screening</td><td>Karyotype, FISH, microarray, exome</td></tr></tbody></table></div>\n<div class=\"rhy\"><b>USMLE: positive screen</b>Never a diagnosis → genetic counseling and an offer of CVS/amniocentesis before any irreversible decision. ACOG: offer both screening and diagnosis to all pregnant women (autonomy).</div>\n<div class=\"rmem\"><b>Anxious · Balance · Content</b>Anxious wants testing regardless of risk; balance wants a risk first (best for screening); content declines. Attitude is the strongest driver of uptake.</div>\n<h3 class=\"rh\">The 2×2</h3>\n<div class=\"rtbl\"><table><thead><tr><th>Measure</th><th>Formula</th></tr></thead><tbody>\n<tr><td>Detection rate (sensitivity)</td><td>a / (a + b)</td></tr>\n<tr><td>False positive rate</td><td>c / (c + d)</td></tr>\n<tr><td>PPV</td><td>a / (a + c)</td></tr>\n<tr><td>NPV</td><td>d / (b + d)</td></tr></tbody></table></div>\n<div class=\"rrule\"><b>Worked example</b>Prevalence 1/500, 99% detection, 0.1% FPR, 1,000 women → 2 true positives, ≈1 false positive → PPV ≈66%.</div>\n<div class=\"rtrap\"><b>Prevalence moves PPV</b>Detection rate and FPR are test properties; PPV/NPV change with prevalence, so cfDNA PPV is lower in younger women and for rarer trisomies.</div>\n", "D": "<h3 class=\"rh\">LO2 · The screening grid</h3>\n<div class=\"rtbl\"><table><thead><tr><th></th><th>Non-DNA</th><th>DNA</th></tr></thead><tbody>\n<tr><td>Single-gene</td><td>Family history, ethnicity</td><td>Carrier screening (targeted or NGS expanded)</td></tr>\n<tr><td>Chromosomes</td><td>Family history, maternal age, serum markers, NT</td><td>Cell-free DNA (NIPT)</td></tr></tbody></table></div>\n<ul class=\"rlist\"><li><b>All ethnicities:</b> CF, SMA (+ hemoglobinopathy via CBC). <b>Ashkenazi:</b> Tay-Sachs panel. <b>Fragile X:</b> family POF, ID, autism.</li><li><b>Expanded carrier screening:</b> &gt;100 disorders, both parents, preconception/early pregnancy; ≈3× more carriers; ethnicity misleading (≈half of Tay-Sachs carriers not Jewish); 24% carry ≥1 condition; &lt;1% of couples share one. Both carriers → <b>25%</b>.</li></ul>\n<div class=\"rtrap\"><b>Panel criteria</b>Carrier frequency ≥1:100, severe, early onset, harms quality of life, detection ≥70%. Only ≈27% of commercial-panel conditions qualify.</div>\n<h3 class=\"rh\">Serum markers &amp; NT</h3>\n<div class=\"rtbl\"><table><thead><tr><th>Screen</th><th>Timing</th><th>T21</th><th>T18</th></tr></thead><tbody>\n<tr><td>First-trimester combined (NT, PAPP-A, β-hCG)</td><td>11–14 wk</td><td>↑NT, ↓PAPP-A, ↑hCG</td><td>↑NT, ↓PAPP-A, ↓hCG</td></tr>\n<tr><td>Quad (AFP, hCG, estriol, inhibin)</td><td>15–22 wk</td><td>↓AFP, ↑hCG, ↓estriol, ↑inhibin</td><td>All ↓, inhibin normal</td></tr></tbody></table></div>\n<div class=\"rmem\"><b>“HI” goes high</b>Down: hCG and Inhibin up. 18: everything low. Isolated ↑AFP → neural tube/abdominal wall defect (or dating, twins).</div>\n<p>Down detection over time: maternal age → AFP → quad → first trimester → integrated → cfDNA (&gt;99% at ≈0.1–0.2% FPR).</p>\n<h3 class=\"rh\">Cell-free DNA</h3>\n<p>Fetal cfDNA comes from <b>placental apoptosis</b>; fetal fraction ≈10%; cleared within hours of birth. Sequencing counts fragments per chromosome.</p>\n<div class=\"rtbl\"><table><thead><tr><th></th><th>Detection</th><th>FPR</th><th>PPV (age 30)</th></tr></thead><tbody>\n<tr><td>T21</td><td>&gt;99%</td><td>0.2%</td><td>58%</td></tr>\n<tr><td>T18</td><td>97%</td><td>0.4%</td><td>19%</td></tr>\n<tr><td>T13</td><td>88%</td><td>&lt;1%</td><td>13%</td></tr>\n<tr><td>45,X</td><td>95%</td><td>1%</td><td>—</td></tr></tbody></table></div>\n<div class=\"rhy\"><b>USMLE: cfDNA false positives</b>Confined placental mosaicism · vanishing twin · maternal mosaicism · maternal transplant · maternal tumor. No-calls from low fetal fraction (obesity, early). Confirm a positive with <b>amniocentesis</b> (CVS samples the same placenta).</div>\n", "T": "<h3 class=\"rh\">LO3 · Indications</h3>\n<ol class=\"rseq\"><li>Parental structural rearrangement (risk depends on type and parent of origin)</li><li>Prior child with de novo aneuploidy (≈1/100 recurrence)</li><li>Disorder amenable to diagnosis: family history, positive screen, abnormal ultrasound</li><li>Maternal desire</li></ol>\n<h3 class=\"rh\">Methods</h3>\n<div class=\"rtbl\"><table><thead><tr><th></th><th>CVS</th><th>Amniocentesis</th><th>PGT</th></tr></thead><tbody>\n<tr><td>Sample</td><td>Chorion frondosum (trophoblast)</td><td>Amniocytes (fetal)</td><td>5–8 trophectoderm cells after IVF</td></tr>\n<tr><td>Timing</td><td>10–14 wk</td><td>≥15 wk</td><td>Before pregnancy</td></tr>\n<tr><td>Loss above background</td><td>0.2–0.3%</td><td>1/300–1/500</td><td>No ↑ anomalies to 5 y</td></tr>\n<tr><td>Pitfalls</td><td>≈1% ambiguous (placental mosaicism); &lt;10 wk → limb defects</td><td>Fetomaternal bleed (anti-D), leak, infection</td><td>IVF burdens; errors 2–5%</td></tr></tbody></table></div>\n<div class=\"rtrap\"><b>CVS and cfDNA both see the placenta</b>Unexpected or mosaic result → confirm with amniocentesis, not repeat CVS.</div>\n<ul class=\"rlist\"><li><b>PGT indications:</b> both parents carriers (± HLA matching), parental translocation, PGT-A (value undetermined).</li><li><b>False negatives:</b> contaminating DNA, allele drop-out, partial amplification, wrong embryo, post-zygotic change.</li><li><b>False positives:</b> embryo mosaicism (≈16%); mosaic embryos can give healthy children; up to 30% of embryos wasted.</li><li>Confirm PGT pregnancies with CVS or (preferred) amniocentesis.</li></ul>\n<h3 class=\"rh\">Laboratory studies</h3>\n<div class=\"rtbl\"><table><thead><tr><th>Test</th><th>Use</th><th>Turnaround / yield</th></tr></thead><tbody>\n<tr><td>Karyotype</td><td>Aneuploidy, gross and balanced rearrangements</td><td>10–14 days</td></tr>\n<tr><td>FISH</td><td>Rapid 13, 18, 21, X, Y</td><td>48–72 h</td></tr>\n<tr><td>Microarray</td><td>Structural anomalies, fetal death; misses balanced</td><td>+5–10% yield</td></tr>\n<tr><td>Exome</td><td>Multiple anomalies, normal array</td><td>20–30% yield</td></tr></tbody></table></div>\n<div class=\"rmem\"><b>Escalation ladder</b>Suspected trisomy → FISH + karyotype · anomaly on ultrasound → microarray · multiple anomalies, normal array → exome · parental balanced translocation → karyotype.</div>\n<p>Counsel before microarray/exome: VUS, non-paternity/consanguinity on SNP arrays, incidental findings, re-analysis. Emerging NIPT for single-gene disorders (Huntington, achondroplasia, CF, sickle cell, hemophilia).</p>\n"};
+var RVW_NAME = {"F":"LO1 Screen vs diagnose","D":"LO2 Screening tests","T":"LO3 Diagnostic testing"};
+(function(){
+  var panel=document.getElementById("rvw"), body=document.getElementById("rvwBody"),
+      toc=document.getElementById("rvwToc"), q=document.getElementById("rvwQ"),
+      cnt=document.getElementById("rvwCount"), empty=document.getElementById("rvwEmpty"),
+      btn=document.getElementById("reviewBtn"), lec="F", secs=[];
+  var TYPES={rrule:1,rtrap:1,rmem:1,rhy:1};
+  function collapse(sec){
+    [].slice.call(sec.querySelectorAll(".rrule,.rtrap,.rmem,.rhy")).forEach(function(d){
+      var type=d.className.trim(); if(!TYPES[type])return;
+      var lbl=d.querySelector("b"), label=lbl?lbl.textContent:"Note";
+      if(lbl)lbl.parentNode.removeChild(lbl);
+      var det=document.createElement("details"); det.className="cx "+type;
+      var sum=document.createElement("summary");
+      sum.innerHTML='<span class="lbl"></span><span class="pk"></span>';
+      sum.querySelector(".lbl").textContent=label;
+      sum.querySelector(".pk").textContent=d.textContent.replace(/\s+/g," ").trim().slice(0,110);
+      var cb=document.createElement("div"); cb.className="cbody";
+      while(d.firstChild)cb.appendChild(d.firstChild);
+      det.appendChild(sum); det.appendChild(cb);
+      d.parentNode.replaceChild(det,d);
+    });
+    var h=sec.querySelector(".rh"), hys=[].slice.call(sec.querySelectorAll("details.rhy"));
+    if(h&&hys.length){ var ref=h.nextSibling; hys.forEach(function(x){ sec.insertBefore(x,ref); }); }
+    var kids=[].slice.call(sec.children), i=0;
+    while(i<kids.length){
+      if(kids[i].tagName==="DETAILS"){
+        var run=[kids[i]], cls=kids[i].className, j=i+1;
+        while(j<kids.length&&kids[j].tagName==="DETAILS"&&kids[j].className===cls){run.push(kids[j]);j++;}
+        if(run.length>1){
+          var g=document.createElement("div"); g.className="cgrid";
+          sec.insertBefore(g,run[0]); run.forEach(function(x){g.appendChild(x);});
+        }
+        i=j;
+      } else i++;
+    }
+  }
+  function group(){
+    var kids=[].slice.call(body.childNodes), out=[], cur=null;
+    kids.forEach(function(n){
+      if(n.nodeType===1&&n.tagName==="H3"){cur=document.createElement("section");cur.className="rsec";out.push(cur);}
+      if(!cur){cur=document.createElement("section");cur.className="rsec";out.push(cur);}
+      cur.appendChild(n);
+    });
+    body.innerHTML="";
+    out.forEach(function(s,i){ s.id="rs"+i; collapse(s); s._t=s.textContent.toLowerCase(); body.appendChild(s); });
+    return out;
+  }
+  function setAll(open){
+    [].slice.call(body.querySelectorAll("details.cx")).forEach(function(d){d.open=open;});
+    var t=document.getElementById("rvwAll");
+    if(t){t.textContent=open?"Collapse all":"Expand all";t.setAttribute("aria-pressed",String(open));}
+  }
+  function buildToc(){
+    toc.innerHTML=secs.map(function(s){
+      var h=s.querySelector(".rh"); return h?'<a href="#'+s.id+'">'+h.textContent+'</a>':'';
+    }).join("");
+  }
+  function filter(){
+    var terms=q.value.toLowerCase().split(/\s+/).filter(Boolean), n=0;
+    secs.forEach(function(s){
+      var on=terms.every(function(t){return s._t.indexOf(t)!==-1;});
+      s.classList.toggle("hide",!on); if(on)n++;
+    });
+    empty.classList.toggle("on",n===0);
+    cnt.textContent = n===secs.length ? secs.length+" sections" : n+" of "+secs.length;
+    toc.style.display = q.value ? "none" : "";
+  }
+  function load(l){
+    lec=l; panel.setAttribute("data-lec",l);
+    body.innerHTML=REVIEW[l]||"";
+    secs=group(); buildToc(); q.value=""; filter();
+    var t=document.getElementById("rvwAll"); if(t){t.textContent="Expand all";t.setAttribute("aria-pressed","false");}
+  }
+  function open(){
+    document.querySelector(".bar").style.display="none";
+    document.querySelector(".main").style.display="none";
+    panel.hidden=false; if(!secs.length)load(lec);
+    btn.setAttribute("aria-pressed","true");
+    window.scrollTo(0,0); q.focus({preventScroll:true});
+  }
+  function close(){
+    panel.hidden=true;
+    document.querySelector(".bar").style.display="";
+    document.querySelector(".main").style.display="";
+    btn.setAttribute("aria-pressed","false");
+    window.scrollTo(0,0);
+  }
+  btn.onclick=function(){ panel.hidden?open():close(); };
+  document.getElementById("rvwClose").onclick=close;
+  document.getElementById("rvwPrint").onclick=function(){window.print();};
+  var allBtn=document.getElementById("rvwAll");
+  if(allBtn)allBtn.onclick=function(){ setAll(this.getAttribute("aria-pressed")!=="true"); };
+  var reclose=[];
+  window.addEventListener("beforeprint",function(){
+    reclose=[];
+    [].slice.call(body.querySelectorAll("details.cx")).forEach(function(d){ if(!d.open){reclose.push(d);d.open=true;} });
+  });
+  window.addEventListener("afterprint",function(){ reclose.forEach(function(d){d.open=false;}); reclose=[]; });
+  document.getElementById("rvwTabs").onclick=function(e){
+    var b=e.target.closest("button"); if(!b)return;
+    [].forEach.call(this.children,function(c){c.setAttribute("aria-pressed",String(c===b));});
+    load(b.dataset.l); window.scrollTo(0,0);
+  };
+  q.addEventListener("input",filter);
+  document.addEventListener("keydown",function(e){
+    if(e.key==="Escape"&&!panel.hidden){ if(document.activeElement===q&&q.value){q.value="";filter();} else close(); }
+  });
+})();
+
+</script>
