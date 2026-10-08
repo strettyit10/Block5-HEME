@@ -1,0 +1,865 @@
+<title>HEM Anemia Relationship Map</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,500;8..60,700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one column of study sections; the MCV × reticulocyte map is the anchor, with a detail panel beside it on wide screens */
+:root{
+  --bg:#f6f5f3; --surface:#ffffff; --surface2:#efedea; --fg:#1d1a1a; --muted:#5e5857; --line:#dcd7d3;
+  --accent:#9b1c2c; --accent-soft:#f6e3e5;
+  --hy-bg:#fff4c2; --hy-bd:#c99a06; --ih-bg:#e7f0fb; --ih-bd:#4a7fc0;
+  --f-ing:#2f67ad; --f-lock:#1b7f80; --f-fac:#6650a6; --f-glob:#a5650f; --f-intr:#b42f3c; --f-imm:#a0306c; --f-mech:#86391c; --f-loss:#56666e;
+  --font-display:"Source Serif 4", Georgia, "Times New Roman", serif;
+  --font-body:"IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono:"IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#151213; --surface:#1e1a1b; --surface2:#272223; --fg:#efe9e7; --muted:#ada3a1; --line:#3a3335;
+  --accent:#ec7a86; --accent-soft:#3a2125;
+  --hy-bg:#3a3008; --hy-bd:#d9a90f; --ih-bg:#1b2a3d; --ih-bd:#6f9fd8;
+  --f-ing:#7aa9e6; --f-lock:#5cc3c2; --f-fac:#a895e6; --f-glob:#e0a24f; --f-intr:#ee7480; --f-imm:#e27bb0; --f-mech:#e08a63; --f-loss:#9fb1ba;
+  color-scheme:dark }}
+:root[data-theme="dark"]{
+  --bg:#151213; --surface:#1e1a1b; --surface2:#272223; --fg:#efe9e7; --muted:#ada3a1; --line:#3a3335;
+  --accent:#ec7a86; --accent-soft:#3a2125;
+  --hy-bg:#3a3008; --hy-bd:#d9a90f; --ih-bg:#1b2a3d; --ih-bd:#6f9fd8;
+  --f-ing:#7aa9e6; --f-lock:#5cc3c2; --f-fac:#a895e6; --f-glob:#e0a24f; --f-intr:#ee7480; --f-imm:#e27bb0; --f-mech:#e08a63; --f-loss:#9fb1ba;
+  color-scheme:dark }
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{background:var(--bg);color:var(--fg);font:15px/1.55 var(--font-body);margin:0}
+.wrap{max-width:1180px;margin:0 auto;padding-inline:20px;padding-block:28px 60px}
+h1,h2,h3{font-family:var(--font-display);text-wrap:balance;margin:0;line-height:1.2}
+h1{font-size:clamp(28px,4.4vw,42px);font-weight:700;letter-spacing:-.01em}
+h2{font-size:clamp(22px,2.8vw,28px);font-weight:700}
+h3{font-size:18px;font-weight:700}
+p{margin:0}
+.mono{font-family:var(--font-mono)}
+.eyebrow{font:500 12px/1 var(--font-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}
+.meta{display:flex;flex-wrap:wrap;gap:8px 18px;color:var(--muted);font-size:13px;margin-top:10px}
+.meta b{color:var(--fg);font-weight:600}
+header.top{display:grid;gap:12px;padding-bottom:22px;border-bottom:2px solid var(--fg)}
+.lede{max-width:72ch;color:var(--muted)}
+section{margin-top:44px;display:grid;gap:16px}
+.sec-head{display:grid;gap:6px}
+.sec-head p{color:var(--muted);max-width:75ch}
+
+/* filter bar */
+.filter{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);padding-block:12px;border-bottom:1px solid var(--line);display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.filter span.lbl{font:500 12px var(--font-mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-right:4px}
+.fbtn{font:500 13px var(--font-body);border:1px solid var(--line);background:var(--surface);color:var(--fg);border-radius:999px;padding:6px 12px;cursor:pointer}
+.fbtn[aria-pressed="true"]{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+.fbtn:focus-visible,.chip:focus-visible,.lnk:focus-visible,summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+/* legend */
+.legend{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:12.5px;color:var(--muted)}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:6px;vertical-align:-1px}
+
+/* map */
+.mapwrap{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);gap:18px;align-items:start}
+@media (max-width:900px){.mapwrap{grid-template-columns:minmax(0,1fr)}}
+.mapwrap>*{min-width:0}
+.grid-scroll{overflow-x:auto}
+.mgrid{display:grid;grid-template-columns:96px minmax(0,1fr) minmax(0,1fr);gap:6px;min-width:520px}
+.mgrid .hd{font:600 12.5px var(--font-body);padding:8px 10px;background:var(--surface2);border-radius:6px}
+.mgrid .hd small{display:block;font:400 11.5px var(--font-body);color:var(--muted)}
+.mgrid .rowhd{font:600 13px var(--font-body);padding:10px;background:var(--surface2);border-radius:6px;display:flex;flex-direction:column;justify-content:center}
+.mgrid .rowhd small{font:400 11.5px var(--font-mono);color:var(--muted)}
+.cell{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:8px;display:flex;flex-wrap:wrap;gap:6px;align-content:flex-start;min-height:84px}
+.chip{--c:var(--f-loss);font:500 12.5px/1.25 var(--font-body);border:1px solid var(--c);background:color-mix(in srgb,var(--c) 12%,var(--surface));color:var(--fg);border-radius:5px;padding:5px 8px;cursor:pointer;text-align:left}
+.chip.cross{border-style:dashed}
+.chip.sel{background:var(--c);color:var(--surface)}
+.chip.dim{opacity:.22}
+.chip.rel{box-shadow:0 0 0 2px var(--c)}
+.nonanemia{font-size:12.5px;color:var(--muted);display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:8px}
+
+.detail{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:18px;display:grid;gap:12px;position:sticky;top:calc(env(safe-area-inset-top,0px) + 70px)}
+@media (max-width:900px){.detail{position:static}}
+.detail .fam{font:500 11.5px var(--font-mono);letter-spacing:.06em;text-transform:uppercase}
+.detail .nick{color:var(--muted);font-style:italic;font-size:13.5px}
+.tags{display:flex;flex-wrap:wrap;gap:5px}
+.ltag{font:500 11px var(--font-mono);border:1px solid var(--line);border-radius:999px;padding:2px 7px;color:var(--muted)}
+.kv{display:grid;grid-template-columns:92px minmax(0,1fr);gap:6px 10px;font-size:13.5px}
+.kv dt{font:500 11.5px var(--font-mono);letter-spacing:.04em;text-transform:uppercase;color:var(--muted);padding-top:2px}
+.kv dd{margin:0}
+.buzz{display:flex;flex-wrap:wrap;gap:5px}
+.buzz span{font-size:12px;background:var(--surface2);border-radius:4px;padding:2px 7px}
+.links{display:grid;gap:6px}
+.lnk{display:grid;grid-template-columns:auto minmax(0,1fr);gap:8px;text-align:left;background:var(--surface2);border:0;border-radius:6px;padding:8px 10px;cursor:pointer;color:var(--fg);font:13px/1.4 var(--font-body)}
+.lnk b{font-weight:600}
+.lnk .ty{font:500 10.5px var(--font-mono);text-transform:uppercase;letter-spacing:.05em;color:var(--muted);white-space:nowrap;padding-top:2px}
+
+/* callouts */
+.hy{background:var(--hy-bg);border:1.5px solid var(--hy-bd);border-radius:6px;padding:10px 12px;font-size:13.5px}
+.hy::before{content:"USMLE high yield";display:block;font:600 11px var(--font-mono);letter-spacing:.06em;text-transform:uppercase;margin-bottom:3px}
+.ih{background:var(--ih-bg);border:1.5px solid var(--ih-bd);border-radius:6px;padding:10px 12px;font-size:13.5px}
+.ih::before{content:"In-house note";display:block;font:600 11px var(--font-mono);letter-spacing:.06em;text-transform:uppercase;margin-bottom:3px}
+
+/* family tree */
+.tree{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+@media (max-width:900px){.tree{grid-template-columns:1fr}}
+.branch{background:var(--surface);border:1px solid var(--line);border-top:4px solid var(--bc);border-radius:8px;padding:14px;display:grid;gap:12px;align-content:start}
+.branch>h3 small{display:block;font:400 12.5px var(--font-body);color:var(--muted);margin-top:4px}
+.twig{display:grid;gap:6px;padding-left:12px;border-left:2px solid var(--line)}
+.twig h4{margin:0;font:600 12.5px var(--font-body);color:var(--muted)}
+.twig .row{display:flex;flex-wrap:wrap;gap:6px}
+.bridge{background:var(--surface);border:1px dashed var(--f-glob);border-top:4px solid var(--f-glob);border-radius:8px;padding:14px;display:grid;gap:12px}
+.brows{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;align-items:start}
+@media (max-width:900px){.brows{grid-template-columns:1fr}}
+.trow{display:grid;gap:4px;justify-items:start;align-content:start}
+.trow .fcs{justify-self:stretch;margin-top:4px}
+.tp{display:grid;gap:1px;font-size:12.5px;line-height:1.4}
+.tp b{font-weight:600;color:var(--fg)}
+.tp span{color:var(--muted)}
+.tq{all:unset;cursor:pointer;font:500 11px var(--font-mono);letter-spacing:.05em;text-transform:uppercase;color:var(--fg);justify-self:start}
+.tq::after{content:" ▸";color:var(--muted)}
+.tq[aria-expanded="true"]::after{content:" ▾"}
+.tq:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.tbody{display:grid;gap:8px}
+#treeEl .chip::after,#bridge .chip::after{content:" ▸";opacity:.6}
+#treeEl .chip.open::after,#bridge .chip.open::after{content:" ▾"}
+.treebar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;font-size:13px;color:var(--muted)}
+.td{font-size:12.5px;color:var(--muted)}
+.twig{gap:10px}
+
+/* workup */
+.flow{display:grid;gap:10px}
+.step{display:grid;grid-template-columns:minmax(0,1fr);gap:8px;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:14px}
+.step .q{font:600 14px var(--font-body)}
+.forks{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+@media (max-width:820px){.forks{grid-template-columns:1fr}}
+.fork{background:var(--surface2);border-radius:6px;padding:10px 12px;display:grid;gap:6px;font-size:13.5px;align-content:start}
+.fork .h{font:600 12px var(--font-mono);letter-spacing:.04em;text-transform:uppercase}
+.fork ul{margin:0;padding-left:18px;display:grid;gap:4px}
+.arrow{font-family:var(--font-mono);color:var(--accent);font-weight:500}
+.down{text-align:center;color:var(--muted);font:500 18px var(--font-mono);line-height:1}
+
+/* connections */
+.conn-groups{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+@media (max-width:820px){.conn-groups{grid-template-columns:1fr}}
+.cg{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:14px;display:grid;gap:8px;align-content:start}
+.cg h3 small{display:block;font:400 12.5px var(--font-body);color:var(--muted);margin-top:3px}
+.edge{display:grid;gap:3px;padding:8px 0;border-top:1px solid var(--line);font-size:13.5px}
+.edge:first-of-type{border-top:0}
+.edge .pair{font-weight:600}
+.edge .pair button{all:unset;cursor:pointer;border-bottom:1px dotted var(--muted)}
+.edge .pair button:focus-visible{outline:2px solid var(--accent)}
+.edge.dim{display:none}
+
+/* relationship tabs */
+.ctools{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center;justify-content:space-between}
+.tabs{display:flex;flex-wrap:wrap;gap:4px;border-bottom:1px solid var(--line)}
+.tab{all:unset;cursor:pointer;padding:8px 12px;font:500 13.5px var(--font-body);color:var(--muted);border-bottom:2px solid transparent;margin-bottom:-1px;display:flex;gap:6px;align-items:center}
+.tab .n{font:500 11px var(--font-mono);background:var(--surface2);border-radius:999px;padding:1px 7px;color:var(--fg)}
+.tab[aria-selected="true"]{color:var(--fg);border-bottom-color:var(--accent)}
+.tab:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.focus{font-size:13px;color:var(--muted);display:flex;gap:8px;align-items:center}
+.focus select{font:500 13px var(--font-body);color:var(--fg);background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:6px 8px;max-width:60vw}
+.cpanel{display:grid;gap:14px}
+.cdesc{font-size:13.5px;color:var(--muted)}
+.cmap{background:var(--surface);border:1px solid var(--line);border-radius:8px}
+.cmap .cap{padding:10px 12px;border-bottom:1px solid var(--line);font:600 13px var(--font-body);display:flex;flex-wrap:wrap;gap:4px 10px;align-items:baseline}
+.cmap .cap span{font:400 12.5px var(--font-body);color:var(--muted)}
+.cmap .fc{border-top:0}
+.egrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:10px}
+.ecard{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:12px;display:grid;gap:8px;align-content:start;font-size:13.5px}
+.ecard .pair{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.ecard .glyph{font:500 14px var(--font-mono);color:var(--muted)}
+.ecard p{color:var(--fg)}
+.cempty{font-size:13.5px;color:var(--muted);padding:12px;border:1px dashed var(--line);border-radius:8px}
+table.cmp{min-width:820px}
+table.cmp td{font-size:13px}
+table.cmp td.sh{color:var(--muted)}
+table.cmp .chip{white-space:nowrap}
+.hide{display:none!important}
+/* traps */
+.ttools{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between}
+.tcats{display:flex;flex-wrap:wrap;gap:6px}
+.tgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:10px}
+.tcard{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:14px;display:grid;gap:10px;align-content:start}
+.tcard .tmeta{display:flex;flex-wrap:wrap;gap:5px;align-items:center}
+.tcard .cat{font:600 10.5px var(--font-mono);letter-spacing:.06em;text-transform:uppercase;color:var(--surface);background:var(--accent);border-radius:3px;padding:2px 6px}
+.tcard .tempt{font:500 16px/1.35 var(--font-display);}
+.tcard .tempt::before{content:"Tempting: ";font:600 11px var(--font-mono);letter-spacing:.05em;text-transform:uppercase;color:var(--accent);display:block;margin-bottom:3px}
+.tcard .catch{font-size:13.5px;border-top:1px solid var(--line);padding-top:10px}
+.tcard .catch b{color:var(--accent)}
+.treveal{justify-self:start;font:500 12.5px var(--font-body);border:1px solid var(--line);background:var(--surface2);color:var(--fg);border-radius:999px;padding:5px 11px;cursor:pointer}
+.treveal:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+table.ivb{min-width:720px}
+/* tables */
+.tbl-scroll{overflow-x:auto;border:1px solid var(--line);border-radius:8px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:13px;min-width:860px}
+th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font:600 11.5px var(--font-mono);letter-spacing:.05em;text-transform:uppercase;color:var(--muted);background:var(--surface2);position:sticky;top:0}
+tr:last-child td{border-bottom:0}
+td .dot{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:6px}
+td button.nm{all:unset;cursor:pointer;font-weight:600}
+td button.nm:focus-visible{outline:2px solid var(--accent)}
+tr.dim{display:none}
+
+/* traps */
+.traps{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+@media (max-width:820px){.traps{grid-template-columns:1fr}}
+.trap{background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--accent);border-radius:6px;padding:12px 14px;display:grid;gap:4px;font-size:13.5px}
+.trap b{font-weight:600}
+
+/* quiz */
+.quiz{display:grid;gap:10px}
+details.qa{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:12px 14px}
+details.qa summary{cursor:pointer;font-weight:500;list-style:none}
+details.qa summary::-webkit-details-marker{display:none}
+details.qa summary::before{content:"Q" counter(q) " ";counter-increment:q;font:600 12px var(--font-mono);color:var(--accent);margin-right:6px}
+.quiz{counter-reset:q}
+details.qa .ans{margin-top:10px;padding-top:10px;border-top:1px solid var(--line);font-size:13.5px;display:grid;gap:6px}
+details.qa .ans b{color:var(--accent)}
+
+.fcs{display:grid;gap:8px}
+.fcd{border:1px solid var(--line);border-radius:6px;background:var(--surface)}
+.fcd>summary{cursor:pointer;list-style:none;padding:7px 10px;font:500 12.5px/1.35 var(--font-body);display:flex;gap:4px 8px;align-items:baseline;flex-wrap:wrap}
+.fcd>summary::-webkit-details-marker{display:none}
+.fcd>summary::before{content:"▸";color:var(--accent)}
+.fcd[open]>summary::before{content:"▾"}
+.fcd>summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.fcd .fl{font:500 10.5px var(--font-mono);letter-spacing:.05em;text-transform:uppercase;color:var(--accent)}
+.fc{overflow-x:auto;padding:10px;border-top:1px solid var(--line);min-height:40px}
+.fc svg{display:block;margin:0 auto;height:auto}
+.fcbar{display:flex;justify-content:flex-end;margin-top:6px}
+.fcbig{font:500 12px var(--font-body);border:1px solid var(--line);background:var(--surface2);color:var(--fg);border-radius:999px;padding:4px 10px;cursor:pointer}
+.fcbig:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+#fcModal{position:fixed;inset:0;z-index:50;background:color-mix(in srgb,var(--bg) 70%,transparent);display:grid;place-items:center;padding:calc(env(safe-area-inset-top,0px) + 16px) 16px calc(env(safe-area-inset-bottom,0px) + 16px)}
+#fcModal .box{background:var(--surface);border:1px solid var(--line);border-radius:10px;max-width:min(1200px,100%);max-height:100%;display:grid;grid-template-rows:auto minmax(0,1fr);box-shadow:0 12px 40px rgba(0,0,0,.25);width:100%}
+#fcModal .hd{display:flex;gap:10px;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid var(--line)}
+#fcModal .hd b{font:600 15px var(--font-body)}
+#fcModal .bd{overflow:auto;padding:16px}
+#fcModal .bd svg{max-width:none!important;display:block;margin:0 auto}
+.fc .fail{font-size:12.5px;color:var(--muted);margin:0}
+.step .fcs,.branch>.fcs{margin-top:2px}
+footer{margin-top:50px;padding-top:14px;border-top:1px solid var(--line);font-size:12.5px;color:var(--muted);display:flex;flex-wrap:wrap;gap:6px 18px;justify-content:space-between}
+@media (prefers-reduced-motion:no-preference){.chip,.lnk,.fbtn{transition:background .15s,opacity .15s,box-shadow .15s}}
+</style>
+
+<div class="wrap">
+<header class="top">
+  <div class="eyebrow">HoyaDocs · HEM · Red Cell Pathology</div>
+  <h1>Anemia Relationship Map</h1>
+  <p class="lede">Every anemia from HEM02 (Anemia I), HEM03 (Anemia II), HEM05 (RBC Case Review) and HEM06 (RBC Lab) on one page: where each one sits by size and marrow response, which mechanism family it belongs to, and how the anemias connect to, mimic, cause or protect against each other.</p>
+  <div class="meta"><span><b>HoyaDocs</b></span><span>Date updated: <b>October 8, 2026</b></span><span>Revision: <b>1.4</b></span><span>Lectures: <b>HEM02 · HEM03 · HEM05 · HEM06</b></span></div>
+</header>
+
+<div class="filter" role="group" aria-label="Filter by lecture">
+  <span class="lbl">Highlight lecture</span>
+  <button class="fbtn" data-l="all" aria-pressed="true">All</button>
+  <button class="fbtn" data-l="02" aria-pressed="false">HEM02 Anemia I</button>
+  <button class="fbtn" data-l="03" aria-pressed="false">HEM03 Anemia II</button>
+  <button class="fbtn" data-l="05" aria-pressed="false">HEM05 Case Review</button>
+  <button class="fbtn" data-l="06" aria-pressed="false">HEM06 RBC Lab</button>
+</div>
+
+<!-- 1. MAP -->
+<section id="map">
+  <div class="sec-head">
+    <div class="eyebrow">1 · The map</div>
+    <h2>Two numbers place every anemia</h2>
+    <p>Rows are size (MCV). Columns are the marrow's answer (reticulocytes): low means a production problem, high means destruction or loss. Dashed chips appear in more than one box, and those crossovers are what exams like to test. Select any anemia to see its essentials and everything it connects to; connected anemias light up on the map.</p>
+  </div>
+  <div class="legend" id="legend"></div>
+  <div class="mapwrap">
+    <div>
+      <div class="grid-scroll"><div class="mgrid" id="mgrid"></div></div>
+      <div class="nonanemia" id="nonanemia"></div>
+    </div>
+    <aside class="detail" id="detail" aria-live="polite"></aside>
+  </div>
+  <div class="hy">Correct the retic before you trust it: corrected retic = retic % × (Hct ÷ 45); RPI = corrected ÷ ~2. RPI &lt;2 means a production problem; &gt;2–3 means destruction or loss. A raw 3% retic at Hct 22 is really ≈1.5% (RPI ≈0.75), an inadequate response (HEM05 Case 1).</div>
+  <div class="ih">Microcytosis cutoff: HEM02 uses MCV <b>&lt;70 fL</b>; HEM06 and boards use <b>&lt;80 fL</b>. Answer an in-house question with the cutoff that lecture taught.</div>
+</section>
+
+<!-- 2. FAMILY TREE -->
+<section id="tree">
+  <div class="sec-head">
+    <div class="eyebrow">2 · Mechanism family tree</div>
+    <h2>Faucet, drain or leak</h2>
+    <p>Think of RBC mass as water in a bathtub. The faucet is the marrow (production), the drain is destruction (hemolysis), and the leak is blood loss. Every anemia fits one of the three, and the thalassemias sit on two at once. Select an anemia to reveal what is missing or broken, how that becomes anemia, and its flowchart from the lecture notes. Select a group question to reveal the group summary.</p>
+    <div class="fcs" data-fcs="balance" data-open="1"></div>
+  </div>
+  <div class="treebar"><button class="fbtn" id="treeAll" aria-pressed="false">Show all details</button><span>Quiz yourself: name the missing or broken part before you open it.</span>
+  </div>
+  <div class="tree" id="treeEl"></div>
+  <div class="bridge" id="bridge"></div>
+</section>
+
+<!-- 3. WORKUP -->
+<section id="workup">
+  <div class="sec-head">
+    <div class="eyebrow">3 · Workup path</div>
+    <h2>From "anemia" to a name in four questions</h2>
+    <p>The same routine runs through all four lectures: history, then MCV × corrected retics and the other cell lines, then targeted labs, then smear or marrow. Each step has the matching flowcharts from the lecture notes.</p>
+  </div>
+  <div class="fcs" data-fcs="five"></div>
+  <div class="flow">
+    <div class="step"><div class="q">1 · Is there anemia, and what does the history point to?</div>
+      <div style="font-size:13.5px">↓ Hb/Hct. Then ask about menses, GI bleeding, diet/pica, meds (NSAIDs, sulfa, primaquine), surgery (bypass, ileal resection), family history, dark urine, rash/joint pain, numb feet, kidney disease.</div><div class="fcs" data-fcs="symptoms"></div></div>
+    <div class="down" aria-hidden="true">↓</div>
+    <div class="step"><div class="q">2 · How big are the cells? (MCV)</div>
+      <div class="forks">
+        <div class="fork"><div class="h" style="color:var(--f-ing)">Microcytic</div>
+          <ul><li>Check <b>ferritin</b> first</li>
+          <li>↓ ferritin, ↑ TIBC <span class="arrow">→</span> <b>iron deficiency</b> <span class="arrow">→</span> adult: find the GI bleed</li>
+          <li>N/↑ ferritin, ↓ TIBC + inflammation <span class="arrow">→</span> <b>chronic disease</b></li>
+          <li>↑ iron, ↑ ferritin, stippling <span class="arrow">→</span> <b>lead / sideroblastic</b></li>
+          <li>All iron normal, Mentzer &lt;13 <span class="arrow">→</span> Hb electrophoresis: ↑ HbA2 = <b>β-thal minor</b>; ↑↑ HbF = <b>β-thal major</b>; normal = <b>α-thal trait</b> possible</li></ul></div>
+        <div class="fork"><div class="h" style="color:var(--f-loss)">Normocytic</div>
+          <ul><li>Check corrected <b>retics</b></li>
+          <li>Low <span class="arrow">→</span> creatinine (<b>CKD</b>), iron panel (<b>ACD</b>, early IDA), other cell lines low <span class="arrow">→</span> marrow (<b>aplastic</b>, <b>myelophthisic</b>)</li>
+          <li>Normal MCV + high RDW <span class="arrow">→</span> <b>mixed deficiency</b> (big + small cells average out)</li>
+          <li>High <span class="arrow">→</span> hemolysis panel or recent <b>bleed</b> (go to step 3)</li></ul></div>
+        <div class="fork"><div class="h" style="color:var(--f-fac)">Macrocytic</div>
+          <ul><li>Look at the <b>smear</b></li>
+          <li>Oval macrocytes + hypersegmented PMNs <span class="arrow">→</span> megaloblastic <span class="arrow">→</span> B12, folate, MMA</li>
+          <li>↑ MMA <span class="arrow">→</span> <b>B12</b> (anti-IF Ab <span class="arrow">→</span> <b>pernicious anemia</b>); normal MMA <span class="arrow">→</span> <b>folate</b></li>
+          <li>Round macrocytes, no hyperseg <span class="arrow">→</span> alcohol, liver, thyroid, MDS, drugs, or many retics</li></ul></div>
+      </div><div class="fcs" data-fcs="algo mcv macro"></div></div>
+    <div class="down" aria-hidden="true">↓</div>
+    <div class="step"><div class="q">3 · Is it hemolysis? ↑ LDH · ↑ indirect bilirubin · ↓ haptoglobin · ↑ retics</div>
+      <div class="forks">
+        <div class="fork"><div class="h" style="color:var(--f-imm)">DAT positive: immune</div>
+          <ul><li>IgG, 37 °C, spherocytes <span class="arrow">→</span> <b>warm AIHA</b></li>
+          <li>C3 only, 4 °C, agglutination <span class="arrow">→</span> <b>cold agglutinin</b></li>
+          <li>Minutes into a transfusion <span class="arrow">→</span> <b>ABO reaction</b></li>
+          <li>Newborn of Rh⁻ mother <span class="arrow">→</span> <b>HDFN</b></li>
+          <li>Penicillin, ceftriaxone, α-methyldopa <span class="arrow">→</span> <b>drug (antibody)</b></li></ul></div>
+        <div class="fork"><div class="h" style="color:var(--f-intr)">DAT negative: read the smear</div>
+          <ul><li>Spherocytes, ↑ MCHC, ↑ osmotic fragility <span class="arrow">→</span> <b>HS</b></li>
+          <li>Bite cells, Heinz bodies <span class="arrow">→</span> <b>G6PD</b></li>
+          <li>Sickle cells, Howell-Jolly <span class="arrow">→</span> <b>sickle cell</b></li>
+          <li>Ring forms <span class="arrow">→</span> <b>malaria</b></li></ul></div>
+        <div class="fork"><div class="h" style="color:var(--f-mech)">Schistocytes: MAHA</div>
+          <ul><li>↑ PT/PTT, ↓ fibrinogen <span class="arrow">→</span> <b>DIC</b></li>
+          <li>Normal PT/PTT + ↓ platelets + fever, neuro, renal <span class="arrow">→</span> <b>TTP</b></li>
+          <li>Child after bloody diarrhea <span class="arrow">→</span> HUS</li>
+          <li>Mechanical valve <span class="arrow">→</span> <b>valve hemolysis</b></li></ul></div>
+      </div>
+      <div class="hy">Hemolysis labs with <b>low</b> retics and normal bilirubin is not hemolysis. It is ineffective erythropoiesis: megaloblasts (or thal precursors) dying in the marrow (HEM03 trap, HEM05 Case 2).</div><div class="fcs" data-fcs="tiers broken coombs"></div></div>
+    <div class="down" aria-hidden="true">↓</div>
+    <div class="step"><div class="q">4 · Confirm on smear or marrow, then treat</div>
+      <div style="font-size:13.5px">Iron to ferritin &gt;50 · B12 lifelong and parenteral if neuro signs · folate only after B12 is excluded · treat the cause of ACD/CKD (ESA + iron in CKD) · steroids for warm AIHA · splenectomy for HS · plasma exchange for TTP · transfuse only if unstable, bleeding, ischemic, or Hb &lt;7.</div></div>
+  </div>
+</section>
+
+<!-- 4. CONNECTIONS -->
+<section id="connections">
+  <div class="sec-head">
+    <div class="eyebrow">4 · Relationships</div>
+    <h2>How the anemias connect</h2>
+    <p>Pick a kind of relationship. Use <b>Focus on</b> to see only the links for one anemia. Select any anemia name to jump to it on the map.</p>
+  </div>
+  <div class="ctools">
+    <div class="tabs" role="tablist" aria-label="Relationship type" id="ctabs"></div>
+    <label class="focus" for="cfocus">Focus on <select id="cfocus"></select></label>
+  </div>
+  <div id="cpanels"></div>
+</section>
+
+<!-- 5. TRAPS -->
+<section id="traps">
+  <div class="sec-head">
+    <div class="eyebrow">5 · Look-alikes and traps</div>
+    <h2>Where questions hide the answer</h2>
+    <p>Each card shows the answer a question wants you to jump to. Decide why it's wrong, then reveal the catch.</p>
+  </div>
+  <div class="ttools">
+    <div class="tcats" role="group" aria-label="Trap type" id="tcats"></div>
+    <button class="fbtn" id="tAll" aria-pressed="false">Reveal all</button>
+  </div>
+  <div class="tgrid" id="trapEl"></div>
+  <h3 style="margin-top:8px">In-house vs boards</h3>
+  <div class="tbl-scroll"><table class="ivb">
+    <thead><tr><th>Topic</th><th>In-house</th><th>Boards / standard</th><th>On the exam</th></tr></thead>
+    <tbody>
+      <tr><td><b>Microcytosis cutoff</b></td><td>MCV &lt;70 fL (HEM02)</td><td>MCV &lt;80 fL (also used in HEM06)</td><td>Match the lecture the question comes from</td></tr>
+      <tr><td><b>Normal marrow erythroblasts</b></td><td>"About 0–2%" (HEM06)</td><td>Erythroid precursors ≈20–30% (M:E ≈3:1)</td><td>0–2% on in-house items; standard value for boards. 0–2% is the normal blood retic range</td></tr>
+      <tr><td><b>Normal neutrophil lobes</b></td><td>3–4 (HEM06 megaloblastic station)</td><td>3–5; hypersegmented = ≥6 lobes (or &gt;5% with 5)</td><td>Six or more lobes is hypersegmented either way</td></tr>
+      <tr><td><b>Human Plasmodium species</b></td><td>Four (HEM06)</td><td>Four classic + P. knowlesi as a fifth</td><td>Answer "four" in-house</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<!-- 6. TABLE -->
+<section id="table">
+  <div class="sec-head">
+    <div class="eyebrow">6 · Master table</div>
+    <h2>Every anemia, one line each</h2>
+    <p>Filtered by the lecture highlight above.</p>
+  </div>
+  <div class="tbl-scroll"><table>
+    <thead><tr><th>Anemia</th><th>Lectures</th><th>MCV</th><th>Retics</th><th>Family</th><th>Clinches it</th></tr></thead>
+    <tbody id="tbody"></tbody>
+  </table></div>
+</section>
+
+<!-- 7. QUIZ -->
+<section id="quiz">
+  <div class="sec-head">
+    <div class="eyebrow">7 · Check yourself</div>
+    <h2>Application questions on the relationships</h2>
+    <p>Answer before you open each one.</p>
+  </div>
+  <div class="quiz">
+    <details class="qa"><summary>A 38-year-old woman had a gastric bypass 9 months ago. She has numb feet, WBC 2.2, platelets 145, Hb 7.8, MCV 100, RDW 17, retics 0.5%, LDH 535, haptoglobin 15, normal bilirubin, B12 112, ferritin 20. Why is the MCV normal, and why is the LDH high?</summary>
+      <div class="ans"><p><b>Combined B12 + iron deficiency.</b> Large (B12) and small (iron) cells average to a normal MCV; the high RDW and dimorphic smear give it away.</p><p>LDH ↑ and haptoglobin ↓ with low retics and normal bilirubin = ineffective erythropoiesis (megaloblasts dying in marrow), not hemolysis. Treat with parenteral B12 (neuro signs) + IV iron.</p></div></details>
+    <details class="qa"><summary>A Greek woman has been given iron twice with no improvement. MCV 64, RBC 6.0, normal RDW, ferritin 85. What test comes next, and what should happen to the iron?</summary>
+      <div class="ans"><p><b>Hb electrophoresis → ↑ HbA2 (β-thal minor).</b> Mentzer 64/6.0 ≈ 10.7 (&lt;13). Stop the iron (overload risk) and offer genetic counseling: two carriers have a 25% chance of a child with β-thal major.</p></div></details>
+    <details class="qa"><summary>A child with hereditary spherocytosis develops fever and a lacy facial rash. Hb falls from 10 to 5 and retics are 0.3%. Which other anemia in this map shares this complication, and why?</summary>
+      <div class="ans"><p><b>Parvovirus B19 aplastic crisis.</b> The virus infects erythroid precursors and stops production. Any chronic hemolytic anemia (HS, sickle cell) depends on a high retic output, so a short shutdown crashes the Hb. Treat with transfusion.</p></div></details>
+    <details class="qa"><summary>A soldier with a P. vivax infection is about to start primaquine. What must be checked first, and which two inherited conditions in this map protect against falciparum malaria?</summary>
+      <div class="ans"><p><b>G6PD level</b>: primaquine is an oxidant (the "oxidize" arm of drug hemolysis) and causes bite cells and Heinz bodies in G6PD deficiency. Primaquine is given for vivax/ovale hypnozoites. Sickle cell trait and G6PD deficiency both protect against P. falciparum.</p></div></details>
+    <details class="qa"><summary>A patient with a mechanical aortic valve has schistocytes and, months later, a falling ferritin and MCV. Connect the two anemias.</summary>
+      <div class="ans"><p><b>Valve hemolysis → iron deficiency.</b> Chronic intravascular hemolysis spills Hb into the urine (hemoglobinuria, hemosiderinuria), so iron is lost. A destruction anemia becomes a production anemia.</p></div></details>
+    <details class="qa"><summary>A 16-year-old with β-thal major on monthly transfusions has dyspnea, edema and an irregular rhythm. Which anemia is his iron status the opposite of, and what is the treatment?</summary>
+      <div class="ans"><p><b>Secondary hemochromatosis</b> (transfusions + ↑ gut absorption from ineffective erythropoiesis): the opposite of iron deficiency. Cardiac iron → CHF, the main cause of death. Treat with chelation (deferoxamine, deferasirox, deferiprone).</p></div></details>
+    <details class="qa"><summary>A 34-year-old woman with a malar rash and arthralgias has spherocytes and retics of 9%. A 58-year-old woman with RA has MCV 79, ferritin 310, low TIBC and low retics. How does one disease lead to two different anemias?</summary>
+      <div class="ans"><p>Autoimmune disease can cause <b>warm AIHA</b> (IgG autoantibody, DAT +, high retics; first patient, SLE) or <b>anemia of chronic disease</b> (IL-6 → hepcidin → iron trapped; low retics; second patient, RA). The retic count splits them.</p></div></details>
+    <details class="qa"><summary>An 18-year-old with sickle cell disease has RUQ pain after a fatty meal. A 7-year-old with HS has an enlarged spleen and jaundice since infancy. What stone links them?</summary>
+      <div class="ans"><p><b>Black pigment (calcium bilirubinate) gallstones</b> from chronic hemolysis: heme → excess unconjugated bilirubin. Distractors: cholesterol stones (↑ cholesterol:bile acid ratio) and brown stones (infection, β-glucuronidase).</p></div></details>
+  </div>
+</section>
+
+<div id="fcModal" hidden role="dialog" aria-modal="true" aria-labelledby="fcModalT"><div class="box"><div class="hd"><b id="fcModalT"></b><button class="fcbig" id="fcClose">Close</button></div><div class="bd" id="fcModalB"></div></div></div>
+<footer><span><b>HoyaDocs</b> · HEM Anemia Relationship Map</span><span>Date updated: October 8, 2026 · Revision 1.4</span></footer>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10.9.1/dist/mermaid.min.js"></script>
+<script>
+const FAM={
+ ing:{n:"Production · missing ingredient",c:"--f-ing"},
+ lock:{n:"Production · iron locked or misused",c:"--f-lock"},
+ fac:{n:"Production · no signal or no factory",c:"--f-fac"},
+ glob:{n:"Production + destruction · too little globin",c:"--f-glob"},
+ intr:{n:"Destruction · defect inside the RBC",c:"--f-intr"},
+ imm:{n:"Destruction · antibody attack (DAT +)",c:"--f-imm"},
+ mech:{n:"Destruction · shredded or infected (DAT −)",c:"--f-mech"},
+ loss:{n:"Blood loss",c:"--f-loss"}
+};
+const D={
+ ida:{n:"Iron deficiency",nick:"The empty pantry",L:["02","05","06"],cells:["micro-low"],fam:"ing",m:"↓ (micro)",r:"Low",
+  mech:"Too little iron → too little Hb → extra divisions → small, pale cells. Stores empty first (↓ ferritin), then transport iron (↓ Fe, ↑ TIBC), then anemia.",
+  buzz:["Pica / ice craving","Koilonychia","Blue sclera","Pencil cells","↑ RDW","↑ platelets","Most common anemia"],
+  test:"↓ ferritin (best single test), ↑ TIBC, ↓ Fe, ↓ saturation; marrow: absent stainable iron (gold standard).",
+  tx:"Oral ferrous sulfate (IV if malabsorption or bypass); treat until ferritin >50. Every adult: colonoscopy + EGD.",
+  hy:"Older adult + iron deficiency + no visible bleeding → GI (right colon) cancer until proven otherwise. Mentzer (MCV ÷ RBC) >13.",
+  key:"↓ ferritin, ↑ TIBC; adult → scope"},
+ acd:{n:"Anemia of chronic disease",nick:"Iron locked in the vault",L:["02","05","06"],cells:["micro-low","normo-low"],fam:"lock",m:"N → ↓",r:"Low",
+  mech:"Inflammation → IL-6 → ↑ hepcidin → ferroportin blocked → iron trapped in macrophages, unavailable to the marrow.",
+  buzz:["RA, SLE","Chronic infection","Cancer","Normocytic → microcytic","Normal RDW"],
+  test:"↓ Fe, ↓ TIBC, ferritin N/↑.",tx:"Treat the underlying disease; ESA in selected patients.",
+  hy:"Ferritin is an acute-phase reactant, so it can be normal even when iron deficiency coexists.",key:"↓ TIBC, ferritin N/↑"},
+ sidero:{n:"Sideroblastic anemia / lead",nick:"Iron arrives, heme never built",L:["02"],cells:["micro-low"],fam:"lock",m:"↓ (dimorphic)",r:"Low",
+  mech:"Iron reaches the erythroblast but can't be put into heme → iron trapped in mitochondria (ringed sideroblasts). Lead blocks ALA dehydratase + ferrochelatase; isoniazid uses up B6 (ALA synthase cofactor).",
+  buzz:["Ringed sideroblasts","Basophilic stippling","Lead: colic, headache, renal injury","Wrist drop","↑ iron, ↑ ferritin"],
+  test:"↑ Fe, ↑ ferritin, ↑ saturation, ↓/N TIBC; Prussian blue marrow stain.",tx:"Remove the source; chelation (succimer, EDTA, dimercaprol); pyridoxine for B6-responsive forms.",
+  ih:"Handout + exam topic: \"Which is likely with lead toxicity?\" → all of the above (microcytic anemia, headache/dizziness, abdominal pain, renal dysfunction).",key:"Ringed sideroblasts; stippling"},
+ b12:{n:"Vitamin B12 deficiency",nick:"The empty ileum",L:["03","05","06"],cells:["macro-low"],fam:"ing",m:"↑↑ (100–150)",r:"Low",
+  mech:"B12 runs methionine synthase (→ ↑ homocysteine, folate trapped) and methylmalonyl-CoA mutase (→ ↑ MMA → myelin loss). ↓ thymidine → DNA lags behind cytoplasm (nuclear–cytoplasmic asynchrony). Stores last 2–5 years.",
+  buzz:["Hypersegmented PMNs","Oval macrocytes","Subacute combined degeneration","Terminal ileal resection (Crohn)","Vegan","D. latum"],
+  test:"↓ B12, ↑ MMA, ↑ homocysteine; marrow hypercellular, megaloblasts in all lines.",tx:"Parenteral B12 (always if neuro signs) or high-dose oral; lifelong if the cause is permanent.",
+  hy:"Megaloblastic anemia mimics hemolysis (↑ LDH, ↑ indirect bili, ↓ haptoglobin) but retics are low. Never give folate alone.",key:"↑ MMA + ↑ homocysteine; neuro"},
+ pa:{n:"Pernicious anemia",nick:"The stomach that forgot intrinsic factor",L:["03","05","06"],cells:["macro-low"],fam:"ing",m:"↑↑",r:"Low",
+  mech:"Autoimmune atrophic gastritis (body/fundus) → parietal cells lost → ↓ intrinsic factor + achlorhydria → no B12 uptake in the ileum. Blocking and binding anti-IF antibodies.",
+  buzz:["Anti-IF Ab (specific)","Anti-parietal Ab (sensitive)","Lemon-yellow skin","Smooth red tongue","Vitiligo, thyroid disease","↑ gastrin"],
+  test:"Megaloblastic labs + anti-IF / anti-parietal cell antibodies.",tx:"Lifelong B12. Gastric changes persist → screen for gastric carcinoma.",
+  hy:"Atrophic gastritis → intestinal metaplasia → gastric adenocarcinoma. Type A gastritis (body/fundus) vs H. pylori (antrum).",key:"Anti-IF Ab; atrophic gastritis"},
+ folate:{n:"Folate deficiency",nick:"The tea-and-toast drinker",L:["03"],cells:["macro-low"],fam:"ing",m:"↑↑",r:"Low",
+  mech:"Folate supplies one-carbon units for dTMP (DNA). Stores only 3–5 months; absorbed in the jejunum. Same megaloblastic picture as B12, without the MMA step.",
+  buzz:["Alcohol, poor diet","Pregnancy","Chronic hemolysis","Methotrexate","Overcooking (heat labile)","No neuro signs"],
+  test:"↓ serum/RBC folate, ↑ homocysteine, normal MMA.",tx:"Oral folate 1–5 mg/day after B12 deficiency is excluded; treat the cause.",
+  hy:"Preconception folate prevents neural tube defects. Leucovorin rescues methotrexate toxicity.",key:"↑ homocysteine, normal MMA"},
+ mixed:{n:"B12 + iron deficiency after bypass",nick:"The bypass that took two vitamins",L:["05"],cells:["normo-low"],fam:"ing",m:"N (≈100), ↑ RDW",r:"Low",
+  mech:"Gastric bypass skips the stomach (acid + IF → ↓ food-bound B12) and the duodenum (main iron absorption site). Big + small cells average to a normal MCV.",
+  buzz:["Pancytopenia","Neuropathy","Dimorphic smear","Hypersegmented PMNs","↑ LDH, ↓ hapto, low retics, normal bili"],
+  test:"↓ B12, ferritin at the bottom of normal, ↑ RDW, dimorphic smear.",tx:"Parenteral B12 + IV iron (or high-dose oral B12 + parenteral iron). B12 lifelong; iron whenever ferritin <50.",
+  ih:"HEM05 Case 2. Replacing B12 restarts production and can use up the remaining iron, unmasking iron deficiency.",
+  hy:"Copper deficiency after bypass can mimic B12 deficiency.",key:"Normal MCV + ↑ RDW + dimorphic"},
+ ckd:{n:"Anemia of CKD",nick:"The kidney that stopped sending EPO",L:["02","05"],cells:["normo-low"],fam:"fac",m:"N",r:"Low",
+  mech:"The kidney makes EPO. Advanced CKD → ↓ EPO → hypoproliferative normocytic anemia.",
+  buzz:["Analgesic nephropathy","Ferritin high","LDH low","Occult blood = distractor"],
+  test:"↑ creatinine; normocytic, low retics, iron stores normal/high.",tx:"Erythropoiesis-stimulating agent + iron.",
+  hy:"Check creatinine in every unexplained normocytic anemia.",key:"↑ creatinine, ↓ EPO"},
+ aplastic:{n:"Aplastic anemia",nick:"The empty factory",L:["02","06"],cells:["normo-low","macro-low"],fam:"fac",m:"N / mildly ↑",r:"Very low",
+  mech:"Stem cell failure → hypocellular, fatty marrow → pancytopenia. Causes: infection (hepatitis, parvovirus, EBV, HIV), drugs (chloramphenicol, chemo), toxins (benzene), radiation, Fanconi anemia, idiopathic.",
+  buzz:["Pancytopenia","Fatty marrow","No splenomegaly","Post-hepatitis"],
+  test:"Marrow biopsy: mostly fat. Cellularity ≈ 100 − age.",tx:"Remove the cause; transfusion; ATG + cyclosporine; stem cell transplant.",key:"Fatty marrow + pancytopenia"},
+ myelo:{n:"Myelophthisic anemia",nick:"Clusters that don't belong",L:["02","06"],cells:["normo-low"],fam:"fac",m:"N",r:"Low",
+  mech:"Marrow replaced by tumor (metastatic breast, prostate, lung), granulomas (TB, fungi, sarcoid, Hodgkin) or fibrosis.",
+  buzz:["Teardrops","Nucleated RBCs","Myelocytes (leukoerythroblastic)","Cohesive clusters = carcinoma","Granuloma → culture it"],
+  test:"Marrow biopsy; cultures + special stains if granuloma.",tx:"Treat the cancer or infection; supportive transfusion.",
+  hy:"Hematopoietic cells are discohesive. Cohesive clumps in marrow = metastatic carcinoma until proven otherwise.",key:"Leukoerythroblastic smear; marrow biopsy"},
+ nonmeg:{n:"Non-megaloblastic macrocytosis",nick:"Big cells, normal DNA",L:["02","03","06"],cells:["macro-low","macro-high"],fam:"fac",m:"↑ (100–110)",r:"Low or high",
+  mech:"Membrane lipid changes or many large young cells. Causes: alcohol, liver disease, hypothyroidism, MDS, drugs/toxins, and brisk reticulocytosis (hemolysis, hemorrhage).",
+  buzz:["Round macrocytes","Targets in liver disease","No hypersegmented PMNs","No megaloblasts"],
+  test:"Smear without megaloblastic features; LFTs, TSH; marrow if unexplained.",tx:"Treat the cause.",
+  hy:"Hydroxyurea (sickle cell therapy) causes macrocytosis.",key:"Round macrocytes, no hyperseg"},
+ parvo:{n:"Parvovirus B19 aplastic crisis",nick:"The factory shuts for a week",L:["02","03","05"],cells:["normo-low"],fam:"fac",m:"N",r:"≈0",
+  mech:"B19 infects erythroid precursors and stops production briefly. Harmless in most people; Hb crashes in anyone who depends on high retic output (chronic hemolysis).",
+  buzz:["Lacy / slapped-cheek rash","Hb crashes","Retics ≈0","Sickle cell, HS"],
+  test:"Sudden ↓ Hb with retics near zero in a hemolytic patient.",tx:"Transfusion support.",key:"Retics ≈0 in a hemolytic patient"},
+ btmaj:{n:"β-thalassemia major",nick:"The marrow that ate the skull",L:["02","06"],cells:["micro-high"],fam:"glob",m:"↓",r:"↑ but < expected",
+  mech:"Two abnormal β genes (point mutations, chr 11) → little/no β chain → free α chains precipitate → ineffective erythropoiesis + splenic removal. ↑ EPO → marrow expansion, extramedullary hematopoiesis, ↑ iron absorption.",
+  buzz:["Chipmunk facies","Crew-cut skull","Hepatosplenomegaly","Target cells, nRBCs","Onset ≈6 months","Mediterranean"],
+  test:"Electrophoresis: ↑↑ HbF, little/no HbA. Hb 2.5–6. Iron normal or ↑.",tx:"Transfusion + chelation (deferoxamine, deferasirox, deferiprone); BMT; gene therapy.",
+  ih:"Exam topic: β-thal major electrophoresis shows more HbF than HbA.",
+  hy:"Main cause of death: CHF from cardiac iron (secondary hemochromatosis).",key:"↑↑ HbF, ↓/absent HbA"},
+ btmin:{n:"β-thalassemia minor",nick:"Small cells, full pantry",L:["02","06"],cells:["micro-low"],fam:"glob",m:"↓↓ for mild anemia",r:"N",
+  mech:"One abnormal β gene → mild ↓ β chain; extra α chains pair with δ → ↑ HbA2.",
+  buzz:["Mentzer <13","RBC count N/↑","Normal RDW","Normal iron","Target cells"],
+  test:"↑ HbA2 (>3.5%), slight ↑ HbF.",tx:"None. Do not give iron. Genetic counseling (two carriers → 25% major).",key:"↑ HbA2, Mentzer <13"},
+ athal:{n:"α-thalassemia",nick:"Count the missing genes",L:["02","05"],cells:["micro-low","micro-high"],fam:"glob",m:"↓",r:"N (trait) / ↑ (HbH)",
+  mech:"Deletion of 1–4 of the four α genes (chr 16). 1 = silent carrier · 2 = trait (cis in Asian → hydrops risk in offspring; trans in African) · 3 = HbH disease (β₄), hemolysis · 4 = Hb Barts (γ₄), hydrops fetalis.",
+  buzz:["Gene deletions","HbH (β₄)","Hb Barts (γ₄)","Hydrops fetalis","Family of anemic women"],
+  test:"Trait: microcytosis with normal iron and a normal adult electrophoresis → diagnosis of exclusion / DNA testing.",tx:"Trait: none. HbH: transfuse as needed. Barts: lethal in utero.",
+  ih:"Taught on a HEM02 slide but not an LO. In HEM05 Case 1 it may coexist with iron deficiency, so treat iron to ferritin >50, not to a normal MCV.",key:"Normal electrophoresis (trait)"},
+ scd:{n:"Sickle cell disease (HbSS)",nick:"The sticky sickles that clog the pipes",L:["02","05","06"],cells:["normo-high"],fam:"intr",m:"Variable (often N)",r:"↑",
+  mech:"Glu → Val at position 6 of β-globin. Low O₂ → HbS polymerizes → vaso-occlusion (pain, infarcts), chronic hemolysis (jaundice, stones) and free Hb scavenging NO (pulmonary HTN).",
+  buzz:["Dactylitis","Acute chest","Autosplenectomy","Howell-Jolly bodies","AVN femoral head","Pigment gallstones","Encapsulated infections"],
+  test:"Hb electrophoresis: HbS ≈90%+, ↑ HbF, no HbA. Hemolysis labs.",tx:"Hydroxyurea (↑ HbF), crizanlizumab (anti-P-selectin), hydration, analgesia, transfusion, BMT; penicillin + vaccines in kids.",
+  hy:"Salmonella osteomyelitis; parvovirus aplastic crisis; voxelotor withdrawn 2024.",key:"HbS on electrophoresis"},
+ sct:{n:"Sickle cell trait (HbAS)",nick:"The silent carrier",L:["02","05"],cells:[],fam:"intr",m:"N",r:"N",
+  mech:"Heterozygous, ≈40% HbS. Sickles only where O₂ is very low (renal medulla).",
+  buzz:["CBC normal","Painless hematuria","Papillary necrosis","Renal medullary carcinoma","Protects vs falciparum"],
+  test:"Electrophoresis HbA ≈60% / HbS ≈40%.",tx:"None; genetic counseling.",ih:"HEM05 Case 1: sickle trait does not cause anemia.",key:"No anemia; hematuria"},
+ hs:{n:"Hereditary spherocytosis",nick:"The balls stuck in the spleen",L:["03","05"],cells:["normo-high"],fam:"intr",m:"N/↓",r:"↑",
+  mech:"Mostly autosomal dominant defects in ankyrin, spectrin, band 3 → membrane loss → spheres that get stuck in the spleen (extravascular).",
+  buzz:["DAT −","↑ MCHC","↑ osmotic fragility","↓ EMA binding","Splenomegaly","Pigment gallstones","Family history"],
+  test:"Spherocytes without central pallor, DAT −, ↑ osmotic fragility.",tx:"Splenectomy fixes the anemia, not the cell (vaccinate first; Howell-Jolly after); folate.",
+  ih:"Flagged exam topic: DAT −, ↑ MCHC, ↑ osmotic fragility → spherocyte.",key:"DAT −, ↑ osmotic fragility"},
+ g6pd:{n:"G6PD deficiency",nick:"The cell with no antioxidant",L:["03","05"],cells:["normo-high"],fam:"intr",m:"N",r:"↑ (episodic)",
+  mech:"X-linked. No G6PD → no NADPH → no reduced glutathione → oxidants denature Hb (Heinz bodies) → splenic macrophages take bites.",
+  buzz:["Bite cells","Heinz bodies","Fava beans","Primaquine, sulfa, TMP-SMX, dapsone","A− (mild) vs Mediterranean (severe)"],
+  test:"DAT −; G6PD assay weeks after the episode.",tx:"Avoid triggers; transfuse if severe; exchange transfusion in infants.",
+  hy:"Assay done during an episode can be falsely normal (young cells have more enzyme).",key:"Bite cells + oxidant trigger"},
+ warm:{n:"Warm AIHA",nick:"The spleen eats coated cells",L:["03","05","06"],cells:["normo-high","macro-high"],fam:"imm",m:"N / ↑ (retics)",r:"↑↑ (up to 20%)",
+  mech:"IgG autoantibody at 37 °C → splenic macrophages nibble the membrane → spherocytes → extravascular hemolysis.",
+  buzz:["DAT + (IgG ± C3)","Spherocytes + polychromasia","SLE","CLL / lymphoma","Drugs"],
+  test:"DAT +; spherocytes; reacts at 37 °C, not 4 °C.",tx:"Steroids, IVIG; rituximab; splenectomy.",
+  hy:"Very high retics can push MCV above 100. That is reticulocytosis, not B12 deficiency.",key:"DAT + IgG, spherocytes"},
+ cold:{n:"Cold agglutinin disease",nick:"Clumps in cold fingers",L:["03"],cells:["normo-high"],fam:"imm",m:"N / falsely ↑",r:"↑",
+  mech:"IgM at 4 °C bridges RBCs (agglutination) and fixes complement → intra- and extravascular (liver) hemolysis.",
+  buzz:["DAT + C3 only","Agglutination","Mycoplasma (anti-I)","EBV","Lymphoma","Acrocyanosis"],
+  test:"DAT + for C3; RBC clumps on smear.",tx:"Avoid cold, treat the cause; rituximab, anti-C1s. Steroids and splenectomy work poorly.",key:"DAT + C3, agglutination"},
+ abo:{n:"ABO transfusion reaction",nick:"The wrong bag",L:["03"],cells:["normo-high"],fam:"imm",m:"N",r:"↑ later",
+  mech:"Naturally occurring IgM isohemagglutinins → complement → severe intravascular hemolysis. Usually a clerical error.",
+  buzz:["Minutes into transfusion","Fever, flank pain","Hypotension","Red urine","DIC, AKI"],
+  test:"DAT +; free Hb in plasma and urine; recheck type and crossmatch.",tx:"Stop the transfusion, keep IV access, support, check labels, return bag + tubing; anti-C5.",key:"IgM complement, intravascular"},
+ hdfn:{n:"Rh hemolytic disease of the fetus/newborn",nick:"The second baby pays",L:["03"],cells:["normo-high"],fam:"imm",m:"N/↑",r:"↑",
+  mech:"Rh⁻ mother sensitized by a prior pregnancy → anti-D IgG crosses the placenta → fetal hemolysis.",
+  buzz:["Anti-D IgG","First pregnancy spared","Kernicterus","Hydrops fetalis","RhIg"],
+  test:"Baby DAT +; mother IAT detects anti-D.",tx:"RhIg at 28 weeks + within 72 h of delivery and after obstetric events; intrauterine transfusion.",
+  hy:"ABO HDFN can affect the first baby but is mild.",key:"Rh⁻ mom, anti-D IgG"},
+ drug:{n:"Drug-induced hemolysis",nick:"Oxidize, Antibody, Shred",L:["03"],cells:["normo-high"],fam:"imm",m:"N",r:"↑",
+  mech:"Three routes: oxidize Hb (G6PD: primaquine, sulfonamides, nitrofurantoin, dapsone) · antibody (penicillin, ceftriaxone, quinidine, α-methyldopa) · microangiopathy (clopidogrel, cyclosporine, gemcitabine, mitomycin, quinine).",
+  buzz:["DAT − + bite cells = oxidant","DAT + + spherocytes = antibody","Schistocytes = shred"],
+  test:"Drug timeline + DAT + smear.",tx:"Stop the drug; supportive care.",key:"Drug timeline; DAT/smear pick the route"},
+ maha:{n:"MAHA (DIC, HUS, malignant HTN, cancer)",nick:"Cells sliced by fibrin strands",L:["03","06"],cells:["normo-high"],fam:"mech",m:"N",r:"↑",
+  mech:"RBCs forced through vessels narrowed by fibrin/platelet microthrombi → fragments → intravascular hemolysis.",
+  buzz:["Schistocytes / helmet cells","↓ platelets","DIC: ↑ PT/PTT, ↓ fibrinogen, ↑ D-dimer","HUS: child, E. coli O157:H7"],
+  test:"Schistocytes; coagulation panel separates DIC (abnormal) from TTP/HUS (normal).",tx:"Treat the cause; blood products if DIC is bleeding.",key:"Schistocytes; PT/PTT ↑ in DIC"},
+ ttp:{n:"TTP",nick:"The vWF that was never cut",L:["03","05"],cells:["normo-high"],fam:"mech",m:"N",r:"↑",
+  mech:"Autoantibody → ↓ ADAMTS13 → ultra-large vWF multimers → platelet microthrombi → schistocytes.",
+  buzz:["FAT RN pentad","Normal PT/PTT","↓ ADAMTS13 (<10%)","Adult woman"],
+  test:"Schistocytes, ↓ platelets, normal PT/PTT, ↓ ADAMTS13.",tx:"Emergency plasma exchange, steroids, rituximab, caplacizumab; no platelet transfusion.",
+  ih:"Thin in HEM03; covered fully in the platelet lectures.",key:"Schistocytes + normal PT/PTT"},
+ valve:{n:"Prosthetic valve hemolysis",nick:"The blender in the heart",L:["03"],cells:["normo-high"],fam:"mech",m:"N / ↓ (iron loss)",r:"↑",
+  mech:"Turbulent shear across a mechanical valve fragments RBCs (MAHA outside the small vessels).",
+  buzz:["Schistocytes","Mechanical valve","Hemosiderinuria","Low ferritin over time"],
+  test:"Schistocytes + valve history.",tx:"Treat the cause; replace iron.",key:"Valve + schistocytes"},
+ malaria:{n:"Malaria",nick:"Rings inside the cells",L:["03","06"],cells:["normo-high"],fam:"mech",m:"N",r:"↑",
+  mech:"Plasmodium replicates inside RBCs → rupture (intravascular) + splenic removal. Four species affect humans in-house (P. knowlesi is a fifth).",
+  buzz:["Ring forms (P. vivax)","Cyclic fevers","Splenomegaly","↓ platelets","Travel"],
+  test:"Thick + thin Giemsa smears.",tx:"Species-directed antimalarials; primaquine for vivax/ovale hypnozoites after a G6PD check.",
+  hy:"P. falciparum is the most severe (cerebral malaria). Sickle trait and G6PD deficiency protect against it.",key:"Ring forms on smear"},
+ acute:{n:"Acute blood loss",nick:"The leak",L:["02","06"],cells:["normo-low","normo-high"],fam:"loss",m:"N",r:"Low → ↑ after 3–5 d",
+  mech:"Whole blood is lost, so Hb/Hct stay normal at first; anemia appears as fluid shifts in. Marrow responds after 3–5 days.",
+  buzz:["Trauma, GI bleed","Tachycardia, hypotension","Hb normal at first"],
+  test:"Vitals first; Hb lags.",tx:"Volume and blood as needed; stop the bleeding.",
+  ih:"Chronic loss (menses, GI) doesn't look like this. It drains iron and becomes iron deficiency.",key:"Vitals > Hb early"}
+};
+const E=[
+ // type: cause | mimic | shared | comp
+ ["acute","ida","cause","Slow, chronic loss (menses, GI cancer, NSAIDs) empties iron stores → iron deficiency. Acute loss stays normocytic."],
+ ["valve","ida","cause","Chronic intravascular hemolysis loses iron in the urine (hemosiderinuria) → iron deficiency."],
+ ["mixed","ida","cause","Bypass skips the duodenum, the main iron absorption site."],
+ ["mixed","b12","cause","Bypass removes acid + intrinsic factor → ↓ food-bound B12. Neuro signs → parenteral B12."],
+ ["pa","b12","cause","Most common cause of B12 malabsorption: anti-IF antibodies + atrophic gastritis."],
+ ["hs","folate","cause","Chronic hemolysis raises folate demand → HS patients take folate."],
+ ["btmaj","folate","cause","Expanded, hyperactive marrow uses up folate; some patients get folate."],
+ ["g6pd","drug","cause","The oxidant arm of drug hemolysis: primaquine, sulfonamides, TMP-SMX, dapsone, nitrofurantoin."],
+ ["warm","drug","cause","The antibody arm: penicillin, ceftriaxone, quinidine, α-methyldopa → DAT +, spherocytes."],
+ ["ttp","drug","cause","The shred arm: clopidogrel/ticlopidine, cyclosporine, gemcitabine, mitomycin, quinine → schistocytes."],
+ ["abo","maha","cause","Severe ABO reactions trigger DIC and AKI."],
+ ["scd","nonmeg","cause","Hydroxyurea for sickle cell causes macrocytosis (and myelosuppression)."],
+ ["folate","nonmeg","shared","Alcohol causes both: folate deficiency (megaloblastic) and direct non-megaloblastic macrocytosis."],
+ ["ida","btmin","mimic","Both microcytic. Thal trait: normal ferritin, ↑ HbA2, RBC count N/↑, normal RDW, Mentzer <13. Iron for trait = overload."],
+ ["ida","acd","mimic","Both ↓ serum iron. TIBC ↑ in IDA, ↓ in ACD; ferritin ↓ vs N/↑."],
+ ["ida","sidero","mimic","Both microcytic. Sideroblastic/lead has ↑ iron and ferritin, ringed sideroblasts, stippling."],
+ ["athal","btmin","mimic","Both trait-level microcytosis with normal iron. β trait ↑ HbA2; α trait has a normal adult electrophoresis."],
+ ["b12","folate","mimic","Identical blood and marrow. MMA ↑ only in B12; neuro signs only in B12; folate alone fixes the anemia but not the nerves."],
+ ["b12","warm","mimic","Both can show MCV >100 and ↑ LDH/bilirubin. Retics split them: low in B12 (ineffective), up to 20% in AIHA (big retics)."],
+ ["b12","nonmeg","mimic","Oval macrocytes + hypersegmented PMNs vs round macrocytes with normal neutrophils."],
+ ["b12","aplastic","mimic","Both cause pancytopenia. Marrow: hypercellular megaloblastic vs fatty and empty."],
+ ["warm","hs","mimic","Both have spherocytes and extravascular hemolysis. DAT + (warm) vs DAT − (HS). Splenectomy helps both."],
+ ["maha","ttp","mimic","Both schistocytes + ↓ platelets. PT/PTT ↑ in DIC, normal in TTP."],
+ ["btmaj","scd","mimic","Both β-globin disorders (chr 11), silent until ≈6 months, both helped by HbF. Electrophoresis: HbF without HbS vs HbS."],
+ ["ckd","acd","mimic","Both hypoproliferative, normocytic, ferritin normal/high. Creatinine and EPO split them."],
+ ["ida","athal","shared","HEM05 Case 1: α-thal trait can coexist with iron deficiency, so treat iron to ferritin >50, not to a normal MCV."],
+ ["btmaj","b12","shared","Both have ineffective erythropoiesis: precursors die in the marrow, retics lower than expected."],
+ ["btmaj","ida","shared","Opposite iron states: transfusions + ↑ absorption → secondary hemochromatosis → CHF; treat with chelation."],
+ ["scd","hs","shared","Chronic hemolysis → excess unconjugated bilirubin → black pigment (calcium bilirubinate) gallstones."],
+ ["warm","acd","shared","SLE/RA can cause either: warm AIHA (DAT +, high retics) or chronic disease (hepcidin, low retics)."],
+ ["warm","cold","shared","Both autoimmune, DAT +. IgG 37 °C extravascular (steroids work) vs IgM 4 °C complement (steroids don't)."],
+ ["abo","hdfn","shared","The two alloimmune hemolytic anemias: IgM complement in the vessel vs IgG across the placenta."],
+ ["athal","hdfn","shared","Both cause hydrops fetalis: Hb Barts (4-gene deletion) vs maternal anti-D."],
+ ["aplastic","myelo","shared","Both marrow failure with pancytopenia: empty marrow vs crowded-out marrow."],
+ ["maha","valve","shared","Both schistocytes from mechanical injury: inside small vessels vs across a valve."],
+ ["scd","sct","shared","Same mutation, one vs two copies. Trait: ≈40% HbS, no anemia, hematuria."],
+ ["btmaj","btmin","shared","Same gene, two vs one copy. Two trait carriers → 25% chance of major."],
+ ["scd","parvo","comp","Parvovirus B19 halts production → Hb crashes with retics ≈0 (aplastic crisis)."],
+ ["hs","parvo","comp","Same aplastic crisis in HS: fever, lacy rash, Hb falls, retics vanish."],
+ ["aplastic","parvo","comp","Parvovirus is one infectious cause of marrow failure."],
+ ["sct","malaria","comp","Sickle trait protects against P. falciparum."],
+ ["g6pd","malaria","comp","Primaquine for vivax/ovale hypnozoites → check G6PD first. G6PD deficiency also protects against falciparum."]
+];
+const ETYPE={cause:{n:"Leads to",d:"One anemia or its treatment produces another"},mimic:{n:"Look-alikes",d:"How to split two anemias that share a finding"},shared:{n:"Shared ground",d:"Same mechanism, trigger, gene or complication"},comp:{n:"Complications and protection",d:"Infections, drugs and cancers that cross the line"}};
+const CHARTS={"balance": {"t": "The normal balance: production vs removal", "L": "02", "s": "flowchart LR\n    K[\"Kidney senses low O2\"] -->|\"EPO\"| M[\"Bone marrow<br>erythropoiesis\"]\n    M -->|\"about 1% new cells per day<br>(reticulocytes)\"| B[\"Circulating RBC mass\"]\n    B -->|\"about 1% removed per day<br>(spleen, macrophages)\"| X[\"Destruction\"]\n    B -->|\"bleeding\"| L[\"Blood loss\"]"}, "algo": {"t": "The clinical algorithm", "L": "02", "s": "flowchart TD\n    A[\"Low Hb / Hct = anemia\"] --> B{\"MCV?\"}\n    B -->|\"Low\"| MI[\"MICROCYTIC<br>check iron studies + smear\"]\n    B -->|\"Normal\"| NO[\"NORMOCYTIC<br>check reticulocytes\"]\n    B -->|\"High\"| MA[\"MACROCYTIC<br>check smear + reticulocytes\"]\n    MI --> MI1[\"Iron deficiency (most common)<br>Thalassemia<br>Anemia of chronic disease<br>Sideroblastic / lead\"]\n    NO --> NO1{\"Retics?\"}\n    NO1 -->|\"High\"| NO2[\"Hemolysis / acute bleed<br>(sickle cell, spherocytosis, G6PD, AIHA)\"]\n    NO1 -->|\"Low\"| NO3[\"Chronic disease, CKD, marrow failure<br>or infiltration - often needs marrow exam\"]\n    MA --> MA1{\"Megaloblastic?<br>(oval macrocytes, hypersegmented PMNs)\"}\n    MA1 -->|\"Yes\"| MA2[\"B12 / folate / drugs\"]\n    MA1 -->|\"No\"| MA3[\"Alcohol, liver, hypothyroid,<br>reticulocytosis, MDS\"]"}, "small": {"t": "Why are cells small?", "L": "02", "s": "flowchart TD\n    HB[\"Hemoglobin\"] --> HEME[\"Heme\"]\n    HB --> GLOB[\"Globin\"]\n    HEME --> FE[\"Iron<br>Iron deficiency<br>Anemia of chronic disease\"]\n    HEME --> PP[\"Protoporphyrin<br>Sideroblastic anemia<br>Lead poisoning\"]\n    GLOB --> TH[\"Globin chains<br>Thalassemias\"]"}, "symptoms": {"t": "Why anemia causes symptoms", "L": "02", "s": "flowchart TD\n    A[\"Low Hb\"] --> B[\"Less O2 delivered to tissues\"]\n    B --> C[\"Tissue hypoxia<br>fatigue, weakness, headache,<br>angina, claudication\"]\n    B --> D[\"Compensation\"]\n    D --> D1[\"Higher cardiac output<br>tachycardia, palpitations,<br>flow murmur, high-output HF\"]\n    D --> D2[\"More 2,3-BPG<br>Hb releases O2 more easily<br>(right shift)\"]\n    D --> D3[\"Blood shunted away from skin<br>PALLOR\"]\n    D --> D4[\"More EPO<br>marrow drive\"]"}, "iron": {"t": "Normal iron metabolism", "L": "02", "s": "flowchart LR\n    D[\"Diet<br>heme iron (meat)<br>non-heme iron (plants)\"] --> E[\"Duodenal enterocyte<br>absorbs iron<br>(acid + vitamin C help)\"]\n    E -->|\"stored as ferritin<br>(lost when cell sheds)\"| S1[\"Shed into gut\"]\n    E -->|\"exported via ferroportin\"| T[\"Transferrin in plasma<br>(about 33% saturated)\"]\n    T --> BM[\"Erythroid precursors<br>(transferrin receptors)\"]\n    T --> ST[\"Stores: ferritin / hemosiderin<br>liver, spleen, marrow macrophages\"]\n    BM --> R[\"RBCs\"]\n    R -->|\"old RBCs eaten,<br>iron recycled\"| MAC[\"Macrophages\"]\n    MAC --> T\n    H[\"Hepcidin (liver)<br>blocks ferroportin\"] -.-> E\n    H -.-> MAC"}, "bthal": {"t": "β-thalassemia pathogenesis", "L": "02", "s": "flowchart TD\n    A[\"Beta-globin gene mutation\"] --> B[\"Little or no beta chain\"]\n    B --> C[\"Less HbA made\"]\n    B --> D[\"Excess free alpha chains\"]\n    C --> C1[\"Microcytic, hypochromic anemia\"]\n    D --> D1[\"Alpha chains precipitate,<br>damage RBC membrane\"]\n    D1 --> E1[\"In MARROW: precursors die<br>= ineffective erythropoiesis\"]\n    D1 --> E2[\"In BLOOD: spleen removes damaged RBCs<br>= hemolysis\"]\n    C1 --> F[\"Severe anemia, high EPO\"]\n    E1 --> F\n    E2 --> F\n    F --> G[\"Massive marrow expansion<br>bone deformities, poor growth\"]\n    F --> H[\"Extramedullary hematopoiesis<br>liver + spleen enlarge\"]\n    F --> I[\"Low hepcidin, more iron absorbed<br>+ transfusions = IRON OVERLOAD\"]"}, "sickle": {"t": "Sickle cell: three arms of disease", "L": "02", "s": "flowchart TD\n    A[\"HbS polymerizes when deoxygenated\"] --> B[\"Sickled, sticky, rigid RBCs\"]\n    B --> V[\"1. VASO-OCCLUSION<br>adhesion + inflammation<br>block small vessels\"]\n    B --> H[\"2. CHRONIC HEMOLYSIS<br>spleen removes cells;<br>some lyse in vessels\"]\n    H --> E[\"3. ENDOTHELIAL DYSFUNCTION<br>free Hb inactivates nitric oxide\"]\n    E --> V\n    V --> O[\"Ischemia, infarcts, PAIN,<br>end-organ damage\"]\n    H --> J[\"Anemia, jaundice,<br>pigment gallstones\"]\n    E --> P[\"Vasoconstriction, platelet aggregation,<br>pulmonary hypertension\"]"}, "macro": {"t": "Macrocytic anemia workup", "L": "03", "s": "flowchart TD\n    A[\"Macrocytic anemia<br>MCV over 100\"] --> B[\"Peripheral smear\"]\n    B -->|\"oval macrocytes +<br>hypersegmented neutrophils\"| C[\"MEGALOBLASTIC<br>check B12, folate,<br>MMA, homocysteine\"]\n    B -->|\"round macrocytes,<br>no hypersegmentation\"| D{\"Reticulocyte count?\"}\n    D -->|\"High\"| E[\"Hemolysis or hemorrhage<br>(retics are big)\"]\n    D -->|\"Normal or low\"| F[\"Alcohol, liver, thyroid, drugs;<br>if unexplained: marrow exam<br>(MDS, aplastic anemia)\"]"}, "b12bio": {"t": "B12 and folate biochemistry", "L": "03", "s": "flowchart TD\n    MTHF[\"Methyl-THF<br>(dietary folate form)\"] -->|\"methionine synthase<br>needs B12\"| THF[\"THF\"]\n    HCY[\"Homocysteine\"] -->|\"same reaction\"| MET[\"Methionine\"]\n    THF --> MTF[\"Methylene-THF\"]\n    MTF -->|\"thymidylate synthase\"| DT[\"dTMP (thymidine)\"]\n    DT --> DNA[\"DNA synthesis\"]\n    MMA[\"Methylmalonyl-CoA\"] -->|\"methylmalonyl-CoA mutase<br>needs B12\"| SUC[\"Succinyl-CoA\"]"}, "pa": {"t": "Pernicious anemia", "L": "03", "s": "flowchart TD\n    A[\"Autoimmune attack on gastric<br>body and fundus\"] --> B[\"Anti-parietal cell antibodies\"]\n    A --> C[\"Anti-intrinsic factor antibodies\"]\n    B --> D[\"Parietal cells destroyed<br>chronic ATROPHIC GASTRITIS\"]\n    D --> E[\"Achlorhydria<br>(no stomach acid)\"]\n    D --> F[\"Less intrinsic factor made\"]\n    C --> G[\"Blocking Ab: stops B12 binding IF<br>Binding Ab: stops B12-IF binding ileum\"]\n    F --> H[\"B12 not absorbed in ileum\"]\n    G --> H\n    H --> I[\"B12 deficiency<br>megaloblastic anemia + neuro damage\"]\n    E --> J[\"High gastrin; G-cell hyperplasia\"]"}, "hemoclass": {"t": "Hemolytic anemia classification", "L": "03", "s": "flowchart TD\n    H[\"Hemolytic anemia\"] --> A[\"ACQUIRED<br>(usually extrinsic to the RBC)\"]\n    H --> R[\"HEREDITARY<br>(intrinsic RBC defect)\"]\n    A --> I[\"Immune\"]\n    A --> N[\"Non-immune\"]\n    I --> I1[\"Infection\"]\n    I --> I2[\"Alloantibodies<br>ABO and Rh reactions\"]\n    I --> I3[\"Autoantibodies<br>warm or cold\"]\n    I --> I4[\"Drug-induced\"]\n    N --> N1[\"Mechanical: MAHA, prosthetic valves\"]\n    N --> N2[\"Infection / toxins: malaria, burns\"]\n    R --> R1[\"Membrane: hereditary spherocytosis\"]\n    R --> R2[\"Enzyme: G6PD deficiency, PK deficiency\"]\n    R --> R3[\"Hemoglobin: sickle cell, thalassemias\"]"}, "where": {"t": "Where are RBCs destroyed?", "L": "03", "s": "flowchart LR\n    subgraph EV[\"EXTRAVASCULAR (spleen, liver)\"]\n    E1[\"Coated or rigid RBC\"] --> E2[\"Macrophage eats it\"] --> E3[\"Hb broken down inside macrophage<br>to bilirubin\"]\n    end\n    subgraph IV[\"INTRAVASCULAR (in vessels)\"]\n    I1[\"RBC lyses in blood\"] --> I2[\"Free Hb in plasma\"] --> I3[\"Binds haptoglobin\"]\n    I3 -->|\"haptoglobin used up\"| I4[\"Free Hb filtered by kidney<br>hemoglobinuria, hemosiderinuria\"]\n    end"}, "broken": {"t": "What happens to a broken RBC?", "L": "03", "s": "flowchart TD\n    RBC[\"Destroyed RBC\"] --> HB[\"Hemoglobin\"]\n    RBC --> LDH[\"LDH released<br>(enzyme inside RBCs)\"]\n    HB --> HEME[\"Heme\"]\n    HB --> GLOB[\"Globin chains\"]\n    HEME --> BV[\"Biliverdin\"] --> UB[\"Unconjugated (indirect) bilirubin<br>JAUNDICE\"]\n    UB --> LIV[\"Liver conjugates it\"] --> GUT[\"Excreted in bile / feces<br>(some as urine urobilinogen)\"]\n    LIV --> GS[\"Excess bilirubin in bile<br>PIGMENT GALLSTONES\"]\n    HEME --> FE[\"Iron\"] --> ST[\"Recycled; stored as<br>ferritin / hemosiderin\"]\n    GLOB --> AA[\"Amino acids, recycled\"]"}, "coombs": {"t": "Direct vs indirect antiglobulin (Coombs) test", "L": "03", "s": "flowchart TD\n    subgraph D[\"DIRECT (DAT): is the patient's RBC coated?\"]\n    D1[\"Patient's RBCs\"] --> D2[\"Add anti-human globulin<br>(Coombs reagent)\"] --> D3{\"Agglutination?\"}\n    D3 -->|\"Yes\"| D4[\"IgG and/or C3 on RBCs<br>= IMMUNE hemolysis\"]\n    end\n    subgraph I[\"INDIRECT (IAT): are there free antibodies in the plasma?\"]\n    I1[\"Patient's plasma / serum\"] --> I2[\"Mix with reagent RBCs<br>of known antigens\"] --> I3[\"Add anti-human globulin\"] --> I4{\"Agglutination?\"}\n    I4 -->|\"Yes\"| I5[\"Patient has anti-RBC antibodies<br>(e.g., alloantibodies)\"]\n    end"}, "hs": {"t": "Hereditary spherocytosis pathogenesis", "L": "03", "s": "flowchart TD\n    A[\"Ankyrin / spectrin / band 3 mutation\"] --> B[\"Weak membrane skeleton\"]\n    B --> C[\"Membrane lost in small pieces\"]\n    C --> D[\"Spherocyte<br>less surface area, rigid\"]\n    D --> E[\"1. Gets STUCK in splenic cords\"]\n    D --> F[\"2. Recognized as FOREIGN\"]\n    E --> G[\"Splenic macrophages remove it<br>= EXTRAVASCULAR hemolysis\"]\n    F --> G"}, "g6pd": {"t": "G6PD: why oxidants hurt", "L": "03", "s": "flowchart LR\n    G6P[\"Glucose-6-phosphate\"] -->|\"G6PD\"| NADPH[\"NADPH\"]\n    NADPH -->|\"glutathione reductase\"| GSH[\"Reduced glutathione\"]\n    GSH -->|\"glutathione peroxidase\"| H2O[\"H2O2 neutralized to water\"]\n    X[\"G6PD deficient\"] -.->|\"little NADPH\"| OX[\"Oxidant damage:<br>Hb precipitates = Heinz bodies<br>membrane damage\"]"}, "mech": {"t": "Mechanical (non-immune) hemolysis", "L": "03", "s": "flowchart LR\n    A[\"Endothelial damage or<br>abnormal clotting\"] --> B[\"Fibrin strands / platelet<br>microthrombi in small vessels\"]\n    B --> C[\"RBCs sliced as they squeeze by<br>SCHISTOCYTES\"]\n    B --> D[\"Platelets used up<br>THROMBOCYTOPENIA\"]\n    B --> E[\"Small-vessel ischemia<br>kidney, brain\"]\n    C --> F[\"Intravascular hemolysis<br>high LDH, low haptoglobin\"]"}, "five": {"t": "The 5-step case framework", "L": "05", "s": "flowchart LR\n    A[\"1. Symptoms + targeted history<br>(LO1)\"] --> B[\"2. Differential diagnosis<br>MCV + reticulocytes (LO2)\"]\n    B --> C[\"3. Order labs in tiers<br>(LO3)\"]\n    C --> D[\"4. Smear + marrow<br>(LO4)\"]\n    D --> E[\"5. Diagnosis, treatment,<br>monitoring (LO5)\"]"}, "tiers": {"t": "Ordering labs in tiers", "L": "05", "s": "flowchart TD\n    T1[\"TIER 1 - everyone<br>CBC with indices + reticulocyte count + smear\"] --> T2{\"What does the MCV / retic suggest?\"}\n    T2 -->|\"Microcytic\"| M[\"Iron panel: iron, TIBC,<br>transferrin saturation, FERRITIN<br>then Hb electrophoresis if iron normal\"]\n    T2 -->|\"Macrocytic\"| B[\"B12, folate<br>MMA, homocysteine<br>(PA antibodies)\"]\n    T2 -->|\"High retics / hemolysis?\"| H[\"LDH, haptoglobin,<br>indirect bilirubin, DAT\"]\n    T2 -->|\"Normocytic, low retics\"| N[\"Creatinine (EPO), iron panel,<br>TSH, consider marrow\"]"}, "mcv": {"t": "Classification by MCV", "L": "06", "s": "flowchart TD\n    A[\"Low Hb / Hct = ANEMIA\"] --> B{\"MCV\"}\n    B -->|\"under 80 fL\"| MI[\"MICROCYTIC<br>Iron deficiency<br>Thalassemia minor<br>Anemia of chronic disease\"]\n    B -->|\"80-100 fL\"| NO[\"NORMOCYTIC<br>Acute blood loss, hemolysis (e.g., sickle cell),<br>chronic disease, CKD,<br>marrow failure / infiltration\"]\n    B -->|\"over 100 fL\"| MA[\"MACROCYTIC<br>then sort by RDW + reticulocytes\"]\n    MA --> MA1[\"Megaloblastic (B12, folate)\"]\n    MA --> MA2[\"Hemolytic (retics are big)\"]\n    MA --> MA3[\"Liver or thyroid disease,<br>primary marrow failure, drugs, toxins\"]"}};
+const TPF={ida:["iron"],acd:["iron"],b12:["b12bio"],folate:["b12bio"],pa:["pa","b12bio"],btmaj:["bthal"],btmin:["bthal"],scd:["sickle"],hs:["hs"],g6pd:["g6pd"],maha:["mech"],ttp:["mech"],valve:["mech"]};
+const AF={ida:["iron","small"],acd:["iron"],sidero:["small"],b12:["b12bio","macro"],pa:["pa","b12bio"],folate:["b12bio","macro"],mixed:["tiers"],nonmeg:["macro"],btmaj:["bthal","small"],btmin:["bthal","small"],athal:["small"],scd:["sickle"],hs:["hs","where"],g6pd:["g6pd"],warm:["coombs","where"],cold:["coombs"],abo:["coombs","where"],hdfn:["coombs"],drug:["hemoclass"],maha:["mech"],ttp:["mech"],valve:["mech"],malaria:["hemoclass"],ckd:["tiers"],acute:["balance"]};
+const BRF={"Faucet · production":["small"],"Drain · destruction":["hemoclass","where"]};
+const GRF={imm:["coombs"],mech:["mech"]};
+function fcd(k,open){const c=CHARTS[k];return `<details class="fcd"${open?" open":""}><summary><span class="fl">Flowchart · HEM${c.L}</span><span>${c.t}</span></summary><div class="fc" data-fc="${k}"></div></details>`}
+const fcs=(ks)=>ks&&ks.length?`<div class="fcs">${ks.map(k=>fcd(k)).join("")}</div>`:"";
+let mid=0,mq=Promise.resolve();
+function tok(n){return getComputedStyle(document.documentElement).getPropertyValue(n).trim()}
+function initM(){mermaid.initialize({startOnLoad:false,securityLevel:"strict",theme:"base",fontFamily:'"IBM Plex Sans", system-ui, sans-serif',
+ themeVariables:{background:tok("--surface"),mainBkg:tok("--surface2"),primaryColor:tok("--surface2"),primaryTextColor:tok("--fg"),primaryBorderColor:tok("--muted"),nodeBorder:tok("--muted"),lineColor:tok("--muted"),textColor:tok("--fg"),secondaryColor:tok("--accent-soft"),tertiaryColor:tok("--surface"),clusterBkg:tok("--bg"),clusterBorder:tok("--line"),titleColor:tok("--fg"),edgeLabelBackground:tok("--surface"),fontSize:"13px"},
+ flowchart:{curve:"basis",htmlLabels:true,useMaxWidth:true,padding:10}})}
+async function renderFC(el){if(el.dataset.done)return;
+ if(!window.mermaid){el.innerHTML='<p class="fail">The flowchart viewer could not load. Reload the page to try again.</p>';return}
+ try{initM();const cs=CHARTS[el.dataset.fc].s;const r=await mermaid.render("fcsvg"+(++mid),typeof cs==="function"?cs():cs);el.innerHTML=r.svg+`<div class="fcbar"><button class="fcbig" data-big="${el.dataset.fc}">Enlarge</button></div>`;el.dataset.done="1"}catch(e){el.innerHTML='<p class="fail">This flowchart could not be drawn.</p>'}}
+function queueFC(el){mq=mq.then(()=>renderFC(el))}
+document.addEventListener("toggle",e=>{const d=e.target;if(d.classList&&d.classList.contains("fcd")&&d.open)d.querySelectorAll(".fc").forEach(queueFC)},true);
+function rerenderFC(){document.querySelectorAll(".fc[data-done]").forEach(el=>{delete el.dataset.done;queueFC(el)})}
+try{matchMedia("(prefers-color-scheme: dark)").addEventListener("change",rerenderFC)}catch(e){}
+new MutationObserver(rerenderFC).observe(document.documentElement,{attributes:true,attributeFilter:["data-theme"]});
+document.querySelectorAll("[data-fcs]").forEach(el=>{el.innerHTML=el.dataset.fcs.split(" ").map(k=>fcd(k,el.dataset.open==="1")).join("")});
+const order=Object.keys(D);
+let sel="ida", lec="all";
+const $=s=>document.querySelector(s);
+const col=f=>`var(${FAM[f].c})`;
+const inLec=id=>lec==="all"||D[id].L.includes(lec);
+function chip(id,cross){return `<button class="chip${cross?" cross":""}" data-id="${id}" style="--c:${col(D[id].fam)}">${D[id].n}</button>`}
+
+// legend
+$("#legend").innerHTML=Object.entries(FAM).map(([k,f])=>`<span><i style="background:var(${f.c})"></i>${f.n}</span>`).join("")+`<span><i style="border:1px dashed var(--muted);background:transparent"></i>Dashed = sits in more than one box</span>`;
+
+// grid
+const rows=[["micro","Microcytic","<80 fL (in-house <70)"],["normo","Normocytic","80–100 fL"],["macro","Macrocytic",">100 fL"]];
+let g=`<div></div><div class="hd">Low / inappropriately normal retics<small>Production problem</small></div><div class="hd">High retics<small>Destruction or loss</small></div>`;
+rows.forEach(([k,lab,rng])=>{g+=`<div class="rowhd">${lab}<small>${rng}</small></div>`;
+ ["low","high"].forEach(r=>{const ids=order.filter(id=>D[id].cells.includes(k+"-"+r));g+=`<div class="cell">${ids.map(id=>chip(id,D[id].cells.length>1)).join("")}</div>`});});
+$("#mgrid").innerHTML=g;
+$("#nonanemia").innerHTML=`<span>Carriers with no anemia:</span>${chip("sct",false)}<span>· silent α carrier (1 gene)</span>`;
+
+// tree
+const branches=[["Faucet · production",["ing","lock","fac"],"--f-ing","Low retics. The marrow lacks an ingredient, can't use iron, gets no signal, or has no room."],
+ ["Drain · destruction",["intr","imm","mech"],"--f-intr","High retics, ↑ LDH, ↑ indirect bili, ↓ haptoglobin. The cell is defective, attacked, or shredded."],
+ ["Leak · blood loss",["loss"],"--f-loss","Retics rise after 3–5 days. Chronic loss turns into iron deficiency."]];
+const TW={
+ ing:{q:"What's missing?",d:"The marrow is healthy but lacks a raw material. Missing iron → can't build heme → microcytic. Missing B12 or folate → can't build DNA → megaloblastic (macrocytic).",hy:"Iron = Hb ingredient (size ↓). B12/folate = DNA ingredient (size ↑, nucleus lags). B12 alone also feeds myelin (MMA step)."},
+ lock:{q:"Where is the iron stuck?",d:"Iron is in the body but never makes it into heme. Iron studies show iron present (ferritin N/↑), which separates these from iron deficiency."},
+ fac:{q:"What failed: the signal or the factory?",d:"Ingredients are fine. The order to make RBCs (EPO) never arrives, or the stem cells and marrow space are gone, paused or crowded out. Other cell lines often fall too."},
+ intr:{q:"What is wrong with the cell?",d:"Inherited defect in one of the RBC's three parts: the hemoglobin, the membrane, or the enzymes that protect it from oxidants. DAT negative."},
+ imm:{q:"Which antibody, against what?",d:"A normal RBC is tagged by antibody (± complement). IgG → spleen eats it (extravascular). IgM → complement lyses it (intravascular). DAT positive."},
+ mech:{q:"What is breaking the cell?",d:"A normal RBC meets a hostile environment: fibrin strands, platelet clots, a valve, or a parasite. DAT negative; schistocytes in the mechanical group."},
+ loss:{q:"Where did the cells go?",d:"Normal RBCs leave the body. Acute loss is normocytic; chronic loss drains iron and becomes iron deficiency."},
+ glob:{q:"Which chain is short?",d:"Too little of one globin chain. Too little Hb → small cells (production). The leftover partner chains precipitate → precursors die in marrow (ineffective erythropoiesis) and survivors are removed in the spleen (destruction)."}
+};
+const TP={
+ ida:["Iron","No iron → no heme → too little Hb per cell → extra divisions → small, pale cells"],
+ b12:["Vitamin B12 (cobalamin)","No methionine synthase → folate trapped → no thymidine → no DNA; no methylmalonyl-CoA mutase → ↑ MMA → myelin damage"],
+ pa:["Intrinsic factor (→ B12)","Autoimmune gastritis destroys parietal cells → no IF → B12 can't be absorbed in the terminal ileum"],
+ folate:["Folate","No one-carbon donor → no dTMP → no DNA; stores last only 3–5 months"],
+ mixed:["B12 + iron together","Bypass skips the stomach (acid, IF → B12) and the duodenum (iron) → big + small cells, normal MCV"],
+ acd:["Stuck in macrophages","IL-6 → ↑ hepcidin → ferroportin blocked → iron can't leave macrophages or gut cells"],
+ sidero:["Stuck in mitochondria","Iron can't be inserted into protoporphyrin: ALA synthase defect (hereditary, ↓ B6/isoniazid, alcohol) or lead blocking ALA dehydratase + ferrochelatase → ringed sideroblasts"],
+ ckd:["Signal: EPO","Damaged kidneys stop making EPO → marrow never told to make RBCs"],
+ aplastic:["Factory: stem cells","Stem cells destroyed (virus, drug, toxin, Fanconi, idiopathic) → empty, fatty marrow → pancytopenia"],
+ myelo:["Factory: space","Tumor, granuloma or fibrosis fills the marrow → precursors pushed out → teardrops, nRBCs"],
+ parvo:["Factory: paused","Parvovirus B19 infects erythroid precursors → production stops for days → crash in hemolytic patients"],
+ nonmeg:["No DNA defect","Membrane lipid change (alcohol, liver, thyroid), MDS, drugs, or many large retics → round macrocytes"],
+ btmaj:["β chain absent (2 genes)","No β → free α chains precipitate → marrow death + splenic removal; ↑↑ HbF"],
+ btmin:["β chain low (1 gene)","Mild ↓ β → extra α pairs with δ → ↑ HbA2; mild microcytosis"],
+ athal:["α chains low (1–4 genes deleted)","Excess β forms HbH (β₄) or excess γ forms Hb Barts (γ₄) → hemolysis or hydrops"],
+ scd:["Hemoglobin: wrong globin","Glu → Val at β6 → HbS polymerizes when deoxygenated → sickles occlude vessels and hemolyze"],
+ sct:["Hemoglobin: one HbS copy","≈40% HbS → sickles only in the hypoxic renal medulla; no anemia"],
+ hs:["Membrane: cytoskeleton","Ankyrin, spectrin or band 3 defect → membrane lost → rigid spheres trapped in the spleen"],
+ g6pd:["Enzyme: antioxidant shield","↓ G6PD → ↓ NADPH → ↓ reduced glutathione → oxidants denature Hb (Heinz bodies) → bite cells"],
+ warm:["IgG autoantibody, 37 °C","Self-antibody coats RBCs → splenic macrophages nibble membrane → spherocytes"],
+ cold:["IgM autoantibody, 4 °C","IgM clumps cells in cold extremities and fixes C3 → complement lysis + liver removal"],
+ abo:["IgM alloantibody (anti-A/B)","Recipient's natural isohemagglutinins hit donor cells → complement → intravascular lysis"],
+ hdfn:["IgG alloantibody (anti-D)","Sensitized Rh⁻ mother's anti-D crosses the placenta → fetal RBCs destroyed"],
+ drug:["Drug as trigger","Drug acts as hapten or triggers autoantibody (penicillin, α-methyldopa); also oxidant or microangiopathic routes"],
+ maha:["Fibrin strands","Fibrin/platelet microthrombi in small vessels slice passing RBCs → schistocytes"],
+ ttp:["Platelet microthrombi","↓ ADAMTS13 → uncut giant vWF → platelet clots → RBCs sheared; platelets consumed"],
+ valve:["Mechanical valve","Turbulent shear stress fragments RBCs; Hb and iron lost in urine"],
+ malaria:["Parasite","Plasmodium grows inside RBCs → rupture + splenic removal"],
+ acute:["Bleeding","Whole blood lost; Hb normal at first, retics rise after 3–5 days"]
+};
+function trow(id){return `<div class="trow">${chip(id,false)}<div class="tp" hidden><b>${TP[id][0]}</b><span>${TP[id][1]}</span>${fcs(TPF[id])}</div></div>`}
+function twig(f){const t=TW[f];return `<div class="twig"><h4 style="color:var(${FAM[f].c})">${FAM[f].n.split(" · ").pop()}</h4><button class="tq" aria-expanded="false">${t.q}</button><div class="tbody" hidden><p class="td">${t.d}</p>${t.hy?`<div class="hy">${t.hy}</div>`:""}${fcs(GRF[f])}</div>${order.filter(id=>D[id].fam===f).map(trow).join("")}</div>`}
+$("#treeEl").innerHTML=branches.map(([t,fs,c,d])=>`<div class="branch" style="--bc:var(${c})"><h3>${t}<small>${d}</small></h3>${fcs(BRF[t])}${fs.map(twig).join("")}${fs[0]==="loss"?`<div class="twig"><h4>Chronic loss becomes</h4><div class="trow">${chip("ida",false)}<div class="tp" hidden><b>Iron runs out</b><span>Menses, GI cancer, NSAIDs: each mL of blood lost takes iron with it</span></div></div></div><div class="twig"><h4>Intravascular hemolysis also loses iron</h4><div class="trow">${chip("valve",false)}<div class="tp" hidden><b>Iron lost in urine</b><span>Hemoglobinuria + hemosiderinuria → iron deficiency over months</span></div></div></div>`:""}</div>`).join("");
+$("#bridge").innerHTML=`<h3 style="--bc:var(--f-glob)">Faucet + drain at once · ${FAM.glob.n.split(" · ")[1]}</h3><button class="tq" aria-expanded="false">${TW.glob.q}</button><div class="tbody" hidden><p class="td">${TW.glob.d}</p></div><div class="brows">${order.filter(id=>D[id].fam==="glob").map(trow).join("")}</div>`;
+
+// connections
+const MIM={
+ "ida|btmin":["Microcytic, mild to moderate anemia","↓ ferritin, ↑ TIBC, ↑ RDW, low RBC count, Mentzer >13","Normal ferritin, ↑ HbA2, normal RDW, RBC count N/↑, Mentzer <13 (no iron)"],
+ "ida|acd":["↓ serum iron","↑ TIBC, ↓ ferritin","↓ TIBC, ferritin N/↑ (hepcidin)"],
+ "ida|sidero":["Microcytic","↓ iron, ↓ ferritin, pencil cells","↑ iron, ↑ ferritin, ringed sideroblasts, basophilic stippling"],
+ "athal|btmin":["Trait-level microcytosis with normal iron","Normal adult electrophoresis (exclusion / DNA testing)","↑ HbA2 (>3.5%)"],
+ "b12|folate":["Oval macrocytes, hypersegmented PMNs, ↑ homocysteine","↑ MMA; neuro signs (subacute combined degeneration)","Normal MMA; no neuro signs"],
+ "b12|warm":["MCV >100, ↑ LDH, ↑ indirect bilirubin","Low retics; oval macrocytes + hypersegmented PMNs","Retics up to 20%; polychromasia, spherocytes, DAT +"],
+ "b12|nonmeg":["MCV >100","Oval macrocytes, hypersegmented PMNs, megaloblasts","Round macrocytes, normal PMNs, no megaloblasts"],
+ "b12|aplastic":["Pancytopenia","Hypercellular, megaloblastic marrow","Hypocellular, fatty marrow"],
+ "warm|hs":["Spherocytes, extravascular hemolysis, splenectomy helps","DAT +; acquired (SLE, CLL)","DAT −; family history, ↑ osmotic fragility, ↑ MCHC"],
+ "maha|ttp":["Schistocytes + ↓ platelets","DIC: ↑ PT/PTT, ↓ fibrinogen, ↑ D-dimer","Normal PT/PTT, ↓ ADAMTS13, FAT RN"],
+ "btmaj|scd":["β-globin (chr 11), silent until ≈6 mo, HbF helps","Microcytic; ↑↑ HbF, no HbS","Normocytic; HbS ≈90%"],
+ "ckd|acd":["Hypoproliferative, normocytic, ferritin N/↑","↑ creatinine, ↓ EPO → ESA + iron","Inflammatory disease, ↓ TIBC → treat the cause"]
+};
+CHARTS.causemap={t:"Cause map",L:"02–06",s:()=>{const c=f=>tok(FAM[f].c);return `flowchart LR
+ loss["Chronic blood loss<br>menses, GI, NSAIDs"] -->|"iron lost"| ida["Iron deficiency"]
+ valve["Prosthetic valve hemolysis"] -->|"hemosiderinuria"| ida
+ byp["Gastric bypass"] -->|"duodenum skipped"| ida
+ byp -->|"no acid / IF"| b12["B12 deficiency"]
+ pa["Pernicious anemia"] -->|"anti-IF"| b12
+ alc["Alcohol"] --> fol["Folate deficiency"]
+ alc --> mac["Non-megaloblastic macrocytosis"]
+ hs["Hereditary spherocytosis"] -->|"↑ folate demand"| fol
+ bt["β-thal major"] -->|"↑ folate demand"| fol
+ bt -->|"transfusions + ↑ absorption"| ovl["Iron overload → CHF"]
+ scd["Sickle cell disease"] -->|"hydroxyurea"| mac
+ scd -->|"parvovirus B19"| apl["Aplastic crisis"]
+ hs -->|"parvovirus B19"| apl
+ drug["Drugs"] -->|"oxidant"| g6["G6PD hemolysis"]
+ drug -->|"antibody"| warm["Warm AIHA / DAT + hemolysis"]
+ drug -->|"microangiopathy"| ttp["TTP / MAHA"]
+ abo["ABO transfusion reaction"] -->|"DIC"| ttp
+ sle["SLE / RA"] --> warm
+ sle --> acd["Anemia of chronic disease"]
+ classDef ing stroke:${c("ing")},stroke-width:2px
+ classDef lock stroke:${c("lock")},stroke-width:2px
+ classDef fac stroke:${c("fac")},stroke-width:2px
+ classDef glob stroke:${c("glob")},stroke-width:2px
+ classDef intr stroke:${c("intr")},stroke-width:2px
+ classDef imm stroke:${c("imm")},stroke-width:2px
+ classDef mech stroke:${c("mech")},stroke-width:2px
+ classDef loss stroke:${c("loss")},stroke-width:2px
+ classDef trig stroke-dasharray:4 3
+ class ida,b12,pa,fol ing
+ class acd lock
+ class mac,apl fac
+ class bt glob
+ class scd,hs,g6 intr
+ class warm,abo imm
+ class valve,ttp mech
+ class loss loss
+ class byp,alc,drug,sle,ovl trig`}};
+const CT=["cause","mimic","shared","comp"];
+const CDESC={cause:"One anemia, or its treatment or trigger, produces another. Solid borders are anemias colored by family; dashed boxes are triggers.",mimic:"Two anemias that share a finding. Read across: what they share, then what points to each one.",shared:"Same mechanism, gene, trigger or complication.",comp:"Infections, drugs and inherited traits that cross from one anemia to another."};
+let ctab="cause",cfocus="all";
+const ttl=t=>ETYPE[t].n;
+$("#ctabs").innerHTML=CT.map(t=>`<button class="tab" role="tab" data-ct="${t}" aria-selected="${t===ctab}">${ttl(t)}<span class="n" data-cn="${t}"></span></button>`).join("");
+$("#cfocus").innerHTML=`<option value="all">All anemias</option>`+order.filter(id=>E.some(e=>e[0]===id||e[1]===id)).sort((a,b)=>D[a].n.localeCompare(D[b].n)).map(id=>`<option value="${id}">${D[id].n}</option>`).join("");
+const glyph={cause:"→",shared:"↔",comp:"↔"};
+function ecard(e){return `<div class="ecard" data-a="${e[0]}" data-b="${e[1]}"><div class="pair">${chip(e[0],false)}<span class="glyph">${glyph[e[2]]}</span>${chip(e[1],false)}</div><p>${e[3]}</p></div>`}
+function mrow(e){const m=MIM[e[0]+"|"+e[1]]||["",e[3],""];return `<tr data-a="${e[0]}" data-b="${e[1]}"><td>${chip(e[0],false)}<div style="margin:4px 0;color:var(--muted)">vs</div>${chip(e[1],false)}</td><td class="sh">${m[0]}</td><td>${m[1]}</td><td>${m[2]}</td></tr>`}
+$("#cpanels").innerHTML=CT.map(t=>{const es=E.filter(e=>e[2]===t);let body="";
+ if(t==="mimic")body=`<div class="tbl-scroll"><table class="cmp"><thead><tr><th>Pair</th><th>They share</th><th>Points to the first</th><th>Points to the second</th></tr></thead><tbody>${es.map(mrow).join("")}</tbody></table></div>`;
+ else body=`<div class="egrid">${es.map(ecard).join("")}</div>`;
+ const map=t==="cause"?`<div class="cmap"><div class="cap">Cause map<span>Arrows read "leads to." Select Enlarge for full size.</span></div><div class="fc" data-fc="causemap"></div></div>`:"";
+ return `<div class="cpanel" data-cp="${t}" ${t===ctab?"":"hidden"}><p class="cdesc">${CDESC[t]}</p>${map}${body}<p class="cempty hide">No ${ttl(t).toLowerCase()} links match this lecture and focus. Try All.</p></div>`}).join("");
+function applyConn(){CT.forEach(t=>{const pn=document.querySelector(`[data-cp="${t}"]`);let n=0;
+ pn.querySelectorAll("[data-a]").forEach(el=>{const a=el.dataset.a,b=el.dataset.b;const ok=(inLec(a)||inLec(b))&&(cfocus==="all"||a===cfocus||b===cfocus);el.classList.toggle("hide",!ok);if(ok)n++});
+ pn.querySelector(".cempty").classList.toggle("hide",n>0);document.querySelector(`[data-cn="${t}"]`).textContent=n})}
+$("#cfocus").addEventListener("change",e=>{cfocus=e.target.value;applyConn()});
+// traps
+const TR=[
+ ["Labs",["02","06"],"Microcytic anemia → start iron.","Check <b>ferritin</b> first. Normal ferritin + Mentzer &lt;13 + ↑ HbA2 = β-thal trait, and iron causes overload. ↓ TIBC with ferritin N/↑ = chronic disease; ↑ iron = sideroblastic/lead."],
+ ["Smear",["03","05","06"],"Spherocytes → hereditary spherocytosis.","The <b>DAT</b> decides: positive = warm AIHA; negative + family history + ↑ osmotic fragility = HS."],
+ ["Labs",["06"],"MCV 104 → B12 deficiency.","Retics of 20% (AIHA) are big cells and push MCV up. Look for <b>polychromasia</b>, not oval macrocytes and hypersegmented PMNs."],
+ ["Labs",["03","05"],"↑ LDH, ↑ indirect bili, ↓ haptoglobin → hemolysis.","Check the <b>retics</b>. Low = ineffective erythropoiesis (B12/folate, thal precursors dying in marrow). True hemolysis has high retics."],
+ ["Labs",["05"],"MCV 100 → the cells are normal size.","<b>High RDW + dimorphic smear</b> = big and small cells averaging out: mixed B12 + iron deficiency (gastric bypass)."],
+ ["Labs",["05"],"Retic 3% → the marrow is responding.","<b>Correct it</b>: 3 × (22 ÷ 45) ≈ 1.5%, RPI ≈ 0.75 → production problem."],
+ ["Labs",["02","05"],"Ferritin is normal → iron stores are fine.","Ferritin is an <b>acute-phase reactant</b>. Infection or inflammation can hide coexisting iron deficiency."],
+ ["Labs",["03"],"G6PD level normal during the episode → not G6PD.","Young retics left after hemolysis have more enzyme. <b>Retest weeks later.</b>"],
+ ["Treatment",["03"],"Macrocytic anemia → start folate.","Folate fixes the blood but <b>not the nerves</b>; subacute combined degeneration keeps going. Check B12 first."],
+ ["Treatment",["05"],"Stable patient, Hb 7.8 → transfuse.","Chronic, stable iron deficiency gets <b>iron, not blood</b>. Transfuse for instability, active bleeding, ischemia, or Hb &lt;7."],
+ ["Timing",["02","06"],"Normal Hb 30 min after a big bleed → stable.","Hb is a <b>concentration</b>; whole blood was lost. Judge by vitals. Retics rise only after 3–5 days."],
+ ["Timing",["02"],"Normal newborn CBC → no β-globin disorder.","HbF (α₂γ₂) has no β chain, so β-thal and sickle cell appear at <b>≈6 months</b>. α-thal can hit the fetus (Hb Barts → hydrops)."],
+ ["Smear",["06"],"RBCs stuck together → cold agglutinin.","<b>Coin stacks = rouleaux</b> (↑ fibrinogen/globulins, ↑ ESR, multiple myeloma). Irregular clumps = agglutination (cold agglutinin)."],
+ ["Smear",["02","06"],"Target cells → thalassemia.","Also <b>HbC, Asplenia, Liver disease</b> (HALT). Seen in sickle cell after autosplenectomy too."]
+];
+let tcat="All";
+$("#tcats").innerHTML=["All","Labs","Smear","Treatment","Timing"].map(c=>`<button class="fbtn" data-tc="${c}" aria-pressed="${c===tcat}">${c}${c==="All"?"":` <span class="mono" style="opacity:.7">${TR.filter(t=>t[0]===c).length}</span>`}</button>`).join("");
+$("#trapEl").innerHTML=TR.map((t,i)=>`<div class="tcard" data-tcat="${t[0]}" data-tl="${t[1].join(" ")}"><div class="tmeta"><span class="cat">${t[0]}</span>${t[1].map(l=>`<span class="ltag">HEM${l}</span>`).join("")}</div><div class="tempt">${t[2]}</div><button class="treveal" aria-expanded="false" aria-controls="tc${i}">Show the catch</button><div class="catch" id="tc${i}" hidden>${t[3]}</div></div>`).join("");
+function applyTraps(){document.querySelectorAll(".tcard").forEach(c=>{const ok=(tcat==="All"||c.dataset.tcat===tcat)&&(lec==="all"||c.dataset.tl.split(" ").includes(lec));c.classList.toggle("hide",!ok)})}
+
+// table
+$("#tbody").innerHTML=order.map(id=>{const d=D[id];return `<tr data-id="${id}"><td><span class="dot" style="background:${col(d.fam)}"></span><button class="nm" data-id="${id}">${d.n}</button></td><td class="mono">${d.L.map(l=>"HEM"+l).join(", ")}</td><td>${d.m}</td><td>${d.r}</td><td>${FAM[d.fam].n}</td><td>${d.key}</td></tr>`}).join("");
+
+function related(id){return E.filter(e=>e[0]===id||e[1]===id).map(e=>({o:e[0]===id?e[1]:e[0],t:e[2],x:e[3]}))}
+function renderDetail(){
+ const d=D[sel];const rel=related(sel);
+ $("#detail").innerHTML=`<div class="fam" style="color:${col(d.fam)}">${FAM[d.fam].n}</div>
+ <h3 style="font-size:22px">${d.n}</h3><div class="nick">${d.nick}</div>
+ <div class="tags">${d.L.map(l=>`<span class="ltag">HEM${l}</span>`).join("")}<span class="ltag">MCV ${d.m}</span><span class="ltag">Retics ${d.r}</span></div>
+ <dl class="kv"><dt>Mechanism</dt><dd>${d.mech}</dd><dt>Key test</dt><dd>${d.test}</dd><dt>Treat</dt><dd>${d.tx}</dd></dl>
+ <div class="buzz">${d.buzz.map(b=>`<span>${b}</span>`).join("")}</div>
+ ${d.hy?`<div class="hy">${d.hy}</div>`:""}${d.ih?`<div class="ih">${d.ih}</div>`:""}
+ ${AF[sel]?`<div><div class="fam" style="color:var(--muted);margin-bottom:6px">Flowcharts from the notes</div>${fcs(AF[sel])}</div>`:""}
+ ${rel.length?`<div><div class="fam" style="color:var(--muted);margin-bottom:6px">Connected to (${rel.length})</div><div class="links">${rel.map(r=>`<button class="lnk" data-id="${r.o}"><span class="ty">${ETYPE[r.t].n}</span><span><b>${D[r.o].n}</b>: ${r.x}</span></button>`).join("")}</div></div>`:""}`;
+ const relIds=new Set(rel.map(r=>r.o));
+ document.querySelectorAll("#mgrid .chip, #nonanemia .chip").forEach(c=>{c.classList.toggle("sel",c.dataset.id===sel);c.classList.toggle("rel",relIds.has(c.dataset.id))});
+}
+function applyFilter(){
+ document.querySelectorAll(".chip").forEach(c=>c.classList.toggle("dim",!inLec(c.dataset.id)));
+ document.querySelectorAll("#tbody tr").forEach(r=>r.classList.toggle("dim",!inLec(r.dataset.id)));
+ applyConn();applyTraps();
+}
+document.addEventListener("click",ev=>{
+ const f=ev.target.closest(".fbtn");
+ if(f){lec=f.dataset.l;document.querySelectorAll(".fbtn").forEach(b=>b.setAttribute("aria-pressed",b===f));applyFilter();try{localStorage.setItem("hd-anemia-map-lec",lec)}catch(e){}return}
+ const big=ev.target.closest("[data-big]");
+ if(big){const src=big.closest(".fc").querySelector("svg");const m=$("#fcModal");$("#fcModalT").textContent=CHARTS[big.dataset.big].t;const c=src.cloneNode(true);const vb=(c.getAttribute("viewBox")||"").split(/\s+/).map(Number);c.removeAttribute("style");if(vb[2]){c.setAttribute("width",Math.round(vb[2]*1.25));c.setAttribute("height",Math.round(vb[3]*1.25))}$("#fcModalB").replaceChildren(c);m.hidden=false;$("#fcClose").focus();return}
+ if(ev.target.id==="fcClose"||ev.target.id==="fcModal"){$("#fcModal").hidden=true;return}
+ const tb=ev.target.closest(".tab[data-ct]");
+ if(tb){ctab=tb.dataset.ct;document.querySelectorAll(".tab[data-ct]").forEach(x=>x.setAttribute("aria-selected",x===tb));document.querySelectorAll("[data-cp]").forEach(p=>p.hidden=p.dataset.cp!==ctab);document.querySelectorAll(`[data-cp="${ctab}"] .fc`).forEach(queueFC);return}
+ const tr=ev.target.closest(".treveal");
+ if(tr){const c=document.getElementById(tr.getAttribute("aria-controls"));c.hidden=!c.hidden;tr.setAttribute("aria-expanded",!c.hidden);tr.textContent=c.hidden?"Show the catch":"Hide the catch";return}
+ const tcb=ev.target.closest("[data-tc]");
+ if(tcb){tcat=tcb.dataset.tc;document.querySelectorAll("[data-tc]").forEach(x=>x.setAttribute("aria-pressed",x===tcb));applyTraps();return}
+ if(ev.target.closest("#tAll")){const b=$("#tAll");const open=b.getAttribute("aria-pressed")!=="true";b.setAttribute("aria-pressed",open);b.textContent=open?"Hide all":"Reveal all";document.querySelectorAll(".treveal").forEach(x=>{const c=document.getElementById(x.getAttribute("aria-controls"));c.hidden=!open;x.setAttribute("aria-expanded",open);x.textContent=open?"Hide the catch":"Show the catch"});return}
+ const tq=ev.target.closest(".tq");
+ if(tq){const b=tq.nextElementSibling;const o=b.hidden;b.hidden=!o;tq.setAttribute("aria-expanded",o);return}
+ if(ev.target.closest("#treeAll")){const btn=ev.target.closest("#treeAll");const open=btn.getAttribute("aria-pressed")!=="true";btn.setAttribute("aria-pressed",open);btn.textContent=open?"Hide all details":"Show all details";
+  document.querySelectorAll("#tree .tp, #tree .tbody").forEach(x=>x.hidden=!open);document.querySelectorAll("#tree .tq").forEach(x=>x.setAttribute("aria-expanded",open));document.querySelectorAll("#tree .chip").forEach(x=>{x.classList.toggle("open",open);x.setAttribute("aria-expanded",open)});document.querySelectorAll("#tree details.fcd").forEach(x=>x.open=open);return}
+ const tc=ev.target.closest("#tree .chip");
+ if(tc){const tp=tc.nextElementSibling;if(tp){tp.hidden=!tp.hidden;tc.classList.toggle("open",!tp.hidden);tc.setAttribute("aria-expanded",!tp.hidden)}return}
+ const t=ev.target.closest("button[data-id]");
+ if(t&&D[t.dataset.id]){
+  sel=t.dataset.id;renderDetail();
+  if(!t.closest("#map")){document.getElementById("map").scrollIntoView({behavior:matchMedia("(prefers-reduced-motion: reduce)").matches?"auto":"smooth"})}
+ }
+});
+try{const s=localStorage.getItem("hd-anemia-map-lec");if(s){const b=document.querySelector(`.fbtn[data-l="${s}"]`);if(b){lec=s;document.querySelectorAll(".fbtn").forEach(x=>x.setAttribute("aria-pressed",x===b))}}}catch(e){}
+renderDetail();applyFilter();
+document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!$("#fcModal").hidden)$("#fcModal").hidden=true});
+document.querySelectorAll("details.fcd[open] .fc").forEach(queueFC);
+document.querySelectorAll(`[data-cp="${ctab}"] .fc`).forEach(queueFC);
+</script>
