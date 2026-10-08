@@ -1,0 +1,556 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HEM23 Survivorship Builder</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,600;8..60,700&family=Public+Sans:wght@400;600;700&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+/* Layout: toolbar + stats on top; structure list | question card | LO mastery map. Stacks to one column on phones. */
+:root{
+  --bg:#f3f5f6; --surface:#ffffff; --ink:#18212b; --muted:#5a6570; --line:#dbe0e5; --chip:#eceff2;
+  --arch:#2c55a0; --face:#a3263f; --eye:#2c55a0; --accent:#a3263f;
+  --ok:#1d7a3e; --ok-bg:#e3f4e8; --bad:#b3261e; --bad-bg:#fbe7e5; --once:#b7791f; --once-bg:#fdf1dc; --mem:#c2621a;
+  --hy-bg:#fff6cc; --hy-line:#c9a227; --hy-ink:#4a3a00;
+  --f-display:"Source Serif 4", Georgia, serif; --f-body:"Public Sans", Arial, sans-serif; --f-mono:"IBM Plex Mono", ui-monospace, monospace;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#11161c; --surface:#19212a; --ink:#e6eaee; --muted:#9aa6b2; --line:#2c3642; --chip:#232c36;
+  --arch:#8fb1f0; --face:#f08a9b; --eye:#8fb1f0; --accent:#f08a9b;
+  --ok:#6fd08f; --ok-bg:#16301f; --bad:#f28b82; --bad-bg:#3a1b19; --once:#f0c070; --once-bg:#3a2e12; --mem:#f0a05c;
+  --hy-bg:#3a3110; --hy-line:#b8952a; --hy-ink:#f5e6a8; color-scheme:dark }}
+:root[data-theme="dark"]{
+  --bg:#11161c; --surface:#19212a; --ink:#e6eaee; --muted:#9aa6b2; --line:#2c3642; --chip:#232c36;
+  --arch:#8fb1f0; --face:#f08a9b; --eye:#8fb1f0; --accent:#f08a9b;
+  --ok:#6fd08f; --ok-bg:#16301f; --bad:#f28b82; --bad-bg:#3a1b19; --once:#f0c070; --once-bg:#3a2e12; --mem:#f0a05c;
+  --hy-bg:#3a3110; --hy-line:#b8952a; --hy-ink:#f5e6a8; color-scheme:dark }
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font:15px/1.5 var(--f-body);margin:0}
+.wrap{max-width:1180px;margin:0 auto;padding-inline:16px;padding-block:22px 48px;display:grid;gap:16px}
+h1,h2,h3{font-family:var(--f-display);margin:0;text-wrap:balance;line-height:1.2}
+.meta{font:500 .74rem var(--f-mono);letter-spacing:.07em;text-transform:uppercase;color:var(--muted);margin:0}
+header{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:end;gap:12px}
+header h1{font-size:1.9rem}
+header p.lede{margin:4px 0 0;color:var(--muted);max-width:62ch}
+.btn{font:600 .85rem var(--f-body);background:var(--chip);color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:7px 12px;cursor:pointer}
+.btn:hover{border-color:var(--ink)}
+.btn:focus-visible,.opt:focus-visible,.seg button:focus-visible,.ent:focus-visible,.lo-tile:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.btn.primary{background:var(--accent);color:var(--surface);border-color:var(--accent)}
+.btn[disabled]{opacity:.45;cursor:default}
+.hdr-actions{display:flex;gap:8px;flex-wrap:wrap}
+.wrap{grid-template-columns:minmax(0,1fr)} .rvw{min-width:0}
+
+.bar{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 12px}
+.seg{display:inline-flex;background:var(--chip);border-radius:10px;padding:3px;gap:2px;flex-wrap:wrap}
+.seg button{font:600 .82rem var(--f-body);border:0;background:transparent;color:var(--ink);padding:6px 11px;border-radius:8px;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--surface);box-shadow:0 1px 2px rgba(0,0,0,.12)}
+.seg .lab{font:500 .7rem var(--f-mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);align-self:center;padding:0 6px}
+.stats{display:flex;gap:18px;flex-wrap:wrap}
+.stat b{display:block;font:700 1.15rem var(--f-body);font-variant-numeric:tabular-nums}
+.stat span{font:500 .68rem var(--f-mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+
+.main{display:grid;grid-template-columns:250px minmax(0,1fr) 270px;gap:16px;align-items:start}
+@media (max-width:1000px){ .main{grid-template-columns:minmax(0,1fr)} .side{order:2} .map{order:3} }
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px;display:grid;gap:8px;min-width:0}
+.panel h2{font-size:1rem}
+.lec-h{font:700 .72rem var(--f-body);letter-spacing:.07em;text-transform:uppercase;margin-top:6px}
+.ent{display:grid;grid-template-columns:1fr auto;gap:2px 8px;text-align:left;width:100%;background:transparent;border:1px solid transparent;border-radius:8px;padding:7px 8px;cursor:pointer;color:var(--ink);font:inherit}
+.ent:hover{background:var(--chip)}
+.ent[aria-current="true"]{border-color:var(--lc);background:var(--chip)}
+.ent .n{font-weight:600;font-size:.9rem}
+.ent .s{grid-column:1;font-size:.75rem;color:var(--muted)}
+.ent .pct{grid-row:1/3;grid-column:2;align-self:center;font:500 .75rem var(--f-mono);color:var(--muted);font-variant-numeric:tabular-nums}
+.ent .mini{grid-column:1/3;height:4px;border-radius:2px;background:var(--line);overflow:hidden}
+.ent .mini i{display:block;height:100%;background:var(--lc)}
+.lF{--lc:var(--arch)} .lD{--lc:var(--face)} .lT{--lc:var(--tcol)}
+:root{--tcol:#1d7a5f} @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--tcol:#6fd0b0}} :root[data-theme="dark"]{--tcol:#6fd0b0}
+.tag.rr{background:var(--chip);color:var(--ink);border:1px solid var(--line)}
+
+.card{background:var(--surface);border:1px solid var(--line);border-top:5px solid var(--lc);border-radius:12px;padding:18px;display:grid;gap:14px;min-width:0}
+.card-top{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px;align-items:baseline}
+.card-top h2{font-size:1.35rem}
+.tag{font:500 .7rem var(--f-mono);letter-spacing:.06em;text-transform:uppercase;padding:3px 8px;border-radius:999px;background:var(--chip);color:var(--muted)}
+.tag.lo{color:var(--lc)}
+.tag.hy{background:var(--hy-bg);color:var(--hy-ink);border:1px solid var(--hy-line)}
+.boxes{display:flex;gap:4px;flex-wrap:wrap}
+.boxes i{width:18px;height:6px;border-radius:3px;background:var(--line)}
+.boxes i.done-ok{background:var(--ok)} .boxes i.done-bad{background:var(--bad)} .boxes i.cur{background:var(--lc)}
+.q{font:600 1.08rem/1.45 var(--f-body);margin:0}
+.hint{font-size:.8rem;color:var(--muted);margin:0}
+.opts{display:grid;gap:8px}
+.opt{display:grid;grid-template-columns:auto 1fr;gap:10px;align-items:start;text-align:left;width:100%;font:inherit;color:var(--ink);background:var(--bg);border:1.5px solid var(--line);border-radius:10px;padding:10px 12px;cursor:pointer}
+.opt:hover:not([disabled]){border-color:var(--lc)}
+.opt .k{font:500 .75rem var(--f-mono);color:var(--muted);border:1px solid var(--line);border-radius:5px;padding:1px 6px;margin-top:1px}
+.opt.sel{border-color:var(--lc);background:var(--chip)}
+.opt.right{border-color:var(--ok);background:var(--ok-bg)}
+.opt.wrong{border-color:var(--bad);background:var(--bad-bg)}
+.opt.missed{border-color:var(--ok);border-style:dashed}
+.opt[disabled]{cursor:default}
+.ordered{display:grid;gap:6px;counter-reset:ord;padding:0;margin:0;list-style:none;min-height:44px;border:1.5px dashed var(--line);border-radius:10px;padding:8px}
+.ordered li{counter-increment:ord;display:grid;grid-template-columns:auto 1fr;gap:8px;align-items:center;background:var(--chip);border-radius:8px;padding:7px 10px;cursor:pointer}
+.ordered li::before{content:counter(ord);font:500 .78rem var(--f-mono);color:var(--lc)}
+.ordered li.right{background:var(--ok-bg)} .ordered li.wrong{background:var(--bad-bg)}
+.ordered .empty{color:var(--muted);font-size:.85rem;padding:4px}
+/* ---------- Review ---------- */
+.rvw{margin-top:14px}
+.rvw-bar{position:sticky;top:0;z-index:8;background:var(--bg);border-bottom:1px solid var(--line);padding:10px 0;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.rvw-bar .seg{display:flex;gap:2px;background:var(--chip);border:1px solid var(--line);border-radius:9px;padding:3px}
+.rvw-bar .seg button{background:transparent;border:0;border-radius:7px;padding:6px 12px;font:inherit;font-size:13.5px;color:var(--muted);cursor:pointer}
+.rvw-bar .seg button[aria-pressed="true"]{background:var(--surface);color:var(--ink);font-weight:600;box-shadow:0 1px 2px rgba(0,0,0,.08)}
+#rvwQ{flex:1 1 180px;min-width:140px;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:7px 10px;font:inherit;font-size:14px;color:inherit}
+#rvwCount{font-family:var(--f-mono);font-size:11px;color:var(--muted);white-space:nowrap}
+.rvw-toc{display:flex;flex-wrap:wrap;gap:6px;margin:12px 0 2px}
+.rvw-toc a{font-size:12.5px;text-decoration:none;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:4px 10px}
+.rvw-toc a:hover{color:var(--ink);border-color:var(--muted)}
+.rvw-body{max-width:none}
+.rsec{padding:6px 0 10px;scroll-margin-top:64px}
+.rsec.hide{display:none}
+.rh{font-family:var(--f-display);font-size:1.5rem;font-weight:650;margin:26px 0 4px;padding-bottom:6px;border-bottom:2px solid var(--acc)}
+.rsh{font-family:var(--f-display);font-size:1.12rem;font-weight:650;margin:18px 0 4px}
+.rvw-body p{margin:8px 0;line-height:1.62}
+ul.rlist{margin:8px 0;padding-left:1.15em;display:grid;gap:5px}
+ul.rlist li{line-height:1.55}
+.rtbl{overflow-x:auto;margin:12px 0;border:1px solid var(--line);border-radius:10px;background:var(--surface)}
+.rtbl table{border-collapse:collapse;width:100%;font-size:14px}
+.rtbl th,.rtbl td{text-align:left;vertical-align:top;padding:8px 11px;border-bottom:1px solid var(--line)}
+.rtbl thead th{background:var(--chip);font-family:var(--f-mono);font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);white-space:nowrap}
+.rtbl tbody tr:last-child td{border-bottom:0}
+.rtbl td b{font-weight:600}
+.rseq{margin:12px 0;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 14px 12px 10px}
+.rseq ol{margin:0;padding-left:1.3em;display:grid;gap:7px}
+.rseq li{line-height:1.55;padding-left:2px}
+.rseq li b{color:var(--acc)}
+.cgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(330px,1fr));gap:10px;margin:12px 0;align-items:start}
+.cgrid>details{margin:0}
+details.cx{margin:11px 0;border-radius:9px;border:1px solid var(--line);background:var(--surface);overflow:hidden}
+details.cx>summary{list-style:none;cursor:pointer;display:flex;align-items:baseline;gap:9px;padding:9px 12px;border-left:3px solid var(--line);font-size:14px}
+details.cx>summary::-webkit-details-marker{display:none}
+details.cx>summary::after{content:"+";margin-left:auto;font-family:var(--f-mono);font-size:14px;color:var(--muted);line-height:1}
+details.cx[open]>summary::after{content:"\2013"}
+details.cx>summary .lbl{font-family:var(--f-mono);font-size:10px;letter-spacing:.11em;text-transform:uppercase;font-weight:700;white-space:nowrap}
+details.cx>summary .pk{color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1}
+details.cx[open]>summary .pk{display:none}
+details.cx .cbody{padding:2px 13px 12px;line-height:1.56;font-size:14.6px;border-left:3px solid var(--line)}
+details.cx .cbody b{font-weight:600}
+details.rrule>summary,details.rrule .cbody{border-left-color:var(--acc)}
+details.rtrap>summary,details.rtrap .cbody{border-left-color:var(--bad)}
+details.rmem>summary,details.rmem .cbody{border-left-color:var(--mem)}
+details.rrule>summary .lbl{color:var(--acc)} details.rtrap>summary .lbl{color:var(--bad)} details.rmem>summary .lbl{color:var(--mem)}
+details.rhy{background:var(--hy-bg);border-color:var(--hy-line);color:var(--hy-ink)}
+details.rhy>summary,details.rhy .cbody{border-left-color:var(--hy-line)}
+details.rhy>summary .lbl{color:var(--hy-ink);opacity:.9}
+details.rhy>summary .pk,details.rhy>summary::after{color:var(--hy-ink);opacity:.75}
+.rvw-empty{display:none;text-align:center;color:var(--muted);border:1px dashed var(--line);border-radius:10px;padding:28px;margin-top:16px}
+.rvw-empty.on{display:block}
+.rvw[data-lec="F"]{--acc:var(--arch)} .rvw[data-lec="D"]{--acc:var(--face)} .rvw[data-lec="T"]{--acc:var(--tcol)}
+@media print{
+  header,.bar,.main,.rvw-bar,.rvw-toc,.rvw-empty{display:none!important}
+  .rvw{margin:0}
+  body{background:#fff}
+  .rsec{break-before:page;break-inside:auto}
+  .rsec:first-of-type{break-before:auto}
+  .rtbl,.rseq,details.cx{break-inside:avoid}
+  details.cx>summary::after{display:none}
+  .cgrid{grid-template-columns:1fr 1fr}
+}
+.fb .ans{font-size:.95rem}
+.fbexp{display:grid;gap:8px}
+.fbexp p{margin:0;line-height:1.6}
+.fbnotes{list-style:none;margin:2px 0 0;padding:0;display:grid;gap:6px}
+.fbnotes li{font-size:.9rem;line-height:1.5;color:var(--muted);padding-left:10px;border-left:2px solid var(--line)}
+.fbnotes li b{color:var(--ink);font-weight:600}
+.fbpearl{margin-top:2px;background:var(--hy-bg);border:1px solid var(--hy-line);border-left-width:3px;border-radius:9px;padding:9px 12px;font-size:.92rem;line-height:1.5;color:var(--hy-ink)}
+.fbpearl b{display:block;font:700 .66rem var(--f-mono);letter-spacing:.14em;text-transform:uppercase;color:var(--hy-line);margin-bottom:3px}
+.fb{border-radius:10px;padding:12px 14px;display:grid;gap:6px}
+.fb.ok{background:var(--ok-bg)} .fb.bad{background:var(--bad-bg)}
+.fb .v{font-weight:700}
+.fb.ok .v{color:var(--ok)} .fb.bad .v{color:var(--bad)}
+.fb ol{margin:0;padding-left:1.2em}
+.actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:space-between;align-items:center}
+.timer{font:500 .8rem var(--f-mono);color:var(--muted);font-variant-numeric:tabular-nums}
+.done{display:grid;gap:10px;text-align:left}
+
+.lo-grid{display:grid;gap:6px}
+.lo-tile{display:grid;grid-template-columns:auto 1fr auto;gap:8px;align-items:center;text-align:left;width:100%;background:transparent;border:1px solid var(--line);border-radius:8px;padding:6px 8px;cursor:pointer;color:var(--ink);font:inherit}
+.lo-tile:hover{border-color:var(--lc)}
+.lo-tile .id{font:500 .72rem var(--f-mono);color:var(--lc);white-space:nowrap}
+.lo-tile .t{font-size:.78rem;line-height:1.3}
+.lo-tile .dot{width:12px;height:12px;border-radius:50%;background:var(--line)}
+.dot.s-o{background:var(--once)} .dot.s-m{background:var(--bad)} .dot.s-M{background:var(--ok)}
+.legend{display:flex;flex-wrap:wrap;gap:10px;font-size:.72rem;color:var(--muted)}
+.legend span{display:inline-flex;gap:5px;align-items:center}
+.legend i{width:10px;height:10px;border-radius:50%;display:inline-block;background:var(--line)}
+.legend i.o{background:var(--once)} .legend i.m{background:var(--bad)} .legend i.M{background:var(--ok)}
+footer{color:var(--muted);font-size:.8rem;border-top:1px solid var(--line);padding-top:12px}
+@media (prefers-reduced-motion: no-preference){ .opt,.ent,.lo-tile{transition:border-color .12s, background .12s} }
+</style>
+
+<div class="wrap">
+<header>
+  <div>
+    <p class="meta">HoyaDocs · Block 5 · Hematology · HEM23</p>
+    <h1>HEM23 Survivorship Builder</h1>
+    <p class="lede">Long-term follow-up of childhood cancer survivors, LO by LO: build each structure box by box, then drill what you miss. Boxes tagged Rapid Review test the LO Rapid Review and Master Review checklists.</p>
+  </div>
+  <div class="hdr-actions">
+    <button class="btn primary" id="reviewBtn" type="button" aria-pressed="false">Review</button>
+    <button class="btn" id="themeBtn" type="button">Theme: auto</button>
+    <button class="btn" id="resetBtn" type="button">Reset progress</button>
+  </div>
+</header>
+
+<div class="bar">
+  <div class="seg" role="group" aria-label="Mode">
+    <span class="lab">Mode</span>
+    <button type="button" data-mode="build" aria-pressed="true">Build</button>
+    <button type="button" data-mode="drill" aria-pressed="false">Drill</button>
+  </div>
+  <div class="seg" role="group" aria-label="Section scope" id="scopeSeg">
+    <span class="lab">Scope</span>
+    <button type="button" data-scope="all" aria-pressed="true">All</button>
+    <button type="button" data-scope="F" aria-pressed="false">LO1 Mission</button>
+    <button type="button" data-scope="D" aria-pressed="false">LO2 Late effects</button>
+    <button type="button" data-scope="T" aria-pressed="false">LO3–4 Support &amp; team</button>
+  </div>
+  <div class="seg" role="group" aria-label="Focus" id="focusSeg">
+    <span class="lab">Focus</span>
+    <button type="button" data-rr="0" aria-pressed="true">All boxes</button>
+    <button type="button" data-rr="1" aria-pressed="false">Rapid Review only</button>
+  </div>
+  <div class="stats" aria-live="polite">
+    <div class="stat"><b id="sScore">0</b><span>Score</span></div>
+    <div class="stat"><b id="sStreak">0</b><span>Streak</span></div>
+    <div class="stat"><b id="sAcc">—</b><span>Accuracy</span></div>
+    <div class="stat"><b id="sBoxes">0</b><span>Boxes mastered</span></div>
+    <div class="stat"><b id="sLos">0/4</b><span>LOs mastered</span></div>
+  </div>
+</div>
+
+<div class="main">
+  <aside class="panel side" aria-label="Structures">
+    <h2>Structures</h2>
+    <div id="entList"></div>
+  </aside>
+  <section class="card" id="card" aria-live="polite"></section>
+  <aside class="panel map" aria-label="Learning objective mastery map">
+    <h2>LO mastery map</h2>
+    <div class="legend"><span><i></i>untested</span><span><i class="m"></i>missed</span><span><i class="o"></i>got it once</span><span><i class="M"></i>mastered</span></div>
+
+    <p class="hint">Tap an LO to drill just that objective. Mastered = right twice in a row.</p>
+    <div class="lo-grid" id="loGrid"></div>
+  </aside>
+</div>
+
+<div class="rvw" id="rvw" data-lec="F" hidden>
+  <div class="rvw-bar">
+    <div class="seg" id="rvwTabs" role="group" aria-label="Section">
+      <button type="button" data-l="F" aria-pressed="true">LO1 Mission</button>
+      <button type="button" data-l="D" aria-pressed="false">LO2 Late effects</button>
+      <button type="button" data-l="T" aria-pressed="false">LO3–4 Support &amp; team</button>
+    </div>
+    <input id="rvwQ" type="search" placeholder="Search this review" autocomplete="off" aria-label="Search the review">
+    <span id="rvwCount"></span>
+    <button class="btn" type="button" id="rvwAll" aria-pressed="false">Expand all</button>
+    <button class="btn" type="button" id="rvwPrint">Print</button>
+    <button class="btn primary" type="button" id="rvwClose">Back to the game</button>
+  </div>
+  <nav class="rvw-toc" id="rvwToc" aria-label="Contents"></nav>
+  <div class="rvw-body" id="rvwBody"></div>
+  <div class="rvw-empty" id="rvwEmpty">Nothing in this section matches that search.</div>
+</div>
+
+
+<footer>HoyaDocs · HEM23 Survivorship Builder · Updated October 8, 2026 · Revision 1.0. Yellow “HY” tags mark high-yield points, including Step 1. “Rapid Review” tags mark boxes built from the LO Rapid Review checklists.</footer>
+</div>
+
+<script>
+/* ================= LEARNING OBJECTIVES ================= */
+var LOS = {"1": "Mission of long-term follow-up care of cancer survivors", "2": "Most common late effects and long-term complications of cancer treatment", "3": "Emotional stress of living as a cancer survivor and the need for support", "4": "The survivorship care team; communication and relationship building with patient and family"};
+var LOLEC = {"1": "F", "2": "D", "3": "T", "4": "T"};
+var LECS = [{"k": "F", "n": "LO1 Mission", "c": "arch"}, {"k": "D", "n": "LO2 Late effects", "c": "face"}, {"k": "T", "n": "LO3–4 Support & team", "c": "eye"}];
+var E = [{"id": "why", "lec": "F", "name": "Why “cure is not enough”", "sub": "Survival · the time bomb · who gets followed", "b": [{"lo": "1", "rr": true, "hy": true, "q": "About what percentage of children and adolescents diagnosed with cancer now survive more than 5 years?", "a": "≈85%", "o": ["≈25%", "≈50%", "≈99%"], "n": ["Decades out of date.", "Too low; most are now cured.", "Too high; some still die of disease."], "w": "≈85% survive >5 years and most are cured. That success creates a large, growing survivor population.", "p": "85% survive."}, {"lo": "1", "rr": true, "hy": true, "q": "About what percentage of childhood cancer survivors are followed in a survivorship program?", "a": "<5%", "o": ["≈25%", "≈50%", "≈85%"], "n": ["Far too high.", "Far too high.", "That is the survival rate, not follow-up."], "w": "Fewer than 5% are followed in a survivorship program. That gap is a central problem of survivorship care.", "p": "85% survive, <5% followed."}, {"lo": "1", "rr": true, "hy": true, "q": "When do MOST late effects of childhood cancer therapy appear?", "a": "15–30 years after therapy ends", "o": ["During induction chemotherapy", "Within 6 months of finishing therapy", "Only after age 70"], "n": ["Some toxicities are acute, but late effects come later.", "Too early for most late effects.", "They show up in young and middle adulthood."], "w": "Most late effects appear 15–30 years after therapy, when the survivor is a young adult who may no longer see an oncologist.", "p": "The time bomb: 15–30 years."}, {"lo": "1", "rr": true, "q": "About how many childhood cancer survivors live in the U.S.?", "a": ">500,000", "o": ["≈5,000", "≈50,000", "≈50 million"], "n": ["Far too few.", "Too few.", "Far too many."], "w": "More than 500,000 survivors; ≈1 in 530 adults aged 20–39 is a childhood cancer survivor, and more than 100,000 are in college.", "p": ">500,000; 1 in 530 young adults."}, {"lo": "1", "rr": true, "q": "About what fraction of U.S. adults aged 20–39 is a childhood cancer survivor?", "a": "≈1 in 530", "o": ["≈1 in 5", "≈1 in 50", "≈1 in 50,000"], "n": ["Far too common.", "Too common.", "Far too rare."], "w": "≈1 in 530 adults aged 20–39. Every primary care doctor will see these patients.", "p": "1 in 530."}, {"lo": "1", "rr": true, "t": "m", "q": "Select ALL treatment sources of late effects.", "a": ["Chemotherapy", "Radiation", "Surgery", "Stem cell transplantation", "Immunotherapy"], "o": ["Routine childhood vaccination", "Supportive growth charts"], "n": ["Not a source of cancer late effects.", "Monitoring, not a treatment."], "w": "Every modality used to cure childhood cancer can leave late effects.", "p": "All cancer therapy has a price."}]}, {"id": "nums", "lec": "F", "name": "The sobering numbers", "sub": "Chronic disease · excess deaths · CCSS", "b": [{"lo": "1", "rr": true, "hy": true, "q": "Of children treated for cancer in the 1970s–1990s, about what percentage will have a chronic disease by age 40?", "a": "75%", "o": ["10%", "25%", "40%"], "n": ["Far too low.", "Too low.", "That is the share with a SERIOUS problem (>40%)."], "w": "75% will have a chronic disease by age 40, and >40% will have a serious health problem.", "p": "75% chronic; >40% serious."}, {"lo": "1", "rr": true, "q": "Of children treated for cancer in the 1970s–1990s, what share will develop a SERIOUS health problem?", "a": ">40%", "o": ["<5%", "≈10%", "≈95%"], "n": ["That is the share in survivorship programs.", "Too low.", "Too high."], "w": "More than 40% develop a serious health problem; 75% develop some chronic disease by 40.", "p": ">40% serious."}, {"lo": "1", "rr": true, "hy": true, "t": "m", "q": "Select ALL leading causes of EXCESS late death in childhood cancer survivors.", "a": ["Second malignancy", "Cardiovascular disease", "Pulmonary disease"], "o": ["Renal failure", "Accidents", "Liver failure"], "n": ["Not one of the top three.", "Not one of the top three.", "Not one of the top three."], "w": "Excess risk of premature death stays elevated beyond 30 years after diagnosis, driven by second cancers, heart disease and lung disease.", "p": "Late death: cancer, heart, lung."}, {"lo": "1", "rr": true, "q": "How long does the excess risk of premature death remain significantly elevated after a childhood cancer diagnosis?", "a": "Beyond 30 years", "o": ["Only the first 2 years", "Only the first 5 years", "Until therapy ends"], "n": ["Risk persists much longer.", "Five-year survival is not the end of risk.", "Risk continues after therapy."], "w": "Excess mortality remains elevated beyond 30 years from diagnosis.", "p": ">30 years of excess risk."}, {"lo": "1", "rr": true, "q": "What is the Childhood Cancer Survivor Study (CCSS)?", "a": "The largest NIH-funded U.S. long-term follow-up study of childhood cancer survivors", "o": ["A randomized trial of new induction chemotherapy", "A registry of adult-onset cancers only", "A European fertility-preservation trial"], "n": ["It is an observational follow-up study.", "It studies childhood cancers.", "It is U.S. and covers all late effects."], "w": "CCSS: 17,308 survivors treated 1970–1986 at 26 pediatric institutions, diagnosed <21 years and surviving >5 years; 10,397 adult survivors compared with 3,034 siblings.", "p": "CCSS = 17,308 survivors vs siblings."}, {"lo": "1", "rr": true, "q": "In the CCSS, about what percentage of survivors had at least one chronic health condition 30 years after diagnosis?", "a": "≈75%", "o": ["≈5%", "≈25%", "≈100%"], "n": ["Too low.", "Too low.", "Not universal."], "w": "≈75% had ≥1 chronic health condition 30 years after diagnosis. The comparison group was their siblings.", "p": "CCSS: 3 of 4 have a chronic condition."}, {"lo": "1", "rr": true, "q": "Who served as the comparison group in the CCSS?", "a": "Siblings of the survivors", "o": ["Adults with adult-onset cancer", "Randomly selected hospital inpatients", "Survivors' parents"], "n": ["Not the comparison.", "Not the comparison.", "Not the comparison."], "w": "10,397 adult survivors were compared with 3,034 siblings, which controls for family and environment.", "p": "Survivors vs siblings."}, {"lo": "1", "rr": true, "t": "m", "q": "Select ALL CCSS eligibility features.", "a": ["Treated 1970–1986", "Younger than 21 at diagnosis", "Survived more than 5 years", "Treated at one of 26 pediatric institutions"], "o": ["Diagnosed after age 40", "Still on active therapy"], "n": ["Childhood cancers only.", "Survivors were >5 years out."], "w": "17,308 survivors met these criteria.", "p": "CCSS: <21, 1970–1986, >5 y."}]}, {"id": "mission", "lec": "F", "name": "Mission of a survivorship program", "sub": "F-E-E-T · eligibility · history", "b": [{"lo": "1", "rr": true, "hy": true, "t": "m", "q": "Select ALL parts of the mission of a long-term follow-up (LTFU) program.", "a": ["Follow survivors for anticipated late effects", "Educate survivors about their cancer and its treatment", "Educate on risk-taking behaviors, healthy lifestyle, fertility, employment and insurance", "Transition survivors to adult programs"], "o": ["Deliver frontline induction chemotherapy", "Discharge survivors at 5 years off therapy"], "n": ["That is treatment, not follow-up.", "That is the old practice that lost survivors."], "w": "Mission = F-E-E-T: Follow, Educate (cancer), Educate (life), Transition.", "p": "F-E-E-T."}, {"lo": "1", "rr": true, "hy": true, "q": "When does a childhood cancer patient become eligible for a long-term follow-up program?", "a": "2 years off therapy", "o": ["At diagnosis", "5 years after diagnosis only", "10 years off therapy"], "n": ["Still in active treatment.", "Eligibility is 2 years off therapy.", "Too late."], "w": "All patients 2 years off therapy qualify for an LTFU program.", "p": "Ticket in = 2 years off therapy."}, {"lo": "1", "rr": true, "q": "What does the National Academy of Medicine recommend for adult survivors of childhood cancer?", "a": "Lifelong, risk-based survivorship care", "o": ["Discharge to routine care after 5 years", "Annual whole-body CT for life", "Follow-up only if symptoms develop"], "n": ["Old practice.", "Not risk-based; adds radiation.", "Waiting for symptoms misses late effects."], "w": "Lifelong, risk-based care: surveillance tailored to each survivor's exposures.", "p": "Lifelong + risk-based."}, {"lo": "1", "rr": true, "q": "What is the goal of 21st-century childhood cancer therapy?", "a": "Improve cure rates while decreasing long-term sequelae", "o": ["Maximize dose intensity regardless of toxicity", "Prioritize short-term quality of life over cure", "Stop follow-up once cured"], "n": ["Ignores late effects.", "Cure remains a goal.", "Late effects require follow-up."], "w": "Proactive, risk-based care plus healthy lifestyles reduce the frequency and severity of late effects.", "p": "Cure more, harm less."}, {"lo": "1", "q": "From the 1960s to the mid-1980s, what usually happened to childhood cancer survivors?", "a": "Discharged 5–10 years off therapy and never seen again at a children's hospital or cancer center", "o": ["Followed for life in pediatric oncology clinics", "Enrolled in national telehealth follow-up", "Transitioned to adult survivorship programs"], "n": ["That is the modern goal.", "Telehealth is modern.", "Formal transition programs did not exist."], "w": "Late effects then appeared decades later in adults whose doctors did not know their treatment history.", "p": "Discharged and lost."}, {"lo": "1", "rr": true, "q": "A 19-year-old finished ALL therapy 2 years ago and feels well. What is the best reason to enroll her in long-term follow-up now?", "a": "Most late effects appear 15–30 years later, so risk-based surveillance and education must begin before problems appear", "o": ["She is still likely to need active chemotherapy", "Follow-up is only needed if symptoms appear", "She is not eligible until 5 years off therapy"], "n": ["She is off therapy.", "Surveillance aims to catch effects early.", "Eligibility is 2 years off therapy."], "w": "She is eligible at 2 years off therapy; feeling well now does not rule out future late effects.", "p": "Start before the time bomb goes off."}]}, {"id": "cat", "lec": "D", "name": "Late-effect categories", "sub": "What survivors ask · what they don't", "b": [{"lo": "2", "rr": true, "t": "m", "q": "Select ALL late-effect categories studied by the CCSS.", "a": ["Growth and development", "Vital organ function", "Fertility and reproduction", "Second malignancy", "Psychosocial (post-traumatic stress)", "Early mortality"], "o": ["Acute tumor lysis syndrome", "Febrile neutropenia during induction"], "n": ["Acute toxicity during therapy.", "Acute toxicity during therapy."], "w": "Growth includes linear growth, intellectual function and sexual development; vital organs include heart, lungs, thyroid, kidneys, liver and immune system.", "p": "Grow, organs, fertility, second cancer, mind, death."}, {"lo": "2", "rr": true, "hy": true, "q": "Which late effect do survivors almost NEVER ask about, even though it is the leading cause of excess late death?", "a": "Second malignancy", "o": ["Neurocognitive problems", "Heart disease", "Infertility"], "n": ["Survivors ask about this often.", "Survivors ask about this often.", "Survivors ask about this often."], "w": "Survivors ask most about neurocognitive problems, heart disease, infertility and psychosocial problems. The physician must raise second-cancer risk (screening, sun protection, no smoking).", "p": "They don't ask; you must raise it."}, {"lo": "2", "rr": true, "q": "A 24-year-old survivor of childhood leukemia asks about her heart and fertility but never mentions cancer risk. What should the physician add?", "a": "Second-malignancy risk, screening and risk-reducing habits", "o": ["Nothing; answer only what she asks", "Reassure her that second cancers do not occur after leukemia", "Refer her to a fertility clinic only"], "n": ["Second cancer is the top excess late killer.", "False reassurance.", "Misses the biggest risk."], "w": "Discuss skin checks, breast screening if she had chest radiation, CBC surveillance, no smoking and sun protection.", "p": "Always raise second cancer."}]}, {"id": "classic", "lec": "D", "name": "Treatment → late effect", "sub": "Classic pairs", "b": [{"lo": "2", "rr": true, "hy": true, "q": "Which treatment is classically linked to heart disease (cardiomyopathy, CHF) in survivors?", "a": "Anthracyclines (doxorubicin, daunorubicin) or chest radiation", "o": ["Vincristine", "Cranial radiation", "Cyclophosphamide alone"], "n": ["Neuropathy.", "Neurocognitive deficits.", "High doses can cause ACUTE hemorrhagic myocarditis, but the classic LATE cardiomyopathy is from anthracyclines/chest radiation."], "w": "Anthracyclines and chest radiation cause cardiomyopathy and heart failure.", "p": "Anthracycline = heart."}, {"lo": "2", "rr": true, "hy": true, "q": "Which treatment is classically linked to learning disabilities in survivors?", "a": "Cranial radiation and/or CNS-directed chemotherapy", "o": ["Abdominal radiation", "Bleomycin", "Mantle radiation"], "n": ["Infertility.", "Pulmonary fibrosis.", "Breast cancer, CAD, thyroid."], "w": "Children with ALL and brain tumors are most at risk because they receive CNS-directed therapy.", "p": "Brain therapy = learning problems."}, {"lo": "2", "rr": true, "hy": true, "q": "A girl received chest radiation as a teen for Hodgkin lymphoma. Which late cancer is classic?", "a": "Early breast cancer", "o": ["Hepatocellular carcinoma", "Renal cell carcinoma", "Testicular cancer"], "n": ["Not in the field.", "Not in the field.", "Wrong sex and site."], "w": "Breast tissue in the radiation field during puberty is highly vulnerable. Screening starts early (at age 25 or 8 years after radiation, whichever is later, per COG guidelines).", "p": "Teen chest radiation → breast cancer."}, {"lo": "2", "rr": true, "q": "Abdominal or pelvic radiation (e.g., for a sarcoma) classically causes which late effect?", "a": "Infertility and premature menopause", "o": ["Hearing loss", "Peripheral neuropathy", "Learning disability"], "n": ["Cisplatin.", "Vincristine.", "Cranial radiation."], "w": "The gonads sit in the field. Ovaries are especially sensitive to radiation.", "p": "Pelvic radiation → gonads."}, {"lo": "2", "rr": true, "t": "m", "q": "Select ALL late effects that come from the cancer experience itself (not a specific drug).", "a": ["Post-traumatic stress in survivors", "Post-traumatic stress in parents", "Chronic pain", "Chronic fatigue"], "o": ["Dilated cardiomyopathy", "Pulmonary fibrosis"], "n": ["Anthracycline.", "Bleomycin or radiation."], "w": "Psychosocial late effects affect the whole family.", "p": "The experience itself leaves scars."}]}, {"id": "neuro", "lec": "D", "name": "Neurocognitive & growth", "sub": "ALL, brain tumors · spinal radiation >35 Gy", "b": [{"lo": "2", "rr": true, "hy": true, "q": "Which children are MOST susceptible to neurocognitive late effects?", "a": "Children with brain tumors and ALL", "o": ["Children with Wilms tumor", "Children with neuroblastoma treated by surgery alone", "Children with Hodgkin lymphoma treated with ABVD"], "n": ["Therapy is not CNS-directed.", "No CNS-directed therapy.", "No CNS-directed therapy."], "w": "Brain tumors and ALL receive CNS-directed therapy (cranial radiation, intrathecal chemo). Stem cell transplant and head/neck radiation also raise risk.", "p": "Brain tumors + ALL."}, {"lo": "2", "rr": true, "q": "About what share of survivors who received CNS-directed therapy (e.g., ALL, brain tumors) need special education?", "a": "8–50%", "o": ["<1%", "75–90%", "100%"], "n": ["Too low.", "Too high.", "Not universal."], "w": "Problems include reading, spelling and arithmetic, attention and memory, processing speed and visual-perceptual-motor skills.", "p": "8–50% need special education."}, {"lo": "2", "rr": true, "t": "m", "q": "Select ALL typical neurocognitive deficits after CNS-directed therapy.", "a": ["Reading, spelling and arithmetic difficulties", "Impaired attention and memory", "Slow processing speed", "Weak visual-perceptual-motor skills"], "o": ["Improved IQ", "Isolated hearing loss only"], "n": ["Opposite.", "Cisplatin ototoxicity, not CNS-directed therapy."], "w": "Deficits range from mild cognitive problems to major learning disabilities.", "p": "Read, attend, process, perceive."}, {"lo": "2", "q": "A 12-year-old who received cranial radiation for ALL at 4 struggles with math and attention. Best next step?", "a": "Neuropsychological testing and school accommodations / special education", "o": ["Start stimulant medication without testing", "Repeat cranial radiation", "Reassure that it will resolve without help"], "n": ["Test first.", "Harmful.", "Late effects need support."], "w": "This is a neurocognitive late effect of CNS-directed therapy.", "p": "Test, then accommodate."}, {"lo": "2", "rr": true, "hy": true, "q": "A 17-year-old who had 40 Gy spinal radiation for medulloblastoma is much shorter than his family, with a short trunk. Mechanism?", "a": "Direct inhibition of vertebral growth by spinal radiation >35 Gy", "o": ["Temporary growth slowing from chemotherapy", "Delayed puberty from chemotherapy alone", "Constitutional short stature"], "n": ["Chemo slowing is usually temporary.", "Would not selectively shorten the trunk; a disproportionately short trunk = spinal radiation.", "A short trunk points to radiation."], "w": "Radiation also causes early puberty (cranial radiation) with early growth-plate fusion. Growth slowing from chemo is usually temporary. Craniospinal radiation also causes GH deficiency (most common endocrine late effect on boards), but a short TRUNK points to direct vertebral injury.", "p": "Spine >35 Gy → short trunk."}, {"lo": "2", "rr": true, "q": "How does cranial radiation affect puberty and final height?", "a": "Early onset of puberty → early growth-plate fusion → reduced final height", "o": ["Delayed puberty → taller final height", "No effect on puberty", "Precocious puberty with normal final height"], "n": ["Opposite.", "Cranial radiation does affect puberty.", "Early fusion reduces height."], "w": "Cranial radiation causes early puberty; spinal radiation >35 Gy directly inhibits vertebral growth. In-house emphasis: early puberty. Boards also stress GH deficiency (most common), and high doses can cause gonadotropin deficiency with delayed puberty.", "p": "Early puberty = early fusion."}]}, {"id": "heart", "lec": "D", "name": "Cardiovascular late effects", "sub": "Anthracyclines · mantle radiation · YF-BDR", "b": [{"lo": "2", "rr": true, "hy": true, "t": "m", "q": "Select ALL risk factors for anthracycline cardiotoxicity.", "a": ["Female sex", "Younger age at treatment", "Higher cumulative anthracycline dose", "Radiation involving the heart"], "o": ["Male sex", "Older age at treatment"], "n": ["Female sex is the risk factor.", "Younger age is the risk factor."], "w": "Mnemonic YF-BDR: Young, Female, Big Dose, Radiation.", "p": "YF-BDR."}, {"lo": "2", "rr": true, "hy": true, "q": "Mantle radiotherapy for Hodgkin lymphoma causes which vascular late effect?", "a": "Coronary and carotid artery disease", "o": ["Aortic dissection from Marfan-like changes", "Varicose veins", "Raynaud phenomenon"], "n": ["Not a radiation effect.", "Not a radiation effect.", "Not a radiation effect."], "w": "Radiation accelerates atherosclerosis in arteries in the field. It can also damage valves.", "p": "Mantle → coronaries and carotids."}, {"lo": "2", "rr": true, "hy": true, "q": "A 28-year-old treated with doxorubicin for osteosarcoma at 8 has dyspnea, an S3 and LVEF 30%. Diagnosis?", "a": "Anthracycline-induced dilated cardiomyopathy", "o": ["Hypertrophic cardiomyopathy", "Constrictive pericarditis from vincristine", "Restrictive cardiomyopathy from cyclophosphamide"], "n": ["Not drug-induced.", "Vincristine causes neuropathy.", "Not the classic pairing."], "w": "Anthracycline toxicity spans asymptomatic cardiotoxicity → cardiomyopathy, LV dysfunction, CHF.", "p": "Doxorubicin → dilated CM."}, {"lo": "2", "hy": true, "q": "Which drug is cardioprotective against anthracycline toxicity?", "a": "Dexrazoxane (iron chelator)", "o": ["Mesna", "Amifostine", "Leucovorin"], "n": ["Protects the bladder from cyclophosphamide.", "Protects kidneys from cisplatin.", "Rescues from methotrexate."], "w": "Standard references: anthracycline cardiotoxicity is dose-dependent (free radicals, iron-mediated). Monitor with echo; limit cumulative dose; dexrazoxane protects.", "p": "Dex protects the heart."}, {"lo": "2", "hy": true, "q": "How does anthracycline cardiotoxicity differ from trastuzumab cardiotoxicity?", "a": "Anthracycline: dose-dependent and largely irreversible; trastuzumab: reversible and not dose-dependent", "o": ["Both are fully reversible", "Trastuzumab is dose-dependent; anthracycline is not", "Neither requires echo monitoring"], "n": ["Anthracycline damage persists.", "Reversed.", "Both need echo."], "w": "Standard references, for pharmacology.", "p": "Doxo permanent; trastuzumab reversible."}]}, {"id": "fert", "lec": "D", "name": "Fertility & gonadal function", "sub": "Testes sensitive · ovaries resist chemo · TBI", "b": [{"lo": "2", "rr": true, "hy": true, "q": "Which cumulative exposure classically causes sterility in boys?", "a": "≈10 g cyclophosphamide or low-dose radiation (200–300 cGy)", "o": ["Any dose of vincristine", "≈100 mg cyclophosphamide", "Only radiation above 50 Gy"], "n": ["Vincristine causes neuropathy.", "Far too small.", "Testes are sterilized by low doses."], "w": "Testes are very sensitive. Leydig cells and testosterone are usually better preserved than sperm production. (In-house threshold; COG guidelines flag risk at lower cyclophosphamide-equivalent doses, ≥4 g/m².)", "p": "Boys: 10 g cyclophosphamide or 2–3 Gy."}, {"lo": "2", "rr": true, "hy": true, "q": "How do ovaries compare with testes in sensitivity to cancer therapy?", "a": "Ovaries are relatively resistant to chemotherapy but sensitive to radiation", "o": ["Ovaries are more sensitive to chemotherapy than testes", "Ovaries are resistant to both chemotherapy and radiation", "Ovaries and testes are equally sensitive"], "n": ["Reversed.", "Ovaries are radiation-sensitive.", "Testes are more chemo-sensitive."], "w": "Female damage comes mainly from abdominal/pelvic radiation, alkylating agents and TBI.", "p": "Ovaries shrug off chemo, not radiation."}, {"lo": "2", "rr": true, "hy": true, "t": "m", "q": "Select ALL risk factors for premature ovarian failure.", "a": ["Age 13–19 at treatment", "High-dose chemotherapy with alkylating agents", "Whole-abdominal radiation (22–30 Gy)", "Cranial irradiation (hypothalamic-pituitary damage)", "Total body irradiation"], "o": ["Treatment before age 10", "Vincristine"], "n": ["Older girls are at higher risk (fewer follicles).", "Not gonadotoxic."], "w": "TBI before bone marrow transplant carries the highest risk.", "p": "Older teen + alkylator + abdomen/TBI."}, {"lo": "2", "rr": true, "hy": true, "q": "What is the risk of premature ovarian failure after TBI in a girl older than 10?", "a": "≈100%", "o": ["≈10%", "≈50%", "≈0%"], "n": ["Far too low.", "That is the risk for girls <10.", "TBI is the highest-risk exposure."], "w": "TBI → POF in 100% of girls >10 and 50% of girls <10.", "p": "TBI: 100% (>10 y), 50% (<10 y)."}, {"lo": "2", "rr": true, "q": "Why are older adolescent girls at higher risk of ovarian failure than younger girls?", "a": "They have fewer follicles in reserve", "o": ["Their ovaries are more chemo-sensitive at puberty", "Younger girls receive lower doses", "Estrogen protects younger ovaries"], "n": ["Reserve, not sensitivity, explains it.", "Not the reason.", "Not the reason."], "w": "Follicle number falls with age, so the same damage leaves less reserve.", "p": "Fewer follicles = higher risk."}, {"lo": "2", "rr": true, "hy": true, "t": "m", "q": "Select ALL consequences of premature ovarian failure.", "a": ["Pubertal delay", "Osteoporosis", "Early coronary artery disease"], "o": ["Polycythemia", "Hypercalcemia"], "n": ["Not related.", "Not related."], "w": "Loss of estrogen removes bone protection (resorption speeds up) and favorable vascular and lipid effects.", "p": "No estrogen → weak bone, sick arteries."}, {"lo": "2", "q": "A 16-year-old girl will receive TBI before marrow transplant. What should be discussed BEFORE treatment?", "a": "Fertility preservation (oocyte or ovarian tissue cryopreservation)", "o": ["Nothing; risk is low at her age", "Sperm banking", "Delaying transplant until age 25"], "n": ["Risk is ≈100%.", "She is female.", "Not appropriate."], "w": "Also plan hormone replacement to protect bone and heart.", "p": "Preserve before you treat."}, {"lo": "2", "q": "A pubertal boy will receive high cumulative cyclophosphamide. What should be offered before treatment?", "a": "Sperm banking", "o": ["Oocyte cryopreservation", "Testosterone injections to protect sperm", "No action; testes resist alkylators"], "n": ["He is male.", "Does not protect spermatogenesis.", "Testes are very sensitive."], "w": "≈10 g cumulative cyclophosphamide causes azoospermia.", "p": "Bank before you treat."}, {"lo": "2", "rr": true, "q": "A 26-year-old who had whole-abdominal radiation for Wilms tumor at 14 has amenorrhea, hot flashes and low bone density. Diagnosis?", "a": "Premature ovarian failure", "o": ["Prolactinoma", "Polycystic ovary syndrome", "Anorexia nervosa"], "n": ["Would cause galactorrhea and LOW FSH (central); radiation damages the ovary directly, so FSH is high.", "Hot flashes and low estrogen don't fit.", "History points to radiation."], "w": "Risk factors: age 13–19 at treatment and abdominal radiation 22–30 Gy.", "p": "Abdominal radiation in teens → POF."}]}, {"id": "other", "lec": "D", "name": "Thyroid, bone & second cancers", "sub": "In-field cancers · drug toxicities", "b": [{"lo": "2", "rr": true, "hy": true, "q": "A 25-year-old has weight gain, cold intolerance and fatigue after neck radiation for Hodgkin lymphoma. Diagnosis, and what else to screen for?", "a": "Hypothyroidism; also screen for thyroid cancer", "o": ["Graves disease only", "Cushing syndrome", "Addison disease"], "n": ["Hyperthyroidism is possible but symptoms say hypo.", "Not a radiation effect.", "Not a radiation effect."], "w": "Neck or mantle radiation → hypothyroidism, hyperthyroidism and thyroid cancer.", "p": "Neck radiation → check TSH."}, {"lo": "2", "rr": true, "t": "m", "q": "Select ALL second malignancies seen after childhood cancer therapy.", "a": ["AML and other leukemias", "Basal and squamous cell skin cancers", "Brain tumors after cranial radiation", "Soft-tissue sarcoma or osteosarcoma in the radiation field"], "o": ["Only cancers identical to the original", "Second cancers never occur in the radiation field"], "n": ["Second cancers are new, different cancers.", "In-field cancers are classic."], "w": "Also breast and thyroid cancers in the field.", "p": "AML, skin, brain, in-field."}, {"lo": "2", "rr": true, "q": "A 30-year-old who had leg radiation for Ewing sarcoma develops a new mass in the same field. Most likely?", "a": "Radiation-induced second malignancy (soft-tissue sarcoma or osteosarcoma)", "o": ["Recurrent Ewing sarcoma is the only possibility", "Benign keloid", "Lipoma unrelated to radiation"], "n": ["A new tumor in the field is a second cancer until proven otherwise.", "Not a mass in a radiation field.", "Ignores the radiation history."], "w": "Cancers in the field: soft-tissue sarcoma, squamous cell carcinoma, osteosarcoma, breast, thyroid.", "p": "New mass in the field = second cancer."}, {"lo": "2", "rr": true, "t": "m", "q": "Select ALL metabolic/bone late effects.", "a": ["Osteoporosis/osteopenia", "Metabolic syndrome"], "o": ["Hypercalcemia from vitamin D excess", "Gout from vincristine"], "n": ["Not a listed late effect.", "Not a listed late effect."], "w": "Glucocorticoids and estrogen loss contribute to bone loss.", "p": "Bones thin, metabolism tips."}, {"lo": "2", "hy": true, "q": "A 21-year-old treated with etoposide 2 years ago has pancytopenia and blasts with an 11q23 rearrangement. Diagnosis?", "a": "Therapy-related AML from a topoisomerase II inhibitor", "o": ["Alkylator-related AML with −5/−7", "Relapsed ALL", "Aplastic anemia"], "n": ["Alkylator AML comes 5–10 years later with −5/−7.", "11q23 + etoposide points to topo II.", "Blasts exclude aplasia."], "w": "Topo II inhibitors → AML 1–3 years later (11q23/KMT2A). Alkylators → AML/MDS 5–10 years later (−5/−7).", "p": "Topo II: fast, 11q23. Alkylator: slow, −5/−7."}, {"lo": "2", "hy": true, "t": "m", "q": "Select ALL correct drug–toxicity pairs (standard references).", "a": ["Bleomycin → pulmonary fibrosis", "Cisplatin → ototoxicity and nephrotoxicity", "Vincristine → peripheral neuropathy", "Cyclophosphamide → hemorrhagic cystitis", "Glucocorticoids → osteonecrosis and cataracts"], "o": ["Doxorubicin → ototoxicity", "Bleomycin → hemorrhagic cystitis"], "n": ["Doxorubicin → cardiomyopathy.", "Cyclophosphamide → cystitis."], "w": "Prevention: mesna (bladder), amifostine and hydration (kidneys), dexrazoxane (heart). Monitor PFTs, audiology and neuro exams.", "p": "Bleo-lung, Cis-ears, Vin-nerves, Cyclo-bladder, Doxo-heart."}, {"lo": "2", "hy": true, "q": "A 32-year-old treated at 15 with mantle radiation and ABVD for Hodgkin lymphoma has exertional dyspnea and a breast mass. Which set of problems should you consider?", "a": "Radiation-induced breast cancer, cardiac disease and pulmonary fibrosis (plus check TSH)", "o": ["Only recurrent Hodgkin lymphoma", "Only anxiety", "Only iron deficiency anemia"], "n": ["Too narrow.", "Ignores organic causes.", "Ignores her history."], "w": "Doxorubicin (cardiomyopathy) + radiation-accelerated CAD; bleomycin + radiation (lung); chest radiation (breast cancer, hypothyroidism).", "p": "Mantle + ABVD: breast, heart, lung, thyroid."}]}, {"id": "emo", "lec": "T", "name": "Emotional stress of survivorship", "sub": "PTSD · parents · why survivors drop out", "b": [{"lo": "3", "rr": true, "hy": true, "t": "m", "q": "Select ALL conditions childhood cancer survivors are MORE likely to have.", "a": ["Mental health disorders (anxiety, depression)", "Chronic pain", "Fatigue", "Sleep disorders"], "o": ["Lower rates of depression than siblings", "Fewer sleep problems than peers"], "n": ["Opposite.", "Opposite."], "w": "Psychological late effects are common and should be screened for at every visit.", "p": "Mind, pain, fatigue, sleep."}, {"lo": "3", "rr": true, "hy": true, "q": "About what fraction of childhood cancer survivors have PTSD?", "a": "About one-fifth (≈20%)", "o": ["<1%", "About half", "Nearly all"], "n": ["Too low.", "Too high.", "Too high."], "w": "PTSD can emerge months to years after treatment, often with anxiety; parents are affected too.", "p": "1 in 5 have PTSD."}, {"lo": "3", "rr": true, "q": "When can PTSD emerge in cancer survivors?", "a": "Months to years after treatment", "o": ["Only during induction", "Only within 1 week of diagnosis", "Never after therapy ends"], "n": ["It can appear later.", "It can appear later.", "It often appears after therapy."], "w": "Delayed onset is why psychosocial screening continues throughout follow-up.", "p": "PTSD can be late, too."}, {"lo": "3", "rr": true, "q": "The mother of a 9-year-old who finished leukemia therapy a year ago reports constant worry, insomnia and nightly checking for bruises. What should the team recognize?", "a": "Parents can develop post-traumatic stress; offer social work/psychology support and support groups", "o": ["Normal parenting that needs no attention", "Munchausen syndrome by proxy", "The child has relapsed"], "n": ["Distress deserves support.", "No fabricated illness here.", "Her worry doesn't mean relapse."], "w": "The family, not just the patient, needs support.", "p": "Parents are survivors too."}, {"lo": "3", "rr": true, "hy": true, "q": "Why do many survivors drop out of follow-up?", "a": "They want normalcy and to be “done with cancer”; visits can trigger traumatic memories", "o": ["Follow-up is not recommended after 5 years", "They are usually too ill to travel", "Insurance never covers survivorship visits"], "n": ["Lifelong care is recommended.", "Most are well.", "Not the main reason given."], "w": "Recognizing this, rather than labeling them noncompliant, is the first step to bringing them back.", "p": "Avoidance, not apathy."}, {"lo": "3", "hy": true, "q": "A 23-year-old osteosarcoma survivor has missed three appointments and reports nightmares about the hospital, feeling on edge, and avoiding reminders of treatment. Best approach?", "a": "Screen for PTSD, respond with empathy, refer to psychology (trauma-focused CBT ± SSRI) and offer flexible follow-up such as telehealth", "o": ["Discharge her from the program for noncompliance", "Tell her parents to bring her", "Start a benzodiazepine as monotherapy"], "n": ["Abandons her.", "She is an adult; involve her directly.", "Not first-line for PTSD."], "w": "Her avoidance explains the missed visits.", "p": "Missed visits may be a symptom."}, {"lo": "3", "hy": true, "t": "m", "q": "Select ALL PTSD symptom clusters (standard references).", "a": ["Intrusion (flashbacks, nightmares)", "Avoidance (e.g., skipping follow-up)", "Negative mood or cognition", "Hyperarousal"], "o": ["Symptoms lasting <1 month only", "Mania"], "n": ["PTSD requires >1 month (shorter = acute stress disorder).", "Not a PTSD cluster."], "w": "First-line treatment: trauma-focused CBT ± SSRIs.", "p": "Intrude, avoid, mood, arousal; >1 month."}, {"lo": "3", "rr": true, "t": "m", "q": "Select ALL social and practical stresses survivors face (why the mission addresses them).", "a": ["Employment", "Health insurance", "Relationships", "Fertility worries", "Fear of recurrence"], "o": ["Mandatory military service", "Required repeat chemotherapy"], "n": ["Not a listed stress.", "Survivors are off therapy."], "w": "Education on jobs, insurance and fertility is part of the LTFU mission.", "p": "Life after cancer is practical too."}]}, {"id": "team", "lec": "T", "name": "The survivorship team", "sub": "MD · NP · SW · psychologist · nutritionist", "b": [{"lo": "4", "rr": true, "hy": true, "t": "m", "q": "Select ALL members of a typical long-term follow-up team.", "a": ["Physician (MD)", "Nurse practitioner (NP)", "Social worker", "Psychologist", "Nutritionist"], "o": ["Radiation physicist", "Hospital chaplain as team lead"], "n": ["Not a core team member.", "Not a core team member."], "w": "Mnemonic: My Nurse Says Please Nourish. The team partners with the primary care physician.", "p": "My Nurse Says Please Nourish."}, {"lo": "4", "rr": true, "q": "What is the backbone of care for pediatric cancer survivors?", "a": "Long-term follow-up programs based at children's hospitals or cancer centers", "o": ["Emergency department visits", "Annual oncology visits only when symptomatic", "Online forums"], "n": ["Not planned care.", "Not risk-based.", "Support, not care delivery."], "w": "A multidisciplinary network delivers risk-based care.", "p": "LTFU programs = backbone."}, {"lo": "4", "rr": true, "hy": true, "t": "m", "q": "Select ALL core components of survivor care delivery.", "a": ["Cancer treatment summary and care plan", "Children's Oncology Group (COG) Long-Term Follow-Up Guidelines", "Delivery of risk-based care"], "o": ["Repeat staging scans every year for life", "Routine prophylactic chemotherapy"], "n": ["Not risk-based.", "Not appropriate."], "w": "The treatment summary lists drugs, cumulative doses and radiation fields so surveillance can be tailored.", "p": "Summary + COG + risk-based."}, {"lo": "4", "rr": true, "hy": true, "t": "o", "q": "Put the survivor care pathway in order.", "a": ["Treatment summary (drugs, doses, radiation)", "Apply COG LTFU guidelines", "Risk-based surveillance plan (echo, TSH, breast MRI, PFTs)", "Multidisciplinary team care with education and wellness", "Transition to adult care with a primary care partner"], "w": "Follows the in-house pathway: exposures (summary) → guidelines → tailored plan → team delivers care and education → transition. No summary, no risk-based plan.", "p": "Summary → guidelines → plan → team → transition."}, {"lo": "4", "rr": true, "hy": true, "q": "A 20-year-old treated for Wilms tumor at 6 doesn't know what therapy he received and hasn't seen an oncologist in 8 years. Single most useful tool to restart care?", "a": "A cancer treatment summary and care plan linked to the COG LTFU Guidelines (e.g., via Passport for Care)", "o": ["A whole-body PET scan", "A repeat nephrectomy", "A letter telling him to return to pediatric oncology"], "n": ["Not risk-based.", "Not indicated.", "Doesn't tell anyone what to screen for."], "w": "With the summary, his PCP can deliver risk-based surveillance.", "p": "Know the exposures first."}]}, {"id": "trans", "lec": "T", "name": "Transition & bringing survivors back", "sub": "Models of care · barriers → strategies · communication", "b": [{"lo": "4", "rr": true, "q": "What is the major challenge of transition in survivorship care?", "a": "A good handoff from pediatric-centered to adult-centered providers, so age-appropriate care continues across the lifespan", "o": ["Finding a new pediatric oncologist each year", "Restarting therapy in adulthood", "Stopping all screening at age 18"], "n": ["Not the challenge.", "Survivors are off therapy.", "Screening must continue."], "w": "Survivors move from the sheltered environment of pediatrics to the independent environment of adult medicine.", "p": "Peds → adult handoff."}, {"lo": "4", "rr": true, "t": "m", "q": "Select ALL models of survivorship care.", "a": ["Pediatric oncology center", "Adult oncology center", "Primary care providers", "Formal transition programs", "A combination of these"], "o": ["Emergency department only", "No follow-up after age 18"], "n": ["Not a model.", "Not a model."], "w": "Examples of formal programs: Live Well After Cancer, STAR (Survivors Taking Action and Responsibility).", "p": "Many models; PCP is integral."}, {"lo": "4", "rr": true, "hy": true, "q": "Which clinician should be an integral partner in risk-based survivor care?", "a": "The primary care physician", "o": ["Only the original surgeon", "Only an emergency physician", "No one outside oncology"], "n": ["Too narrow.", "Not continuous care.", "PCPs are essential partners."], "w": "PCPs are educated with simplified COG guidelines.", "p": "Partner with the PCP."}, {"lo": "4", "rr": true, "hy": true, "q": "Survivors were too young at treatment to know their therapy details. Best strategy?", "a": "Provide a treatment summary and enroll them in Passport for Care", "o": ["Ask parents to keep all records for life", "Repeat all baseline tests every year", "Assume standard therapy was given"], "n": ["Responsibility should shift to the survivor.", "Not risk-based.", "Exposures vary; guessing misses risks."], "w": "Passport for Care is an online survivor record linked to the guidelines.", "p": "Summary + Passport."}, {"lo": "4", "rr": true, "q": "Survivors who move away for college get lost to follow-up. Best strategy?", "a": "Remote yearly check-ups via telehealth", "o": ["Require them to return in person monthly", "Discharge them", "Contact only their parents"], "n": ["Unrealistic.", "Abandons them.", "They are adults."], "w": "Telehealth keeps surveillance going after high school.", "p": "Lost after high school → telehealth."}, {"lo": "4", "rr": true, "hy": true, "q": "Survivors want normalcy and to be done with cancer. What theme helps bring them back?", "a": "Focus on wellness, not illness", "o": ["Emphasize fear of recurrence", "Threaten loss of insurance", "Focus only on past treatment"], "n": ["Fear drives avoidance.", "Coercive.", "Doesn't engage them."], "w": "Reframe visits around wellness and the survivor's goals.", "p": "Sell wellness."}, {"lo": "4", "rr": true, "q": "Survivors are not interested in healthy-lifestyle education. Which strategy helps?", "a": "Survivor support groups and survivorship conferences on specific late effects", "o": ["Longer talks at each visit", "Stop all lifestyle counseling", "Written handouts mailed to parents"], "n": ["More of the same.", "Abandons prevention.", "Bypasses the survivor."], "w": "Peer support and topic-focused conferences engage survivors.", "p": "Peers > pamphlets."}, {"lo": "4", "rr": true, "q": "Parents used to track appointments. Best strategy as the survivor grows up?", "a": "Education near the end of treatment for survivors and parents, shifting responsibility to the survivor", "o": ["Parents continue managing care indefinitely", "Wait until age 30 to educate the survivor", "Stop reminders once therapy ends"], "n": ["Survivor must own care.", "Too late.", "Survivors get lost."], "w": "Ownership shifts to the adolescent/young adult, who becomes the decision maker at 18.", "p": "Teach at the end of treatment."}, {"lo": "4", "rr": true, "hy": true, "q": "A 19-year-old survivor says, “I'm done with cancer; I don't want to come back to the children's hospital.” Best response?", "a": "Acknowledge her wish for normalcy, reframe visits around wellness and her goals, offer telehealth or transition to an adult/PCP-based program, and explain why surveillance matters", "o": ["Tell her she must come back", "Ask her parents to make her come", "Accept and discharge her without further plans"], "n": ["Not patient-centered.", "She is an adult.", "Abandons risk-based care."], "w": "Communication questions reward patient-centered answers: explore concerns, frame around wellness, educate, involve the survivor directly and partner with the PCP.", "p": "Meet her where she is."}, {"lo": "4", "rr": true, "t": "m", "q": "Select ALL good communication and relationship practices in survivorship.", "a": ["Build trust early with end-of-treatment family education", "Shift ownership to the young adult as they mature", "Anticipatory guidance on what late effects to expect and why", "Honest, empathic talks about fertility, second cancers and insurance", "Coordinate with the PCP and share the treatment summary"], "o": ["Avoid discussing second cancers to reduce anxiety", "Communicate only through parents after age 18"], "n": ["Survivors need to know.", "Adults make their own decisions."], "w": "Survivorship is a decades-long physician–patient–family relationship.", "p": "Trust, ownership, anticipate, honesty, coordinate."}, {"lo": "4", "q": "Adult doctors are unfamiliar with childhood cancer late effects. Best strategy?", "a": "Simplified COG guidelines and education of primary care providers", "o": ["Keep all survivors in pediatric clinics for life", "Tell survivors to ignore their PCP", "Stop screening once survivors reach adulthood"], "n": ["Not sustainable or age-appropriate.", "PCPs are integral.", "Screening is lifelong."], "w": "Educated PCPs extend risk-based care into adulthood.", "p": "Teach the PCP."}]}];
+
+
+(function(){
+"use strict";
+var KEY="hd-hem23-survivorship-builder-v1";
+var S={box:{},score:0,streak:0,best:0,tot:0,right:0,theme:"auto"};
+function load(){try{var j=JSON.parse(localStorage.getItem(KEY)||"null");if(j&&j.box)S=Object.assign(S,j);}catch(e){}}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}}
+load();
+
+var ALL=[]; E.forEach(function(e){e.b.forEach(function(b,i){b.id=e.id+"."+i;b.ent=e;ALL.push(b);});});
+function st(b){var r=S.box[b.id];return r?r.s:"u";}
+var rrOnly=false, mode="build", scope="all", loFilter=null, curEnt=null, idx=0, cur=null, answered=false, results={}, lastId=null, t0=0, tick=null;
+
+function shuffle(a){a=a.slice();for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=a[i];a[i]=a[j];a[j]=t;}return a;}
+function esc(s){return String(s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];});}
+function inScope(b){return (scope==="all"||b.ent.lec===scope)&&(!loFilter||b.lo===loFilter)&&(!rrOnly||b.rr);}
+
+/* ---------- theme ---------- */
+var themeBtn=document.getElementById("themeBtn");
+function applyTheme(){var r=document.documentElement;if(S.theme==="auto")r.removeAttribute("data-theme");else r.setAttribute("data-theme",S.theme);themeBtn.textContent="Theme: "+S.theme;}
+themeBtn.onclick=function(){S.theme={auto:"light",light:"dark",dark:"auto"}[S.theme];applyTheme();save();};
+applyTheme();
+document.getElementById("resetBtn").onclick=function(){
+  var b=this; if(b.dataset.confirm){S.box={};S.score=S.streak=S.tot=S.right=0;save();b.textContent="Reset progress";delete b.dataset.confirm;renderAll();next();return;}
+  b.dataset.confirm="1";b.textContent="Tap again to reset";setTimeout(function(){if(b.dataset.confirm){delete b.dataset.confirm;b.textContent="Reset progress";}},3000);
+};
+
+/* ---------- stats / side / map ---------- */
+function loStatus(lo){var bs=ALL.filter(function(b){return b.lo===lo;});var ss=bs.map(st);
+  var m=ss.filter(function(x){return x==="M";}).length;
+  if(m===bs.length)return{s:"M",m:m,n:bs.length};
+  if(ss.indexOf("m")>=0)return{s:"m",m:m,n:bs.length};
+  if(ss.some(function(x){return x!=="u";}))return{s:"o",m:m,n:bs.length};
+  return{s:"u",m:m,n:bs.length};}
+function renderStats(){
+  document.getElementById("sScore").textContent=S.score;
+  document.getElementById("sStreak").textContent=S.streak;
+  document.getElementById("sAcc").textContent=S.tot?Math.round(100*S.right/S.tot)+"%":"—";
+  document.getElementById("sBoxes").textContent=ALL.filter(function(b){return st(b)==="M";}).length+"/"+ALL.length;
+  var los=Object.keys(LOS);document.getElementById("sLos").textContent=los.filter(function(l){return loStatus(l).s==="M";}).length+"/"+los.length;
+}
+function renderSide(){
+  var h="";LECS.forEach(function(L){if(scope!=="all"&&scope!==L.k)return;
+    h+='<p class="lec-h l'+L.k+'" style="color:var(--lc)">HEM23 · '+esc(L.n)+'</p>';
+    E.filter(function(e){return e.lec===L.k;}).forEach(function(e){
+      var m=e.b.filter(function(b){return st(b)==="M";}).length,p=Math.round(100*m/e.b.length);
+      h+='<button type="button" class="ent l'+e.lec+'" data-ent="'+e.id+'"'+(curEnt===e&&mode==="build"?' aria-current="true"':'')+'><span class="n">'+esc(e.name)+'</span><span class="pct">'+m+'/'+e.b.length+'</span><span class="s">'+esc(e.sub)+'</span><span class="mini"><i style="width:'+p+'%"></i></span></button>';
+    });});
+  var el=document.getElementById("entList");el.innerHTML=h;
+  el.querySelectorAll(".ent").forEach(function(b){b.onclick=function(){setMode("build");startEnt(E.filter(function(e){return e.id===b.dataset.ent;})[0]);};});
+}
+function renderMap(){
+  var h="";Object.keys(LOS).forEach(function(lo){var lec=LOLEC[lo];if(scope!=="all"&&scope!==lec)return;var s=loStatus(lo);
+    h+='<button type="button" class="lo-tile l'+lec+'" data-lo="'+lo+'"'+(loFilter===lo?' style="border-color:var(--lc)"':'')+'><span class="id">'+(lo.slice(-1)==="X"?"Extra":"LO "+lo)+'</span><span class="t">'+esc(LOS[lo])+'</span><span class="dot s-'+s.s+'" title="'+s.m+'/'+s.n+' mastered"></span></button>';});
+  var g=document.getElementById("loGrid");g.innerHTML=h;
+  g.querySelectorAll(".lo-tile").forEach(function(b){b.onclick=function(){loFilter=(loFilter===b.dataset.lo?null:b.dataset.lo);setMode("drill");};});
+}
+function renderAll(){renderStats();renderSide();renderMap();}
+
+/* ---------- flow ---------- */
+function setMode(m){mode=m;document.querySelectorAll("[data-mode]").forEach(function(b){b.setAttribute("aria-pressed",String(b.dataset.mode===m));});
+  if(m==="build"){loFilter=null;if(rrOnly){rrOnly=false;setRR();}renderAll();if(!curEnt||!inScope(curEnt.b[0]))startEnt(firstEnt());else show();}
+  else{renderAll();next();}}
+function firstEnt(){var es=E.filter(function(e){return scope==="all"||e.lec===scope;});
+  for(var i=0;i<es.length;i++){if(es[i].b.some(function(b){return st(b)!=="M";}))return es[i];}return es[0];}
+document.querySelectorAll("[data-mode]").forEach(function(b){b.onclick=function(){setMode(b.dataset.mode);};});
+function setRR(){document.querySelectorAll("[data-rr]").forEach(function(x){x.setAttribute("aria-pressed",String((x.dataset.rr==="1")===rrOnly));});}
+document.querySelectorAll("[data-rr]").forEach(function(b){b.onclick=function(){rrOnly=b.dataset.rr==="1";setRR();setMode(rrOnly?"drill":mode);};});
+document.querySelectorAll("[data-scope]").forEach(function(b){b.onclick=function(){scope=b.dataset.scope;loFilter=null;
+  document.querySelectorAll("[data-scope]").forEach(function(x){x.setAttribute("aria-pressed",String(x===b));});
+  if(mode==="build"){curEnt=null;setMode("build");}else setMode("drill");};});
+
+function startEnt(e){curEnt=e;idx=0;results={};renderSide();cur=e.b[0];show();}
+function next(){
+  if(mode==="build"){idx++;if(idx>=curEnt.b.length){finishEnt();return;}cur=curEnt.b[idx];show();return;}
+  var pool=ALL.filter(inScope);if(!pool.length){cur=null;show();return;}
+  var rank={m:0,u:1,o:2,M:3};
+  pool=shuffle(pool).sort(function(a,b){return rank[st(a)]-rank[st(b)];});
+  var best=rank[st(pool[0])];var top=pool.filter(function(b){return rank[st(b)]===best&&b.id!==lastId;});
+  if(best===3)top=pool.filter(function(b){return b.id!==lastId;});
+  cur=(top.length?top:pool)[0];show();
+}
+function finishEnt(){
+  var ok=Object.keys(results).filter(function(k){return results[k];}).length,n=curEnt.b.length;
+  var i=E.indexOf(curEnt),nxt=null;for(var j=1;j<=E.length;j++){var c=E[(i+j)%E.length];if(scope==="all"||c.lec===scope){nxt=c;break;}}
+  var card=document.getElementById("card");card.className="card l"+curEnt.lec;
+  card.innerHTML='<div class="done"><p class="meta">Structure complete</p><h2>'+esc(curEnt.name)+': '+ok+' / '+n+' first try</h2>'+
+   '<p class="hint">'+(ok===n?"Clean build. It will count as mastered after one more clean pass.":"Missed boxes are queued first in Drill mode.")+'</p>'+
+   '<div class="actions"><button class="btn" type="button" id="again">Rebuild '+esc(curEnt.name)+'</button>'+(nxt?'<button class="btn primary" type="button" id="nextEnt">Next: '+esc(nxt.name)+' →</button>':'')+'</div></div>';
+  document.getElementById("again").onclick=function(){startEnt(curEnt);};
+  if(nxt)document.getElementById("nextEnt").onclick=function(){startEnt(nxt);};
+  var ne=document.getElementById("nextEnt");if(ne)ne.focus();
+}
+
+var picks=[];
+function show(){
+  answered=false;picks=[];clearInterval(tick);
+  var card=document.getElementById("card");
+  if(!cur){card.className="card";card.innerHTML='<p class="q">Nothing in this scope yet.</p>';return;}
+  var b=cur,e=b.ent;card.className="card l"+e.lec;
+  var head='<div class="card-top"><div><p class="meta">'+(mode==="build"?"Build · box "+(idx+1)+" of "+e.b.length:"Drill"+(rrOnly?" · Rapid Review":"")+(loFilter?" · LO "+loFilter:""))+'</p><h2>'+esc(e.name)+'</h2></div>'+
+    '<div style="display:flex;gap:6px;flex-wrap:wrap"><span class="tag lo">'+(b.lo.slice(-1)==="X"?"Extra":"LO "+b.lo)+'</span>'+(b.rr?'<span class="tag rr">Rapid Review</span>':'')+(b.hy?'<span class="tag hy">HY</span>':'')+'<span class="timer" id="timer">0.0s</span></div></div>';
+  if(mode==="build"){head+='<div class="boxes" aria-hidden="true">'+e.b.map(function(x,i){var c=i===idx?"cur":(x.id in results?(results[x.id]?"done-ok":"done-bad"):"");return '<i class="'+c+'"></i>';}).join("")+'</div>';}
+  var body='<p class="q">'+esc(b.q)+'</p>';
+  if(!b.t){b._opts=shuffle([b.a].concat(b.o));
+    body+='<div class="opts">'+b._opts.map(function(o,i){return '<button type="button" class="opt" data-i="'+i+'"><span class="k">'+(i+1)+'</span><span>'+esc(o)+'</span></button>';}).join("")+'</div>';}
+  else if(b.t==="m"){b._opts=shuffle(b.a.concat(b.o));
+    body+='<p class="hint">Select all that apply, then check.</p><div class="opts">'+b._opts.map(function(o,i){return '<button type="button" class="opt" aria-pressed="false" data-i="'+i+'"><span class="k">'+(i+1)+'</span><span>'+esc(o)+'</span></button>';}).join("")+'</div>';}
+  else{b._opts=shuffle(b.a);
+    body+='<p class="hint">Tap items in order. Tap a placed item to remove it.</p><ol class="ordered" id="ordList"><li class="empty" style="cursor:default">Your order appears here</li></ol><div class="opts">'+b._opts.map(function(o,i){return '<button type="button" class="opt" data-i="'+i+'"><span class="k">+</span><span>'+esc(o)+'</span></button>';}).join("")+'</div>';}
+  var act='<div id="fb"></div><div class="actions"><span class="hint">'+(b.t?"Enter to check":"Keys 1–"+b._opts.length+" to answer")+'</span><div style="display:flex;gap:8px">'+
+    (mode==="build"?'<button class="btn" type="button" id="skipBtn">Skip structure</button>':'')+
+    (b.t?'<button class="btn primary" type="button" id="checkBtn"'+(b.t==="o"?" disabled":"")+'>Check</button>':'')+
+    '<button class="btn primary" type="button" id="nextBtn" hidden>Next box →</button></div></div>';
+  card.innerHTML=head+body+act;
+  t0=Date.now();tick=setInterval(function(){var t=document.getElementById("timer");if(t)t.textContent=((Date.now()-t0)/1000).toFixed(1)+"s";},100);
+  var opts=card.querySelectorAll(".opt");
+  if(!b.t)opts.forEach(function(o){o.onclick=function(){if(!answered)grade([+o.dataset.i]);};});
+  else if(b.t==="m")opts.forEach(function(o){o.onclick=function(){if(answered)return;var on=o.getAttribute("aria-pressed")!=="true";o.setAttribute("aria-pressed",String(on));o.classList.toggle("sel",on);};});
+  else opts.forEach(function(o){o.onclick=function(){if(answered||o.disabled)return;picks.push(+o.dataset.i);o.disabled=true;o.style.opacity=".4";drawOrd();};});
+  var cb=document.getElementById("checkBtn");if(cb)cb.onclick=function(){if(answered)return;
+    if(b.t==="m"){var sel=[];opts.forEach(function(o){if(o.getAttribute("aria-pressed")==="true")sel.push(+o.dataset.i);});grade(sel);}else grade(picks);};
+  var sk=document.getElementById("skipBtn");if(sk)sk.onclick=function(){var i=E.indexOf(curEnt);for(var j=1;j<=E.length;j++){var c=E[(i+j)%E.length];if(scope==="all"||c.lec===scope){startEnt(c);return;}}};
+  document.getElementById("nextBtn").onclick=function(){lastId=cur.id;next();};
+}
+function drawOrd(){var b=cur,ol=document.getElementById("ordList");
+  ol.innerHTML=picks.length?picks.map(function(i,k){return '<li data-k="'+k+'">'+esc(b._opts[i])+'</li>';}).join(""):'<li class="empty" style="cursor:default">Your order appears here</li>';
+  ol.querySelectorAll("li[data-k]").forEach(function(li){li.onclick=function(){if(answered)return;var k=+li.dataset.k,i=picks[k];picks.splice(k,1);
+    var o=document.querySelector('.opt[data-i="'+i+'"]');o.disabled=false;o.style.opacity="";drawOrd();};});
+  document.getElementById("checkBtn").disabled=picks.length!==b.a.length;}
+
+function grade(sel){
+  answered=true;clearInterval(tick);var b=cur,ok,card=document.getElementById("card"),opts=card.querySelectorAll(".opt");
+  if(!b.t){ok=b._opts[sel[0]]===b.a;opts.forEach(function(o){var t=b._opts[+o.dataset.i];o.disabled=true;if(t===b.a)o.classList.add("right");else if(+o.dataset.i===sel[0])o.classList.add("wrong");});}
+  else if(b.t==="m"){var chosen=sel.map(function(i){return b._opts[i];});ok=chosen.length===b.a.length&&chosen.every(function(c){return b.a.indexOf(c)>=0;});
+    opts.forEach(function(o){var t=b._opts[+o.dataset.i],isA=b.a.indexOf(t)>=0,isS=chosen.indexOf(t)>=0;o.disabled=true;o.classList.remove("sel");
+      if(isA&&isS)o.classList.add("right");else if(isA)o.classList.add("missed");else if(isS)o.classList.add("wrong");});}
+  else{var got=sel.map(function(i){return b._opts[i];});ok=got.every(function(g,k){return g===b.a[k];});
+    document.querySelectorAll("#ordList li[data-k]").forEach(function(li,k){li.classList.add(got[k]===b.a[k]?"right":"wrong");});
+    opts.forEach(function(o){o.disabled=true;});}
+  var r=S.box[b.id]||{n:0,c:0,s:"u"};r.n++;
+  if(ok){r.c++;r.s=r.c>=2?"M":"o";S.streak++;S.best=Math.max(S.best,S.streak);S.right++;S.score+=10+Math.min(S.streak,10);}
+  else{r.c=0;r.s="m";S.streak=0;}
+  S.tot++;S.box[b.id]=r;if(!(b.id in results))results[b.id]=ok;save();
+  var fb='<div class="fb '+(ok?"ok":"bad")+'"><span class="v">'+(ok?"Correct":"Not quite")+'</span>';
+  if(!b.t)fb+='<span class="ans">Answer: <b>'+esc(b.a)+'</b></span>';
+  else if(b.t==="m")fb+='<span class="ans">Answer: <b>'+b.a.map(esc).join(" · ")+'</b></span>';
+  else fb+='<span class="ans">Correct order:</span><ol>'+b.a.map(function(x){return "<li>"+esc(x)+"</li>";}).join("")+'</ol>';
+  fb+='<div class="fbexp">'+String(b.w||"").split(/\n\n+/).filter(Boolean).map(function(t){return '<p>'+esc(t)+'</p>';}).join("")+'</div>';
+  if(b.n&&b.n.length&&b.o&&b.o.length){
+    var rows=b.o.map(function(x,i){return b.n[i]?'<li><b>'+esc(x)+'</b> — '+esc(b.n[i])+'</li>':"";}).join("");
+    if(rows)fb+='<ul class="fbnotes">'+rows+'</ul>';
+  }
+  if(b.p)fb+='<div class="fbpearl"><b>High-yield</b>'+esc(b.p)+'</div>';
+  fb+='</div>';
+  document.getElementById("fb").innerHTML=fb;
+  var cb=document.getElementById("checkBtn");if(cb)cb.hidden=true;
+  var nb=document.getElementById("nextBtn");nb.hidden=false;nb.textContent=(mode==="build"&&idx===curEnt.b.length-1)?"Finish structure →":"Next box →";nb.focus();
+  renderAll();
+}
+document.addEventListener("keydown",function(ev){
+  if(ev.target.tagName==="INPUT"||ev.metaKey||ev.ctrlKey||ev.altKey)return;
+  if(ev.key==="Enter"){var nb=document.getElementById("nextBtn"),cb=document.getElementById("checkBtn");
+    if(nb&&!nb.hidden){ev.preventDefault();nb.click();}else if(cb&&!cb.hidden&&!cb.disabled){ev.preventDefault();cb.click();}return;}
+  var n=parseInt(ev.key,10);if(!cur||answered||isNaN(n))return;var o=document.querySelector('.opt[data-i="'+(n-1)+'"]');if(o&&!o.disabled)o.click();
+});
+
+renderAll();startEnt(firstEnt());
+})();
+
+/* ---------- Review: the compiled version of everything the answers teach ---------- */
+var REVIEW = {"F": "<h3 class=\"rh\">LO1 · Why survivorship care exists</h3>\n<p>≈<b>85%</b> of children and adolescents with cancer survive &gt;5 years, and most are cured. More than <b>500,000</b> survivors live in the U.S. (≈1 in 530 adults aged 20–39; &gt;100,000 in college). Yet <b>&lt;5%</b> are followed in a survivorship program.</p>\n<div class=\"rmem\"><b>The time bomb</b>Most late effects appear <b>15–30 years</b> after therapy, when the survivor is a young adult who may no longer see an oncologist. Sources: chemo, radiation, surgery, stem cell transplant, immunotherapy.</div>\n<h3 class=\"rh\">The sobering numbers</h3>\n<div class=\"rtbl\"><table><thead><tr><th>Statistic</th><th>Value</th></tr></thead><tbody>\n<tr><td>Chronic disease by age 40 (treated 1970s–1990s)</td><td><b>75%</b></td></tr>\n<tr><td>Serious health problem</td><td><b>&gt;40%</b></td></tr>\n<tr><td>Excess risk of premature death</td><td>Elevated <b>&gt;30 years</b> after diagnosis</td></tr>\n<tr><td>CCSS: ≥1 chronic condition at 30 years</td><td>≈75%</td></tr></tbody></table></div>\n<div class=\"rhy\"><b>Top causes of excess late death</b>1. Second malignancy · 2. Cardiovascular disease · 3. Pulmonary disease.</div>\n<div class=\"rrule\"><b>CCSS</b>Largest NIH-funded U.S. follow-up study: 17,308 survivors treated 1970–1986 at 26 pediatric institutions, &lt;21 at diagnosis, &gt;5-year survivors; 10,397 adult survivors compared with 3,034 siblings.</div>\n<h3 class=\"rh\">Mission of an LTFU program</h3>\n<div class=\"rmem\"><b>F-E-E-T</b><b>F</b>ollow for anticipated late effects · <b>E</b>ducate about the cancer and its treatment · <b>E</b>ducate on risk-taking, healthy lifestyle, fertility, employment, insurance · <b>T</b>ransition to adult programs.</div>\n<ul class=\"rlist\"><li><b>Eligibility:</b> all patients <b>2 years off therapy</b>.</li><li>National Academy of Medicine: <b>lifelong, risk-based</b> survivorship care.</li><li>Goal of modern therapy: improve cure rates <i>and</i> decrease long-term sequelae.</li></ul>\n<div class=\"rtrap\"><b>History</b>From the 1960s to the mid-1980s, survivors were discharged 5–10 years off therapy and never seen again. Their adult doctors did not know their treatment history.</div>\n", "D": "<h3 class=\"rh\">LO2 · Late-effect categories</h3>\n<p>Growth and development · vital organ function (heart, lungs, thyroid, kidneys, liver, immune) · fertility · second malignancy · psychosocial · early mortality.</p>\n<div class=\"rtrap\"><b>They don't ask</b>Survivors ask about neurocognitive problems, heart, fertility and psychosocial issues, but <b>almost never about second cancers</b>, the leading cause of excess late death. You must raise it.</div>\n<div class=\"rtbl\"><table><thead><tr><th>Treatment</th><th>Classic late effect</th></tr></thead><tbody>\n<tr><td>Anthracyclines or chest radiation</td><td>Cardiomyopathy, CHF</td></tr>\n<tr><td>Cranial radiation / CNS-directed chemo</td><td>Learning disabilities</td></tr>\n<tr><td>Teen chest radiation (Hodgkin, girls)</td><td>Early breast cancer</td></tr>\n<tr><td>Abdominal/pelvic radiation</td><td>Infertility, premature menopause</td></tr>\n<tr><td>The cancer experience</td><td>PTSD (survivors and parents), chronic pain, fatigue</td></tr></tbody></table></div>\n<h3 class=\"rh\">Neurocognitive &amp; growth</h3>\n<ul class=\"rlist\"><li>Most at risk: <b>brain tumors and ALL</b> (also stem cell transplant, head/neck radiation). <b>8–50%</b> need special education: reading, spelling, math, attention, memory, processing speed, visual-motor skills.</li><li>Cranial radiation → <b>early puberty</b> → early growth-plate fusion.</li><li>Spinal radiation <b>&gt;35 Gy</b> → inhibited vertebral growth → short stature (short trunk).</li><li>Growth slowing from chemo is usually <b>temporary</b>.</li></ul>\n<h3 class=\"rh\">Cardiovascular</h3>\n<ul class=\"rlist\"><li>Anthracyclines: asymptomatic cardiotoxicity → cardiomyopathy, LV dysfunction, CHF.</li><li>Mantle radiation: <b>coronary and carotid</b> artery disease.</li></ul>\n<div class=\"rmem\"><b>YF-BDR</b>Risky hearts: <b>Y</b>ounger age · <b>F</b>emale · <b>B</b>ig cumulative <b>D</b>ose · <b>R</b>adiation to the heart.</div>\n<div class=\"rhy\"><b>USMLE: anthracycline cardiotoxicity</b>Dose-dependent dilated cardiomyopathy (free radicals, iron). Echo monitoring, dose limits, <b>dexrazoxane</b>. Trastuzumab: reversible, not dose-dependent.</div>\n<h3 class=\"rh\">Fertility</h3>\n<div class=\"rtbl\"><table><thead><tr><th></th><th>Males</th><th>Females</th></tr></thead><tbody>\n<tr><td>Sensitivity</td><td>Testes very sensitive</td><td>Ovaries resist chemo; <b>sensitive to radiation</b></td></tr>\n<tr><td>Damage</td><td>≈<b>10 g cyclophosphamide</b> or <b>200–300 cGy</b> → sterility</td><td>Abdominal/pelvic radiation, alkylators, TBI</td></tr>\n<tr><td>Result</td><td>Azoospermia (testosterone better preserved)</td><td>Pubertal delay, POF → osteoporosis, early CAD</td></tr></tbody></table></div>\n<ul class=\"rlist\"><li><b>POF risk factors:</b> age 13–19, high-dose alkylators, whole-abdominal radiation 22–30 Gy, cranial radiation, <b>TBI</b> (highest: 100% of girls &gt;10, 50% &lt;10).</li><li>Older girls are at higher risk because they have fewer follicles in reserve.</li><li>Preserve fertility <b>before</b> treatment: sperm banking or oocyte/ovarian tissue cryopreservation.</li></ul>\n<h3 class=\"rh\">Thyroid, bone &amp; second cancers</h3>\n<ul class=\"rlist\"><li>Neck/mantle radiation → hypothyroidism (most common), hyperthyroidism, thyroid cancer.</li><li>Osteoporosis/osteopenia, metabolic syndrome.</li><li>Second cancers: AML, skin (BCC, SCC), brain tumors, <b>in-field</b> sarcoma, SCC, osteosarcoma, breast, thyroid.</li></ul>\n<div class=\"rtbl\"><table><thead><tr><th>Agent (standard references)</th><th>Toxicity</th><th>Prevent / monitor</th></tr></thead><tbody>\n<tr><td>Doxorubicin, daunorubicin</td><td>Dilated cardiomyopathy</td><td>Echo, dexrazoxane</td></tr>\n<tr><td>Bleomycin, busulfan</td><td>Pulmonary fibrosis</td><td>PFTs</td></tr>\n<tr><td>Cyclophosphamide</td><td>Infertility, hemorrhagic cystitis, bladder cancer</td><td>Mesna, hydration</td></tr>\n<tr><td>Cisplatin</td><td>Nephro- and ototoxicity</td><td>Hydration, amifostine, audiology</td></tr>\n<tr><td>Vincristine</td><td>Peripheral neuropathy</td><td>Neuro exam</td></tr>\n<tr><td>Alkylators</td><td>AML/MDS 5–10 y (−5/−7)</td><td>CBC</td></tr>\n<tr><td>Topo II (etoposide)</td><td>AML 1–3 y (11q23/KMT2A)</td><td>CBC</td></tr>\n<tr><td>Glucocorticoids</td><td>Osteonecrosis, osteoporosis, cataracts</td><td>Bone density</td></tr></tbody></table></div>\n<div class=\"rhy\"><b>Classic vignette</b>A woman in her 30s who had mantle radiation for Hodgkin as a teen → breast cancer, CAD, hypothyroidism. Breast screening starts early (age 25 or 8 years after radiation, whichever is later, per COG).</div>\n", "T": "<h3 class=\"rh\">LO3 · Emotional stress</h3>\n<ul class=\"rlist\"><li>Survivors have more mental health disorders, chronic pain, fatigue and sleep disorders.</li><li><b>≈1 in 5 have PTSD</b>; it can appear months to years after treatment. <b>Parents</b> are affected too.</li><li>Practical stresses: employment, insurance, relationships, fertility, fear of recurrence.</li></ul>\n<div class=\"rmem\"><b>Avoidance, not apathy</b>Survivors want normalcy and to be “done with cancer”; visits can trigger traumatic memories. Missed visits may be a symptom.</div>\n<div class=\"rhy\"><b>USMLE: PTSD</b>Trauma → intrusion, avoidance, negative mood/cognition, hyperarousal for <b>&gt;1 month</b>. First line: trauma-focused CBT ± SSRI.</div>\n<h3 class=\"rh\">LO4 · The team &amp; care delivery</h3>\n<div class=\"rmem\"><b>My Nurse Says Please Nourish</b>MD · NP · Social worker · Psychologist · Nutritionist. LTFU programs at children's hospitals or cancer centers are the backbone.</div>\n<ol class=\"rseq\"><li>Treatment summary and care plan (drugs, cumulative doses, radiation fields)</li><li>COG Long-Term Follow-Up Guidelines</li><li>Risk-based surveillance (echo, TSH, breast MRI, PFTs)</li><li>Multidisciplinary care, education and wellness</li><li>Transition to adult care with the PCP</li></ol>\n<h3 class=\"rh\">Transition</h3>\n<p>Move from the sheltered pediatric setting to independent adult medicine. Models: pediatric oncology, adult oncology, <b>primary care</b>, formal transition programs, or a combination. The <b>PCP is an integral partner</b>.</p>\n<div class=\"rtbl\"><table><thead><tr><th>Barrier</th><th>Strategy</th></tr></thead><tbody>\n<tr><td>Parents tracked appointments</td><td>End-of-treatment education for survivor and parents</td></tr>\n<tr><td>Don't know treatment details</td><td>Treatment summary; Passport for Care</td></tr>\n<tr><td>Want normalcy</td><td>Focus on <b>wellness</b></td></tr>\n<tr><td>Lost after high school</td><td>Yearly <b>telehealth</b> check-ups</td></tr>\n<tr><td>Not interested in lifestyle education</td><td>Support groups, survivorship conferences</td></tr>\n<tr><td>Adult doctors unfamiliar</td><td>Simplified COG guidelines; PCP education</td></tr></tbody></table></div>\n<div class=\"rtrap\"><b>Communication questions</b>Wrong: “tell her she must come” or “have her parents bring her.” Right: explore concerns, frame around wellness and goals, educate, involve the survivor directly (an adult at 18), partner with the PCP.</div>\n"};
+var RVW_NAME = {"F":"LO1 Mission","D":"LO2 Late effects","T":"LO3–4 Support & team"};
+(function(){
+  var panel=document.getElementById("rvw"), body=document.getElementById("rvwBody"),
+      toc=document.getElementById("rvwToc"), q=document.getElementById("rvwQ"),
+      cnt=document.getElementById("rvwCount"), empty=document.getElementById("rvwEmpty"),
+      btn=document.getElementById("reviewBtn"), lec="F", secs=[];
+  var TYPES={rrule:1,rtrap:1,rmem:1,rhy:1};
+  function collapse(sec){
+    [].slice.call(sec.querySelectorAll(".rrule,.rtrap,.rmem,.rhy")).forEach(function(d){
+      var type=d.className.trim(); if(!TYPES[type])return;
+      var lbl=d.querySelector("b"), label=lbl?lbl.textContent:"Note";
+      if(lbl)lbl.parentNode.removeChild(lbl);
+      var det=document.createElement("details"); det.className="cx "+type;
+      var sum=document.createElement("summary");
+      sum.innerHTML='<span class="lbl"></span><span class="pk"></span>';
+      sum.querySelector(".lbl").textContent=label;
+      sum.querySelector(".pk").textContent=d.textContent.replace(/\s+/g," ").trim().slice(0,110);
+      var cb=document.createElement("div"); cb.className="cbody";
+      while(d.firstChild)cb.appendChild(d.firstChild);
+      det.appendChild(sum); det.appendChild(cb);
+      d.parentNode.replaceChild(det,d);
+    });
+    var h=sec.querySelector(".rh"), hys=[].slice.call(sec.querySelectorAll("details.rhy"));
+    if(h&&hys.length){ var ref=h.nextSibling; hys.forEach(function(x){ sec.insertBefore(x,ref); }); }
+    var kids=[].slice.call(sec.children), i=0;
+    while(i<kids.length){
+      if(kids[i].tagName==="DETAILS"){
+        var run=[kids[i]], cls=kids[i].className, j=i+1;
+        while(j<kids.length&&kids[j].tagName==="DETAILS"&&kids[j].className===cls){run.push(kids[j]);j++;}
+        if(run.length>1){
+          var g=document.createElement("div"); g.className="cgrid";
+          sec.insertBefore(g,run[0]); run.forEach(function(x){g.appendChild(x);});
+        }
+        i=j;
+      } else i++;
+    }
+  }
+  function group(){
+    var kids=[].slice.call(body.childNodes), out=[], cur=null;
+    kids.forEach(function(n){
+      if(n.nodeType===1&&n.tagName==="H3"){cur=document.createElement("section");cur.className="rsec";out.push(cur);}
+      if(!cur){cur=document.createElement("section");cur.className="rsec";out.push(cur);}
+      cur.appendChild(n);
+    });
+    body.innerHTML="";
+    out.forEach(function(s,i){ s.id="rs"+i; collapse(s); s._t=s.textContent.toLowerCase(); body.appendChild(s); });
+    return out;
+  }
+  function setAll(open){
+    [].slice.call(body.querySelectorAll("details.cx")).forEach(function(d){d.open=open;});
+    var t=document.getElementById("rvwAll");
+    if(t){t.textContent=open?"Collapse all":"Expand all";t.setAttribute("aria-pressed",String(open));}
+  }
+  function buildToc(){
+    toc.innerHTML=secs.map(function(s){
+      var h=s.querySelector(".rh"); return h?'<a href="#'+s.id+'">'+h.textContent+'</a>':'';
+    }).join("");
+  }
+  function filter(){
+    var terms=q.value.toLowerCase().split(/\s+/).filter(Boolean), n=0;
+    secs.forEach(function(s){
+      var on=terms.every(function(t){return s._t.indexOf(t)!==-1;});
+      s.classList.toggle("hide",!on); if(on)n++;
+    });
+    empty.classList.toggle("on",n===0);
+    cnt.textContent = n===secs.length ? secs.length+" sections" : n+" of "+secs.length;
+    toc.style.display = q.value ? "none" : "";
+  }
+  function load(l){
+    lec=l; panel.setAttribute("data-lec",l);
+    body.innerHTML=REVIEW[l]||"";
+    secs=group(); buildToc(); q.value=""; filter();
+    var t=document.getElementById("rvwAll"); if(t){t.textContent="Expand all";t.setAttribute("aria-pressed","false");}
+  }
+  function open(){
+    document.querySelector(".bar").style.display="none";
+    document.querySelector(".main").style.display="none";
+    panel.hidden=false; if(!secs.length)load(lec);
+    btn.setAttribute("aria-pressed","true");
+    window.scrollTo(0,0); q.focus({preventScroll:true});
+  }
+  function close(){
+    panel.hidden=true;
+    document.querySelector(".bar").style.display="";
+    document.querySelector(".main").style.display="";
+    btn.setAttribute("aria-pressed","false");
+    window.scrollTo(0,0);
+  }
+  btn.onclick=function(){ panel.hidden?open():close(); };
+  document.getElementById("rvwClose").onclick=close;
+  document.getElementById("rvwPrint").onclick=function(){window.print();};
+  var allBtn=document.getElementById("rvwAll");
+  if(allBtn)allBtn.onclick=function(){ setAll(this.getAttribute("aria-pressed")!=="true"); };
+  var reclose=[];
+  window.addEventListener("beforeprint",function(){
+    reclose=[];
+    [].slice.call(body.querySelectorAll("details.cx")).forEach(function(d){ if(!d.open){reclose.push(d);d.open=true;} });
+  });
+  window.addEventListener("afterprint",function(){ reclose.forEach(function(d){d.open=false;}); reclose=[]; });
+  document.getElementById("rvwTabs").onclick=function(e){
+    var b=e.target.closest("button"); if(!b)return;
+    [].forEach.call(this.children,function(c){c.setAttribute("aria-pressed",String(c===b));});
+    load(b.dataset.l); window.scrollTo(0,0);
+  };
+  q.addEventListener("input",filter);
+  document.addEventListener("keydown",function(e){
+    if(e.key==="Escape"&&!panel.hidden){ if(document.activeElement===q&&q.value){q.value="";filter();} else close(); }
+  });
+})();
+
+</script>

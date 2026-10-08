@@ -1,0 +1,553 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HEM13 MPN Builder</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,600;8..60,700&family=Public+Sans:wght@400;600;700&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+/* Layout: toolbar + stats on top; structure list | question card | LO mastery map. Stacks to one column on phones. */
+:root{
+  --bg:#f3f5f6; --surface:#ffffff; --ink:#18212b; --muted:#5a6570; --line:#dbe0e5; --chip:#eceff2;
+  --arch:#2c55a0; --face:#a3263f; --eye:#2c55a0; --accent:#a3263f;
+  --ok:#1d7a3e; --ok-bg:#e3f4e8; --bad:#b3261e; --bad-bg:#fbe7e5; --once:#b7791f; --once-bg:#fdf1dc; --mem:#c2621a;
+  --hy-bg:#fff6cc; --hy-line:#c9a227; --hy-ink:#4a3a00;
+  --f-display:"Source Serif 4", Georgia, serif; --f-body:"Public Sans", Arial, sans-serif; --f-mono:"IBM Plex Mono", ui-monospace, monospace;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#11161c; --surface:#19212a; --ink:#e6eaee; --muted:#9aa6b2; --line:#2c3642; --chip:#232c36;
+  --arch:#8fb1f0; --face:#f08a9b; --eye:#8fb1f0; --accent:#f08a9b;
+  --ok:#6fd08f; --ok-bg:#16301f; --bad:#f28b82; --bad-bg:#3a1b19; --once:#f0c070; --once-bg:#3a2e12; --mem:#f0a05c;
+  --hy-bg:#3a3110; --hy-line:#b8952a; --hy-ink:#f5e6a8; color-scheme:dark }}
+:root[data-theme="dark"]{
+  --bg:#11161c; --surface:#19212a; --ink:#e6eaee; --muted:#9aa6b2; --line:#2c3642; --chip:#232c36;
+  --arch:#8fb1f0; --face:#f08a9b; --eye:#8fb1f0; --accent:#f08a9b;
+  --ok:#6fd08f; --ok-bg:#16301f; --bad:#f28b82; --bad-bg:#3a1b19; --once:#f0c070; --once-bg:#3a2e12; --mem:#f0a05c;
+  --hy-bg:#3a3110; --hy-line:#b8952a; --hy-ink:#f5e6a8; color-scheme:dark }
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font:15px/1.5 var(--f-body);margin:0}
+.wrap{max-width:1180px;margin:0 auto;padding-inline:16px;padding-block:22px 48px;display:grid;gap:16px}
+h1,h2,h3{font-family:var(--f-display);margin:0;text-wrap:balance;line-height:1.2}
+.meta{font:500 .74rem var(--f-mono);letter-spacing:.07em;text-transform:uppercase;color:var(--muted);margin:0}
+header{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:end;gap:12px}
+header h1{font-size:1.9rem}
+header p.lede{margin:4px 0 0;color:var(--muted);max-width:62ch}
+.btn{font:600 .85rem var(--f-body);background:var(--chip);color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:7px 12px;cursor:pointer}
+.btn:hover{border-color:var(--ink)}
+.btn:focus-visible,.opt:focus-visible,.seg button:focus-visible,.ent:focus-visible,.lo-tile:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.btn.primary{background:var(--accent);color:var(--surface);border-color:var(--accent)}
+.btn[disabled]{opacity:.45;cursor:default}
+.hdr-actions{display:flex;gap:8px;flex-wrap:wrap}
+.wrap{grid-template-columns:minmax(0,1fr)} .rvw{min-width:0}
+
+.bar{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 12px}
+.seg{display:inline-flex;background:var(--chip);border-radius:10px;padding:3px;gap:2px;flex-wrap:wrap}
+.seg button{font:600 .82rem var(--f-body);border:0;background:transparent;color:var(--ink);padding:6px 11px;border-radius:8px;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--surface);box-shadow:0 1px 2px rgba(0,0,0,.12)}
+.seg .lab{font:500 .7rem var(--f-mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);align-self:center;padding:0 6px}
+.stats{display:flex;gap:18px;flex-wrap:wrap}
+.stat b{display:block;font:700 1.15rem var(--f-body);font-variant-numeric:tabular-nums}
+.stat span{font:500 .68rem var(--f-mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+
+.main{display:grid;grid-template-columns:250px minmax(0,1fr) 270px;gap:16px;align-items:start}
+@media (max-width:1000px){ .main{grid-template-columns:minmax(0,1fr)} .side{order:2} .map{order:3} }
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px;display:grid;gap:8px;min-width:0}
+.panel h2{font-size:1rem}
+.lec-h{font:700 .72rem var(--f-body);letter-spacing:.07em;text-transform:uppercase;margin-top:6px}
+.ent{display:grid;grid-template-columns:1fr auto;gap:2px 8px;text-align:left;width:100%;background:transparent;border:1px solid transparent;border-radius:8px;padding:7px 8px;cursor:pointer;color:var(--ink);font:inherit}
+.ent:hover{background:var(--chip)}
+.ent[aria-current="true"]{border-color:var(--lc);background:var(--chip)}
+.ent .n{font-weight:600;font-size:.9rem}
+.ent .s{grid-column:1;font-size:.75rem;color:var(--muted)}
+.ent .pct{grid-row:1/3;grid-column:2;align-self:center;font:500 .75rem var(--f-mono);color:var(--muted);font-variant-numeric:tabular-nums}
+.ent .mini{grid-column:1/3;height:4px;border-radius:2px;background:var(--line);overflow:hidden}
+.ent .mini i{display:block;height:100%;background:var(--lc)}
+.lF{--lc:var(--arch)} .lD{--lc:var(--face)}
+.tag.rr{background:var(--chip);color:var(--ink);border:1px solid var(--line)}
+
+.card{background:var(--surface);border:1px solid var(--line);border-top:5px solid var(--lc);border-radius:12px;padding:18px;display:grid;gap:14px;min-width:0}
+.card-top{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px;align-items:baseline}
+.card-top h2{font-size:1.35rem}
+.tag{font:500 .7rem var(--f-mono);letter-spacing:.06em;text-transform:uppercase;padding:3px 8px;border-radius:999px;background:var(--chip);color:var(--muted)}
+.tag.lo{color:var(--lc)}
+.tag.hy{background:var(--hy-bg);color:var(--hy-ink);border:1px solid var(--hy-line)}
+.boxes{display:flex;gap:4px;flex-wrap:wrap}
+.boxes i{width:18px;height:6px;border-radius:3px;background:var(--line)}
+.boxes i.done-ok{background:var(--ok)} .boxes i.done-bad{background:var(--bad)} .boxes i.cur{background:var(--lc)}
+.q{font:600 1.08rem/1.45 var(--f-body);margin:0}
+.hint{font-size:.8rem;color:var(--muted);margin:0}
+.opts{display:grid;gap:8px}
+.opt{display:grid;grid-template-columns:auto 1fr;gap:10px;align-items:start;text-align:left;width:100%;font:inherit;color:var(--ink);background:var(--bg);border:1.5px solid var(--line);border-radius:10px;padding:10px 12px;cursor:pointer}
+.opt:hover:not([disabled]){border-color:var(--lc)}
+.opt .k{font:500 .75rem var(--f-mono);color:var(--muted);border:1px solid var(--line);border-radius:5px;padding:1px 6px;margin-top:1px}
+.opt.sel{border-color:var(--lc);background:var(--chip)}
+.opt.right{border-color:var(--ok);background:var(--ok-bg)}
+.opt.wrong{border-color:var(--bad);background:var(--bad-bg)}
+.opt.missed{border-color:var(--ok);border-style:dashed}
+.opt[disabled]{cursor:default}
+.ordered{display:grid;gap:6px;counter-reset:ord;padding:0;margin:0;list-style:none;min-height:44px;border:1.5px dashed var(--line);border-radius:10px;padding:8px}
+.ordered li{counter-increment:ord;display:grid;grid-template-columns:auto 1fr;gap:8px;align-items:center;background:var(--chip);border-radius:8px;padding:7px 10px;cursor:pointer}
+.ordered li::before{content:counter(ord);font:500 .78rem var(--f-mono);color:var(--lc)}
+.ordered li.right{background:var(--ok-bg)} .ordered li.wrong{background:var(--bad-bg)}
+.ordered .empty{color:var(--muted);font-size:.85rem;padding:4px}
+/* ---------- Review ---------- */
+.rvw{margin-top:14px}
+.rvw-bar{position:sticky;top:0;z-index:8;background:var(--bg);border-bottom:1px solid var(--line);padding:10px 0;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.rvw-bar .seg{display:flex;gap:2px;background:var(--chip);border:1px solid var(--line);border-radius:9px;padding:3px}
+.rvw-bar .seg button{background:transparent;border:0;border-radius:7px;padding:6px 12px;font:inherit;font-size:13.5px;color:var(--muted);cursor:pointer}
+.rvw-bar .seg button[aria-pressed="true"]{background:var(--surface);color:var(--ink);font-weight:600;box-shadow:0 1px 2px rgba(0,0,0,.08)}
+#rvwQ{flex:1 1 180px;min-width:140px;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:7px 10px;font:inherit;font-size:14px;color:inherit}
+#rvwCount{font-family:var(--f-mono);font-size:11px;color:var(--muted);white-space:nowrap}
+.rvw-toc{display:flex;flex-wrap:wrap;gap:6px;margin:12px 0 2px}
+.rvw-toc a{font-size:12.5px;text-decoration:none;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:4px 10px}
+.rvw-toc a:hover{color:var(--ink);border-color:var(--muted)}
+.rvw-body{max-width:none}
+.rsec{padding:6px 0 10px;scroll-margin-top:64px}
+.rsec.hide{display:none}
+.rh{font-family:var(--f-display);font-size:1.5rem;font-weight:650;margin:26px 0 4px;padding-bottom:6px;border-bottom:2px solid var(--acc)}
+.rsh{font-family:var(--f-display);font-size:1.12rem;font-weight:650;margin:18px 0 4px}
+.rvw-body p{margin:8px 0;line-height:1.62}
+ul.rlist{margin:8px 0;padding-left:1.15em;display:grid;gap:5px}
+ul.rlist li{line-height:1.55}
+.rtbl{overflow-x:auto;margin:12px 0;border:1px solid var(--line);border-radius:10px;background:var(--surface)}
+.rtbl table{border-collapse:collapse;width:100%;font-size:14px}
+.rtbl th,.rtbl td{text-align:left;vertical-align:top;padding:8px 11px;border-bottom:1px solid var(--line)}
+.rtbl thead th{background:var(--chip);font-family:var(--f-mono);font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);white-space:nowrap}
+.rtbl tbody tr:last-child td{border-bottom:0}
+.rtbl td b{font-weight:600}
+.rseq{margin:12px 0;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 14px 12px 10px}
+.rseq ol{margin:0;padding-left:1.3em;display:grid;gap:7px}
+.rseq li{line-height:1.55;padding-left:2px}
+.rseq li b{color:var(--acc)}
+.cgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(330px,1fr));gap:10px;margin:12px 0;align-items:start}
+.cgrid>details{margin:0}
+details.cx{margin:11px 0;border-radius:9px;border:1px solid var(--line);background:var(--surface);overflow:hidden}
+details.cx>summary{list-style:none;cursor:pointer;display:flex;align-items:baseline;gap:9px;padding:9px 12px;border-left:3px solid var(--line);font-size:14px}
+details.cx>summary::-webkit-details-marker{display:none}
+details.cx>summary::after{content:"+";margin-left:auto;font-family:var(--f-mono);font-size:14px;color:var(--muted);line-height:1}
+details.cx[open]>summary::after{content:"\2013"}
+details.cx>summary .lbl{font-family:var(--f-mono);font-size:10px;letter-spacing:.11em;text-transform:uppercase;font-weight:700;white-space:nowrap}
+details.cx>summary .pk{color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1}
+details.cx[open]>summary .pk{display:none}
+details.cx .cbody{padding:2px 13px 12px;line-height:1.56;font-size:14.6px;border-left:3px solid var(--line)}
+details.cx .cbody b{font-weight:600}
+details.rrule>summary,details.rrule .cbody{border-left-color:var(--acc)}
+details.rtrap>summary,details.rtrap .cbody{border-left-color:var(--bad)}
+details.rmem>summary,details.rmem .cbody{border-left-color:var(--mem)}
+details.rrule>summary .lbl{color:var(--acc)} details.rtrap>summary .lbl{color:var(--bad)} details.rmem>summary .lbl{color:var(--mem)}
+details.rhy{background:var(--hy-bg);border-color:var(--hy-line);color:var(--hy-ink)}
+details.rhy>summary,details.rhy .cbody{border-left-color:var(--hy-line)}
+details.rhy>summary .lbl{color:var(--hy-ink);opacity:.9}
+details.rhy>summary .pk,details.rhy>summary::after{color:var(--hy-ink);opacity:.75}
+.rvw-empty{display:none;text-align:center;color:var(--muted);border:1px dashed var(--line);border-radius:10px;padding:28px;margin-top:16px}
+.rvw-empty.on{display:block}
+.rvw[data-lec="F"]{--acc:var(--arch)} .rvw[data-lec="D"]{--acc:var(--face)}
+@media print{
+  header,.bar,.main,.rvw-bar,.rvw-toc,.rvw-empty{display:none!important}
+  .rvw{margin:0}
+  body{background:#fff}
+  .rsec{break-before:page;break-inside:auto}
+  .rsec:first-of-type{break-before:auto}
+  .rtbl,.rseq,details.cx{break-inside:avoid}
+  details.cx>summary::after{display:none}
+  .cgrid{grid-template-columns:1fr 1fr}
+}
+.fb .ans{font-size:.95rem}
+.fbexp{display:grid;gap:8px}
+.fbexp p{margin:0;line-height:1.6}
+.fbnotes{list-style:none;margin:2px 0 0;padding:0;display:grid;gap:6px}
+.fbnotes li{font-size:.9rem;line-height:1.5;color:var(--muted);padding-left:10px;border-left:2px solid var(--line)}
+.fbnotes li b{color:var(--ink);font-weight:600}
+.fbpearl{margin-top:2px;background:var(--hy-bg);border:1px solid var(--hy-line);border-left-width:3px;border-radius:9px;padding:9px 12px;font-size:.92rem;line-height:1.5;color:var(--hy-ink)}
+.fbpearl b{display:block;font:700 .66rem var(--f-mono);letter-spacing:.14em;text-transform:uppercase;color:var(--hy-line);margin-bottom:3px}
+.fb{border-radius:10px;padding:12px 14px;display:grid;gap:6px}
+.fb.ok{background:var(--ok-bg)} .fb.bad{background:var(--bad-bg)}
+.fb .v{font-weight:700}
+.fb.ok .v{color:var(--ok)} .fb.bad .v{color:var(--bad)}
+.fb ol{margin:0;padding-left:1.2em}
+.actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:space-between;align-items:center}
+.timer{font:500 .8rem var(--f-mono);color:var(--muted);font-variant-numeric:tabular-nums}
+.done{display:grid;gap:10px;text-align:left}
+
+.lo-grid{display:grid;gap:6px}
+.lo-tile{display:grid;grid-template-columns:auto 1fr auto;gap:8px;align-items:center;text-align:left;width:100%;background:transparent;border:1px solid var(--line);border-radius:8px;padding:6px 8px;cursor:pointer;color:var(--ink);font:inherit}
+.lo-tile:hover{border-color:var(--lc)}
+.lo-tile .id{font:500 .72rem var(--f-mono);color:var(--lc);white-space:nowrap}
+.lo-tile .t{font-size:.78rem;line-height:1.3}
+.lo-tile .dot{width:12px;height:12px;border-radius:50%;background:var(--line)}
+.dot.s-o{background:var(--once)} .dot.s-m{background:var(--bad)} .dot.s-M{background:var(--ok)}
+.legend{display:flex;flex-wrap:wrap;gap:10px;font-size:.72rem;color:var(--muted)}
+.legend span{display:inline-flex;gap:5px;align-items:center}
+.legend i{width:10px;height:10px;border-radius:50%;display:inline-block;background:var(--line)}
+.legend i.o{background:var(--once)} .legend i.m{background:var(--bad)} .legend i.M{background:var(--ok)}
+footer{color:var(--muted);font-size:.8rem;border-top:1px solid var(--line);padding-top:12px}
+@media (prefers-reduced-motion: no-preference){ .opt,.ent,.lo-tile{transition:border-color .12s, background .12s} }
+</style>
+
+<div class="wrap">
+<header>
+  <div>
+    <p class="meta">HoyaDocs · Block 5 · Hematology · HEM13</p>
+    <h1>HEM13 MPN Builder</h1>
+    <p class="lede">WBC disorders and the myeloproliferative neoplasms, LO by LO: build each structure box by box, then drill what you miss. Boxes tagged Rapid Review test the LO Rapid Review and Master Review checklists.</p>
+  </div>
+  <div class="hdr-actions">
+    <button class="btn primary" id="reviewBtn" type="button" aria-pressed="false">Review</button>
+    <button class="btn" id="themeBtn" type="button">Theme: auto</button>
+    <button class="btn" id="resetBtn" type="button">Reset progress</button>
+  </div>
+</header>
+
+<div class="bar">
+  <div class="seg" role="group" aria-label="Mode">
+    <span class="lab">Mode</span>
+    <button type="button" data-mode="build" aria-pressed="true">Build</button>
+    <button type="button" data-mode="drill" aria-pressed="false">Drill</button>
+  </div>
+  <div class="seg" role="group" aria-label="Lecture scope" id="scopeSeg">
+    <span class="lab">Scope</span>
+    <button type="button" data-scope="all" aria-pressed="true">All</button>
+    <button type="button" data-scope="F" aria-pressed="false">LO1–3 Foundations</button>
+    <button type="button" data-scope="D" aria-pressed="false">LO4–8 The four MPNs</button>
+  </div>
+  <div class="seg" role="group" aria-label="Focus" id="focusSeg">
+    <span class="lab">Focus</span>
+    <button type="button" data-rr="0" aria-pressed="true">All boxes</button>
+    <button type="button" data-rr="1" aria-pressed="false">Rapid Review only</button>
+  </div>
+  <div class="stats" aria-live="polite">
+    <div class="stat"><b id="sScore">0</b><span>Score</span></div>
+    <div class="stat"><b id="sStreak">0</b><span>Streak</span></div>
+    <div class="stat"><b id="sAcc">—</b><span>Accuracy</span></div>
+    <div class="stat"><b id="sBoxes">0</b><span>Boxes mastered</span></div>
+    <div class="stat"><b id="sLos">0/8</b><span>LOs mastered</span></div>
+  </div>
+</div>
+
+<div class="main">
+  <aside class="panel side" aria-label="Structures">
+    <h2>Structures</h2>
+    <div id="entList"></div>
+  </aside>
+  <section class="card" id="card" aria-live="polite"></section>
+  <aside class="panel map" aria-label="Learning objective mastery map">
+    <h2>LO mastery map</h2>
+    <div class="legend"><span><i></i>untested</span><span><i class="m"></i>missed</span><span><i class="o"></i>got it once</span><span><i class="M"></i>mastered</span></div>
+
+    <p class="hint">Tap an LO to drill just that objective. Mastered = right twice in a row.</p>
+    <div class="lo-grid" id="loGrid"></div>
+  </aside>
+</div>
+
+<div class="rvw" id="rvw" data-lec="F" hidden>
+  <div class="rvw-bar">
+    <div class="seg" id="rvwTabs" role="group" aria-label="Lecture">
+      <button type="button" data-l="F" aria-pressed="true">LO1–3 Foundations</button>
+      <button type="button" data-l="D" aria-pressed="false">LO4–8 The four MPNs</button>
+    </div>
+    <input id="rvwQ" type="search" placeholder="Search this review" autocomplete="off" aria-label="Search the review">
+    <span id="rvwCount"></span>
+    <button class="btn" type="button" id="rvwAll" aria-pressed="false">Expand all</button>
+    <button class="btn" type="button" id="rvwPrint">Print</button>
+    <button class="btn primary" type="button" id="rvwClose">Back to the game</button>
+  </div>
+  <nav class="rvw-toc" id="rvwToc" aria-label="Contents"></nav>
+  <div class="rvw-body" id="rvwBody"></div>
+  <div class="rvw-empty" id="rvwEmpty">Nothing in this lecture matches that search.</div>
+</div>
+
+
+<footer>HoyaDocs · HEM13 MPN Builder · Updated October 7, 2026 · Revision 1.0. Yellow “HY” tags mark high-yield points, including Step 1. “Rapid Review” tags mark boxes built from the LO Rapid Review checklists.</footer>
+</div>
+
+<script>
+/* ================= LEARNING OBJECTIVES ================= */
+var LOS = {"1": "Normal hematopoiesis; myeloid vs lymphoid cell lines", "2": "Reactive vs neoplastic neutrophilia", "3": "Define myeloproliferative neoplasm and list the four types", "4": "Each MPN’s features, mechanisms and genetic abnormalities", "5": "Workup of a patient with each MPN", "6": "Lab findings correlated with clinical setting and morphology", "7": "Differential diagnosis for each disorder", "8": "Natural history and treatment of each disease"};
+var LOLEC = {"1": "F", "2": "F", "3": "F", "4": "D", "5": "D", "6": "D", "7": "D", "8": "D"};
+var LECS = [{"k": "F", "n": "LO1–3 Foundations", "c": "arch"}, {"k": "D", "n": "LO4–8 The four MPNs", "c": "face"}];
+var E = [{"id": "myl", "lec": "A", "name": "Myeloid vs lymphoid", "sub": "Lineages · WBC count · CSFs", "b": [{"lo": "1", "rr": true, "t": "m", "q": "Select ALL cells of the MYELOID lineage.", "a": ["Neutrophils", "Eosinophils and basophils", "Monocytes", "Megakaryocytes / platelets", "Erythrocytes"], "o": ["B cells", "T cells", "NK cells"], "n": ["Lymphoid.", "Lymphoid.", "Lymphoid."], "w": "Myeloid cells mature in the marrow (the predominant lineage there) and maturation is recognized by morphology: nuclear condensation and granules (granulocytes), nuclear lobulation (megakaryocytes), loss of nucleus (RBCs).", "p": "Myeloid = granulocytes, monocytes, RBCs, platelets."}, {"lo": "1", "rr": true, "hy": true, "q": "Why are lymphoid neoplasms classified by immunophenotype rather than appearance?", "a": "B and T cells look the same under the microscope; CD markers tell them apart", "o": ["Lymphocytes can’t be stained", "Lymphocytes are never found in marrow", "Morphology is only useful for lymphoma"], "n": ["They stain fine.", "B cells mature in marrow.", "Morphology is key for myeloid cells."], "w": "B cells mature in the marrow, T cells in the thymus; both then live in lymph nodes. Flow cytometry and immunohistochemistry identify them.", "p": "Lymphoid: CD markers. Myeloid: morphology."}, {"lo": "1", "rr": true, "t": "m", "q": "Select ALL factors that determine the blood WBC count.", "a": ["Size of the marrow storage pool", "Rate of release from the marrow", "Proportion marginated on vessel walls", "Rate of exit into tissues"], "o": ["Serum iron", "Splenic red pulp size alone"], "n": ["Not a determinant of WBC count.", "Not one of the four factors."], "w": "Leukocytosis can be reactive (infection, inflammation, drugs) or neoplastic; leukopenia comes from immunodeficiency, drugs, infection, malnutrition.", "p": "Storage pool + release + margination + tissue exit."}, {"lo": "1", "hy": true, "q": "A patient started on prednisone has a neutrophil count that doubles within hours without infection. Mechanism?", "a": "Demargination of neutrophils from vessel walls (and marrow release)", "o": ["New production by the marrow", "Splenic sequestration", "Reactive leukemoid response to infection"], "n": ["Production takes days.", "Would lower the count.", "No infection present."], "w": "Glucocorticoids and epinephrine raise the neutrophil count within hours by demargination.", "p": "Steroids/epinephrine → neutrophilia via demargination."}, {"lo": "1", "q": "Match the colony-stimulating factor: which stimulates BOTH granulocytes and monocytes?", "a": "GM-CSF", "o": ["G-CSF", "M-CSF", "EPO"], "n": ["Granulocytes only.", "Monocytes only.", "RBCs."], "w": "Lineage-specific CSFs: M-CSF (monocytes), G-CSF (granulocytes), GM-CSF (both), multi-CSF (IL-3). Stem cells are ≈0.01–0.05% of marrow mononuclear cells, defined by self-renewal and multilineage progeny.", "p": "GM-CSF = both."}]}, {"id": "tool", "lec": "A", "name": "Hematopathology toolkit", "sub": "Biopsy vs aspirate · acute vs chronic", "b": [{"lo": "1", "rr": true, "hy": true, "q": "Which marrow specimen is best for judging CELLULARITY, infiltrate pattern and fibrosis?", "a": "Core biopsy", "o": ["Aspirate", "Peripheral smear", "Flow cytometry"], "n": ["Best for morphology and differential counts.", "Blood, not marrow.", "Immunophenotype, not architecture."], "w": "Biopsy (core of tissue): cellularity, pattern of focal infiltrates (metastases, lymphoma), stroma (fibrosis). Aspirate (fluid): cell morphology and differential counts. Site: posterior iliac crest.", "p": "Biopsy = architecture. Aspirate = cells."}, {"lo": "1", "rr": true, "q": "Which bone marrow specimen gives cell morphology and differential counts?", "a": "Aspirate", "o": ["Core biopsy", "Trephine imprint only", "Lymph node biopsy"], "n": ["Best for cellularity and fibrosis.", "Not the main answer.", "Not marrow."], "w": "Indications for marrow exam: definitive diagnosis of most hematologic diseases, fever of unknown origin, some infections.", "p": "Aspirate = morphology + differential."}, {"lo": "1", "rr": true, "t": "m", "q": "Select ALL features of ACUTE (vs chronic) leukemia.", "a": ["Immature blasts", "Maturation arrest", "Early marrow failure (bleeding, infections, fatigue)", "Urgent treatment"], "o": ["Mature and maturing cells", "Marrow failure only late"], "n": ["Chronic.", "Chronic."], "w": "Chronic leukemia: mature/maturing cells, increased proliferation, nonspecific symptoms, organ infiltration, marked leukocytosis, marrow failure late, non-urgent.", "p": "Acute = blasts + arrest + urgent."}, {"lo": "1", "rr": true, "q": "What distinguishes leukemia from lymphoma?", "a": "Leukemia: mainly marrow with circulating cells · Lymphoma: clonal lymphocytes forming masses in nodes or extranodal sites", "o": ["Leukemia is always myeloid; lymphoma always lymphoid", "Leukemia is always acute; lymphoma chronic", "They are the same disease"], "n": ["Leukemia can be lymphoid.", "Both can be acute or chronic (lymphoma grade).", "They differ by location."], "w": "Lymphomas are Hodgkin or non-Hodgkin (B or T).", "p": "Leukemia = blood/marrow. Lymphoma = masses."}, {"lo": "1", "q": "Which test gives detailed genetic profiling of a white cell neoplasm?", "a": "Next-generation sequencing", "o": ["Southern blot", "Wright-Giemsa stain", "Reticulin stain"], "n": ["Older clonality test.", "Morphology stain.", "Fibrosis stain."], "w": "Ancillary tests: flow cytometry and IHC (immunophenotype), cytochemistry, cytogenetics (karyotype), FISH, PCR, NGS. Translocations and mutations in most WBC neoplasms block maturation, turn on growth signals, alter the epigenome, inhibit apoptosis or impair tumor suppressors.", "p": "NGS = detailed profiling."}]}, {"id": "neut", "lec": "A", "name": "Reactive vs neoplastic neutrophilia", "sub": "6 features · LAP · leukemoid", "b": [{"lo": "2", "rr": true, "hy": true, "t": "m", "q": "Select ALL features that favor CML over reactive neutrophilia.", "a": ["WBC >50 × 10⁹/L", "All precursor stages (myelocytes, metamyelocytes, promyelocytes)", "Absolute basophilia", "Splenomegaly", "t(9;22)", "Low LAP score"], "o": ["Fever", "Toxic granulation and Döhle bodies"], "n": ["Reactive (infection).", "Reactive neutrophils."], "w": "Reactive: <30k, bands (± few metamyelocytes), no basophils, no spleen, fever, normal genetics, high LAP.", "p": "Basophilia + spleen + all stages = CML."}, {"lo": "2", "rr": true, "q": "Fever, WBC 26,000 with bands, no splenomegaly, no basophils. Most likely?", "a": "Reactive neutrophilia (infection)", "o": ["CML", "Polycythemia vera", "Primary myelofibrosis"], "n": ["Every feature points away from CML.", "Would raise Hct.", "Teardrops and big spleen expected."], "w": "Reactive = normal marrow response to a stimulus; polyclonal and temporary.", "p": "Fever + bands + no spleen = reactive."}, {"lo": "2", "rr": true, "hy": true, "q": "How does the LAP score help separate a leukemoid reaction from CML?", "a": "High in leukemoid reaction (normal activated neutrophils); low in CML", "o": ["High in CML; low in leukemoid reaction", "Normal in both", "Only measurable in PV"], "n": ["Reversed.", "They differ.", "Not true."], "w": "A leukemoid reaction is a very high reactive count with immature cells that can mimic CML. Today BCR-ABL testing is definitive.", "p": "LAP: high = leukemoid; low = CML."}, {"lo": "2", "rr": true, "q": "What is the key conceptual difference between reactive and neoplastic neutrophilia?", "a": "Reactive: normal marrow responds to a stimulus (polyclonal, temporary) · Neoplastic: mutated precursor grows abnormally (clonal, persistent)", "o": ["Reactive is always above 100,000", "Neoplastic always has fever", "Reactive cells carry t(9;22)"], "n": ["Reactive is usually <30k.", "Fever points to a reactive (infectious) cause; it doesn’t define a neoplasm.", "Reactive genetics are normal."], "w": "Neoplastic example: CML.", "p": "Reactive = polyclonal; neoplastic = clonal."}]}, {"id": "mpn", "lec": "A", "name": "What is an MPN?", "sub": "Tyrosine kinase · features · the four", "b": [{"lo": "3", "rr": true, "hy": true, "q": "Which definition fits a myeloproliferative neoplasm?", "a": "Clonal proliferation of one or more myeloid lineages with intact maturation, driven by a constitutively active tyrosine kinase", "o": ["Clonal proliferation of blasts with maturation arrest", "Reactive proliferation after infection", "Clonal lymphocytes forming nodal masses"], "n": ["That’s acute leukemia.", "Not clonal.", "That’s lymphoma."], "w": "Maturation is effective, so blood counts are high. Analogy: accelerator stuck down (kinase always on) with a normal assembly line (cells mature).", "p": "MPN = too many finished cells."}, {"lo": "3", "rr": true, "t": "m", "q": "Select ALL common features of MPNs.", "a": ["High peripheral blood counts", "Splenomegaly from extramedullary hematopoiesis", "A possible “spent phase” with marrow fibrosis and cytopenias", "Possible transformation to acute leukemia"], "o": ["Maturation arrest with many blasts at diagnosis", "Polyclonal proliferation"], "n": ["That’s AML.", "MPNs are clonal."], "w": "Myeloid diseases can overlap and evolve into one another with extra mutations.", "p": "High counts · big spleen · spent phase · leukemia."}, {"lo": "3", "rr": true, "q": "What does a tyrosine kinase do, and what happens when it’s mutated in an MPN?", "a": "Moves phosphate from ATP to tyrosine on a target protein; mutated, it’s on without signals, driving growth and survival without blocking differentiation", "o": ["Removes phosphate; mutated, it blocks differentiation", "Cleaves DNA; mutated, it causes apoptosis", "Adds methyl groups; mutated, it silences genes"], "n": ["Not its function; MPNs don’t block differentiation.", "Not its function.", "That’s a methyltransferase."], "w": "Constitutive kinase activity = the common MPN mechanism.", "p": "Kinase always on → growth, survival, normal maturation."}, {"lo": "3", "rr": true, "hy": true, "q": "Match each MPN to its main expanded line and mutation. Which is correct?", "a": "CML: granulocytes, BCR-ABL · PV: RBCs, JAK2 · ET: platelets, JAK2/CALR/MPL · PMF: fibrosis, JAK2/CALR/MPL", "o": ["CML: RBCs, JAK2 · PV: granulocytes, BCR-ABL", "ET: granulocytes, BCR-ABL · PMF: RBCs, JAK2 only", "All four: BCR-ABL"], "n": ["Swapped.", "Wrong lines and mutations.", "Only CML is BCR-ABL."], "w": "“One cell line each, plus scar.” The three BCR-ABL–negative MPNs are the Philadelphia-negative MPNs.", "p": "CML white · PV red · ET platelets · PMF scar."}, {"lo": "3", "rr": true, "q": "If MPNs cause too many cells, why do patients eventually develop cytopenias?", "a": "Spent phase: marrow fibrosis replaces hematopoietic tissue, or transformation to acute leukemia", "o": ["Iron deficiency always develops", "The kinase turns off with age", "The spleen shrinks"], "n": ["Not the general mechanism (phlebotomy in PV aside).", "It stays on.", "The spleen enlarges."], "w": "Especially in PMF and late PV.", "p": "Spent phase = fibrosis + cytopenias."}]}, {"id": "cml", "lec": "B", "name": "CML", "sub": "BCR-ABL · basophilia · TKIs · blast crisis", "b": [{"lo": "4", "rr": true, "hy": true, "q": "What is the genetic hallmark of CML?", "a": "t(9;22) Philadelphia chromosome → BCR-ABL fusion with constitutive tyrosine kinase activity", "o": ["JAK2 V617F", "t(15;17) PML-RARA", "t(8;14) MYC-IGH"], "n": ["PV, ET, PMF.", "APL.", "Burkitt lymphoma."], "w": "Present in about 95%. BCR (chr 22) fuses with ABL (chr 9). BCR-ABL phosphorylates downstream effectors → proliferation, stem cell expansion, delayed apoptosis, early release of immature granulocytes.", "p": "Philadelphia CreaML cheese: Ph = CML."}, {"lo": "4", "rr": true, "q": "Which statement about CML epidemiology is correct?", "a": "Most common MPN (in-house); acquired disease of adults of any age, median about 55", "o": ["Rarest MPN; children only", "Most common in teenagers", "Always familial"], "n": ["Not rare; mostly adults.", "Median 55.", "Acquired."], "w": "The clone drives proliferation of the granulocytic line → ↑ total body granulocyte mass.", "p": "CML: most common MPN, median 55."}, {"lo": "5", "rr": true, "hy": true, "q": "A 59-year-old man has fatigue and early satiety. What exam finding explains the early satiety?", "a": "Splenomegaly pressing on the stomach", "o": ["Gastric outlet obstruction from cancer", "Hepatic encephalopathy", "Ascites from heart failure"], "n": ["Not suggested.", "Not related.", "Not related."], "w": "CML symptoms come from anemia and hypermetabolism: gradual fatigue, weight loss, night sweats; abdominal discomfort from splenomegaly (± hepatomegaly).", "p": "Early satiety = big spleen."}, {"lo": "6", "rr": true, "hy": true, "t": "m", "q": "Select ALL blood and marrow findings in CML.", "a": ["WBC 50–400 × 10⁹/L", "Neutrophils at every stage of maturation", "Basophilia", "Often increased platelets", "Hypercellular marrow with maturing granulocytic precursors"], "o": ["Teardrop cells and dry tap at diagnosis", "Hct >60% with low EPO"], "n": ["That’s PMF.", "That’s PV."], "w": "Confirm with cytogenetics/FISH for t(9;22) or PCR for BCR-ABL (also used to monitor treatment); LAP is low.", "p": "CML: very high WBC, all stages, basophils."}, {"lo": "5", "rr": true, "q": "A 55-year-old man has WBC 180,000 with myelocytes through segs, 8% basophils, a huge spleen and no fever. Most specific test?", "a": "PCR or FISH for BCR-ABL / t(9;22)", "o": ["LAP score", "JAK2 mutation testing", "Bone marrow reticulin stain"], "n": ["Supportive, not specific.", "For Ph-negative MPNs.", "For fibrosis."], "w": "BCR-ABL confirms CML and monitors TKI response.", "p": "CML confirm = BCR-ABL."}, {"lo": "7", "rr": true, "t": "m", "q": "Select ALL items in the differential diagnosis of CML.", "a": ["Reactive neutrophilia / leukemoid reaction", "Other MPNs (PV, ET, PMF)", "CMML and atypical CML"], "o": ["Iron deficiency anemia", "Hereditary spherocytosis"], "n": ["Not a cause of marked neutrophilia.", "Hemolytic anemia."], "w": "Other MPNs and CMML/atypical CML are BCR-ABL negative.", "p": "CML differential: leukemoid, other MPNs, CMML."}, {"lo": "8", "rr": true, "hy": true, "t": "o", "q": "Put the natural history of untreated CML in order.", "a": ["Chronic phase (median 3–4 years untreated)", "Accelerated phase (≈50%): cytopenias, new chromosome changes, fibrosis", "Blast crisis: acute leukemia (myeloid ≈60%, lymphoid ≈30%)"], "w": "TKIs markedly reduce the risk of progression.", "p": "Chronic → accelerated → blast crisis."}, {"lo": "8", "rr": true, "hy": true, "q": "How does imatinib work in CML, and what is its limitation?", "a": "Blocks the ATP-binding site of BCR-ABL; doesn’t eliminate the stem cell, so therapy is usually lifelong", "o": ["Kills all CML stem cells, curing most patients", "Blocks JAK2 signaling", "Induces differentiation of promyelocytes"], "n": ["Doesn’t eliminate the stem cell.", "That’s ruxolitinib.", "That’s ATRA in APL."], "w": "TKIs (imatinib; then dasatinib, nilotinib, bosutinib, ponatinib for resistance) give sustained remissions with few side effects. Imatinib also blocks c-KIT (GIST). Allogeneic stem cell transplant is the potential cure, now mainly for TKI failure.", "p": "Imatinib = model targeted therapy."}, {"lo": "8", "rr": true, "hy": true, "q": "A CML patient on imatinib for 5 years develops 30% blasts that are CD10+, CD19+, TdT+. What happened, and why is it possible?", "a": "Lymphoid blast crisis; BCR-ABL arose in a pluripotent stem cell above the myeloid/lymphoid split", "o": ["Myeloid blast crisis; imatinib caused it", "Reactive lymphocytosis", "Transformation to myelofibrosis"], "n": ["CD10/CD19/TdT are B-lymphoblast markers.", "Blasts aren’t reactive.", "Not fibrosis."], "w": "About 30% of blast crises are lymphoid.", "p": "CML blast crisis can be lymphoid."}, {"lo": "7", "hy": true, "q": "A Ph+ (t(9;22)) result in a child with lymphoblasts most likely means:", "a": "Ph+ acute lymphoblastic leukemia (worse prognosis), not necessarily CML", "o": ["CML in chronic phase", "Polycythemia vera", "A lab error, since t(9;22) occurs only in CML"], "n": ["Blasts and age point to ALL.", "Unrelated.", "t(9;22) occurs in a subset of ALL."], "w": "Ph+ doesn’t always mean CML.", "p": "t(9;22) also in some ALL."}]}, {"id": "pv", "lec": "B", "name": "Polycythemia vera", "sub": "JAK2 · low EPO · phlebotomy", "b": [{"lo": "4", "rr": true, "hy": true, "q": "What mutation is found in more than 97% of polycythemia vera, and what does it do?", "a": "JAK2 (V617F in ≈95%, exon 12 in most of the rest); JAK/STAT signaling downstream of the EPO receptor is always on", "o": ["BCR-ABL; constitutive ABL kinase", "CALR; activates MPL", "EPO receptor loss-of-function"], "n": ["CML.", "ET/PMF (not PV).", "Not PV."], "w": "Valine → phenylalanine at 617. JAK2 also sits downstream of TPO and G-CSF receptors, so all myeloid lines rise, but erythroid proliferation dominates and is EPO-independent. Homozygous (¼): higher WBC, bigger organs, more pruritus, more spent-phase progression.", "p": "PV = JAK2 (>97%), mostly V617F."}, {"lo": "5", "rr": true, "hy": true, "t": "m", "q": "Select ALL classic symptoms of polycythemia vera.", "a": ["Headache and dizziness", "Hypertension", "Pruritus after a warm shower", "Thrombosis (incl. Budd-Chiari) and bleeding", "Peptic ulcer disease"], "o": ["Early satiety as the main symptom", "Erythromelalgia as the only symptom"], "n": ["Most typical of CML.", "ET (also PV), but not the only PV symptom."], "w": "Symptoms come from ↑ red cell mass and abnormal flow. Mean age ≈60. Also facial plethora, sweating, gout.", "p": "PV: headache + hot-shower itch + thrombosis."}, {"lo": "6", "rr": true, "hy": true, "q": "Which lab result distinguishes polycythemia vera from secondary polycythemia?", "a": "LOW serum EPO", "o": ["High serum EPO", "Low O₂ saturation", "Low hematocrit"], "n": ["Secondary polycythemia.", "Hypoxic secondary.", "Polycythemia raises Hct."], "w": "The clone suppresses EPO by negative feedback. PV labs: Hct >60% (Hb 14–28 g/dL in-house range), often ↑ WBC and platelets; marrow panmyelosis.", "p": "PV = only polycythemia with LOW EPO."}, {"lo": "6", "rr": true, "q": "What does the marrow show in polycythemia vera?", "a": "Panmyelosis with prominent erythroid and megakaryocytic proliferation", "o": ["Pure red cell aplasia", "Dense fibrosis with a dry tap at diagnosis", "Clusters of blasts"], "n": ["Opposite.", "Late spent phase, not diagnosis.", "AML."], "w": "In-house criteria: major — ↑ red cell mass, no secondary cause, splenomegaly, clonal non-Ph abnormality (JAK2); minor — platelets >400k, WBC >12k, panmyelosis, low EPO. Current WHO: major — ↑ Hb/Hct, marrow panmyelosis, JAK2 mutation; minor — subnormal EPO.", "p": "PV marrow = panmyelosis."}, {"lo": "5", "rr": true, "hy": true, "q": "A 47-year-old woman has a portal vein thrombosis. Hct 55%, platelets 610,000, WBC 13,000, spleen palpable. Next test?", "a": "JAK2 mutation testing", "o": ["BCR-ABL PCR", "Factor V Leiden alone", "Bone marrow for metastases"], "n": ["High Hct points away from CML.", "Doesn’t explain the high counts.", "Not suggested."], "w": "Unusual-site thrombosis (Budd-Chiari, portal vein) is a classic MPN presentation.", "p": "Odd-site clot + high counts → JAK2."}, {"lo": "8", "rr": true, "hy": true, "q": "What is the first-line treatment for polycythemia vera?", "a": "Periodic phlebotomy (target Hct <45%) plus low-dose aspirin", "o": ["Imatinib", "Iron supplementation", "Splenectomy"], "n": ["CML.", "Phlebotomy-induced iron deficiency helps limit RBC production.", "Not first line."], "w": "Cytoreduction for high risk: hydroxyurea, interferon, ruxolitinib. Older alkylating agents increase leukemia/lymphoma risk. Untreated → death from thrombosis/bleeding in months; treated → ≈10 years (in-house; often longer today).", "p": "PV: phlebotomy + aspirin."}, {"lo": "8", "rr": true, "q": "What is the late course of polycythemia vera?", "a": "Spent phase (post-polycythemic myelofibrosis) with cytopenias; AML in about 2%", "o": ["Blast crisis in most patients", "Spontaneous remission", "Iron overload cirrhosis"], "n": ["That’s CML.", "Not typical.", "Phlebotomy causes iron deficiency."], "w": "Ten years later a patient may stop needing phlebotomy and develop anemia, massive spleen and teardrops.", "p": "PV → spent phase; AML ≈2%."}]}, {"id": "poly", "lec": "B", "name": "Primary vs secondary polycythemia", "sub": "EPO · O₂ sat · tumors", "b": [{"lo": "7", "rr": true, "hy": true, "q": "A 58-year-old smoker with COPD has Hct 56%, O₂ sat 86%, no splenomegaly, normal WBC and platelets. EPO?", "a": "High: appropriate secondary polycythemia from hypoxia", "o": ["Low: polycythemia vera", "Normal: relative polycythemia", "Low: EPO-secreting tumor"], "n": ["No splenomegaly, normal counts, low sat.", "Hypoxia raises EPO.", "Tumors raise EPO."], "w": "Hypoxic causes: COPD, high altitude, sleep apnea, cyanotic heart disease, smoking (CO). Treat the hypoxia.", "p": "Low sat + high EPO = appropriate secondary."}, {"lo": "7", "rr": true, "hy": true, "q": "A 45-year-old man has Hct 58%, normal O₂ sat, HIGH EPO, flank pain and hematuria. Most likely cause?", "a": "Renal cell carcinoma secreting EPO", "o": ["Polycythemia vera", "COPD", "Dehydration"], "n": ["EPO would be low.", "O₂ sat would be low.", "EPO normal; Hct falls with fluids."], "w": "Inappropriate secondary polycythemia: RCC, hepatocellular carcinoma, hemangioblastoma, leiomyoma; exogenous EPO or testosterone.", "p": "Normal sat + high EPO = tumor/exogenous EPO."}, {"lo": "7", "rr": true, "t": "m", "q": "Match: select ALL that cause RELATIVE polycythemia (normal red cell mass).", "a": ["Dehydration", "Diuretics"], "o": ["High altitude", "Renal cell carcinoma", "JAK2 mutation"], "n": ["True (secondary) polycythemia.", "True (secondary) polycythemia.", "True (primary) polycythemia."], "w": "Relative polycythemia = ↓ plasma volume; EPO and O₂ sat normal.", "p": "Relative = low plasma volume."}, {"lo": "7", "rr": true, "q": "A 64-year-old man has headaches, itching after hot showers, ruddy face, splenomegaly; Hct 62%, platelets 520,000, WBC 14,000, O₂ sat 97%. Expected EPO and mutation?", "a": "Low EPO; JAK2 V617F", "o": ["High EPO; JAK2", "Low EPO; BCR-ABL", "High EPO; no mutation"], "n": ["EPO is low in PV.", "BCR-ABL is CML.", "That’s secondary polycythemia."], "w": "Normal O₂ sat argues against hypoxic secondary polycythemia.", "p": "PV: low EPO + JAK2."}]}, {"id": "et", "lec": "B", "name": "Essential thrombocythemia", "sub": "CALR · erythromelalgia · exclusion", "b": [{"lo": "4", "rr": true, "hy": true, "q": "What are the mutation frequencies in essential thrombocythemia?", "a": "JAK2 ≈50–60%, CALR ≈30%, MPL ≈5–10%", "o": ["JAK2 >97%", "BCR-ABL ≈95%", "CALR ≈90%, JAK2 ≈5%"], "n": ["That’s PV.", "That’s CML.", "Reversed proportions."], "w": "CALR mutations activate the thrombopoietin receptor (MPL); MPL mutations make the receptor always on.", "p": "ET: JAK2 > CALR > MPL."}, {"lo": "4", "rr": true, "hy": true, "q": "What does CALR stand for?", "a": "Calreticulin (an ER chaperone protein)", "o": ["Calretinin", "Calcitonin receptor", "Calmodulin"], "n": ["In-house material says calretinin, but that’s a mesothelioma marker; CALR = calreticulin.", "Not related.", "Not related."], "w": "Use calreticulin on boards.", "p": "CALR = calreticulin, not calretinin."}, {"lo": "5", "rr": true, "hy": true, "q": "A 56-year-old woman has fatigue and burning, red, warm hands and feet that improve dramatically with aspirin. Which MPN?", "a": "Essential thrombocythemia (erythromelalgia)", "o": ["CML", "Primary myelofibrosis", "Polycythemia vera only"], "n": ["Not the classic presentation.", "Not typical.", "PV can cause it too, but the platelet-driven classic is ET."], "w": "Erythromelalgia = platelet-driven microvascular clotting.", "p": "Erythromelalgia + aspirin response → ET."}, {"lo": "5", "rr": true, "t": "m", "q": "Select ALL presentations of essential thrombocythemia.", "a": ["Thrombosis (MI, stroke, digital ischemia)", "Bleeding (e.g., GI)", "Headache and dizziness", "Asymptomatic high platelets on routine CBC", "Splenomegaly in ≈30–60%"], "o": ["Massive splenomegaly with dry tap", "Very high WBC with basophilia"], "n": ["PMF.", "CML."], "w": "Recurrent thromboses and hemorrhages come from too many, dysfunctional platelets. ET is the least common classic MPN (in-house).", "p": "ET: clots or bleeds or nothing."}, {"lo": "6", "rr": true, "hy": true, "q": "Which platelet threshold is used in-house for ET, and what does current WHO use?", "a": "In-house >600 × 10⁹/L; WHO ≥450 × 10⁹/L, sustained", "o": ["In-house >150k; WHO >300k", "Both >1,000,000", "In-house >400k; WHO >900k"], "n": ["150k is the lower normal limit.", "Too high.", "Not the values."], "w": "Blood: large, abnormal, clumped, dysfunctional platelets. Marrow: megakaryocytic hyperplasia with enlarged, atypical megakaryocytes in clusters.", "p": "ET: >600k in-house; ≥450k WHO."}, {"lo": "7", "rr": true, "hy": true, "q": "A 35-year-old woman with heavy periods has platelets 620,000, Hb 9.8, MCV 70, ferritin 4. Next step?", "a": "Treat the iron deficiency (reactive thrombocytosis)", "o": ["JAK2 testing and start hydroxyurea", "Bone marrow biopsy", "Start aspirin for ET"], "n": ["Exclude reactive causes first.", "Not needed yet.", "Not ET."], "w": "ET is a diagnosis of exclusion: rule out reactive thrombocytosis (iron deficiency, infection, inflammation, cancer, post-splenectomy, bleeding, hemolysis, surgery) and other MPNs.", "p": "Iron deficiency → reactive thrombocytosis."}, {"lo": "7", "rr": true, "t": "m", "q": "Select ALL features favoring ESSENTIAL thrombocythemia over reactive thrombocytosis.", "a": ["Sustained count", "Giant, bizarre, clumped platelets", "Splenomegaly", "JAK2, CALR or MPL mutation", "High thrombosis/bleeding risk"], "o": ["High CRP and low ferritin", "Resolves after treating the cause"], "n": ["Reactive.", "Reactive."], "w": "ET is BCR-ABL negative.", "p": "Clonal markers + sustained = ET."}, {"lo": "8", "rr": true, "q": "What is the natural history and treatment of ET?", "a": "Indolent; near-normal life expectancy (median 10–15 years); <5% transform; aspirin ± hydroxyurea", "o": ["Median survival 3–5 years; transplant for all", "Blast crisis in 50%; imatinib", "Phlebotomy is first line"], "n": ["That’s PMF.", "That’s CML.", "That’s PV."], "w": "Younger asymptomatic patients may need no treatment for years; treat after thrombosis or if high risk. Cytoreduction: hydroxyurea, anagrelide, interferon.", "p": "ET: aspirin ± hydroxyurea; near-normal life."}, {"lo": "6", "hy": true, "q": "Why can extremely high platelet counts (>1,000,000) cause BLEEDING?", "a": "Acquired von Willebrand syndrome: large vWF multimers bind the excess platelets and are cleaved and cleared", "o": ["Platelets stop making vWF", "Factor VIII is consumed", "Platelets block the coagulation cascade"], "n": ["vWF production is normal; the large multimers are lost.", "Not the mechanism.", "Not the mechanism."], "w": "Paradoxical bleeding in ET and other MPNs.", "p": "Very high platelets → acquired vWD."}]}, {"id": "pmf", "lec": "B", "name": "Primary myelofibrosis", "sub": "Megakaryocytes · teardrops · dry tap", "b": [{"lo": "4", "rr": true, "hy": true, "q": "Which cell drives the fibrosis in primary myelofibrosis, and how?", "a": "Neoplastic megakaryocytes release PDGF and TGF-β, stimulating reactive fibroblasts to lay down collagen", "o": ["Neoplastic fibroblasts are the clone", "Plasma cells secrete collagen", "Macrophages release IL-6"], "n": ["Fibroblasts are reactive, not clonal.", "Not the mechanism.", "Not the mechanism."], "w": "About 90% have JAK2, CALR or MPL mutations. Megakaryocytes = the culprit.", "p": "PMF: megakaryocyte PDGF + TGF-β → fibrosis."}, {"lo": "4", "rr": true, "t": "o", "q": "Put the pathogenesis of primary myelofibrosis in order.", "a": ["Clonal megakaryocytes (JAK2/CALR/MPL)", "Release of PDGF and TGF-β", "Fibroblasts deposit collagen (marrow fibrosis)", "Hematopoietic cells forced out of the marrow", "Extramedullary hematopoiesis in spleen and liver"], "w": "The scarred marrow squeezes RBCs into teardrops and lets immature cells leak out (leukoerythroblastosis).", "p": "Megakaryocytes → fibrosis → EMH → massive spleen."}, {"lo": "5", "rr": true, "q": "A 69-year-old man has 5 months of fatigue, abdominal fullness and recurrent respiratory infections. Exam: massive splenomegaly. Hb 8.9, WBC 3,100, platelets 85,000; smear shows teardrop cells and nucleated RBCs; aspiration is a dry tap. Which MPN fits?", "a": "Primary myelofibrosis", "o": ["Essential thrombocythemia", "Polycythemia vera", "CML in chronic phase"], "n": ["Thrombosis or asymptomatic.", "Headache, high Hct.", "CML has a very high WBC with basophilia, not cytopenias and teardrops."], "w": "Fatigue (anemia) + fullness (huge spleen) + infections (cytopenias) in an older adult. Also hyperuricemia/gout from high turnover.", "p": "Old + huge spleen + cytopenias → PMF."}, {"lo": "6", "rr": true, "hy": true, "t": "m", "q": "Select ALL blood and marrow findings in late primary myelofibrosis.", "a": ["Leukoerythroblastosis (myelocytes + nucleated RBCs)", "Dacrocytes (teardrop cells)", "Dry tap on aspiration", "Fibrosis on reticulin/trichrome stain", "Anemia, leukopenia and thrombocytopenia"], "o": ["Absolute basophilia with WBC 300k", "Hct >60% with low EPO"], "n": ["CML.", "PV."], "w": "Early (prefibrotic) PMF: mild anemia, ↑ WBC, marked thrombocytosis, little splenomegaly (can mimic ET). Biopsy is required because the aspirate is dry.", "p": "Teardrops + dry tap = myelofibrosis."}, {"lo": "7", "rr": true, "hy": true, "q": "A 66-year-old woman with past breast cancer has teardrops, nucleated RBCs and myelocytes; marrow shows cohesive clusters of epithelial cells. Diagnosis?", "a": "Metastatic breast carcinoma (myelophthisis), not primary myelofibrosis", "o": ["Primary myelofibrosis", "Hairy cell leukemia", "CML"], "n": ["Cohesive clusters are the tie-breaker.", "Hairy B cells, BRAF V600E.", "BCR-ABL, basophilia."], "w": "Teardrops + leukoerythroblastosis = marrow infiltration or fibrosis until proven otherwise.", "p": "Cohesive clusters = carcinoma."}, {"lo": "7", "rr": true, "t": "m", "q": "Select ALL in the differential diagnosis of primary myelofibrosis.", "a": ["Post-PV or post-ET myelofibrosis", "CML", "Metastatic carcinoma", "Hairy cell leukemia", "Granulomatous infection (TB)"], "o": ["Iron deficiency anemia", "Hereditary spherocytosis"], "n": ["Not a fibrosing process.", "Not a fibrosing process."], "w": "Hairy cell leukemia also gives a dry tap and big spleen but has pancytopenia from the start, hairy B cells, BRAF V600E, TRAP+.", "p": "Dry tap: PMF, hairy cell, metastasis."}, {"lo": "8", "rr": true, "hy": true, "q": "What is the prognosis and treatment of primary myelofibrosis?", "a": "Worst of the MPNs: survival ≈3–5 years, AML in 5–20%; ruxolitinib and transfusions; transplant is the only cure", "o": ["Near-normal life; aspirin only", "Median 20 years; phlebotomy", "Cured by imatinib"], "n": ["That’s ET.", "Not PMF.", "That’s CML (control, not cure)."], "w": "Deaths from infection, thrombosis, bleeding; portal hypertension from EMH.", "p": "PMF: 3–5 y; ruxolitinib; transplant cures."}, {"lo": "7", "q": "Ten years after a PV diagnosis, a patient no longer needs phlebotomy, is anemic, and has massive splenomegaly and teardrop cells. What happened?", "a": "Post-polycythemic (spent phase) myelofibrosis", "o": ["Iron deficiency from phlebotomy", "Transformation to CML", "New hereditary spherocytosis"], "n": ["Doesn’t explain teardrops and massive spleen.", "Not how PV evolves.", "Not acquired."], "w": "PV and ET can progress to secondary myelofibrosis.", "p": "Prior PV/ET + teardrops = spent phase."}]}, {"id": "mix", "lec": "B", "name": "MPN master comparison", "sub": "Mixed cases", "b": [{"lo": "7", "rr": true, "q": "A 58-year-old man has burning red toes relieved by aspirin, platelets 880,000, normal Hb and WBC, JAK2+, BCR-ABL−. Diagnosis?", "a": "Essential thrombocythemia", "o": ["Polycythemia vera", "CML", "Reactive thrombocytosis"], "n": ["Hb is normal.", "BCR-ABL negative.", "JAK2 positive means clonal."], "w": "Erythromelalgia is classic for ET.", "p": "Erythromelalgia + JAK2 + normal Hb = ET."}, {"lo": "8", "rr": true, "q": "Match the MPN to first-line therapy. Which set is correct?", "a": "CML: TKI · PV: phlebotomy + aspirin · ET: aspirin ± hydroxyurea · PMF: supportive + ruxolitinib", "o": ["CML: phlebotomy · PV: imatinib", "ET: transplant for all · PMF: aspirin only", "All four: imatinib"], "n": ["Swapped.", "Not first line.", "Only CML responds to imatinib."], "w": "Allogeneic transplant can cure CML and PMF.", "p": "TKI · phlebotomy · aspirin · ruxolitinib."}, {"lo": "8", "rr": true, "q": "Which MPN has the worst prognosis?", "a": "Primary myelofibrosis (≈3–5 years)", "o": ["Essential thrombocythemia", "Polycythemia vera", "CML on TKI"], "n": ["Near-normal life.", "≈10 years treated (in-house).", "TKIs give long control."], "w": "AML risk: PMF 5–20%, PV ≈2%, ET <5%.", "p": "PMF = worst MPN prognosis."}, {"lo": "6", "rr": true, "q": "Match the smear to the MPN: neutrophils at every stage with basophilia.", "a": "CML", "o": ["PV", "ET", "PMF"], "n": ["High Hct.", "Giant, clumped platelets.", "Teardrops and leukoerythroblastosis."], "w": "CML: WBC 50–400k, all stages, basophilia.", "p": "All stages + basophils = CML."}]}];
+
+
+(function(){
+"use strict";
+var KEY="hd-hem13-mpn-builder-v1";
+var S={box:{},score:0,streak:0,best:0,tot:0,right:0,theme:"auto"};
+function load(){try{var j=JSON.parse(localStorage.getItem(KEY)||"null");if(j&&j.box)S=Object.assign(S,j);}catch(e){}}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}}
+load();
+
+var ALL=[]; E.forEach(function(e){e.b.forEach(function(b,i){b.id=e.id+"."+i;b.ent=e;ALL.push(b);});});
+function st(b){var r=S.box[b.id];return r?r.s:"u";}
+var rrOnly=false, mode="build", scope="all", loFilter=null, curEnt=null, idx=0, cur=null, answered=false, results={}, lastId=null, t0=0, tick=null;
+
+function shuffle(a){a=a.slice();for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=a[i];a[i]=a[j];a[j]=t;}return a;}
+function esc(s){return String(s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];});}
+function inScope(b){return (scope==="all"||b.ent.lec===scope)&&(!loFilter||b.lo===loFilter)&&(!rrOnly||b.rr);}
+
+/* ---------- theme ---------- */
+var themeBtn=document.getElementById("themeBtn");
+function applyTheme(){var r=document.documentElement;if(S.theme==="auto")r.removeAttribute("data-theme");else r.setAttribute("data-theme",S.theme);themeBtn.textContent="Theme: "+S.theme;}
+themeBtn.onclick=function(){S.theme={auto:"light",light:"dark",dark:"auto"}[S.theme];applyTheme();save();};
+applyTheme();
+document.getElementById("resetBtn").onclick=function(){
+  var b=this; if(b.dataset.confirm){S.box={};S.score=S.streak=S.tot=S.right=0;save();b.textContent="Reset progress";delete b.dataset.confirm;renderAll();next();return;}
+  b.dataset.confirm="1";b.textContent="Tap again to reset";setTimeout(function(){if(b.dataset.confirm){delete b.dataset.confirm;b.textContent="Reset progress";}},3000);
+};
+
+/* ---------- stats / side / map ---------- */
+function loStatus(lo){var bs=ALL.filter(function(b){return b.lo===lo;});var ss=bs.map(st);
+  var m=ss.filter(function(x){return x==="M";}).length;
+  if(m===bs.length)return{s:"M",m:m,n:bs.length};
+  if(ss.indexOf("m")>=0)return{s:"m",m:m,n:bs.length};
+  if(ss.some(function(x){return x!=="u";}))return{s:"o",m:m,n:bs.length};
+  return{s:"u",m:m,n:bs.length};}
+function renderStats(){
+  document.getElementById("sScore").textContent=S.score;
+  document.getElementById("sStreak").textContent=S.streak;
+  document.getElementById("sAcc").textContent=S.tot?Math.round(100*S.right/S.tot)+"%":"—";
+  document.getElementById("sBoxes").textContent=ALL.filter(function(b){return st(b)==="M";}).length+"/"+ALL.length;
+  var los=Object.keys(LOS);document.getElementById("sLos").textContent=los.filter(function(l){return loStatus(l).s==="M";}).length+"/"+los.length;
+}
+function renderSide(){
+  var h="";LECS.forEach(function(L){if(scope!=="all"&&scope!==L.k)return;
+    h+='<p class="lec-h l'+L.k+'" style="color:var(--lc)">HEM13 · '+esc(L.n)+'</p>';
+    E.filter(function(e){return e.lec===L.k;}).forEach(function(e){
+      var m=e.b.filter(function(b){return st(b)==="M";}).length,p=Math.round(100*m/e.b.length);
+      h+='<button type="button" class="ent l'+e.lec+'" data-ent="'+e.id+'"'+(curEnt===e&&mode==="build"?' aria-current="true"':'')+'><span class="n">'+esc(e.name)+'</span><span class="pct">'+m+'/'+e.b.length+'</span><span class="s">'+esc(e.sub)+'</span><span class="mini"><i style="width:'+p+'%"></i></span></button>';
+    });});
+  var el=document.getElementById("entList");el.innerHTML=h;
+  el.querySelectorAll(".ent").forEach(function(b){b.onclick=function(){setMode("build");startEnt(E.filter(function(e){return e.id===b.dataset.ent;})[0]);};});
+}
+function renderMap(){
+  var h="";Object.keys(LOS).forEach(function(lo){var lec=LOLEC[lo];if(scope!=="all"&&scope!==lec)return;var s=loStatus(lo);
+    h+='<button type="button" class="lo-tile l'+lec+'" data-lo="'+lo+'"'+(loFilter===lo?' style="border-color:var(--lc)"':'')+'><span class="id">'+(lo.slice(-1)==="X"?"Extra":"LO "+lo)+'</span><span class="t">'+esc(LOS[lo])+'</span><span class="dot s-'+s.s+'" title="'+s.m+'/'+s.n+' mastered"></span></button>';});
+  var g=document.getElementById("loGrid");g.innerHTML=h;
+  g.querySelectorAll(".lo-tile").forEach(function(b){b.onclick=function(){loFilter=(loFilter===b.dataset.lo?null:b.dataset.lo);setMode("drill");};});
+}
+function renderAll(){renderStats();renderSide();renderMap();}
+
+/* ---------- flow ---------- */
+function setMode(m){mode=m;document.querySelectorAll("[data-mode]").forEach(function(b){b.setAttribute("aria-pressed",String(b.dataset.mode===m));});
+  if(m==="build"){loFilter=null;if(rrOnly){rrOnly=false;setRR();}renderAll();if(!curEnt||!inScope(curEnt.b[0]))startEnt(firstEnt());else show();}
+  else{renderAll();next();}}
+function firstEnt(){var es=E.filter(function(e){return scope==="all"||e.lec===scope;});
+  for(var i=0;i<es.length;i++){if(es[i].b.some(function(b){return st(b)!=="M";}))return es[i];}return es[0];}
+document.querySelectorAll("[data-mode]").forEach(function(b){b.onclick=function(){setMode(b.dataset.mode);};});
+function setRR(){document.querySelectorAll("[data-rr]").forEach(function(x){x.setAttribute("aria-pressed",String((x.dataset.rr==="1")===rrOnly));});}
+document.querySelectorAll("[data-rr]").forEach(function(b){b.onclick=function(){rrOnly=b.dataset.rr==="1";setRR();setMode(rrOnly?"drill":mode);};});
+document.querySelectorAll("[data-scope]").forEach(function(b){b.onclick=function(){scope=b.dataset.scope;loFilter=null;
+  document.querySelectorAll("[data-scope]").forEach(function(x){x.setAttribute("aria-pressed",String(x===b));});
+  if(mode==="build"){curEnt=null;setMode("build");}else setMode("drill");};});
+
+function startEnt(e){curEnt=e;idx=0;results={};renderSide();cur=e.b[0];show();}
+function next(){
+  if(mode==="build"){idx++;if(idx>=curEnt.b.length){finishEnt();return;}cur=curEnt.b[idx];show();return;}
+  var pool=ALL.filter(inScope);if(!pool.length){cur=null;show();return;}
+  var rank={m:0,u:1,o:2,M:3};
+  pool=shuffle(pool).sort(function(a,b){return rank[st(a)]-rank[st(b)];});
+  var best=rank[st(pool[0])];var top=pool.filter(function(b){return rank[st(b)]===best&&b.id!==lastId;});
+  if(best===3)top=pool.filter(function(b){return b.id!==lastId;});
+  cur=(top.length?top:pool)[0];show();
+}
+function finishEnt(){
+  var ok=Object.keys(results).filter(function(k){return results[k];}).length,n=curEnt.b.length;
+  var i=E.indexOf(curEnt),nxt=null;for(var j=1;j<=E.length;j++){var c=E[(i+j)%E.length];if(scope==="all"||c.lec===scope){nxt=c;break;}}
+  var card=document.getElementById("card");card.className="card l"+curEnt.lec;
+  card.innerHTML='<div class="done"><p class="meta">Structure complete</p><h2>'+esc(curEnt.name)+': '+ok+' / '+n+' first try</h2>'+
+   '<p class="hint">'+(ok===n?"Clean build. It will count as mastered after one more clean pass.":"Missed boxes are queued first in Drill mode.")+'</p>'+
+   '<div class="actions"><button class="btn" type="button" id="again">Rebuild '+esc(curEnt.name)+'</button>'+(nxt?'<button class="btn primary" type="button" id="nextEnt">Next: '+esc(nxt.name)+' →</button>':'')+'</div></div>';
+  document.getElementById("again").onclick=function(){startEnt(curEnt);};
+  if(nxt)document.getElementById("nextEnt").onclick=function(){startEnt(nxt);};
+  var ne=document.getElementById("nextEnt");if(ne)ne.focus();
+}
+
+var picks=[];
+function show(){
+  answered=false;picks=[];clearInterval(tick);
+  var card=document.getElementById("card");
+  if(!cur){card.className="card";card.innerHTML='<p class="q">Nothing in this scope yet.</p>';return;}
+  var b=cur,e=b.ent;card.className="card l"+e.lec;
+  var head='<div class="card-top"><div><p class="meta">'+(mode==="build"?"Build · box "+(idx+1)+" of "+e.b.length:"Drill"+(rrOnly?" · Rapid Review":"")+(loFilter?" · LO "+loFilter:""))+'</p><h2>'+esc(e.name)+'</h2></div>'+
+    '<div style="display:flex;gap:6px;flex-wrap:wrap"><span class="tag lo">'+(b.lo.slice(-1)==="X"?"Extra":"LO "+b.lo)+'</span>'+(b.rr?'<span class="tag rr">Rapid Review</span>':'')+(b.hy?'<span class="tag hy">HY</span>':'')+'<span class="timer" id="timer">0.0s</span></div></div>';
+  if(mode==="build"){head+='<div class="boxes" aria-hidden="true">'+e.b.map(function(x,i){var c=i===idx?"cur":(x.id in results?(results[x.id]?"done-ok":"done-bad"):"");return '<i class="'+c+'"></i>';}).join("")+'</div>';}
+  var body='<p class="q">'+esc(b.q)+'</p>';
+  if(!b.t){b._opts=shuffle([b.a].concat(b.o));
+    body+='<div class="opts">'+b._opts.map(function(o,i){return '<button type="button" class="opt" data-i="'+i+'"><span class="k">'+(i+1)+'</span><span>'+esc(o)+'</span></button>';}).join("")+'</div>';}
+  else if(b.t==="m"){b._opts=shuffle(b.a.concat(b.o));
+    body+='<p class="hint">Select all that apply, then check.</p><div class="opts">'+b._opts.map(function(o,i){return '<button type="button" class="opt" aria-pressed="false" data-i="'+i+'"><span class="k">'+(i+1)+'</span><span>'+esc(o)+'</span></button>';}).join("")+'</div>';}
+  else{b._opts=shuffle(b.a);
+    body+='<p class="hint">Tap items in order. Tap a placed item to remove it.</p><ol class="ordered" id="ordList"><li class="empty" style="cursor:default">Your order appears here</li></ol><div class="opts">'+b._opts.map(function(o,i){return '<button type="button" class="opt" data-i="'+i+'"><span class="k">+</span><span>'+esc(o)+'</span></button>';}).join("")+'</div>';}
+  var act='<div id="fb"></div><div class="actions"><span class="hint">'+(b.t?"Enter to check":"Keys 1–"+b._opts.length+" to answer")+'</span><div style="display:flex;gap:8px">'+
+    (mode==="build"?'<button class="btn" type="button" id="skipBtn">Skip structure</button>':'')+
+    (b.t?'<button class="btn primary" type="button" id="checkBtn"'+(b.t==="o"?" disabled":"")+'>Check</button>':'')+
+    '<button class="btn primary" type="button" id="nextBtn" hidden>Next box →</button></div></div>';
+  card.innerHTML=head+body+act;
+  t0=Date.now();tick=setInterval(function(){var t=document.getElementById("timer");if(t)t.textContent=((Date.now()-t0)/1000).toFixed(1)+"s";},100);
+  var opts=card.querySelectorAll(".opt");
+  if(!b.t)opts.forEach(function(o){o.onclick=function(){if(!answered)grade([+o.dataset.i]);};});
+  else if(b.t==="m")opts.forEach(function(o){o.onclick=function(){if(answered)return;var on=o.getAttribute("aria-pressed")!=="true";o.setAttribute("aria-pressed",String(on));o.classList.toggle("sel",on);};});
+  else opts.forEach(function(o){o.onclick=function(){if(answered||o.disabled)return;picks.push(+o.dataset.i);o.disabled=true;o.style.opacity=".4";drawOrd();};});
+  var cb=document.getElementById("checkBtn");if(cb)cb.onclick=function(){if(answered)return;
+    if(b.t==="m"){var sel=[];opts.forEach(function(o){if(o.getAttribute("aria-pressed")==="true")sel.push(+o.dataset.i);});grade(sel);}else grade(picks);};
+  var sk=document.getElementById("skipBtn");if(sk)sk.onclick=function(){var i=E.indexOf(curEnt);for(var j=1;j<=E.length;j++){var c=E[(i+j)%E.length];if(scope==="all"||c.lec===scope){startEnt(c);return;}}};
+  document.getElementById("nextBtn").onclick=function(){lastId=cur.id;next();};
+}
+function drawOrd(){var b=cur,ol=document.getElementById("ordList");
+  ol.innerHTML=picks.length?picks.map(function(i,k){return '<li data-k="'+k+'">'+esc(b._opts[i])+'</li>';}).join(""):'<li class="empty" style="cursor:default">Your order appears here</li>';
+  ol.querySelectorAll("li[data-k]").forEach(function(li){li.onclick=function(){if(answered)return;var k=+li.dataset.k,i=picks[k];picks.splice(k,1);
+    var o=document.querySelector('.opt[data-i="'+i+'"]');o.disabled=false;o.style.opacity="";drawOrd();};});
+  document.getElementById("checkBtn").disabled=picks.length!==b.a.length;}
+
+function grade(sel){
+  answered=true;clearInterval(tick);var b=cur,ok,card=document.getElementById("card"),opts=card.querySelectorAll(".opt");
+  if(!b.t){ok=b._opts[sel[0]]===b.a;opts.forEach(function(o){var t=b._opts[+o.dataset.i];o.disabled=true;if(t===b.a)o.classList.add("right");else if(+o.dataset.i===sel[0])o.classList.add("wrong");});}
+  else if(b.t==="m"){var chosen=sel.map(function(i){return b._opts[i];});ok=chosen.length===b.a.length&&chosen.every(function(c){return b.a.indexOf(c)>=0;});
+    opts.forEach(function(o){var t=b._opts[+o.dataset.i],isA=b.a.indexOf(t)>=0,isS=chosen.indexOf(t)>=0;o.disabled=true;o.classList.remove("sel");
+      if(isA&&isS)o.classList.add("right");else if(isA)o.classList.add("missed");else if(isS)o.classList.add("wrong");});}
+  else{var got=sel.map(function(i){return b._opts[i];});ok=got.every(function(g,k){return g===b.a[k];});
+    document.querySelectorAll("#ordList li[data-k]").forEach(function(li,k){li.classList.add(got[k]===b.a[k]?"right":"wrong");});
+    opts.forEach(function(o){o.disabled=true;});}
+  var r=S.box[b.id]||{n:0,c:0,s:"u"};r.n++;
+  if(ok){r.c++;r.s=r.c>=2?"M":"o";S.streak++;S.best=Math.max(S.best,S.streak);S.right++;S.score+=10+Math.min(S.streak,10);}
+  else{r.c=0;r.s="m";S.streak=0;}
+  S.tot++;S.box[b.id]=r;if(!(b.id in results))results[b.id]=ok;save();
+  var fb='<div class="fb '+(ok?"ok":"bad")+'"><span class="v">'+(ok?"Correct":"Not quite")+'</span>';
+  if(!b.t)fb+='<span class="ans">Answer: <b>'+esc(b.a)+'</b></span>';
+  else if(b.t==="m")fb+='<span class="ans">Answer: <b>'+b.a.map(esc).join(" · ")+'</b></span>';
+  else fb+='<span class="ans">Correct order:</span><ol>'+b.a.map(function(x){return "<li>"+esc(x)+"</li>";}).join("")+'</ol>';
+  fb+='<div class="fbexp">'+String(b.w||"").split(/\n\n+/).filter(Boolean).map(function(t){return '<p>'+esc(t)+'</p>';}).join("")+'</div>';
+  if(b.n&&b.n.length&&b.o&&b.o.length){
+    var rows=b.o.map(function(x,i){return b.n[i]?'<li><b>'+esc(x)+'</b> — '+esc(b.n[i])+'</li>':"";}).join("");
+    if(rows)fb+='<ul class="fbnotes">'+rows+'</ul>';
+  }
+  if(b.p)fb+='<div class="fbpearl"><b>High-yield</b>'+esc(b.p)+'</div>';
+  fb+='</div>';
+  document.getElementById("fb").innerHTML=fb;
+  var cb=document.getElementById("checkBtn");if(cb)cb.hidden=true;
+  var nb=document.getElementById("nextBtn");nb.hidden=false;nb.textContent=(mode==="build"&&idx===curEnt.b.length-1)?"Finish structure →":"Next box →";nb.focus();
+  renderAll();
+}
+document.addEventListener("keydown",function(ev){
+  if(ev.target.tagName==="INPUT"||ev.metaKey||ev.ctrlKey||ev.altKey)return;
+  if(ev.key==="Enter"){var nb=document.getElementById("nextBtn"),cb=document.getElementById("checkBtn");
+    if(nb&&!nb.hidden){ev.preventDefault();nb.click();}else if(cb&&!cb.hidden&&!cb.disabled){ev.preventDefault();cb.click();}return;}
+  var n=parseInt(ev.key,10);if(!cur||answered||isNaN(n))return;var o=document.querySelector('.opt[data-i="'+(n-1)+'"]');if(o&&!o.disabled)o.click();
+});
+
+renderAll();startEnt(firstEnt());
+})();
+
+/* ---------- Review: the compiled version of everything the answers teach ---------- */
+var REVIEW = {"F": "<h3 class=\"rh\">LO1 · Myeloid vs lymphoid &amp; the toolkit</h3>\n<div class=\"rtbl\"><table><thead><tr><th></th><th>Myeloid</th><th>Lymphoid</th></tr></thead><tbody>\n<tr><td>Cells</td><td>Neutrophils, eosinophils, basophils, monocytes, megakaryocytes/platelets, RBCs</td><td>B, T, NK (plasma cells from B)</td></tr>\n<tr><td>Mature in</td><td>Marrow</td><td>B: marrow · T: thymus; live in nodes</td></tr>\n<tr><td>Recognized by</td><td>Morphology (granules, lobulation, loss of nucleus)</td><td>Immunophenotype (CD markers)</td></tr>\n<tr><td>Neoplasms</td><td>MPN, MDS (chronic), AML (acute)</td><td>Leukemias, lymphomas</td></tr></tbody></table></div>\n<div class=\"rrule\"><b>WBC count</b>Storage pool + release rate + margination + tissue exit. CSFs: M-CSF (monocytes), G-CSF (granulocytes), GM-CSF (both), IL-3 (multi).</div>\n<div class=\"rhy\"><b>Demargination</b>Glucocorticoids and epinephrine raise neutrophils within hours, without infection or new production.</div>\n<div class=\"rtbl\"><table><thead><tr><th>Marrow specimen</th><th>Best for</th></tr></thead><tbody>\n<tr><td>Core biopsy</td><td>Cellularity, infiltrate pattern, fibrosis</td></tr><tr><td>Aspirate</td><td>Morphology, differential</td></tr></tbody></table></div>\n<div class=\"rtbl\"><table><thead><tr><th></th><th>Acute leukemia</th><th>Chronic leukemia</th></tr></thead><tbody>\n<tr><td>Cells</td><td>Blasts</td><td>Mature/maturing</td></tr><tr><td>Mechanism</td><td>Maturation arrest</td><td>↑ proliferation</td></tr>\n<tr><td>Clinical</td><td>Early marrow failure</td><td>Leukocytosis, organ infiltration; failure late</td></tr><tr><td>Urgency</td><td>Urgent</td><td>Non-urgent</td></tr></tbody></table></div>\n<p>Leukemia = marrow + circulating cells. Lymphoma = clonal lymphocyte masses in nodes or extranodal sites. Tests: flow, IHC, cytogenetics, FISH, PCR, NGS.</p>\n<h3 class=\"rh\">LO2 · Reactive vs neoplastic neutrophilia</h3>\n<div class=\"rtbl\"><table><thead><tr><th>Feature</th><th>Reactive</th><th>CML</th></tr></thead><tbody>\n<tr><td>WBC</td><td>&lt;30k</td><td>&gt;50k (50–400k)</td></tr><tr><td>Left shift</td><td>Bands</td><td>All stages</td></tr>\n<tr><td>Basophils</td><td>Absent</td><td>↑</td></tr><tr><td>Spleen</td><td>Normal</td><td>Enlarged</td></tr>\n<tr><td>Fever</td><td>Yes</td><td>No</td></tr><tr><td>Genetics</td><td>Normal</td><td>t(9;22)</td></tr><tr><td>LAP</td><td>High</td><td>Low</td></tr></tbody></table></div>\n<div class=\"rhy\"><b>Leukemoid reaction</b>Very high reactive count with immature cells; toxic granulation, Döhle bodies, vacuoles; high LAP. BCR-ABL is definitive.</div>\n<h3 class=\"rh\">LO3 · What is an MPN?</h3>\n<p>Clonal proliferation of ≥1 myeloid line, driven by a <b>constitutively active tyrosine kinase</b>; maturation is intact → high counts, splenomegaly (EMH), possible spent phase (fibrosis, cytopenias), possible acute leukemia.</p>\n<div class=\"rmem\"><b>Stuck accelerator</b>MPN: accelerator stuck, normal assembly line → too many finished cells. Acute leukemia: broken assembly line → unfinished blasts.</div>\n<div class=\"rmem\"><b>One line each, plus scar</b>CML = white (BCR-ABL) · PV = red (JAK2) · ET = platelets (JAK2/CALR/MPL) · PMF = scar (JAK2/CALR/MPL).</div>\n<h3 class=\"rh\">Rapid Review checklist · LO1–LO3</h3>\n<ul class=\"rlist\">\n<li><b>LO1</b> Myeloid vs lymphoid · WBC count factors · biopsy vs aspirate · acute vs chronic</li>\n<li><b>LO2</b> Reactive: &lt;30k, bands, no basophils, no spleen, fever, normal genetics, high LAP · CML: the opposite</li>\n<li><b>LO3</b> Clonal, kinase, maturation intact · high counts, spleen, spent phase, leukemia · the four MPNs</li></ul>\n", "D": "<h3 class=\"rh\">CML</h3>\n<p>Most common MPN; median age 55. <b>t(9;22)</b> (≈95%) → BCR (22) + ABL (9) → <b>BCR-ABL</b> always-on kinase → granulocytes proliferate, survive longer, released early.</p>\n<div class=\"rmem\"><b>Philadelphia CreaML cheese</b>Ph chromosome = CML. ABL on 9 meets BCR on 22.</div>\n<p>Fatigue, weight loss, night sweats, <b>early satiety</b> (splenomegaly). Blood: WBC 50–400k, all stages, <b>basophilia</b>, ↑ platelets. Marrow hypercellular. Confirm BCR-ABL (FISH/PCR); LAP low. Differential: leukemoid reaction, other MPNs, CMML/atypical CML.</p>\n<div class=\"rseq\"><ol><li><b>Chronic</b> Median 3–4 years untreated</li><li><b>Accelerated</b> ≈50%: cytopenias, new chromosome changes, fibrosis</li><li><b>Blast crisis</b> Myeloid ≈60%, lymphoid ≈30%</li></ol></div>\n<div class=\"rhy\"><b>CML pearls</b>Imatinib blocks the ATP site of BCR-ABL (also c-KIT, GIST); doesn’t kill the stem cell → lifelong. Transplant can cure. Lymphoid blast crisis possible (pluripotent stem cell). t(9;22) also in some ALL.</div>\n<h3 class=\"rh\">Polycythemia vera</h3>\n<p>Clonal panmyelosis, erythroid-dominant, EPO-independent. <b>JAK2 (&gt;97%; mostly V617F)</b> in JAK/STAT downstream of EPO-R (also TPO-R, G-CSF-R). Homozygous (¼): higher WBC, bigger organs, more pruritus.</p>\n<p>Mean age ≈60. Headache, dizziness, HTN, sweating, <b>pruritus after hot shower</b>, thrombosis (Budd-Chiari) and bleeding, PUD, plethora, gout. Hb 14–28 (in-house), Hct &gt;60%, ↑ WBC/platelets, <b>low EPO</b>; marrow panmyelosis.</p>\n<div class=\"rtbl\"><table><thead><tr><th>Type</th><th>Causes</th><th>EPO</th><th>O₂ sat</th></tr></thead><tbody>\n<tr><td>PV</td><td>JAK2 clone</td><td>↓</td><td>nl</td></tr>\n<tr><td>Secondary, appropriate</td><td>COPD, altitude, sleep apnea, cyanotic heart disease, smoking</td><td>↑</td><td>↓</td></tr>\n<tr><td>Secondary, inappropriate</td><td>RCC, HCC, hemangioblastoma, leiomyoma; exogenous EPO, testosterone</td><td>↑</td><td>nl</td></tr>\n<tr><td>Relative</td><td>Dehydration, diuretics</td><td>nl</td><td>nl</td></tr></tbody></table></div>\n<div class=\"rhy\"><b>PV treatment</b>Phlebotomy (Hct &lt;45%) + low-dose aspirin; hydroxyurea, interferon, ruxolitinib if high risk. Survival ≈10 y treated (in-house). Spent phase (post-PV myelofibrosis); AML ≈2%.</div>\n<h3 class=\"rh\">Essential thrombocythemia</h3>\n<p>Clonal megakaryocytic MPN. <b>JAK2 50–60%, CALR (calreticulin) ≈30%, MPL 5–10%</b>. Age 50–60. Least common classic MPN (in-house).</p>\n<div class=\"rtrap\"><b>CALR</b>In-house says “calretinin.” CALR = calreticulin. Calretinin is a mesothelioma marker.</div>\n<p>Presentations: thrombosis (MI, stroke, digital ischemia, <b>erythromelalgia</b>), bleeding, headache, or asymptomatic; spleen in 30–60%. Platelets &gt;600k in-house (WHO ≥450k), giant/clumped/dysfunctional; marrow clusters of large atypical megakaryocytes. Diagnosis of exclusion.</p>\n<div class=\"rtbl\"><table><thead><tr><th></th><th>Reactive</th><th>ET</th></tr></thead><tbody>\n<tr><td>Causes</td><td>Iron deficiency, infection, inflammation, cancer, post-splenectomy, bleeding, hemolysis, surgery</td><td>JAK2/CALR/MPL</td></tr>\n<tr><td>Course</td><td>Resolves</td><td>Sustained</td></tr><tr><td>Platelets</td><td>Normal</td><td>Giant, bizarre, clumped</td></tr>\n<tr><td>Risk</td><td>Low</td><td>High</td></tr><tr><td>Markers</td><td>↑ CRP/ESR, ↓ ferritin</td><td>Mutation +, BCR-ABL −</td></tr></tbody></table></div>\n<div class=\"rhy\"><b>ET pearls</b>Erythromelalgia responds to aspirin. Platelets &gt;1,000,000 → acquired vWD → bleeding. Indolent; median 10–15 y; &lt;5% transform. Aspirin ± hydroxyurea, anagrelide, interferon.</div>\n<h3 class=\"rh\">Primary myelofibrosis</h3>\n<div class=\"rseq\"><ol><li><b>Clonal megakaryocytes</b> (JAK2/CALR/MPL ≈90%)</li><li><b>PDGF + TGF-β</b> released</li><li><b>Reactive fibroblasts</b> deposit collagen</li><li><b>Cells forced out</b> → EMH in spleen, liver</li><li><b>Teardrops + leukoerythroblastosis</b></li></ol></div>\n<p>Age &gt;60. Massive splenomegaly, anemia, infections, gout. Early: ↑ WBC, marked thrombocytosis (mimics ET). Late: pancytopenia, massive spleen, <b>dry tap</b>, fibrosis on reticulin/trichrome.</p>\n<div class=\"rtbl\"><table><thead><tr><th>Differential</th><th>Clue</th></tr></thead><tbody>\n<tr><td>Post-PV/ET MF</td><td>Prior PV or ET</td></tr><tr><td>CML</td><td>BCR-ABL, basophilia</td></tr>\n<tr><td>Metastatic carcinoma</td><td>Cohesive clusters</td></tr><tr><td>Hairy cell leukemia</td><td>Pancytopenia from start, BRAF V600E, TRAP+</td></tr>\n<tr><td>Secondary fibrosis</td><td>TB, MDS, acute megakaryoblastic AML</td></tr></tbody></table></div>\n<div class=\"rhy\"><b>PMF outcome</b>Worst MPN: 3–5 y; AML 5–20%; infection, thrombosis, bleeding, portal HTN. Transfusions, ruxolitinib, hydroxyurea; allogeneic transplant = only cure.</div>\n<h3 class=\"rh\">MPN master comparison</h3>\n<div class=\"rtbl\"><table><thead><tr><th></th><th>CML</th><th>PV</th><th>ET</th><th>PMF</th></tr></thead><tbody>\n<tr><td>Line</td><td>Granulocytes</td><td>RBCs</td><td>Platelets</td><td>Fibrosis</td></tr>\n<tr><td>Mutation</td><td>BCR-ABL</td><td>JAK2 &gt;97%</td><td>JAK2/CALR/MPL</td><td>JAK2/CALR/MPL</td></tr>\n<tr><td>Age</td><td>55</td><td>60</td><td>50–60</td><td>&gt;60</td></tr>\n<tr><td>Blood</td><td>All stages, basophils</td><td>Hct &gt;60%, ↓ EPO</td><td>Plt &gt;600k, giant</td><td>Teardrops, leukoerythroblastosis</td></tr>\n<tr><td>Spleen</td><td>Big</td><td>Big</td><td>30–60%</td><td>Massive</td></tr>\n<tr><td>Course</td><td>Blast crisis</td><td>Spent phase; AML 2%</td><td>Near-normal</td><td>3–5 y; AML 5–20%</td></tr>\n<tr><td>Treatment</td><td>TKI</td><td>Phlebotomy + aspirin</td><td>Aspirin ± HU</td><td>Ruxolitinib; transplant</td></tr></tbody></table></div>\n<h3 class=\"rh\">Rapid Review checklist · the four MPNs</h3>\n<ul class=\"rlist\">\n<li><b>CML</b> Most common; t(9;22) 95%; median 55; early satiety; WBC 50–400k, all stages, basophils; chronic → accelerated → blast crisis; TKIs, transplant</li>\n<li><b>PV</b> JAK2 &gt;97%; age 60; headache, HTN, hot-shower itch, clots; Hct &gt;60%, low EPO; differential by EPO and O₂ sat; phlebotomy + aspirin; spent phase; AML 2%</li>\n<li><b>ET</b> JAK2/CALR/MPL; &gt;600k; clots, erythromelalgia, bleeding; exclude reactive; aspirin ± HU; 10–15 y</li>\n<li><b>PMF</b> Megakaryocyte PDGF/TGF-β → fibrosis + EMH; &gt;60; massive spleen; teardrops, dry tap; 3–5 y; ruxolitinib; transplant</li></ul>\n"};
+var RVW_NAME = {"F":"LO1–3 Foundations","D":"LO4–8 The four MPNs"};
+(function(){
+  var panel=document.getElementById("rvw"), body=document.getElementById("rvwBody"),
+      toc=document.getElementById("rvwToc"), q=document.getElementById("rvwQ"),
+      cnt=document.getElementById("rvwCount"), empty=document.getElementById("rvwEmpty"),
+      btn=document.getElementById("reviewBtn"), lec="F", secs=[];
+  var TYPES={rrule:1,rtrap:1,rmem:1,rhy:1};
+  function collapse(sec){
+    [].slice.call(sec.querySelectorAll(".rrule,.rtrap,.rmem,.rhy")).forEach(function(d){
+      var type=d.className.trim(); if(!TYPES[type])return;
+      var lbl=d.querySelector("b"), label=lbl?lbl.textContent:"Note";
+      if(lbl)lbl.parentNode.removeChild(lbl);
+      var det=document.createElement("details"); det.className="cx "+type;
+      var sum=document.createElement("summary");
+      sum.innerHTML='<span class="lbl"></span><span class="pk"></span>';
+      sum.querySelector(".lbl").textContent=label;
+      sum.querySelector(".pk").textContent=d.textContent.replace(/\s+/g," ").trim().slice(0,110);
+      var cb=document.createElement("div"); cb.className="cbody";
+      while(d.firstChild)cb.appendChild(d.firstChild);
+      det.appendChild(sum); det.appendChild(cb);
+      d.parentNode.replaceChild(det,d);
+    });
+    var h=sec.querySelector(".rh"), hys=[].slice.call(sec.querySelectorAll("details.rhy"));
+    if(h&&hys.length){ var ref=h.nextSibling; hys.forEach(function(x){ sec.insertBefore(x,ref); }); }
+    var kids=[].slice.call(sec.children), i=0;
+    while(i<kids.length){
+      if(kids[i].tagName==="DETAILS"){
+        var run=[kids[i]], cls=kids[i].className, j=i+1;
+        while(j<kids.length&&kids[j].tagName==="DETAILS"&&kids[j].className===cls){run.push(kids[j]);j++;}
+        if(run.length>1){
+          var g=document.createElement("div"); g.className="cgrid";
+          sec.insertBefore(g,run[0]); run.forEach(function(x){g.appendChild(x);});
+        }
+        i=j;
+      } else i++;
+    }
+  }
+  function group(){
+    var kids=[].slice.call(body.childNodes), out=[], cur=null;
+    kids.forEach(function(n){
+      if(n.nodeType===1&&n.tagName==="H3"){cur=document.createElement("section");cur.className="rsec";out.push(cur);}
+      if(!cur){cur=document.createElement("section");cur.className="rsec";out.push(cur);}
+      cur.appendChild(n);
+    });
+    body.innerHTML="";
+    out.forEach(function(s,i){ s.id="rs"+i; collapse(s); s._t=s.textContent.toLowerCase(); body.appendChild(s); });
+    return out;
+  }
+  function setAll(open){
+    [].slice.call(body.querySelectorAll("details.cx")).forEach(function(d){d.open=open;});
+    var t=document.getElementById("rvwAll");
+    if(t){t.textContent=open?"Collapse all":"Expand all";t.setAttribute("aria-pressed",String(open));}
+  }
+  function buildToc(){
+    toc.innerHTML=secs.map(function(s){
+      var h=s.querySelector(".rh"); return h?'<a href="#'+s.id+'">'+h.textContent+'</a>':'';
+    }).join("");
+  }
+  function filter(){
+    var terms=q.value.toLowerCase().split(/\s+/).filter(Boolean), n=0;
+    secs.forEach(function(s){
+      var on=terms.every(function(t){return s._t.indexOf(t)!==-1;});
+      s.classList.toggle("hide",!on); if(on)n++;
+    });
+    empty.classList.toggle("on",n===0);
+    cnt.textContent = n===secs.length ? secs.length+" sections" : n+" of "+secs.length;
+    toc.style.display = q.value ? "none" : "";
+  }
+  function load(l){
+    lec=l; panel.setAttribute("data-lec",l);
+    body.innerHTML=REVIEW[l]||"";
+    secs=group(); buildToc(); q.value=""; filter();
+    var t=document.getElementById("rvwAll"); if(t){t.textContent="Expand all";t.setAttribute("aria-pressed","false");}
+  }
+  function open(){
+    document.querySelector(".bar").style.display="none";
+    document.querySelector(".main").style.display="none";
+    panel.hidden=false; if(!secs.length)load(lec);
+    btn.setAttribute("aria-pressed","true");
+    window.scrollTo(0,0); q.focus({preventScroll:true});
+  }
+  function close(){
+    panel.hidden=true;
+    document.querySelector(".bar").style.display="";
+    document.querySelector(".main").style.display="";
+    btn.setAttribute("aria-pressed","false");
+    window.scrollTo(0,0);
+  }
+  btn.onclick=function(){ panel.hidden?open():close(); };
+  document.getElementById("rvwClose").onclick=close;
+  document.getElementById("rvwPrint").onclick=function(){window.print();};
+  var allBtn=document.getElementById("rvwAll");
+  if(allBtn)allBtn.onclick=function(){ setAll(this.getAttribute("aria-pressed")!=="true"); };
+  var reclose=[];
+  window.addEventListener("beforeprint",function(){
+    reclose=[];
+    [].slice.call(body.querySelectorAll("details.cx")).forEach(function(d){ if(!d.open){reclose.push(d);d.open=true;} });
+  });
+  window.addEventListener("afterprint",function(){ reclose.forEach(function(d){d.open=false;}); reclose=[]; });
+  document.getElementById("rvwTabs").onclick=function(e){
+    var b=e.target.closest("button"); if(!b)return;
+    [].forEach.call(this.children,function(c){c.setAttribute("aria-pressed",String(c===b));});
+    load(b.dataset.l); window.scrollTo(0,0);
+  };
+  q.addEventListener("input",filter);
+  document.addEventListener("keydown",function(e){
+    if(e.key==="Escape"&&!panel.hidden){ if(document.activeElement===q&&q.value){q.value="";filter();} else close(); }
+  });
+})();
+
+</script>

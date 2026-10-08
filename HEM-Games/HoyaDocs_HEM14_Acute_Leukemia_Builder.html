@@ -1,0 +1,556 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HEM14 MDS & Acute Leukemia Builder</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,600;8..60,700&family=Public+Sans:wght@400;600;700&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+/* Layout: toolbar + stats on top; structure list | question card | LO mastery map. Stacks to one column on phones. */
+:root{
+  --bg:#f3f5f6; --surface:#ffffff; --ink:#18212b; --muted:#5a6570; --line:#dbe0e5; --chip:#eceff2;
+  --arch:#2c55a0; --face:#a3263f; --eye:#2c55a0; --accent:#a3263f;
+  --ok:#1d7a3e; --ok-bg:#e3f4e8; --bad:#b3261e; --bad-bg:#fbe7e5; --once:#b7791f; --once-bg:#fdf1dc; --mem:#c2621a;
+  --hy-bg:#fff6cc; --hy-line:#c9a227; --hy-ink:#4a3a00;
+  --f-display:"Source Serif 4", Georgia, serif; --f-body:"Public Sans", Arial, sans-serif; --f-mono:"IBM Plex Mono", ui-monospace, monospace;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#11161c; --surface:#19212a; --ink:#e6eaee; --muted:#9aa6b2; --line:#2c3642; --chip:#232c36;
+  --arch:#8fb1f0; --face:#f08a9b; --eye:#8fb1f0; --accent:#f08a9b;
+  --ok:#6fd08f; --ok-bg:#16301f; --bad:#f28b82; --bad-bg:#3a1b19; --once:#f0c070; --once-bg:#3a2e12; --mem:#f0a05c;
+  --hy-bg:#3a3110; --hy-line:#b8952a; --hy-ink:#f5e6a8; color-scheme:dark }}
+:root[data-theme="dark"]{
+  --bg:#11161c; --surface:#19212a; --ink:#e6eaee; --muted:#9aa6b2; --line:#2c3642; --chip:#232c36;
+  --arch:#8fb1f0; --face:#f08a9b; --eye:#8fb1f0; --accent:#f08a9b;
+  --ok:#6fd08f; --ok-bg:#16301f; --bad:#f28b82; --bad-bg:#3a1b19; --once:#f0c070; --once-bg:#3a2e12; --mem:#f0a05c;
+  --hy-bg:#3a3110; --hy-line:#b8952a; --hy-ink:#f5e6a8; color-scheme:dark }
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font:15px/1.5 var(--f-body);margin:0}
+.wrap{max-width:1180px;margin:0 auto;padding-inline:16px;padding-block:22px 48px;display:grid;gap:16px}
+h1,h2,h3{font-family:var(--f-display);margin:0;text-wrap:balance;line-height:1.2}
+.meta{font:500 .74rem var(--f-mono);letter-spacing:.07em;text-transform:uppercase;color:var(--muted);margin:0}
+header{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:end;gap:12px}
+header h1{font-size:1.9rem}
+header p.lede{margin:4px 0 0;color:var(--muted);max-width:62ch}
+.btn{font:600 .85rem var(--f-body);background:var(--chip);color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:7px 12px;cursor:pointer}
+.btn:hover{border-color:var(--ink)}
+.btn:focus-visible,.opt:focus-visible,.seg button:focus-visible,.ent:focus-visible,.lo-tile:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.btn.primary{background:var(--accent);color:var(--surface);border-color:var(--accent)}
+.btn[disabled]{opacity:.45;cursor:default}
+.hdr-actions{display:flex;gap:8px;flex-wrap:wrap}
+.wrap{grid-template-columns:minmax(0,1fr)} .rvw{min-width:0}
+
+.bar{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 12px}
+.seg{display:inline-flex;background:var(--chip);border-radius:10px;padding:3px;gap:2px;flex-wrap:wrap}
+.seg button{font:600 .82rem var(--f-body);border:0;background:transparent;color:var(--ink);padding:6px 11px;border-radius:8px;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--surface);box-shadow:0 1px 2px rgba(0,0,0,.12)}
+.seg .lab{font:500 .7rem var(--f-mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);align-self:center;padding:0 6px}
+.stats{display:flex;gap:18px;flex-wrap:wrap}
+.stat b{display:block;font:700 1.15rem var(--f-body);font-variant-numeric:tabular-nums}
+.stat span{font:500 .68rem var(--f-mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+
+.main{display:grid;grid-template-columns:250px minmax(0,1fr) 270px;gap:16px;align-items:start}
+@media (max-width:1000px){ .main{grid-template-columns:minmax(0,1fr)} .side{order:2} .map{order:3} }
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px;display:grid;gap:8px;min-width:0}
+.panel h2{font-size:1rem}
+.lec-h{font:700 .72rem var(--f-body);letter-spacing:.07em;text-transform:uppercase;margin-top:6px}
+.ent{display:grid;grid-template-columns:1fr auto;gap:2px 8px;text-align:left;width:100%;background:transparent;border:1px solid transparent;border-radius:8px;padding:7px 8px;cursor:pointer;color:var(--ink);font:inherit}
+.ent:hover{background:var(--chip)}
+.ent[aria-current="true"]{border-color:var(--lc);background:var(--chip)}
+.ent .n{font-weight:600;font-size:.9rem}
+.ent .s{grid-column:1;font-size:.75rem;color:var(--muted)}
+.ent .pct{grid-row:1/3;grid-column:2;align-self:center;font:500 .75rem var(--f-mono);color:var(--muted);font-variant-numeric:tabular-nums}
+.ent .mini{grid-column:1/3;height:4px;border-radius:2px;background:var(--line);overflow:hidden}
+.ent .mini i{display:block;height:100%;background:var(--lc)}
+.lF{--lc:var(--arch)} .lD{--lc:var(--face)} .lT{--lc:var(--tcol)}
+:root{--tcol:#1d7a5f} @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--tcol:#6fd0b0}} :root[data-theme="dark"]{--tcol:#6fd0b0}
+.tag.rr{background:var(--chip);color:var(--ink);border:1px solid var(--line)}
+
+.card{background:var(--surface);border:1px solid var(--line);border-top:5px solid var(--lc);border-radius:12px;padding:18px;display:grid;gap:14px;min-width:0}
+.card-top{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px;align-items:baseline}
+.card-top h2{font-size:1.35rem}
+.tag{font:500 .7rem var(--f-mono);letter-spacing:.06em;text-transform:uppercase;padding:3px 8px;border-radius:999px;background:var(--chip);color:var(--muted)}
+.tag.lo{color:var(--lc)}
+.tag.hy{background:var(--hy-bg);color:var(--hy-ink);border:1px solid var(--hy-line)}
+.boxes{display:flex;gap:4px;flex-wrap:wrap}
+.boxes i{width:18px;height:6px;border-radius:3px;background:var(--line)}
+.boxes i.done-ok{background:var(--ok)} .boxes i.done-bad{background:var(--bad)} .boxes i.cur{background:var(--lc)}
+.q{font:600 1.08rem/1.45 var(--f-body);margin:0}
+.hint{font-size:.8rem;color:var(--muted);margin:0}
+.opts{display:grid;gap:8px}
+.opt{display:grid;grid-template-columns:auto 1fr;gap:10px;align-items:start;text-align:left;width:100%;font:inherit;color:var(--ink);background:var(--bg);border:1.5px solid var(--line);border-radius:10px;padding:10px 12px;cursor:pointer}
+.opt:hover:not([disabled]){border-color:var(--lc)}
+.opt .k{font:500 .75rem var(--f-mono);color:var(--muted);border:1px solid var(--line);border-radius:5px;padding:1px 6px;margin-top:1px}
+.opt.sel{border-color:var(--lc);background:var(--chip)}
+.opt.right{border-color:var(--ok);background:var(--ok-bg)}
+.opt.wrong{border-color:var(--bad);background:var(--bad-bg)}
+.opt.missed{border-color:var(--ok);border-style:dashed}
+.opt[disabled]{cursor:default}
+.ordered{display:grid;gap:6px;counter-reset:ord;padding:0;margin:0;list-style:none;min-height:44px;border:1.5px dashed var(--line);border-radius:10px;padding:8px}
+.ordered li{counter-increment:ord;display:grid;grid-template-columns:auto 1fr;gap:8px;align-items:center;background:var(--chip);border-radius:8px;padding:7px 10px;cursor:pointer}
+.ordered li::before{content:counter(ord);font:500 .78rem var(--f-mono);color:var(--lc)}
+.ordered li.right{background:var(--ok-bg)} .ordered li.wrong{background:var(--bad-bg)}
+.ordered .empty{color:var(--muted);font-size:.85rem;padding:4px}
+/* ---------- Review ---------- */
+.rvw{margin-top:14px}
+.rvw-bar{position:sticky;top:0;z-index:8;background:var(--bg);border-bottom:1px solid var(--line);padding:10px 0;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.rvw-bar .seg{display:flex;gap:2px;background:var(--chip);border:1px solid var(--line);border-radius:9px;padding:3px}
+.rvw-bar .seg button{background:transparent;border:0;border-radius:7px;padding:6px 12px;font:inherit;font-size:13.5px;color:var(--muted);cursor:pointer}
+.rvw-bar .seg button[aria-pressed="true"]{background:var(--surface);color:var(--ink);font-weight:600;box-shadow:0 1px 2px rgba(0,0,0,.08)}
+#rvwQ{flex:1 1 180px;min-width:140px;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:7px 10px;font:inherit;font-size:14px;color:inherit}
+#rvwCount{font-family:var(--f-mono);font-size:11px;color:var(--muted);white-space:nowrap}
+.rvw-toc{display:flex;flex-wrap:wrap;gap:6px;margin:12px 0 2px}
+.rvw-toc a{font-size:12.5px;text-decoration:none;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:4px 10px}
+.rvw-toc a:hover{color:var(--ink);border-color:var(--muted)}
+.rvw-body{max-width:none}
+.rsec{padding:6px 0 10px;scroll-margin-top:64px}
+.rsec.hide{display:none}
+.rh{font-family:var(--f-display);font-size:1.5rem;font-weight:650;margin:26px 0 4px;padding-bottom:6px;border-bottom:2px solid var(--acc)}
+.rsh{font-family:var(--f-display);font-size:1.12rem;font-weight:650;margin:18px 0 4px}
+.rvw-body p{margin:8px 0;line-height:1.62}
+ul.rlist{margin:8px 0;padding-left:1.15em;display:grid;gap:5px}
+ul.rlist li{line-height:1.55}
+.rtbl{overflow-x:auto;margin:12px 0;border:1px solid var(--line);border-radius:10px;background:var(--surface)}
+.rtbl table{border-collapse:collapse;width:100%;font-size:14px}
+.rtbl th,.rtbl td{text-align:left;vertical-align:top;padding:8px 11px;border-bottom:1px solid var(--line)}
+.rtbl thead th{background:var(--chip);font-family:var(--f-mono);font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);white-space:nowrap}
+.rtbl tbody tr:last-child td{border-bottom:0}
+.rtbl td b{font-weight:600}
+.rseq{margin:12px 0;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 14px 12px 10px}
+.rseq ol{margin:0;padding-left:1.3em;display:grid;gap:7px}
+.rseq li{line-height:1.55;padding-left:2px}
+.rseq li b{color:var(--acc)}
+.cgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(330px,1fr));gap:10px;margin:12px 0;align-items:start}
+.cgrid>details{margin:0}
+details.cx{margin:11px 0;border-radius:9px;border:1px solid var(--line);background:var(--surface);overflow:hidden}
+details.cx>summary{list-style:none;cursor:pointer;display:flex;align-items:baseline;gap:9px;padding:9px 12px;border-left:3px solid var(--line);font-size:14px}
+details.cx>summary::-webkit-details-marker{display:none}
+details.cx>summary::after{content:"+";margin-left:auto;font-family:var(--f-mono);font-size:14px;color:var(--muted);line-height:1}
+details.cx[open]>summary::after{content:"\2013"}
+details.cx>summary .lbl{font-family:var(--f-mono);font-size:10px;letter-spacing:.11em;text-transform:uppercase;font-weight:700;white-space:nowrap}
+details.cx>summary .pk{color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1}
+details.cx[open]>summary .pk{display:none}
+details.cx .cbody{padding:2px 13px 12px;line-height:1.56;font-size:14.6px;border-left:3px solid var(--line)}
+details.cx .cbody b{font-weight:600}
+details.rrule>summary,details.rrule .cbody{border-left-color:var(--acc)}
+details.rtrap>summary,details.rtrap .cbody{border-left-color:var(--bad)}
+details.rmem>summary,details.rmem .cbody{border-left-color:var(--mem)}
+details.rrule>summary .lbl{color:var(--acc)} details.rtrap>summary .lbl{color:var(--bad)} details.rmem>summary .lbl{color:var(--mem)}
+details.rhy{background:var(--hy-bg);border-color:var(--hy-line);color:var(--hy-ink)}
+details.rhy>summary,details.rhy .cbody{border-left-color:var(--hy-line)}
+details.rhy>summary .lbl{color:var(--hy-ink);opacity:.9}
+details.rhy>summary .pk,details.rhy>summary::after{color:var(--hy-ink);opacity:.75}
+.rvw-empty{display:none;text-align:center;color:var(--muted);border:1px dashed var(--line);border-radius:10px;padding:28px;margin-top:16px}
+.rvw-empty.on{display:block}
+.rvw[data-lec="F"]{--acc:var(--arch)} .rvw[data-lec="D"]{--acc:var(--face)} .rvw[data-lec="T"]{--acc:var(--tcol)}
+@media print{
+  header,.bar,.main,.rvw-bar,.rvw-toc,.rvw-empty{display:none!important}
+  .rvw{margin:0}
+  body{background:#fff}
+  .rsec{break-before:page;break-inside:auto}
+  .rsec:first-of-type{break-before:auto}
+  .rtbl,.rseq,details.cx{break-inside:avoid}
+  details.cx>summary::after{display:none}
+  .cgrid{grid-template-columns:1fr 1fr}
+}
+.fb .ans{font-size:.95rem}
+.fbexp{display:grid;gap:8px}
+.fbexp p{margin:0;line-height:1.6}
+.fbnotes{list-style:none;margin:2px 0 0;padding:0;display:grid;gap:6px}
+.fbnotes li{font-size:.9rem;line-height:1.5;color:var(--muted);padding-left:10px;border-left:2px solid var(--line)}
+.fbnotes li b{color:var(--ink);font-weight:600}
+.fbpearl{margin-top:2px;background:var(--hy-bg);border:1px solid var(--hy-line);border-left-width:3px;border-radius:9px;padding:9px 12px;font-size:.92rem;line-height:1.5;color:var(--hy-ink)}
+.fbpearl b{display:block;font:700 .66rem var(--f-mono);letter-spacing:.14em;text-transform:uppercase;color:var(--hy-line);margin-bottom:3px}
+.fb{border-radius:10px;padding:12px 14px;display:grid;gap:6px}
+.fb.ok{background:var(--ok-bg)} .fb.bad{background:var(--bad-bg)}
+.fb .v{font-weight:700}
+.fb.ok .v{color:var(--ok)} .fb.bad .v{color:var(--bad)}
+.fb ol{margin:0;padding-left:1.2em}
+.actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:space-between;align-items:center}
+.timer{font:500 .8rem var(--f-mono);color:var(--muted);font-variant-numeric:tabular-nums}
+.done{display:grid;gap:10px;text-align:left}
+
+.lo-grid{display:grid;gap:6px}
+.lo-tile{display:grid;grid-template-columns:auto 1fr auto;gap:8px;align-items:center;text-align:left;width:100%;background:transparent;border:1px solid var(--line);border-radius:8px;padding:6px 8px;cursor:pointer;color:var(--ink);font:inherit}
+.lo-tile:hover{border-color:var(--lc)}
+.lo-tile .id{font:500 .72rem var(--f-mono);color:var(--lc);white-space:nowrap}
+.lo-tile .t{font-size:.78rem;line-height:1.3}
+.lo-tile .dot{width:12px;height:12px;border-radius:50%;background:var(--line)}
+.dot.s-o{background:var(--once)} .dot.s-m{background:var(--bad)} .dot.s-M{background:var(--ok)}
+.legend{display:flex;flex-wrap:wrap;gap:10px;font-size:.72rem;color:var(--muted)}
+.legend span{display:inline-flex;gap:5px;align-items:center}
+.legend i{width:10px;height:10px;border-radius:50%;display:inline-block;background:var(--line)}
+.legend i.o{background:var(--once)} .legend i.m{background:var(--bad)} .legend i.M{background:var(--ok)}
+footer{color:var(--muted);font-size:.8rem;border-top:1px solid var(--line);padding-top:12px}
+@media (prefers-reduced-motion: no-preference){ .opt,.ent,.lo-tile{transition:border-color .12s, background .12s} }
+</style>
+
+<div class="wrap">
+<header>
+  <div>
+    <p class="meta">HoyaDocs · Block 5 · Hematology · HEM14</p>
+    <h1>HEM14 MDS & Acute Leukemia Builder</h1>
+    <p class="lede">Myelodysplastic syndromes, AML and ALL, LO by LO: build each structure box by box, then drill what you miss. Boxes tagged Rapid Review test the LO Rapid Review and Master Review checklists.</p>
+  </div>
+  <div class="hdr-actions">
+    <button class="btn primary" id="reviewBtn" type="button" aria-pressed="false">Review</button>
+    <button class="btn" id="themeBtn" type="button">Theme: auto</button>
+    <button class="btn" id="resetBtn" type="button">Reset progress</button>
+  </div>
+</header>
+
+<div class="bar">
+  <div class="seg" role="group" aria-label="Mode">
+    <span class="lab">Mode</span>
+    <button type="button" data-mode="build" aria-pressed="true">Build</button>
+    <button type="button" data-mode="drill" aria-pressed="false">Drill</button>
+  </div>
+  <div class="seg" role="group" aria-label="Lecture scope" id="scopeSeg">
+    <span class="lab">Scope</span>
+    <button type="button" data-scope="all" aria-pressed="true">All</button>
+    <button type="button" data-scope="F" aria-pressed="false">LO1–4 MDS</button>
+    <button type="button" data-scope="D" aria-pressed="false">LO5–10 Leukemia &amp; AML</button>
+    <button type="button" data-scope="T" aria-pressed="false">LO11–13 ALL</button>
+  </div>
+  <div class="seg" role="group" aria-label="Focus" id="focusSeg">
+    <span class="lab">Focus</span>
+    <button type="button" data-rr="0" aria-pressed="true">All boxes</button>
+    <button type="button" data-rr="1" aria-pressed="false">Rapid Review only</button>
+  </div>
+  <div class="stats" aria-live="polite">
+    <div class="stat"><b id="sScore">0</b><span>Score</span></div>
+    <div class="stat"><b id="sStreak">0</b><span>Streak</span></div>
+    <div class="stat"><b id="sAcc">—</b><span>Accuracy</span></div>
+    <div class="stat"><b id="sBoxes">0</b><span>Boxes mastered</span></div>
+    <div class="stat"><b id="sLos">0/13</b><span>LOs mastered</span></div>
+  </div>
+</div>
+
+<div class="main">
+  <aside class="panel side" aria-label="Structures">
+    <h2>Structures</h2>
+    <div id="entList"></div>
+  </aside>
+  <section class="card" id="card" aria-live="polite"></section>
+  <aside class="panel map" aria-label="Learning objective mastery map">
+    <h2>LO mastery map</h2>
+    <div class="legend"><span><i></i>untested</span><span><i class="m"></i>missed</span><span><i class="o"></i>got it once</span><span><i class="M"></i>mastered</span></div>
+
+    <p class="hint">Tap an LO to drill just that objective. Mastered = right twice in a row.</p>
+    <div class="lo-grid" id="loGrid"></div>
+  </aside>
+</div>
+
+<div class="rvw" id="rvw" data-lec="F" hidden>
+  <div class="rvw-bar">
+    <div class="seg" id="rvwTabs" role="group" aria-label="Lecture">
+      <button type="button" data-l="F" aria-pressed="true">LO1–4 MDS</button>
+      <button type="button" data-l="D" aria-pressed="false">LO5–10 Leukemia &amp; AML</button>
+      <button type="button" data-l="T" aria-pressed="false">LO11–13 ALL</button>
+    </div>
+    <input id="rvwQ" type="search" placeholder="Search this review" autocomplete="off" aria-label="Search the review">
+    <span id="rvwCount"></span>
+    <button class="btn" type="button" id="rvwAll" aria-pressed="false">Expand all</button>
+    <button class="btn" type="button" id="rvwPrint">Print</button>
+    <button class="btn primary" type="button" id="rvwClose">Back to the game</button>
+  </div>
+  <nav class="rvw-toc" id="rvwToc" aria-label="Contents"></nav>
+  <div class="rvw-body" id="rvwBody"></div>
+  <div class="rvw-empty" id="rvwEmpty">Nothing in this lecture matches that search.</div>
+</div>
+
+
+<footer>HoyaDocs · HEM14 MDS & Acute Leukemia Builder · Updated October 7, 2026 · Revision 1.0. Yellow “HY” tags mark high-yield points, including Step 1. “Rapid Review” tags mark boxes built from the LO Rapid Review checklists.</footer>
+</div>
+
+<script>
+/* ================= LEARNING OBJECTIVES ================= */
+var LOS = {"1": "Define MDS and the basis of its classification", "2": "Signs and symptoms of cytopenias correlated with lab tests", "3": "MDS cytogenetic abnormalities and complications", "4": "MDS vs myeloproliferative neoplasms", "5": "Leukemia vs lymphoma; acute vs chronic", "6": "Clinical and pathologic features of AML vs ALL", "7": "Clinical presentation of acute vs chronic leukemias", "8": "AML classification and how it reflects disease biology", "9": "De novo AML vs AML arising from MDS", "10": "AML translocations, subtypes and prognosis", "11": "WHO classification of ALL", "12": "The typical patient with ALL", "13": "ALL markers, cytogenetics and prognosis"};
+var LOLEC = {"1": "F", "2": "F", "3": "F", "4": "F", "5": "D", "6": "D", "7": "D", "8": "D", "9": "D", "10": "D", "11": "T", "12": "T", "13": "T"};
+var LECS = [{"k": "F", "n": "LO1–4 MDS", "c": "arch"}, {"k": "D", "n": "LO5–10 Leukemia & AML", "c": "face"}, {"k": "T", "n": "LO11–13 ALL", "c": "eye"}];
+var E = [{"id": "mdsdef", "lec": "F", "name": "What is MDS?", "sub": "Definition · MPN vs MDS vs AML · CHIP", "b": [{"lo": "1", "rr": true, "hy": true, "q": "Which definition fits myelodysplastic syndrome?", "a": "Clonal stem cell disorder with disorderly, ineffective hematopoiesis, cytopenias, blasts <20% and a high risk of AML", "o": ["Clonal disorder with effective maturation and high blood counts", "Clonal proliferation with ≥20% blasts", "Reactive marrow suppression after infection"], "n": ["That’s an MPN.", "That’s acute leukemia.", "MDS is clonal, not reactive."], "w": "MDS has quantitative and qualitative defects in one, two or all three lines. It doesn’t meet acute leukemia criteria but causes similar marrow failure.", "p": "MDS = sloppy assembly line: busy marrow, defective products."}, {"lo": "1", "rr": true, "q": "Compare maturation across the myeloid neoplasms. Which set is correct?", "a": "MPN: effective · MDS: disorderly, ineffective · AML: blocked", "o": ["MPN: blocked · MDS: effective · AML: ineffective", "All three: effective", "MPN: ineffective · MDS: blocked · AML: effective"], "n": ["Scrambled.", "Not true.", "Scrambled."], "w": "Counts: MPN ↑; MDS ↓ (cytopenias); AML ↓ normal cells with ↑ blasts. Blasts: MPN normal; MDS increased but <20%; AML ≥20%.", "p": "Effective · ineffective · blocked."}, {"lo": "1", "rr": true, "hy": true, "q": "A patient develops MDS 5 years after chemotherapy and radiation. How does this differ from primary MDS?", "a": "Therapy-related MDS (2–8 years after genotoxic therapy) progresses to AML more often and faster", "o": ["It has a better prognosis than primary MDS", "It never progresses to AML", "It occurs only in children"], "n": ["Worse prognosis.", "High AML risk.", "Not true."], "w": "Primary (idiopathic) MDS: slow onset, older adults (>50).", "p": "t-MDS: 2–8 y after chemo/radiation; faster to AML."}, {"lo": "1", "rr": true, "q": "What is MDS classification based on?", "a": "Clinical features, peripheral blood, bone marrow, and cytogenetic/molecular findings", "o": ["Peripheral blood morphology alone", "Patient age alone", "Spleen size alone"], "n": ["Too narrow.", "Not the basis.", "Not the basis."], "w": "WHO 2022 (no need to memorize): genetically defined (isolated del(5q), SF3B1, biallelic TP53) and morphologically defined (low blasts, hypoplastic, increased blasts, fibrosis).", "p": "MDS classification = clinical + blood + marrow + genetics."}, {"lo": "1", "rr": true, "t": "m", "q": "Select ALL features of clonal hematopoiesis (CHIP).", "a": ["Acquired cancer-gene mutation with normal blood counts", "Usually TET2 or DNMT3A", "About 10% of people by age 70", "About 1% per year risk of blood cancer", "Pro-inflammatory (worse atherosclerosis)"], "o": ["≥20% marrow blasts", "Always symptomatic cytopenias"], "n": ["That’s AML.", "Counts are normal."], "w": "TET2 and DNMT3A regulate DNA methylation. CHIP also raises RDW, an independent mortality predictor.", "p": "CHIP: TET2/DNMT3A, normal counts, 1%/yr."}]}, {"id": "cyto", "lec": "F", "name": "Cytopenias & MDS labs", "sub": "A-B-C of marrow failure · dysplasia", "b": [{"lo": "2", "rr": true, "q": "Who typically gets MDS?", "a": "Older adults (mean ≈70), men more than women; often found on a routine CBC", "o": ["Children aged 2–10", "Young women aged 20–30", "Infants with Down syndrome only"], "n": ["That’s ALL.", "Not typical.", "Not the usual group."], "w": "Consider MDS in unexplained anemia in an older patient.", "p": "MDS: ≈70 y, men > women."}, {"lo": "2", "rr": true, "hy": true, "q": "Match the low cell line to its symptom. Which set is correct?", "a": "↓ neutrophils → infections · ↓ RBCs → fatigue · ↓ platelets → bleeding", "o": ["↓ neutrophils → bleeding · ↓ platelets → infection", "↓ RBCs → infection · ↓ neutrophils → fatigue", "All three → bone pain"], "n": ["Swapped.", "Swapped.", "Not the pattern."], "w": "A-B-C of marrow failure: Anemia (fatigue), Bleeding (platelets), Contagion (infection). Same in MDS, AML, ALL and aplastic anemia.", "p": "A-B-C: anemia, bleeding, contagion."}, {"lo": "2", "rr": true, "hy": true, "t": "m", "q": "Select ALL blood findings typical of MDS.", "a": ["Anemia, often macrocytic", "Hypogranular neutrophils", "Pseudo-Pelger-Huët (bilobed) neutrophils", "Giant platelets"], "o": ["Absolute basophilia with WBC 200k", "Hct >60%"], "n": ["CML.", "PV."], "w": "Anemia is the most common presenting abnormality, alone or with thrombocytopenia and/or neutropenia.", "p": "Pseudo-Pelger-Huët = dysplasia."}, {"lo": "2", "rr": true, "hy": true, "q": "Why can the marrow be hypercellular while the blood is cytopenic in MDS?", "a": "Ineffective hematopoiesis: defective cells die in the marrow before release", "o": ["The spleen sequesters all cells", "Cells are destroyed by antibodies in the blood", "The marrow is replaced by fibrosis"], "n": ["Organomegaly is uncommon in MDS.", "Not immune.", "That’s myelofibrosis."], "w": "Marrow: hypercellular, dysplastic precursors in ≥1 lineage (megaloblastoid erythroids, ringed sideroblasts, small hypolobated megakaryocytes), blasts <20%.", "p": "Busy marrow, empty blood = MDS."}, {"lo": "2", "rr": true, "hy": true, "q": "An older patient has macrocytic anemia with dysplastic neutrophils. What must be excluded first?", "a": "B12 and folate deficiency", "o": ["Iron deficiency", "Hemophilia", "Hereditary spherocytosis"], "n": ["Microcytic.", "Not relevant.", "Not relevant."], "w": "MDS doesn’t correct with vitamins and shows clonal cytogenetic abnormalities.", "p": "Macrocytosis + dysplasia → check B12/folate first."}]}, {"id": "mdsgen", "lec": "F", "name": "MDS genetics & course", "sub": "del(5q) · −7 · therapy-related · treatment", "b": [{"lo": "3", "rr": true, "hy": true, "q": "A 70-year-old woman has isolated macrocytic anemia, normal-to-high platelets and small hypolobated megakaryocytes. Deletion and drug?", "a": "del(5q) MDS; lenalidomide", "o": ["Monosomy 7; ATRA", "t(9;22); imatinib", "del(17p); rituximab"], "n": ["−7 is poor-risk; ATRA is for APL.", "CML.", "Not MDS standard."], "w": "5q– syndrome: older women, macrocytic anemia, good prognosis, responds to lenalidomide.", "p": "del(5q) = good + lenalidomide."}, {"lo": "3", "rr": true, "t": "m", "q": "Select ALL POOR-prognosis findings in MDS.", "a": ["Monosomy 7 / del(7q)", "Complex karyotype", "TP53 mutation"], "o": ["Isolated del(5q)", "SF3B1 mutation with ringed sideroblasts"], "n": ["Good prognosis.", "Generally lower risk."], "w": "Classic MDS changes: −5/del(5q), −7/del(7q), trisomy 8, del(20q).", "p": "−7, complex, TP53 = bad."}, {"lo": "3", "rr": true, "t": "m", "q": "Select ALL functional groups of MDS driver mutations.", "a": ["Epigenetic regulators (TET2, DNMT3A)", "RNA splicing factors (SF3B1)", "Transcription factors", "TP53"], "o": ["BCR-ABL tyrosine kinase", "JAK2 V617F as the main driver"], "n": ["CML.", "MPN driver."], "w": "MDS is multistep: an initial DNA-damaging event, then secondary hits. Drivers overlap with AML. SF3B1 is linked to ringed sideroblasts.", "p": "MDS drivers: epigenetic, splicing, TF, TP53."}, {"lo": "3", "hy": true, "q": "Match the therapy-related MDS/AML pattern: which drug class causes a SHORT latency (1–3 years) with 11q23/KMT2A?", "a": "Topoisomerase II inhibitors (e.g., etoposide)", "o": ["Alkylating agents", "Corticosteroids", "Hydroxyurea only"], "n": ["Longer latency (5–10 y), often −5/−7.", "Not leukemogenic this way.", "Not the classic cause."], "w": "Alkylating agents → 5–10 years, −5/−7. Topo II inhibitors → 1–3 years, 11q23.", "p": "Alkylators: late, −5/−7. Topo II: early, 11q23."}, {"lo": "3", "rr": true, "t": "m", "q": "Select ALL complications of MDS.", "a": ["Infections", "Bleeding", "Symptomatic anemia", "Transfusion iron overload", "Transformation to AML (≈10–40%)"], "o": ["Massive splenomegaly", "Hyperviscosity from erythrocytosis"], "n": ["Uncommon in MDS.", "PV."], "w": "Survival ranges from weeks to years depending on blasts, cytopenias and cytogenetics.", "p": "MDS → AML 10–40%."}, {"lo": "3", "rr": true, "q": "How is MDS treated in an older patient vs a young adult?", "a": "Older: supportive care (transfusions, growth factors), hypomethylating agents · Young: stem cell transplant (only cure)", "o": ["Both: imatinib", "Both: watchful waiting only", "Older: transplant · young: supportive only"], "n": ["Not MDS therapy.", "Many need treatment.", "Reversed."], "w": "Hypomethylating agents: azacitidine, decitabine. Lenalidomide for del(5q).", "p": "MDS cure = transplant."}]}, {"id": "mdsmpn", "lec": "F", "name": "MDS vs MPN", "sub": "Busy marrow · good vs ugly cells", "b": [{"lo": "4", "rr": true, "hy": true, "t": "m", "q": "Select ALL features that favor MDS over MPN.", "a": ["Ineffective hematopoiesis", "Peripheral cytopenias", "Dysplastic cell morphology", "Organomegaly uncommon"], "o": ["High peripheral counts", "Splenomegaly from EMH", "Tyrosine kinase driver (JAK2, BCR-ABL)"], "n": ["MPN.", "MPN.", "MPN."], "w": "Both have hypercellular marrow and both can transform to AML.", "p": "MPN: too many good cells. MDS: too few ugly cells."}, {"lo": "4", "rr": true, "q": "Which features do MDS and MPN SHARE?", "a": "Hypercellular marrow and risk of AML", "o": ["Cytopenias", "Organomegaly", "Tyrosine kinase mutations"], "n": ["Typical of MDS; MPN usually has high counts.", "MPN mainly.", "MPN."], "w": "Blasts: MPN normal; MDS normal or ↑ but <20%.", "p": "Both busy marrow; both can become AML."}, {"lo": "4", "rr": true, "hy": true, "q": "A 74-year-old man: Hb 8.9 (MCV 108), WBC 2.9, platelets 88,000; normal B12/folate; hypogranular bilobed neutrophils; hypercellular dysplastic marrow with 6% blasts; −7. Diagnosis and prognosis?", "a": "MDS with monosomy 7: poor prognosis, higher AML risk", "o": ["AML: blasts ≥20%", "MPN: high counts", "B12 deficiency"], "n": ["Blasts are 6%.", "Counts are low.", "B12 is normal."], "w": "Cytopenias + dysplasia + hypercellular marrow + blasts <20% = MDS.", "p": "−7 MDS = poor."}]}, {"id": "acute", "lec": "D", "name": "Leukemia basics", "sub": "Leukemia vs lymphoma · acute vs chronic", "b": [{"lo": "5", "rr": true, "q": "Which statement correctly contrasts leukemia and lymphoma?", "a": "Leukemia mainly involves marrow with circulating tumor cells; lymphoma forms discrete masses in nodes or extranodal sites", "o": ["Leukemia is always myeloid; lymphoma always lymphoid", "Leukemia never circulates", "Lymphoma is always acute"], "n": ["Leukemia can be lymphoid.", "Leukemia usually has circulating tumor cells.", "Not true."], "w": "Overlap: CLL = small lymphocytic lymphoma (same disease), taught with lymphomas. CML is an MPN.", "p": "CLL = SLL."}, {"lo": "5", "rr": true, "q": "Why is CLL taught with the lymphomas and CML with the myeloproliferative neoplasms?", "a": "CLL and small lymphocytic lymphoma are the same disease (marrow, blood and nodes); CML is an MPN driven by BCR-ABL", "o": ["CLL is a myeloid disease; CML is lymphoid", "Both are acute leukemias", "CML never involves the blood"], "n": ["Reversed lineages.", "Both are chronic.", "CML has very high blood counts."], "w": "Classification follows biology, not just where the cells are found.", "p": "CLL = SLL; CML = MPN."}, {"lo": "7", "rr": true, "hy": true, "t": "m", "q": "Select ALL features of ACUTE leukemia.", "a": ["Blasts from immature precursors", "Maturation arrest", "Early marrow failure (bleeding, infection, fatigue)", "≥20% blasts", "Urgent treatment"], "o": ["Organ infiltration with marked mature leukocytosis and late marrow failure", "Often found incidentally"], "n": ["Chronic.", "Chronic."], "w": "Chronic: terminally differentiated cells, ↑ proliferation, nonspecific findings, organ infiltration, marked leukocytosis, late marrow failure; diagnosed with disease-specific markers (BCR-ABL, CD5/CD23).", "p": "Acute = blasts, arrest, early failure, urgent."}, {"lo": "7", "rr": true, "hy": true, "q": "What blast threshold defines acute leukemia, and what is increased blasts below it with dysplasia?", "a": "≥20% blasts = acute leukemia; <20% with dysplasia = MDS", "o": ["≥5% = acute leukemia", "≥50% = acute leukemia; 20–49% = MDS", "≥10% = acute leukemia"], "n": ["Too low.", "Too high.", "Too low."], "w": "Blasts in marrow or blood. Exception: AML-defining translocations [t(15;17), t(8;21), inv(16)] = AML regardless of blast count.", "p": "20% is the line."}, {"lo": "7", "rr": true, "q": "A 60-year-old man has WBC 110,000, all stages of granulocytes, basophilia, splenomegaly, <5% blasts and t(9;22). Acute leukemia?", "a": "No; this is CML in chronic phase (an MPN), since blasts are <20%", "o": ["Yes; AML", "Yes; Ph+ ALL", "Yes; APL"], "n": ["Blasts aren’t ≥20%.", "Blasts aren’t ≥20%.", "No promyelocytes or DIC."], "w": "t(9;22) alone doesn’t mean acute leukemia.", "p": "Blasts decide acute vs chronic."}]}, {"id": "amlall", "lec": "D", "name": "AML vs ALL", "sub": "Age · morphology · markers · clues", "b": [{"lo": "6", "rr": true, "hy": true, "q": "Which age pattern fits AML vs ALL?", "a": "AML: older adults (average ≈65) · ALL: children 2–10", "o": ["AML: children · ALL: older adults", "Both peak in teens", "Both peak at 40"], "n": ["Reversed.", "Not true.", "Not true."], "w": "“ALL kids, AML grand-dads.” AML also occurs in infants.", "p": "ALL kids, AML grand-dads."}, {"lo": "6", "rr": true, "hy": true, "q": "Blasts contain needle-like pink cytoplasmic rods and are MPO positive. AML or ALL?", "a": "AML (Auer rods)", "o": ["ALL", "CLL", "Hairy cell leukemia"], "n": ["Lymphoblasts lack granules and Auer rods.", "Mature lymphocytes.", "Hairy projections, not rods."], "w": "Auer rods are fused azurophilic (MPO) granules, found only in myeloid blasts. Myeloblasts: larger, more cytoplasm, nucleoli.", "p": "Auer rods = AML."}, {"lo": "6", "rr": true, "hy": true, "t": "m", "q": "Select ALL markers that point to AML.", "a": ["CD13", "CD33", "CD117", "MPO"], "o": ["TdT", "CD10", "CD3"], "n": ["Lymphoblast marker.", "B-ALL.", "T-ALL."], "w": "AML: CD13, CD33, CD117, HLA-DR, MPO+. ALL: TdT+; B: CD10, 19, 20, 22; T: CD2, 3, 5, 7.", "p": "AML: CD13/33, MPO."}, {"lo": "6", "rr": true, "t": "m", "q": "Select ALL clinical clues that point to AML rather than ALL.", "a": ["DIC (APL)", "Gum hypertrophy (monocytic)", "Skin infiltration / myeloid sarcoma"], "o": ["Mediastinal mass", "Testicular relapse", "Bone pain in a 4-year-old"], "n": ["T-ALL.", "ALL.", "ALL."], "w": "ALL clues: bone pain/arthralgias, CNS and testicular spread, mediastinal mass (T-ALL).", "p": "AML: DIC, gums, skin."}, {"lo": "6", "rr": true, "t": "m", "q": "Select ALL syndromes that raise AML risk.", "a": ["Down syndrome", "Bloom syndrome", "Fanconi anemia", "Neurofibromatosis"], "o": ["Ataxia-telangiectasia (classic ALL association)", "Marfan syndrome"], "n": ["Linked to ALL in the in-house table.", "Not associated."], "w": "Down syndrome raises both AML (megakaryoblastic, under 5) and ALL risk. Exposures: radiation, chemo, benzene, smoking.", "p": "AML syndromes: Down, Bloom, Fanconi, NF."}, {"lo": "6", "rr": true, "q": "What shared pathophysiology causes symptoms in BOTH AML and ALL?", "a": "Maturation block → blasts replace marrow → marrow failure (anemia, bleeding, infection)", "o": ["Excess mature cells causing hyperviscosity", "Autoimmune destruction of RBCs", "Iron overload"], "n": ["Chronic leukemia / MPN.", "Not the mechanism.", "Not the mechanism."], "w": "Both diagnosed with ≥20% blasts.", "p": "Both: block → blasts → marrow failure."}]}, {"id": "amlbio", "lec": "D", "name": "AML biology & classification", "sub": "4 mutation classes · WHO · FAB clues", "b": [{"lo": "8", "rr": true, "q": "What is AML?", "a": "A tumor of hematopoietic progenitors with acquired mutations that block differentiation, so immature myeloid blasts accumulate", "o": ["Clonal proliferation of mature granulocytes", "Reactive marrow response", "Clonal plasma cell disorder"], "n": ["That’s CML.", "Not clonal.", "That’s myeloma."], "w": "Mechanisms: maturation arrest, block in terminal differentiation, ↓ apoptosis → rapid marrow failure. Known risk factors explain only 1–2% of cases.", "p": "AML = acquired block → myeloblasts."}, {"lo": "8", "rr": true, "t": "m", "q": "Select ALL known risk factors for AML.", "a": ["Ionizing radiation", "Cytotoxic chemotherapy", "Benzene", "Smoking"], "o": ["Iron deficiency", "Hepatitis A"], "n": ["Not a risk factor.", "Not a risk factor."], "w": "Smoking doubles the risk.", "p": "AML exposures: radiation, chemo, benzene, smoking."}, {"lo": "8", "rr": true, "hy": true, "q": "Match the AML mutation class. t(8;21), inv(16) and t(15;17) belong to which class?", "a": "Transcription factor fusions that block myeloid maturation", "o": ["Signaling proteins (FLT3, KIT, RAS)", "Epigenetic regulators (DNMT3A, TET2, IDH, NPM1)", "TP53 pathway"], "n": ["Drive growth/survival.", "Alter methylation.", "Complex karyotype, poor prognosis."], "w": "t(8;21) and inv(16) disrupt core-binding factor (RUNX1/CBFB); t(15;17) makes PML-RARα.", "p": "AML classes: TF fusions · signaling · epigenetic · TP53."}, {"lo": "8", "rr": true, "q": "Why is the WHO AML classification built on genetics first?", "a": "Genetic groups behave differently: different prognosis and sometimes targeted therapy", "o": ["Morphology is useless in AML", "Genetics are cheaper than flow cytometry", "Older FAB classes no longer exist"], "n": ["Morphology still matters.", "Not the reason.", "FAB is still used on boards."], "w": "WHO groups: defining genetic abnormalities, AML with myelodysplasia-related changes, therapy-related AML, AML defined by differentiation.", "p": "WHO AML = genetics first."}, {"lo": "8", "rr": true, "hy": true, "q": "A 58-year-old with AML has swollen bleeding gums and skin nodules; blasts are monocytic. Subtype?", "a": "Acute monocytic (or myelomonocytic) leukemia, FAB M5/M4", "o": ["Acute promyelocytic leukemia (M3)", "Acute megakaryoblastic leukemia (M7)", "AML with maturation (M2)"], "n": ["DIC and Auer rod bundles.", "Down syndrome, fibrosis.", "t(8;21)."], "w": "Monocytes infiltrate gums and skin; often 11q23.", "p": "Gum hypertrophy = monocytic AML."}, {"lo": "8", "hy": true, "q": "A 3-year-old with Down syndrome has pancytopenia, marrow fibrosis and CD41/CD61+ blasts. Diagnosis?", "a": "Acute megakaryoblastic leukemia (AML M7)", "o": ["B-ALL", "APL", "AML M2"], "n": ["Wrong markers.", "No t(15;17)/DIC.", "No t(8;21)."], "w": "M7 is the AML most associated with Down syndrome under age 5.", "p": "Down + <5 + fibrosis = M7."}, {"lo": "8", "rr": true, "t": "m", "q": "Select ALL findings expected at diagnosis of AML.", "a": ["≥20% blasts in blood or marrow", "Hypercellular marrow with ↓ normal elements", "CD13 and CD33 on flow cytometry", "Anemia and thrombocytopenia", "WBC often 20–100 × 10⁹/L (mostly blasts)"], "o": ["TdT positivity on all blasts", "Absolute basophilia with <5% blasts"], "n": ["Lymphoblasts.", "CML."], "w": "Cytogenetics are essential for diagnosis and prognosis.", "p": "AML workup: smear, marrow, flow, cytogenetics."}]}, {"id": "denovo", "lec": "D", "name": "De novo vs MDS-related AML", "sub": "Young & balanced vs old & lost chromosomes", "b": [{"lo": "9", "rr": true, "hy": true, "t": "m", "q": "Select ALL features of AML arising from MDS or prior therapy (vs de novo AML).", "a": ["Older patient or prior chemo/radiation", "Months–years of prior cytopenias", "Unbalanced/complex karyotype (−5, −7, TP53)", "Multilineage dysplasia", "Worse prognosis"], "o": ["Balanced translocations like t(8;21)", "Abrupt onset in a young adult"], "n": ["De novo.", "De novo."], "w": "Pattern: balanced translocation in a young patient = good; lost chromosomes in an old or previously treated patient = bad.", "p": "Balanced + young = good. Lost + old = bad."}, {"lo": "9", "rr": true, "q": "A 67-year-old with 2 years of low counts has 35% CD13+/CD33+ blasts with multilineage dysplasia and −7. Compared with a 30-year-old with t(8;21) AML, his prognosis is:", "a": "Much worse", "o": ["Better", "The same", "Better because he is older"], "n": ["MDS-related AML with −7 is high risk.", "They differ.", "Age >60 worsens prognosis."], "w": "AML arising from MDS has lower remission rates and more resistance.", "p": "MDS-related AML = worse."}, {"lo": "9", "rr": true, "q": "A woman gets AML 2 years after doxorubicin, cyclophosphamide and etoposide, with an 11q23 rearrangement. Category and prognosis?", "a": "Therapy-related AML (topoisomerase II inhibitor, short latency); poor prognosis", "o": ["De novo AML; favorable", "APL; favorable", "CML; good"], "n": ["Prior therapy makes it therapy-related.", "No t(15;17).", "Not CML."], "w": "Topo II inhibitors (etoposide, doxorubicin) → 1–3 years, 11q23/KMT2A.", "p": "Short latency + 11q23 = topo II therapy-related AML."}]}, {"id": "trans", "lec": "D", "name": "AML translocations & APL", "sub": "8 · 15 · 16 good · lost chromosomes bad", "b": [{"lo": "10", "rr": true, "hy": true, "t": "m", "q": "Select ALL FAVORABLE AML cytogenetic findings.", "a": ["t(15;17)", "t(8;21)", "inv(16)"], "o": ["Monosomy 7", "t(11q23)", "Complex karyotype"], "n": ["Unfavorable.", "Unfavorable.", "Unfavorable."], "w": "Favorable AML = 8, 15, 16. “Lost chromosomes = lost cause”: −5, −7.", "p": "Favorable: t(8;21), t(15;17), inv(16)."}, {"lo": "10", "rr": true, "hy": true, "q": "Match the translocation to the subtype: inv(16) / CBFB-MYH11.", "a": "Myelomonocytic leukemia with eosinophils (M4eo); favorable", "o": ["APL (M3); favorable", "AML with maturation (M2); unfavorable", "Monocytic AML; unfavorable"], "n": ["That’s t(15;17).", "M2 is t(8;21) and favorable.", "11q23."], "w": "t(8;21) RUNX1-RUNX1T1 → M2 (favorable). t(15;17) PML-RARα → M3 (favorable with ATRA). 11q23 KMT2A → monocytic, infants, topo II (unfavorable).", "p": "inv(16) = M4eo."}, {"lo": "10", "rr": true, "hy": true, "q": "A 38-year-old woman has gum bleeding, petechiae and oozing IV sites; platelets 18,000, low fibrinogen, high D-dimer. Marrow: abnormal promyelocytes with bundles of Auer rods. Translocation and therapy?", "a": "t(15;17) PML-RARα; acute promyelocytic leukemia with DIC → ATRA (± arsenic trioxide) urgently", "o": ["t(8;21); standard chemo only", "inv(16); imatinib", "t(9;22); TKI"], "n": ["M2, no DIC.", "M4eo; imatinib is for BCR-ABL.", "CML/Ph+ ALL."], "w": "APL: median age 35–40, high DIC frequency (granules release procoagulants), faggot cells. ATRA forces differentiation; with arsenic, among the best AML outcomes.", "p": "APL = DIC + Auer bundles + ATRA."}, {"lo": "10", "rr": true, "q": "How does ATRA work in APL?", "a": "It forces leukemic promyelocytes to differentiate by overcoming the abnormal RARα block", "o": ["It kills blasts by DNA alkylation", "It blocks BCR-ABL", "It depletes B cells"], "n": ["Not ATRA.", "Imatinib.", "Rituximab."], "w": "PML-RARα blocks differentiation at the promyelocyte stage; ATRA (vitamin A derivative) releases the block.", "p": "ATRA = differentiation therapy."}, {"lo": "10", "hy": true, "q": "Days after starting ATRA, an APL patient develops fever, dyspnea, pulmonary infiltrates and edema. Diagnosis and treatment?", "a": "Differentiation syndrome; steroids", "o": ["Tumor lysis syndrome; rasburicase", "Pneumocystis pneumonia; TMP-SMX", "Transfusion reaction; stop blood"], "n": ["Not typical with ATRA.", "Not the picture.", "Not related."], "w": "Many cells mature at once.", "p": "ATRA → differentiation syndrome → steroids."}, {"lo": "10", "rr": true, "t": "m", "q": "Select ALL prognostic indicators in AML.", "a": ["Age (infants and >60 worse)", "High WBC (worse)", "Preexisting MDS (worse)", "Speed to remission (faster better)", "Cytogenetics"], "o": ["Blood type", "Hair color"], "n": ["Not prognostic.", "Not prognostic."], "w": "Remission is usually reached within 7–14 days of induction.", "p": "AML prognosis: age, WBC, prior MDS, speed, genetics."}, {"lo": "10", "rr": true, "q": "Which statement about AML treatment is correct?", "a": "Induction gives complete remission in ≈60–70%; stem cell transplant is the curative option; CD33 antibody-drug conjugate is a targeted option", "o": ["Imatinib cures most AML", "AML needs no urgent therapy", "Remission rates exceed 99% in all patients"], "n": ["Imatinib targets BCR-ABL.", "Acute leukemia is urgent.", "Not true; high-risk is much worse."], "w": "Gemtuzumab ozogamicin = anti-CD33 conjugated to a DNA-damaging toxin. Also FLT3 and IDH inhibitors.", "p": "AML: CR 60–70%; transplant cures."}]}, {"id": "allbio", "lec": "T", "name": "ALL biology & WHO", "sub": "Lymphoblasts · NOTCH1, PAX5 · classification", "b": [{"lo": "11", "rr": true, "q": "What is ALL?", "a": "A systemic clonal proliferation of lymphoblasts (immature B or T precursors) in marrow and/or blood", "o": ["Clonal mature B cells with smudge cells", "Clonal plasma cells", "Reactive lymphocytosis"], "n": ["That’s CLL.", "That’s myeloma.", "Not clonal."], "w": "Originates in marrow (B) or thymus (T) progenitors. Most common leukemia in children (<17). Risk ↑ with Down syndrome and ataxia-telangiectasia.", "p": "ALL = most common childhood leukemia."}, {"lo": "11", "rr": true, "hy": true, "q": "Which transcription factor is mutated in T-ALL vs B-ALL?", "a": "T-ALL: NOTCH1 · B-ALL: PAX5 and E2A", "o": ["T-ALL: PAX5 · B-ALL: NOTCH1", "Both: JAK2", "Both: BCR-ABL only"], "n": ["Reversed.", "MPN gene.", "Only a subset."], "w": "Plus growth and survival gene abnormalities. About 90% of ALLs have numerical or structural chromosome changes; hyperdiploidy (>50) is most common.", "p": "NOTCH1 = T; PAX5/E2A = B."}, {"lo": "11", "rr": true, "t": "m", "q": "Select ALL features the WHO classification of ALL emphasizes.", "a": ["B- vs T-lymphoblastic lineage", "Immunophenotype (CD markers)", "Recurrent cytogenetic abnormalities"], "o": ["FAB morphology only", "Spleen size"], "n": ["Lineage can’t be told by morphology.", "Not a basis."], "w": "B-ALL subgroups: hyperdiploidy, hypodiploidy, t(12;21), t(9;22), t(1;19), KMT2A, BCR-ABL1-like. “Leukemia/lymphoma” because the same blasts can present in marrow (≥20%) or as a mass (often mediastinal T).", "p": "WHO ALL = lineage + markers + genetics."}, {"lo": "11", "rr": true, "hy": true, "q": "How is B-ALL distinguished from T-ALL?", "a": "Flow cytometry markers; B and T lymphoblasts look the same under the microscope", "o": ["Auer rods in B-ALL", "Morphology alone", "MPO stain"], "n": ["Auer rods = AML.", "They look alike.", "MPO = myeloid."], "w": "B-lymphoblastic is the most common group.", "p": "Lineage = flow, not looks."}]}, {"id": "allpt", "lec": "T", "name": "The typical ALL patient", "sub": "Child with bone pain · teen with mediastinal mass", "b": [{"lo": "12", "rr": true, "hy": true, "q": "A 4-year-old has 3 weeks of fatigue, fever, bruising, petechiae and refuses to walk because of leg pain; small nodes and a spleen tip. CBC: anemia, low platelets, blasts. Most likely?", "a": "B-ALL", "o": ["AML", "Juvenile idiopathic arthritis", "ITP"], "n": ["Possible, but age and bone pain fit ALL.", "Doesn’t explain blasts and cytopenias.", "Isolated thrombocytopenia, no blasts."], "w": "Marrow replacement → anemia, bleeding, infection. Bone pain and arthralgias are common in children (marrow expansion).", "p": "Child + bone pain + blasts = ALL."}, {"lo": "12", "rr": true, "hy": true, "q": "A 16-year-old boy has stridor and facial swelling; anterior mediastinal mass; WBC 120,000 with TdT+, CD3+, CD7+ blasts. Diagnosis?", "a": "Precursor T-ALL / lymphoblastic lymphoma", "o": ["B-ALL", "Hodgkin lymphoma", "AML"], "n": ["T markers (CD3, CD7).", "No TdT+ blasts in Hodgkin.", "Not myeloid."], "w": "T-ALL: adolescent boys, thymic mass (SVC syndrome, stridor, hoarseness), higher WBC.", "p": "Teen boy + mediastinal mass = T-ALL."}, {"lo": "12", "rr": true, "t": "m", "q": "Select ALL extramedullary sites of ALL spread.", "a": ["Lymph nodes", "Spleen and liver", "CNS (meninges)", "Testes", "Thymus (T cell)"], "o": ["Gums as the classic site", "Skin as the classic site"], "n": ["Monocytic AML.", "Monocytic AML / myeloid sarcoma."], "w": "CNS and testes are sanctuary sites.", "p": "ALL spreads to CNS and testes."}, {"lo": "12", "rr": true, "hy": true, "q": "Which procedure is done in EVERY patient with ALL?", "a": "Lumbar puncture for CSF (CNS involvement)", "o": ["Splenectomy", "Lymph node excision", "Liver biopsy"], "n": ["Not indicated.", "Not routine.", "Not routine."], "w": "Leptomeningeal spread is clinically significant and a common relapse site.", "p": "ALL → always LP."}, {"lo": "12", "rr": true, "t": "o", "q": "Put the phases of ALL treatment in order.", "a": ["Remission induction", "Consolidation / intensification", "Maintenance (≈2–3 years)"], "w": "CNS prophylaxis (intrathecal chemotherapy) is given throughout, starting during induction. Stem cell transplant for selected high-risk patients. Newer: TKIs for Ph+ ALL, blinatumomab (CD19×CD3), anti-CD19 CAR-T cells.", "p": "Induction → consolidation → maintenance; CNS prophylaxis throughout."}, {"lo": "12", "rr": true, "q": "A boy treated for ALL 2 years ago has a painless enlarged testis with lymphoblasts. Why there?", "a": "Testes (like the CNS) are sanctuary sites where chemotherapy penetrates poorly", "o": ["Testicular germ cell tumor arising from therapy", "Mumps orchitis", "Varicocele"], "n": ["Biopsy shows lymphoblasts.", "Not infectious.", "Not a mass of blasts."], "w": "At relapse, morphology and immunophenotype are usually preserved; cytogenetics may evolve.", "p": "ALL relapse: CNS and testes."}, {"lo": "12", "rr": true, "t": "m", "q": "Select ALL FAVORABLE clinical parameters in childhood ALL.", "a": ["Age 2–9", "Female", "Low initial WBC", "Rapid early tumor reduction"], "o": ["Age under 1", "WBC >50,000", "CNS disease at diagnosis"], "n": ["Unfavorable.", "Unfavorable.", "Unfavorable."], "w": "Childhood ALL is about 90% curable; adults do worse.", "p": "ALL: age 2–9, low WBC, fast response = good."}]}, {"id": "allgen", "lec": "T", "name": "ALL markers & cytogenetics", "sub": "TdT · B vs T CDs · good vs bad", "b": [{"lo": "13", "rr": true, "hy": true, "q": "Which marker is shared by B and T lymphoblasts?", "a": "TdT", "o": ["CD10", "CD3", "MPO"], "n": ["B-ALL.", "T-ALL.", "Myeloid."], "w": "TdT marks immature lymphocytes (any lymphoblast).", "p": "TdT = lymphoblast."}, {"lo": "13", "rr": true, "hy": true, "t": "m", "q": "Select ALL B-ALL markers.", "a": ["CD10 (CALLA)", "CD19", "CD20", "CD22"], "o": ["CD3", "CD7"], "n": ["T-ALL.", "T-ALL."], "w": "B markers are CD10, 19, 20, 22 (“big numbers from 10 to 22”); T markers are single digits: CD2, 3, 5, 7.", "p": "B: 10, 19, 20, 22. T: 2, 3, 5, 7."}, {"lo": "13", "rr": true, "hy": true, "t": "m", "q": "Select ALL FAVORABLE ALL cytogenetics.", "a": ["Hyperdiploidy (>50 chromosomes)", "t(12;21) ETV6-RUNX1"], "o": ["t(9;22)", "t(1;19)", "t(4;11) / KMT2A", "14q11"], "n": ["Unfavorable.", "Unfavorable (in-house).", "Unfavorable (infants).", "Unfavorable (T-ALL)."], "w": "ALL good genetics = “more and twelve.”", "p": "More chromosomes and t(12;21) = good."}, {"lo": "13", "rr": true, "hy": true, "q": "A 45-year-old man with ALL has t(9;22). Prognosis and treatment compared with CML?", "a": "Unfavorable (≈25% of adult ALL); ALL chemo plus a BCR-ABL TKI ± transplant", "o": ["Favorable; TKI alone", "Identical to chronic-phase CML", "Favorable; no treatment"], "n": ["Ph+ ALL is high risk.", "Different (acute, lymphoid) disease.", "Not true."], "w": "Same fusion, different disease.", "p": "Ph+ ALL = bad; add TKI."}, {"lo": "13", "rr": true, "q": "How does hypodiploidy affect ALL prognosis?", "a": "Unfavorable (near-normal 45 chromosomes may be intermediate; true hypodiploidy <44 is clearly unfavorable)", "o": ["Favorable, like hyperdiploidy", "No effect", "Curative by itself"], "n": ["Opposite of hyperdiploidy.", "It matters.", "Not true."], "w": "In-house material lists hypodiploidy as intermediate in one place and unfavorable in another. Boards: hyperdiploid good, hypodiploid bad.", "p": "Hyper = good. Hypo = bad."}, {"lo": "13", "rr": true, "q": "A 4-year-old girl: marrow 85% blasts, CD10+, CD19+, TdT+, MPO−, 54 chromosomes; WBC 12,000. Diagnosis and prognosis?", "a": "Precursor B-ALL with hyperdiploidy; favorable", "o": ["T-ALL; unfavorable", "AML; favorable", "B-ALL; unfavorable because of hyperdiploidy"], "n": ["B markers.", "MPO negative, TdT positive.", "Hyperdiploidy is favorable."], "w": "Also favorable: age 2–9, female, modest WBC. Next: lumbar puncture.", "p": "54 chromosomes = hyperdiploid = good."}, {"lo": "13", "q": "About what fraction of T-ALL has 14q11 (T-cell receptor gene) rearrangement, and what is its prognosis?", "a": "About 45%; unfavorable", "o": ["About 5%; favorable", "100%; favorable", "None; it is a B-ALL finding"], "n": ["Not the figure.", "Not the figure.", "It is a T-ALL finding."], "w": "T-ALL cytogenetics involve TCR loci on 14q11.", "p": "14q11 = T-ALL, unfavorable."}]}, {"id": "mix", "lec": "T", "name": "MDS, AML or ALL?", "sub": "Mixed case drill", "b": [{"lo": "1", "rr": true, "q": "76-year-old: pancytopenia with macrocytosis, dysplastic neutrophils, hypercellular marrow with 9% blasts.", "a": "MDS", "o": ["AML", "ALL", "CML"], "n": ["Blasts <20%.", "Wrong age and lineage.", "No leukocytosis or BCR-ABL."], "w": "Blasts <20% with dysplasia and cytopenias.", "p": "<20% + dysplasia = MDS."}, {"lo": "9", "rr": true, "q": "Same patient 18 months later: 34% marrow blasts, CD13+, CD33+.", "a": "AML arising from MDS (unfavorable)", "o": ["De novo AML (favorable)", "B-ALL", "Still MDS"], "n": ["Prior MDS.", "Myeloid markers.", "Blasts now ≥20%."], "w": "MDS transforms to AML in 10–40%.", "p": "MDS → AML = worse."}, {"lo": "13", "rr": true, "q": "6-year-old with bone pain, petechiae and lymphadenopathy; blasts CD19+, TdT+; t(12;21).", "a": "B-ALL, favorable", "o": ["T-ALL, unfavorable", "AML, favorable", "APL"], "n": ["B markers.", "Lymphoid markers.", "No DIC/Auer rods."], "w": "t(12;21) and good age.", "p": "t(12;21) = favorable B-ALL."}]}];
+
+
+(function(){
+"use strict";
+var KEY="hd-hem14-acute-leukemia-builder-v1";
+var S={box:{},score:0,streak:0,best:0,tot:0,right:0,theme:"auto"};
+function load(){try{var j=JSON.parse(localStorage.getItem(KEY)||"null");if(j&&j.box)S=Object.assign(S,j);}catch(e){}}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}}
+load();
+
+var ALL=[]; E.forEach(function(e){e.b.forEach(function(b,i){b.id=e.id+"."+i;b.ent=e;ALL.push(b);});});
+function st(b){var r=S.box[b.id];return r?r.s:"u";}
+var rrOnly=false, mode="build", scope="all", loFilter=null, curEnt=null, idx=0, cur=null, answered=false, results={}, lastId=null, t0=0, tick=null;
+
+function shuffle(a){a=a.slice();for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=a[i];a[i]=a[j];a[j]=t;}return a;}
+function esc(s){return String(s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];});}
+function inScope(b){return (scope==="all"||b.ent.lec===scope)&&(!loFilter||b.lo===loFilter)&&(!rrOnly||b.rr);}
+
+/* ---------- theme ---------- */
+var themeBtn=document.getElementById("themeBtn");
+function applyTheme(){var r=document.documentElement;if(S.theme==="auto")r.removeAttribute("data-theme");else r.setAttribute("data-theme",S.theme);themeBtn.textContent="Theme: "+S.theme;}
+themeBtn.onclick=function(){S.theme={auto:"light",light:"dark",dark:"auto"}[S.theme];applyTheme();save();};
+applyTheme();
+document.getElementById("resetBtn").onclick=function(){
+  var b=this; if(b.dataset.confirm){S.box={};S.score=S.streak=S.tot=S.right=0;save();b.textContent="Reset progress";delete b.dataset.confirm;renderAll();next();return;}
+  b.dataset.confirm="1";b.textContent="Tap again to reset";setTimeout(function(){if(b.dataset.confirm){delete b.dataset.confirm;b.textContent="Reset progress";}},3000);
+};
+
+/* ---------- stats / side / map ---------- */
+function loStatus(lo){var bs=ALL.filter(function(b){return b.lo===lo;});var ss=bs.map(st);
+  var m=ss.filter(function(x){return x==="M";}).length;
+  if(m===bs.length)return{s:"M",m:m,n:bs.length};
+  if(ss.indexOf("m")>=0)return{s:"m",m:m,n:bs.length};
+  if(ss.some(function(x){return x!=="u";}))return{s:"o",m:m,n:bs.length};
+  return{s:"u",m:m,n:bs.length};}
+function renderStats(){
+  document.getElementById("sScore").textContent=S.score;
+  document.getElementById("sStreak").textContent=S.streak;
+  document.getElementById("sAcc").textContent=S.tot?Math.round(100*S.right/S.tot)+"%":"—";
+  document.getElementById("sBoxes").textContent=ALL.filter(function(b){return st(b)==="M";}).length+"/"+ALL.length;
+  var los=Object.keys(LOS);document.getElementById("sLos").textContent=los.filter(function(l){return loStatus(l).s==="M";}).length+"/"+los.length;
+}
+function renderSide(){
+  var h="";LECS.forEach(function(L){if(scope!=="all"&&scope!==L.k)return;
+    h+='<p class="lec-h l'+L.k+'" style="color:var(--lc)">HEM14 · '+esc(L.n)+'</p>';
+    E.filter(function(e){return e.lec===L.k;}).forEach(function(e){
+      var m=e.b.filter(function(b){return st(b)==="M";}).length,p=Math.round(100*m/e.b.length);
+      h+='<button type="button" class="ent l'+e.lec+'" data-ent="'+e.id+'"'+(curEnt===e&&mode==="build"?' aria-current="true"':'')+'><span class="n">'+esc(e.name)+'</span><span class="pct">'+m+'/'+e.b.length+'</span><span class="s">'+esc(e.sub)+'</span><span class="mini"><i style="width:'+p+'%"></i></span></button>';
+    });});
+  var el=document.getElementById("entList");el.innerHTML=h;
+  el.querySelectorAll(".ent").forEach(function(b){b.onclick=function(){setMode("build");startEnt(E.filter(function(e){return e.id===b.dataset.ent;})[0]);};});
+}
+function renderMap(){
+  var h="";Object.keys(LOS).forEach(function(lo){var lec=LOLEC[lo];if(scope!=="all"&&scope!==lec)return;var s=loStatus(lo);
+    h+='<button type="button" class="lo-tile l'+lec+'" data-lo="'+lo+'"'+(loFilter===lo?' style="border-color:var(--lc)"':'')+'><span class="id">'+(lo.slice(-1)==="X"?"Extra":"LO "+lo)+'</span><span class="t">'+esc(LOS[lo])+'</span><span class="dot s-'+s.s+'" title="'+s.m+'/'+s.n+' mastered"></span></button>';});
+  var g=document.getElementById("loGrid");g.innerHTML=h;
+  g.querySelectorAll(".lo-tile").forEach(function(b){b.onclick=function(){loFilter=(loFilter===b.dataset.lo?null:b.dataset.lo);setMode("drill");};});
+}
+function renderAll(){renderStats();renderSide();renderMap();}
+
+/* ---------- flow ---------- */
+function setMode(m){mode=m;document.querySelectorAll("[data-mode]").forEach(function(b){b.setAttribute("aria-pressed",String(b.dataset.mode===m));});
+  if(m==="build"){loFilter=null;if(rrOnly){rrOnly=false;setRR();}renderAll();if(!curEnt||!inScope(curEnt.b[0]))startEnt(firstEnt());else show();}
+  else{renderAll();next();}}
+function firstEnt(){var es=E.filter(function(e){return scope==="all"||e.lec===scope;});
+  for(var i=0;i<es.length;i++){if(es[i].b.some(function(b){return st(b)!=="M";}))return es[i];}return es[0];}
+document.querySelectorAll("[data-mode]").forEach(function(b){b.onclick=function(){setMode(b.dataset.mode);};});
+function setRR(){document.querySelectorAll("[data-rr]").forEach(function(x){x.setAttribute("aria-pressed",String((x.dataset.rr==="1")===rrOnly));});}
+document.querySelectorAll("[data-rr]").forEach(function(b){b.onclick=function(){rrOnly=b.dataset.rr==="1";setRR();setMode(rrOnly?"drill":mode);};});
+document.querySelectorAll("[data-scope]").forEach(function(b){b.onclick=function(){scope=b.dataset.scope;loFilter=null;
+  document.querySelectorAll("[data-scope]").forEach(function(x){x.setAttribute("aria-pressed",String(x===b));});
+  if(mode==="build"){curEnt=null;setMode("build");}else setMode("drill");};});
+
+function startEnt(e){curEnt=e;idx=0;results={};renderSide();cur=e.b[0];show();}
+function next(){
+  if(mode==="build"){idx++;if(idx>=curEnt.b.length){finishEnt();return;}cur=curEnt.b[idx];show();return;}
+  var pool=ALL.filter(inScope);if(!pool.length){cur=null;show();return;}
+  var rank={m:0,u:1,o:2,M:3};
+  pool=shuffle(pool).sort(function(a,b){return rank[st(a)]-rank[st(b)];});
+  var best=rank[st(pool[0])];var top=pool.filter(function(b){return rank[st(b)]===best&&b.id!==lastId;});
+  if(best===3)top=pool.filter(function(b){return b.id!==lastId;});
+  cur=(top.length?top:pool)[0];show();
+}
+function finishEnt(){
+  var ok=Object.keys(results).filter(function(k){return results[k];}).length,n=curEnt.b.length;
+  var i=E.indexOf(curEnt),nxt=null;for(var j=1;j<=E.length;j++){var c=E[(i+j)%E.length];if(scope==="all"||c.lec===scope){nxt=c;break;}}
+  var card=document.getElementById("card");card.className="card l"+curEnt.lec;
+  card.innerHTML='<div class="done"><p class="meta">Structure complete</p><h2>'+esc(curEnt.name)+': '+ok+' / '+n+' first try</h2>'+
+   '<p class="hint">'+(ok===n?"Clean build. It will count as mastered after one more clean pass.":"Missed boxes are queued first in Drill mode.")+'</p>'+
+   '<div class="actions"><button class="btn" type="button" id="again">Rebuild '+esc(curEnt.name)+'</button>'+(nxt?'<button class="btn primary" type="button" id="nextEnt">Next: '+esc(nxt.name)+' →</button>':'')+'</div></div>';
+  document.getElementById("again").onclick=function(){startEnt(curEnt);};
+  if(nxt)document.getElementById("nextEnt").onclick=function(){startEnt(nxt);};
+  var ne=document.getElementById("nextEnt");if(ne)ne.focus();
+}
+
+var picks=[];
+function show(){
+  answered=false;picks=[];clearInterval(tick);
+  var card=document.getElementById("card");
+  if(!cur){card.className="card";card.innerHTML='<p class="q">Nothing in this scope yet.</p>';return;}
+  var b=cur,e=b.ent;card.className="card l"+e.lec;
+  var head='<div class="card-top"><div><p class="meta">'+(mode==="build"?"Build · box "+(idx+1)+" of "+e.b.length:"Drill"+(rrOnly?" · Rapid Review":"")+(loFilter?" · LO "+loFilter:""))+'</p><h2>'+esc(e.name)+'</h2></div>'+
+    '<div style="display:flex;gap:6px;flex-wrap:wrap"><span class="tag lo">'+(b.lo.slice(-1)==="X"?"Extra":"LO "+b.lo)+'</span>'+(b.rr?'<span class="tag rr">Rapid Review</span>':'')+(b.hy?'<span class="tag hy">HY</span>':'')+'<span class="timer" id="timer">0.0s</span></div></div>';
+  if(mode==="build"){head+='<div class="boxes" aria-hidden="true">'+e.b.map(function(x,i){var c=i===idx?"cur":(x.id in results?(results[x.id]?"done-ok":"done-bad"):"");return '<i class="'+c+'"></i>';}).join("")+'</div>';}
+  var body='<p class="q">'+esc(b.q)+'</p>';
+  if(!b.t){b._opts=shuffle([b.a].concat(b.o));
+    body+='<div class="opts">'+b._opts.map(function(o,i){return '<button type="button" class="opt" data-i="'+i+'"><span class="k">'+(i+1)+'</span><span>'+esc(o)+'</span></button>';}).join("")+'</div>';}
+  else if(b.t==="m"){b._opts=shuffle(b.a.concat(b.o));
+    body+='<p class="hint">Select all that apply, then check.</p><div class="opts">'+b._opts.map(function(o,i){return '<button type="button" class="opt" aria-pressed="false" data-i="'+i+'"><span class="k">'+(i+1)+'</span><span>'+esc(o)+'</span></button>';}).join("")+'</div>';}
+  else{b._opts=shuffle(b.a);
+    body+='<p class="hint">Tap items in order. Tap a placed item to remove it.</p><ol class="ordered" id="ordList"><li class="empty" style="cursor:default">Your order appears here</li></ol><div class="opts">'+b._opts.map(function(o,i){return '<button type="button" class="opt" data-i="'+i+'"><span class="k">+</span><span>'+esc(o)+'</span></button>';}).join("")+'</div>';}
+  var act='<div id="fb"></div><div class="actions"><span class="hint">'+(b.t?"Enter to check":"Keys 1–"+b._opts.length+" to answer")+'</span><div style="display:flex;gap:8px">'+
+    (mode==="build"?'<button class="btn" type="button" id="skipBtn">Skip structure</button>':'')+
+    (b.t?'<button class="btn primary" type="button" id="checkBtn"'+(b.t==="o"?" disabled":"")+'>Check</button>':'')+
+    '<button class="btn primary" type="button" id="nextBtn" hidden>Next box →</button></div></div>';
+  card.innerHTML=head+body+act;
+  t0=Date.now();tick=setInterval(function(){var t=document.getElementById("timer");if(t)t.textContent=((Date.now()-t0)/1000).toFixed(1)+"s";},100);
+  var opts=card.querySelectorAll(".opt");
+  if(!b.t)opts.forEach(function(o){o.onclick=function(){if(!answered)grade([+o.dataset.i]);};});
+  else if(b.t==="m")opts.forEach(function(o){o.onclick=function(){if(answered)return;var on=o.getAttribute("aria-pressed")!=="true";o.setAttribute("aria-pressed",String(on));o.classList.toggle("sel",on);};});
+  else opts.forEach(function(o){o.onclick=function(){if(answered||o.disabled)return;picks.push(+o.dataset.i);o.disabled=true;o.style.opacity=".4";drawOrd();};});
+  var cb=document.getElementById("checkBtn");if(cb)cb.onclick=function(){if(answered)return;
+    if(b.t==="m"){var sel=[];opts.forEach(function(o){if(o.getAttribute("aria-pressed")==="true")sel.push(+o.dataset.i);});grade(sel);}else grade(picks);};
+  var sk=document.getElementById("skipBtn");if(sk)sk.onclick=function(){var i=E.indexOf(curEnt);for(var j=1;j<=E.length;j++){var c=E[(i+j)%E.length];if(scope==="all"||c.lec===scope){startEnt(c);return;}}};
+  document.getElementById("nextBtn").onclick=function(){lastId=cur.id;next();};
+}
+function drawOrd(){var b=cur,ol=document.getElementById("ordList");
+  ol.innerHTML=picks.length?picks.map(function(i,k){return '<li data-k="'+k+'">'+esc(b._opts[i])+'</li>';}).join(""):'<li class="empty" style="cursor:default">Your order appears here</li>';
+  ol.querySelectorAll("li[data-k]").forEach(function(li){li.onclick=function(){if(answered)return;var k=+li.dataset.k,i=picks[k];picks.splice(k,1);
+    var o=document.querySelector('.opt[data-i="'+i+'"]');o.disabled=false;o.style.opacity="";drawOrd();};});
+  document.getElementById("checkBtn").disabled=picks.length!==b.a.length;}
+
+function grade(sel){
+  answered=true;clearInterval(tick);var b=cur,ok,card=document.getElementById("card"),opts=card.querySelectorAll(".opt");
+  if(!b.t){ok=b._opts[sel[0]]===b.a;opts.forEach(function(o){var t=b._opts[+o.dataset.i];o.disabled=true;if(t===b.a)o.classList.add("right");else if(+o.dataset.i===sel[0])o.classList.add("wrong");});}
+  else if(b.t==="m"){var chosen=sel.map(function(i){return b._opts[i];});ok=chosen.length===b.a.length&&chosen.every(function(c){return b.a.indexOf(c)>=0;});
+    opts.forEach(function(o){var t=b._opts[+o.dataset.i],isA=b.a.indexOf(t)>=0,isS=chosen.indexOf(t)>=0;o.disabled=true;o.classList.remove("sel");
+      if(isA&&isS)o.classList.add("right");else if(isA)o.classList.add("missed");else if(isS)o.classList.add("wrong");});}
+  else{var got=sel.map(function(i){return b._opts[i];});ok=got.every(function(g,k){return g===b.a[k];});
+    document.querySelectorAll("#ordList li[data-k]").forEach(function(li,k){li.classList.add(got[k]===b.a[k]?"right":"wrong");});
+    opts.forEach(function(o){o.disabled=true;});}
+  var r=S.box[b.id]||{n:0,c:0,s:"u"};r.n++;
+  if(ok){r.c++;r.s=r.c>=2?"M":"o";S.streak++;S.best=Math.max(S.best,S.streak);S.right++;S.score+=10+Math.min(S.streak,10);}
+  else{r.c=0;r.s="m";S.streak=0;}
+  S.tot++;S.box[b.id]=r;if(!(b.id in results))results[b.id]=ok;save();
+  var fb='<div class="fb '+(ok?"ok":"bad")+'"><span class="v">'+(ok?"Correct":"Not quite")+'</span>';
+  if(!b.t)fb+='<span class="ans">Answer: <b>'+esc(b.a)+'</b></span>';
+  else if(b.t==="m")fb+='<span class="ans">Answer: <b>'+b.a.map(esc).join(" · ")+'</b></span>';
+  else fb+='<span class="ans">Correct order:</span><ol>'+b.a.map(function(x){return "<li>"+esc(x)+"</li>";}).join("")+'</ol>';
+  fb+='<div class="fbexp">'+String(b.w||"").split(/\n\n+/).filter(Boolean).map(function(t){return '<p>'+esc(t)+'</p>';}).join("")+'</div>';
+  if(b.n&&b.n.length&&b.o&&b.o.length){
+    var rows=b.o.map(function(x,i){return b.n[i]?'<li><b>'+esc(x)+'</b> — '+esc(b.n[i])+'</li>':"";}).join("");
+    if(rows)fb+='<ul class="fbnotes">'+rows+'</ul>';
+  }
+  if(b.p)fb+='<div class="fbpearl"><b>High-yield</b>'+esc(b.p)+'</div>';
+  fb+='</div>';
+  document.getElementById("fb").innerHTML=fb;
+  var cb=document.getElementById("checkBtn");if(cb)cb.hidden=true;
+  var nb=document.getElementById("nextBtn");nb.hidden=false;nb.textContent=(mode==="build"&&idx===curEnt.b.length-1)?"Finish structure →":"Next box →";nb.focus();
+  renderAll();
+}
+document.addEventListener("keydown",function(ev){
+  if(ev.target.tagName==="INPUT"||ev.metaKey||ev.ctrlKey||ev.altKey)return;
+  if(ev.key==="Enter"){var nb=document.getElementById("nextBtn"),cb=document.getElementById("checkBtn");
+    if(nb&&!nb.hidden){ev.preventDefault();nb.click();}else if(cb&&!cb.hidden&&!cb.disabled){ev.preventDefault();cb.click();}return;}
+  var n=parseInt(ev.key,10);if(!cur||answered||isNaN(n))return;var o=document.querySelector('.opt[data-i="'+(n-1)+'"]');if(o&&!o.disabled)o.click();
+});
+
+renderAll();startEnt(firstEnt());
+})();
+
+/* ---------- Review: the compiled version of everything the answers teach ---------- */
+var REVIEW = {"F": "<h3 class=\"rh\">LO1 · What is MDS?</h3>\n<div class=\"rtbl\"><table><thead><tr><th></th><th>MPN</th><th>MDS</th><th>AML</th></tr></thead><tbody>\n<tr><td>Maturation</td><td>Effective</td><td><b>Disorderly, ineffective</b></td><td>Blocked</td></tr>\n<tr><td>Counts</td><td>↑</td><td><b>↓ cytopenias</b></td><td>↓ normal, ↑ blasts</td></tr>\n<tr><td>Blasts</td><td>Normal</td><td><b>↑ but &lt;20%</b></td><td>≥20%</td></tr></tbody></table></div>\n<div class=\"rmem\"><b>Sloppy assembly line</b>MDS: busy factory (hypercellular marrow) turning out defective products that are thrown away (ineffective hematopoiesis → cytopenias).</div>\n<p>MDS = clonal stem cell disorder, quantitative and qualitative defects in 1–3 lines, high AML risk. <b>Primary</b>: older adults (&gt;50). <b>Therapy-related</b>: 2–8 y after chemo/radiation; faster to AML. Classification = clinical + blood + marrow + genetics (del(5q), SF3B1, TP53).</p>\n<div class=\"rrule\"><b>CHIP</b>Acquired cancer-gene mutation with normal counts; TET2/DNMT3A; ≈10% by 70; ≈1%/yr blood cancer; pro-inflammatory; ↑ RDW.</div>\n<h3 class=\"rh\">LO2 · Cytopenias &amp; labs</h3>\n<p>Mean age ≈70, men &gt; women; often a routine CBC finding.</p>\n<div class=\"rmem\"><b>A-B-C of marrow failure</b>Anemia (fatigue) · Bleeding (platelets) · Contagion (infection, neutrophils). Same in MDS, AML, ALL, aplastic anemia.</div>\n<p>Blood: anemia (often macrocytic, most common), hypogranular neutrophils, pseudo-Pelger-Huët cells, giant platelets. Marrow: hypercellular, dysplastic (megaloblastoid erythroids, ringed sideroblasts, small hypolobated megakaryocytes), blasts &lt;20%.</p>\n<div class=\"rtrap\"><b>B12 mimic</b>Macrocytosis + dysplasia → check B12/folate first. MDS doesn’t correct and shows clonal cytogenetics.</div>\n<h3 class=\"rh\">LO3 · Genetics, complications &amp; course</h3>\n<p>Multistep. Drivers overlap AML: epigenetic (TET2, DNMT3A), splicing (SF3B1 → ringed sideroblasts), transcription factors, TP53. Classic changes: −5/del(5q), −7/del(7q), +8, del(20q).</p>\n<div class=\"rhy\"><b>MDS genetics</b>5q– syndrome: older women, macrocytic anemia, normal/↑ platelets, hypolobated megakaryocytes, good prognosis, lenalidomide. −7, complex, TP53 → poor. Alkylators: 5–10 y, −5/−7. Topo II inhibitors: 1–3 y, 11q23.</div>\n<p>Complications: infection, bleeding, symptomatic anemia, transfusion iron overload; AML 10–40%. Treatment: supportive in older patients (transfusions, growth factors), hypomethylating agents, lenalidomide for del(5q); transplant in young patients (only cure).</p>\n<h3 class=\"rh\">LO4 · MDS vs MPN</h3>\n<div class=\"rtbl\"><table><thead><tr><th></th><th>MPN</th><th>MDS</th></tr></thead><tbody>\n<tr><td>Cellularity</td><td>↑</td><td>↑</td></tr><tr><td>Blasts</td><td>Normal</td><td>Normal/↑ &lt;20%</td></tr>\n<tr><td>Hematopoiesis</td><td>Effective</td><td>Ineffective</td></tr><tr><td>Counts</td><td>↑</td><td>↓</td></tr>\n<tr><td>Organomegaly</td><td>Common</td><td>Uncommon</td></tr><tr><td>Morphology</td><td>Normal-looking</td><td>Dysplastic</td></tr>\n<tr><td>Genes</td><td>BCR-ABL, JAK2, CALR, MPL</td><td>Epigenetic, SF3B1, TP53; −5/−7</td></tr>\n<tr><td>AML</td><td>Variable</td><td>10–40%</td></tr></tbody></table></div>\n<h3 class=\"rh\">Rapid Review checklist · MDS</h3>\n<ul class=\"rlist\"><li><b>LO1</b> Definition · primary vs therapy-related · classification basis · CHIP</li>\n<li><b>LO2</b> ≈70, men · A-B-C · macrocytic anemia, dysplasia · hypercellular marrow, blasts &lt;20%</li>\n<li><b>LO3</b> Multi-hit drivers · del(5q) good, −7/TP53/complex bad · complications, AML 10–40% · supportive vs transplant</li>\n<li><b>LO4</b> MPN effective/high counts/organomegaly vs MDS ineffective/cytopenias/dysplasia · both hypercellular, both → AML</li></ul>\n", "D": "<h3 class=\"rh\">LO5 &amp; LO7 · Leukemia basics</h3>\n<p>Leukemia = marrow + circulating tumor cells. Lymphoma = masses in nodes or extranodal sites. CLL = SLL (taught with lymphomas); CML = MPN.</p>\n<div class=\"rtbl\"><table><thead><tr><th></th><th>Acute</th><th>Chronic</th></tr></thead><tbody>\n<tr><td>Cells</td><td>Blasts</td><td>Mature/maturing</td></tr><tr><td>Mechanism</td><td>Maturation arrest</td><td>↑ proliferation</td></tr>\n<tr><td>Clinical</td><td>Early marrow failure; days–weeks</td><td>Nonspecific, organ infiltration, leukocytosis; late failure</td></tr>\n<tr><td>Diagnosis</td><td>≥20% blasts</td><td>Specific markers (BCR-ABL, CD5/CD23)</td></tr><tr><td>Urgency</td><td>Urgent</td><td>Non-urgent</td></tr></tbody></table></div>\n<div class=\"rhy\"><b>The number</b>≥20% blasts = acute leukemia. &lt;20% with dysplasia = MDS.</div>\n<h3 class=\"rh\">LO6 · AML vs ALL</h3>\n<div class=\"rtbl\"><table><thead><tr><th></th><th>AML</th><th>ALL</th></tr></thead><tbody>\n<tr><td>Age</td><td>Adults ≈65 (also infants)</td><td>Children 2–10</td></tr>\n<tr><td>Blasts</td><td>Larger, nucleoli, <b>Auer rods</b></td><td>Small, scant cytoplasm, no granules</td></tr>\n<tr><td>Markers</td><td>CD13, CD33, CD117, HLA-DR, MPO+</td><td>TdT+; B: CD10/19/20/22 · T: CD2/3/5/7</td></tr>\n<tr><td>Clues</td><td>DIC (APL), gums (monocytic), skin, myeloid sarcoma</td><td>Bone pain, CNS/testes, mediastinal mass (T)</td></tr>\n<tr><td>Syndromes</td><td>Down, Bloom, Fanconi, NF; radiation, chemo, benzene, smoking</td><td>Down, ataxia-telangiectasia</td></tr>\n<tr><td>Good genetics</td><td>t(15;17), t(8;21), inv(16)</td><td>Hyperdiploidy, t(12;21)</td></tr>\n<tr><td>Bad genetics</td><td>−5/−7, del(7q), 11q23, complex, TP53</td><td>t(9;22), t(1;19), hypodiploidy, 14q11</td></tr></tbody></table></div>\n<div class=\"rmem\"><b>ALL kids, AML grand-dads</b>Auer rods = AML. TdT = lymphoblast.</div>\n<h3 class=\"rh\">LO8 · AML biology &amp; classification</h3>\n<p>Acquired mutations block differentiation → myeloblasts → rapid marrow failure. Known risks explain only 1–2%.</p>\n<div class=\"rtbl\"><table><thead><tr><th>Class</th><th>Examples</th><th>Effect</th></tr></thead><tbody>\n<tr><td>TF fusions</td><td>t(8;21), inv(16) (core-binding factor), t(15;17) PML-RARα</td><td>Block maturation</td></tr>\n<tr><td>Signaling</td><td>FLT3, KIT, RAS</td><td>Growth/survival</td></tr>\n<tr><td>Epigenetic</td><td>DNMT3A, TET2, IDH1/2, NPM1</td><td>Methylation/chromatin</td></tr>\n<tr><td>TP53</td><td>TP53</td><td>Complex karyotype, poor</td></tr></tbody></table></div>\n<div class=\"rtbl\"><table><thead><tr><th>FAB</th><th>Name</th><th>Clue</th></tr></thead><tbody>\n<tr><td>M2</td><td>With maturation</td><td>t(8;21), Auer rods</td></tr><tr><td>M3</td><td>APL</td><td>t(15;17), faggot cells, DIC, ATRA</td></tr>\n<tr><td>M4</td><td>Myelomonocytic</td><td>inv(16), eosinophils</td></tr><tr><td>M5</td><td>Monocytic</td><td>Gums, skin; 11q23</td></tr>\n<tr><td>M7</td><td>Megakaryoblastic</td><td>Down syndrome &lt;5, fibrosis</td></tr></tbody></table></div>\n<p>Presentation: average age 65; fatigue, fever/infection, petechiae. WBC often 20–100k (blasts), anemia, thrombocytopenia. Dx ≥20% blasts; hypercellular marrow; CD13/CD33; cytogenetics essential. WHO = genetics first.</p>\n<h3 class=\"rh\">LO9 · De novo vs MDS-related AML</h3>\n<div class=\"rtbl\"><table><thead><tr><th></th><th>De novo</th><th>From MDS / therapy</th></tr></thead><tbody>\n<tr><td>Patient</td><td>Younger</td><td>Older or prior chemo/radiation</td></tr>\n<tr><td>History</td><td>Abrupt</td><td>Prior cytopenias/MDS</td></tr>\n<tr><td>Genetics</td><td>Balanced translocations</td><td>−5, −7, del(7q), TP53, 11q23</td></tr>\n<tr><td>Morphology</td><td>No dysplasia</td><td>Multilineage dysplasia</td></tr>\n<tr><td>Prognosis</td><td>Better</td><td>Worse</td></tr></tbody></table></div>\n<h3 class=\"rh\">LO10 · Translocations, APL &amp; treatment</h3>\n<div class=\"rtbl\"><table><thead><tr><th>Abnormality</th><th>Genes</th><th>Subtype</th><th>Prognosis</th></tr></thead><tbody>\n<tr><td>t(15;17)</td><td>PML-RARα</td><td>APL (M3)</td><td>Favorable (ATRA)</td></tr>\n<tr><td>t(8;21)</td><td>RUNX1-RUNX1T1</td><td>M2</td><td>Favorable</td></tr>\n<tr><td>inv(16)</td><td>CBFB-MYH11</td><td>M4eo</td><td>Favorable</td></tr>\n<tr><td>−5/−7, del(7q)</td><td>—</td><td>MDS/therapy-related</td><td>Unfavorable</td></tr>\n<tr><td>11q23</td><td>KMT2A</td><td>Monocytic, infants, topo II</td><td>Unfavorable</td></tr>\n<tr><td>Complex / TP53</td><td>—</td><td>Older, MDS-related</td><td>Unfavorable</td></tr></tbody></table></div>\n<div class=\"rmem\"><b>8, 15, 16</b>Favorable AML. Lost chromosomes = lost cause.</div>\n<div class=\"rhy\"><b>APL</b>Abnormal promyelocytes; median age 35–40; DIC (bleeding emergency); faggot cells; ATRA (differentiation) + arsenic; differentiation syndrome → steroids.</div>\n<p>CR ≈60–70%; transplant = cure; gemtuzumab (anti-CD33 conjugate), FLT3 and IDH inhibitors. Prognosis: age, WBC, prior MDS, speed to remission (7–14 days), cytogenetics.</p>\n<h3 class=\"rh\">Rapid Review checklist · AML</h3>\n<ul class=\"rlist\"><li><b>LO5/7</b> Leukemia vs lymphoma; CLL = SLL · acute vs chronic · ≥20% blasts</li>\n<li><b>LO6</b> Age, morphology, markers, clues, syndromes, genetics</li>\n<li><b>LO8</b> Block → myeloblasts · risks · 4 mutation classes · WHO genetics first · DIC = APL, gums = monocytic · ≥20%, CD13/33, MPO, Auer rods</li>\n<li><b>LO9–10</b> De novo vs MDS-related · favorable vs unfavorable · APL + ATRA · CR 60–70%, transplant, prognostic factors</li></ul>\n", "T": "<h3 class=\"rh\">LO11 · ALL biology &amp; WHO</h3>\n<p>Clonal lymphoblasts (B or T) in marrow/blood; marrow (B) or thymus (T) progenitors. Most common childhood leukemia (&lt;17). Risk: Down syndrome, ataxia-telangiectasia.</p>\n<div class=\"rrule\"><b>Genetics</b>NOTCH1 → T-ALL. PAX5, E2A → B-ALL. ≈90% have chromosome changes; hyperdiploidy (&gt;50) most common.</div>\n<p>WHO: B-lymphoblastic (most common) and T-lymphoblastic leukemia/lymphoma; B-ALL split by recurrent genetics (hyperdiploidy, hypodiploidy, t(12;21), t(9;22), t(1;19), KMT2A, BCR-ABL1-like). Emphasizes immunophenotype and cytogenetics.</p>\n<div class=\"rtrap\"><b>Look-alikes</b>B and T lymphoblasts look the same; lineage = flow cytometry.</div>\n<h3 class=\"rh\">LO12 · The typical ALL patient</h3>\n<p>Age 2–10. Marrow replacement → anemia, bleeding, infection. <b>Bone pain/arthralgias</b> (limp, refuses to walk). Spread: nodes, spleen/liver, CNS, testes, thymus. <b>T-ALL</b>: adolescent boys, mediastinal mass (stridor, SVC syndrome), higher WBC.</p>\n<p>Workup: anemia, ↓ platelets/granulocytes, WBC ≈5–25k with blasts; marrow ≥20% blasts; TdT+; cytogenetics; <b>lumbar puncture in every patient</b>.</p>\n<div class=\"rseq\"><ol><li><b>Induction</b></li><li><b>Consolidation</b></li><li><b>Maintenance</b> ≈2–3 years</li></ol></div><div class=\"rrule\"><b>CNS prophylaxis</b>Intrathecal chemo throughout, starting with induction.</div>\n<div class=\"rhy\"><b>ALL prognosis</b>≈90% cure in children; adults worse. Good: age 2–9, female, white, low WBC, rapid response. Bad: age &lt;1 or &gt;10, WBC &gt;50k, t(9;22), t(4;11)/KMT2A, hypodiploidy, CNS disease, slow response. Relapse in CNS and testes (sanctuary sites). Newer: TKIs (Ph+), blinatumomab, CAR-T.</div>\n<h3 class=\"rh\">LO13 · Markers &amp; cytogenetics</h3>\n<div class=\"rtbl\"><table><thead><tr><th></th><th>B-ALL</th><th>T-ALL</th></tr></thead><tbody>\n<tr><td>Shared</td><td>TdT+</td><td>TdT+</td></tr><tr><td>Lineage</td><td>CD10, 19, 20, 21, 22</td><td>CD2, 3, 5, 7 (CD4/8)</td></tr>\n<tr><td>Patient</td><td>Child 2–10</td><td>Teen boy, mediastinal mass</td></tr></tbody></table></div>\n<div class=\"rmem\"><b>Numbers</b>B: big numbers 10–22. T: single digits 2, 3, 5, 7.</div>\n<div class=\"rtbl\"><table><thead><tr><th>Abnormality</th><th>Prognosis</th></tr></thead><tbody>\n<tr><td>Hyperdiploidy (&gt;50)</td><td>Favorable</td></tr><tr><td>t(12;21) ETV6-RUNX1</td><td>Favorable</td></tr>\n<tr><td>Hypodiploidy</td><td>Intermediate (45) → unfavorable (&lt;44)</td></tr>\n<tr><td>t(1;19) TCF3-PBX1</td><td>Unfavorable (in-house)</td></tr>\n<tr><td>t(9;22) BCR-ABL</td><td>Unfavorable; ≈25% adult ALL; add TKI</td></tr>\n<tr><td>14q11 (TCR)</td><td>T-ALL ≈45%; unfavorable</td></tr><tr><td>t(4;11) KMT2A</td><td>Infants; unfavorable</td></tr></tbody></table></div>\n<div class=\"rmem\"><b>More and twelve</b>More chromosomes and t(12;21) = good. 9;22 is bad in ALL.</div>\n<h3 class=\"rh\">Rapid Review checklist · ALL</h3>\n<ul class=\"rlist\"><li>Clonal lymphoblasts; kids 2–10; Down, ataxia-telangiectasia</li>\n<li>NOTCH1 (T), PAX5/E2A (B); 90% chromosome changes; WHO = markers + genetics</li>\n<li>Marrow failure + bone pain; nodes, spleen, CNS, testes; T-ALL mediastinal mass</li>\n<li>Always LP; induction → consolidation → maintenance, CNS prophylaxis throughout; relapse CNS/testes</li>\n<li>TdT+; B CD10/19/20/22; T CD2/3/5/7</li>\n<li>Good: hyperdiploidy, t(12;21) · bad: t(9;22), t(1;19), hypodiploidy, 14q11, t(4;11)</li></ul>\n"};
+var RVW_NAME = {"F":"LO1–4 MDS","D":"LO5–10 Leukemia & AML","T":"LO11–13 ALL"};
+(function(){
+  var panel=document.getElementById("rvw"), body=document.getElementById("rvwBody"),
+      toc=document.getElementById("rvwToc"), q=document.getElementById("rvwQ"),
+      cnt=document.getElementById("rvwCount"), empty=document.getElementById("rvwEmpty"),
+      btn=document.getElementById("reviewBtn"), lec="F", secs=[];
+  var TYPES={rrule:1,rtrap:1,rmem:1,rhy:1};
+  function collapse(sec){
+    [].slice.call(sec.querySelectorAll(".rrule,.rtrap,.rmem,.rhy")).forEach(function(d){
+      var type=d.className.trim(); if(!TYPES[type])return;
+      var lbl=d.querySelector("b"), label=lbl?lbl.textContent:"Note";
+      if(lbl)lbl.parentNode.removeChild(lbl);
+      var det=document.createElement("details"); det.className="cx "+type;
+      var sum=document.createElement("summary");
+      sum.innerHTML='<span class="lbl"></span><span class="pk"></span>';
+      sum.querySelector(".lbl").textContent=label;
+      sum.querySelector(".pk").textContent=d.textContent.replace(/\s+/g," ").trim().slice(0,110);
+      var cb=document.createElement("div"); cb.className="cbody";
+      while(d.firstChild)cb.appendChild(d.firstChild);
+      det.appendChild(sum); det.appendChild(cb);
+      d.parentNode.replaceChild(det,d);
+    });
+    var h=sec.querySelector(".rh"), hys=[].slice.call(sec.querySelectorAll("details.rhy"));
+    if(h&&hys.length){ var ref=h.nextSibling; hys.forEach(function(x){ sec.insertBefore(x,ref); }); }
+    var kids=[].slice.call(sec.children), i=0;
+    while(i<kids.length){
+      if(kids[i].tagName==="DETAILS"){
+        var run=[kids[i]], cls=kids[i].className, j=i+1;
+        while(j<kids.length&&kids[j].tagName==="DETAILS"&&kids[j].className===cls){run.push(kids[j]);j++;}
+        if(run.length>1){
+          var g=document.createElement("div"); g.className="cgrid";
+          sec.insertBefore(g,run[0]); run.forEach(function(x){g.appendChild(x);});
+        }
+        i=j;
+      } else i++;
+    }
+  }
+  function group(){
+    var kids=[].slice.call(body.childNodes), out=[], cur=null;
+    kids.forEach(function(n){
+      if(n.nodeType===1&&n.tagName==="H3"){cur=document.createElement("section");cur.className="rsec";out.push(cur);}
+      if(!cur){cur=document.createElement("section");cur.className="rsec";out.push(cur);}
+      cur.appendChild(n);
+    });
+    body.innerHTML="";
+    out.forEach(function(s,i){ s.id="rs"+i; collapse(s); s._t=s.textContent.toLowerCase(); body.appendChild(s); });
+    return out;
+  }
+  function setAll(open){
+    [].slice.call(body.querySelectorAll("details.cx")).forEach(function(d){d.open=open;});
+    var t=document.getElementById("rvwAll");
+    if(t){t.textContent=open?"Collapse all":"Expand all";t.setAttribute("aria-pressed",String(open));}
+  }
+  function buildToc(){
+    toc.innerHTML=secs.map(function(s){
+      var h=s.querySelector(".rh"); return h?'<a href="#'+s.id+'">'+h.textContent+'</a>':'';
+    }).join("");
+  }
+  function filter(){
+    var terms=q.value.toLowerCase().split(/\s+/).filter(Boolean), n=0;
+    secs.forEach(function(s){
+      var on=terms.every(function(t){return s._t.indexOf(t)!==-1;});
+      s.classList.toggle("hide",!on); if(on)n++;
+    });
+    empty.classList.toggle("on",n===0);
+    cnt.textContent = n===secs.length ? secs.length+" sections" : n+" of "+secs.length;
+    toc.style.display = q.value ? "none" : "";
+  }
+  function load(l){
+    lec=l; panel.setAttribute("data-lec",l);
+    body.innerHTML=REVIEW[l]||"";
+    secs=group(); buildToc(); q.value=""; filter();
+    var t=document.getElementById("rvwAll"); if(t){t.textContent="Expand all";t.setAttribute("aria-pressed","false");}
+  }
+  function open(){
+    document.querySelector(".bar").style.display="none";
+    document.querySelector(".main").style.display="none";
+    panel.hidden=false; if(!secs.length)load(lec);
+    btn.setAttribute("aria-pressed","true");
+    window.scrollTo(0,0); q.focus({preventScroll:true});
+  }
+  function close(){
+    panel.hidden=true;
+    document.querySelector(".bar").style.display="";
+    document.querySelector(".main").style.display="";
+    btn.setAttribute("aria-pressed","false");
+    window.scrollTo(0,0);
+  }
+  btn.onclick=function(){ panel.hidden?open():close(); };
+  document.getElementById("rvwClose").onclick=close;
+  document.getElementById("rvwPrint").onclick=function(){window.print();};
+  var allBtn=document.getElementById("rvwAll");
+  if(allBtn)allBtn.onclick=function(){ setAll(this.getAttribute("aria-pressed")!=="true"); };
+  var reclose=[];
+  window.addEventListener("beforeprint",function(){
+    reclose=[];
+    [].slice.call(body.querySelectorAll("details.cx")).forEach(function(d){ if(!d.open){reclose.push(d);d.open=true;} });
+  });
+  window.addEventListener("afterprint",function(){ reclose.forEach(function(d){d.open=false;}); reclose=[]; });
+  document.getElementById("rvwTabs").onclick=function(e){
+    var b=e.target.closest("button"); if(!b)return;
+    [].forEach.call(this.children,function(c){c.setAttribute("aria-pressed",String(c===b));});
+    load(b.dataset.l); window.scrollTo(0,0);
+  };
+  q.addEventListener("input",filter);
+  document.addEventListener("keydown",function(e){
+    if(e.key==="Escape"&&!panel.hidden){ if(document.activeElement===q&&q.value){q.value="";filter();} else close(); }
+  });
+})();
+
+</script>
