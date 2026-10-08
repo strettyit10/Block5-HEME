@@ -1,0 +1,553 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HEM15 Molecular Genetics Builder</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,600;8..60,700&family=Public+Sans:wght@400;600;700&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+/* Layout: toolbar + stats on top; structure list | question card | LO mastery map. Stacks to one column on phones. */
+:root{
+  --bg:#f3f5f6; --surface:#ffffff; --ink:#18212b; --muted:#5a6570; --line:#dbe0e5; --chip:#eceff2;
+  --arch:#2c55a0; --face:#a3263f; --eye:#2c55a0; --accent:#a3263f;
+  --ok:#1d7a3e; --ok-bg:#e3f4e8; --bad:#b3261e; --bad-bg:#fbe7e5; --once:#b7791f; --once-bg:#fdf1dc; --mem:#c2621a;
+  --hy-bg:#fff6cc; --hy-line:#c9a227; --hy-ink:#4a3a00;
+  --f-display:"Source Serif 4", Georgia, serif; --f-body:"Public Sans", Arial, sans-serif; --f-mono:"IBM Plex Mono", ui-monospace, monospace;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#11161c; --surface:#19212a; --ink:#e6eaee; --muted:#9aa6b2; --line:#2c3642; --chip:#232c36;
+  --arch:#8fb1f0; --face:#f08a9b; --eye:#8fb1f0; --accent:#f08a9b;
+  --ok:#6fd08f; --ok-bg:#16301f; --bad:#f28b82; --bad-bg:#3a1b19; --once:#f0c070; --once-bg:#3a2e12; --mem:#f0a05c;
+  --hy-bg:#3a3110; --hy-line:#b8952a; --hy-ink:#f5e6a8; color-scheme:dark }}
+:root[data-theme="dark"]{
+  --bg:#11161c; --surface:#19212a; --ink:#e6eaee; --muted:#9aa6b2; --line:#2c3642; --chip:#232c36;
+  --arch:#8fb1f0; --face:#f08a9b; --eye:#8fb1f0; --accent:#f08a9b;
+  --ok:#6fd08f; --ok-bg:#16301f; --bad:#f28b82; --bad-bg:#3a1b19; --once:#f0c070; --once-bg:#3a2e12; --mem:#f0a05c;
+  --hy-bg:#3a3110; --hy-line:#b8952a; --hy-ink:#f5e6a8; color-scheme:dark }
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font:15px/1.5 var(--f-body);margin:0}
+.wrap{max-width:1180px;margin:0 auto;padding-inline:16px;padding-block:22px 48px;display:grid;gap:16px}
+h1,h2,h3{font-family:var(--f-display);margin:0;text-wrap:balance;line-height:1.2}
+.meta{font:500 .74rem var(--f-mono);letter-spacing:.07em;text-transform:uppercase;color:var(--muted);margin:0}
+header{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:end;gap:12px}
+header h1{font-size:1.9rem}
+header p.lede{margin:4px 0 0;color:var(--muted);max-width:62ch}
+.btn{font:600 .85rem var(--f-body);background:var(--chip);color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:7px 12px;cursor:pointer}
+.btn:hover{border-color:var(--ink)}
+.btn:focus-visible,.opt:focus-visible,.seg button:focus-visible,.ent:focus-visible,.lo-tile:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.btn.primary{background:var(--accent);color:var(--surface);border-color:var(--accent)}
+.btn[disabled]{opacity:.45;cursor:default}
+.hdr-actions{display:flex;gap:8px;flex-wrap:wrap}
+.wrap{grid-template-columns:minmax(0,1fr)} .rvw{min-width:0}
+
+.bar{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 12px}
+.seg{display:inline-flex;background:var(--chip);border-radius:10px;padding:3px;gap:2px;flex-wrap:wrap}
+.seg button{font:600 .82rem var(--f-body);border:0;background:transparent;color:var(--ink);padding:6px 11px;border-radius:8px;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--surface);box-shadow:0 1px 2px rgba(0,0,0,.12)}
+.seg .lab{font:500 .7rem var(--f-mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);align-self:center;padding:0 6px}
+.stats{display:flex;gap:18px;flex-wrap:wrap}
+.stat b{display:block;font:700 1.15rem var(--f-body);font-variant-numeric:tabular-nums}
+.stat span{font:500 .68rem var(--f-mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+
+.main{display:grid;grid-template-columns:250px minmax(0,1fr) 270px;gap:16px;align-items:start}
+@media (max-width:1000px){ .main{grid-template-columns:minmax(0,1fr)} .side{order:2} .map{order:3} }
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px;display:grid;gap:8px;min-width:0}
+.panel h2{font-size:1rem}
+.lec-h{font:700 .72rem var(--f-body);letter-spacing:.07em;text-transform:uppercase;margin-top:6px}
+.ent{display:grid;grid-template-columns:1fr auto;gap:2px 8px;text-align:left;width:100%;background:transparent;border:1px solid transparent;border-radius:8px;padding:7px 8px;cursor:pointer;color:var(--ink);font:inherit}
+.ent:hover{background:var(--chip)}
+.ent[aria-current="true"]{border-color:var(--lc);background:var(--chip)}
+.ent .n{font-weight:600;font-size:.9rem}
+.ent .s{grid-column:1;font-size:.75rem;color:var(--muted)}
+.ent .pct{grid-row:1/3;grid-column:2;align-self:center;font:500 .75rem var(--f-mono);color:var(--muted);font-variant-numeric:tabular-nums}
+.ent .mini{grid-column:1/3;height:4px;border-radius:2px;background:var(--line);overflow:hidden}
+.ent .mini i{display:block;height:100%;background:var(--lc)}
+.lF{--lc:var(--arch)} .lD{--lc:var(--face)}
+.tag.rr{background:var(--chip);color:var(--ink);border:1px solid var(--line)}
+
+.card{background:var(--surface);border:1px solid var(--line);border-top:5px solid var(--lc);border-radius:12px;padding:18px;display:grid;gap:14px;min-width:0}
+.card-top{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px;align-items:baseline}
+.card-top h2{font-size:1.35rem}
+.tag{font:500 .7rem var(--f-mono);letter-spacing:.06em;text-transform:uppercase;padding:3px 8px;border-radius:999px;background:var(--chip);color:var(--muted)}
+.tag.lo{color:var(--lc)}
+.tag.hy{background:var(--hy-bg);color:var(--hy-ink);border:1px solid var(--hy-line)}
+.boxes{display:flex;gap:4px;flex-wrap:wrap}
+.boxes i{width:18px;height:6px;border-radius:3px;background:var(--line)}
+.boxes i.done-ok{background:var(--ok)} .boxes i.done-bad{background:var(--bad)} .boxes i.cur{background:var(--lc)}
+.q{font:600 1.08rem/1.45 var(--f-body);margin:0}
+.hint{font-size:.8rem;color:var(--muted);margin:0}
+.opts{display:grid;gap:8px}
+.opt{display:grid;grid-template-columns:auto 1fr;gap:10px;align-items:start;text-align:left;width:100%;font:inherit;color:var(--ink);background:var(--bg);border:1.5px solid var(--line);border-radius:10px;padding:10px 12px;cursor:pointer}
+.opt:hover:not([disabled]){border-color:var(--lc)}
+.opt .k{font:500 .75rem var(--f-mono);color:var(--muted);border:1px solid var(--line);border-radius:5px;padding:1px 6px;margin-top:1px}
+.opt.sel{border-color:var(--lc);background:var(--chip)}
+.opt.right{border-color:var(--ok);background:var(--ok-bg)}
+.opt.wrong{border-color:var(--bad);background:var(--bad-bg)}
+.opt.missed{border-color:var(--ok);border-style:dashed}
+.opt[disabled]{cursor:default}
+.ordered{display:grid;gap:6px;counter-reset:ord;padding:0;margin:0;list-style:none;min-height:44px;border:1.5px dashed var(--line);border-radius:10px;padding:8px}
+.ordered li{counter-increment:ord;display:grid;grid-template-columns:auto 1fr;gap:8px;align-items:center;background:var(--chip);border-radius:8px;padding:7px 10px;cursor:pointer}
+.ordered li::before{content:counter(ord);font:500 .78rem var(--f-mono);color:var(--lc)}
+.ordered li.right{background:var(--ok-bg)} .ordered li.wrong{background:var(--bad-bg)}
+.ordered .empty{color:var(--muted);font-size:.85rem;padding:4px}
+/* ---------- Review ---------- */
+.rvw{margin-top:14px}
+.rvw-bar{position:sticky;top:0;z-index:8;background:var(--bg);border-bottom:1px solid var(--line);padding:10px 0;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.rvw-bar .seg{display:flex;gap:2px;background:var(--chip);border:1px solid var(--line);border-radius:9px;padding:3px}
+.rvw-bar .seg button{background:transparent;border:0;border-radius:7px;padding:6px 12px;font:inherit;font-size:13.5px;color:var(--muted);cursor:pointer}
+.rvw-bar .seg button[aria-pressed="true"]{background:var(--surface);color:var(--ink);font-weight:600;box-shadow:0 1px 2px rgba(0,0,0,.08)}
+#rvwQ{flex:1 1 180px;min-width:140px;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:7px 10px;font:inherit;font-size:14px;color:inherit}
+#rvwCount{font-family:var(--f-mono);font-size:11px;color:var(--muted);white-space:nowrap}
+.rvw-toc{display:flex;flex-wrap:wrap;gap:6px;margin:12px 0 2px}
+.rvw-toc a{font-size:12.5px;text-decoration:none;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:4px 10px}
+.rvw-toc a:hover{color:var(--ink);border-color:var(--muted)}
+.rvw-body{max-width:none}
+.rsec{padding:6px 0 10px;scroll-margin-top:64px}
+.rsec.hide{display:none}
+.rh{font-family:var(--f-display);font-size:1.5rem;font-weight:650;margin:26px 0 4px;padding-bottom:6px;border-bottom:2px solid var(--acc)}
+.rsh{font-family:var(--f-display);font-size:1.12rem;font-weight:650;margin:18px 0 4px}
+.rvw-body p{margin:8px 0;line-height:1.62}
+ul.rlist{margin:8px 0;padding-left:1.15em;display:grid;gap:5px}
+ul.rlist li{line-height:1.55}
+.rtbl{overflow-x:auto;margin:12px 0;border:1px solid var(--line);border-radius:10px;background:var(--surface)}
+.rtbl table{border-collapse:collapse;width:100%;font-size:14px}
+.rtbl th,.rtbl td{text-align:left;vertical-align:top;padding:8px 11px;border-bottom:1px solid var(--line)}
+.rtbl thead th{background:var(--chip);font-family:var(--f-mono);font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);white-space:nowrap}
+.rtbl tbody tr:last-child td{border-bottom:0}
+.rtbl td b{font-weight:600}
+.rseq{margin:12px 0;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 14px 12px 10px}
+.rseq ol{margin:0;padding-left:1.3em;display:grid;gap:7px}
+.rseq li{line-height:1.55;padding-left:2px}
+.rseq li b{color:var(--acc)}
+.cgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(330px,1fr));gap:10px;margin:12px 0;align-items:start}
+.cgrid>details{margin:0}
+details.cx{margin:11px 0;border-radius:9px;border:1px solid var(--line);background:var(--surface);overflow:hidden}
+details.cx>summary{list-style:none;cursor:pointer;display:flex;align-items:baseline;gap:9px;padding:9px 12px;border-left:3px solid var(--line);font-size:14px}
+details.cx>summary::-webkit-details-marker{display:none}
+details.cx>summary::after{content:"+";margin-left:auto;font-family:var(--f-mono);font-size:14px;color:var(--muted);line-height:1}
+details.cx[open]>summary::after{content:"\2013"}
+details.cx>summary .lbl{font-family:var(--f-mono);font-size:10px;letter-spacing:.11em;text-transform:uppercase;font-weight:700;white-space:nowrap}
+details.cx>summary .pk{color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1}
+details.cx[open]>summary .pk{display:none}
+details.cx .cbody{padding:2px 13px 12px;line-height:1.56;font-size:14.6px;border-left:3px solid var(--line)}
+details.cx .cbody b{font-weight:600}
+details.rrule>summary,details.rrule .cbody{border-left-color:var(--acc)}
+details.rtrap>summary,details.rtrap .cbody{border-left-color:var(--bad)}
+details.rmem>summary,details.rmem .cbody{border-left-color:var(--mem)}
+details.rrule>summary .lbl{color:var(--acc)} details.rtrap>summary .lbl{color:var(--bad)} details.rmem>summary .lbl{color:var(--mem)}
+details.rhy{background:var(--hy-bg);border-color:var(--hy-line);color:var(--hy-ink)}
+details.rhy>summary,details.rhy .cbody{border-left-color:var(--hy-line)}
+details.rhy>summary .lbl{color:var(--hy-ink);opacity:.9}
+details.rhy>summary .pk,details.rhy>summary::after{color:var(--hy-ink);opacity:.75}
+.rvw-empty{display:none;text-align:center;color:var(--muted);border:1px dashed var(--line);border-radius:10px;padding:28px;margin-top:16px}
+.rvw-empty.on{display:block}
+.rvw[data-lec="F"]{--acc:var(--arch)} .rvw[data-lec="D"]{--acc:var(--face)}
+@media print{
+  header,.bar,.main,.rvw-bar,.rvw-toc,.rvw-empty{display:none!important}
+  .rvw{margin:0}
+  body{background:#fff}
+  .rsec{break-before:page;break-inside:auto}
+  .rsec:first-of-type{break-before:auto}
+  .rtbl,.rseq,details.cx{break-inside:avoid}
+  details.cx>summary::after{display:none}
+  .cgrid{grid-template-columns:1fr 1fr}
+}
+.fb .ans{font-size:.95rem}
+.fbexp{display:grid;gap:8px}
+.fbexp p{margin:0;line-height:1.6}
+.fbnotes{list-style:none;margin:2px 0 0;padding:0;display:grid;gap:6px}
+.fbnotes li{font-size:.9rem;line-height:1.5;color:var(--muted);padding-left:10px;border-left:2px solid var(--line)}
+.fbnotes li b{color:var(--ink);font-weight:600}
+.fbpearl{margin-top:2px;background:var(--hy-bg);border:1px solid var(--hy-line);border-left-width:3px;border-radius:9px;padding:9px 12px;font-size:.92rem;line-height:1.5;color:var(--hy-ink)}
+.fbpearl b{display:block;font:700 .66rem var(--f-mono);letter-spacing:.14em;text-transform:uppercase;color:var(--hy-line);margin-bottom:3px}
+.fb{border-radius:10px;padding:12px 14px;display:grid;gap:6px}
+.fb.ok{background:var(--ok-bg)} .fb.bad{background:var(--bad-bg)}
+.fb .v{font-weight:700}
+.fb.ok .v{color:var(--ok)} .fb.bad .v{color:var(--bad)}
+.fb ol{margin:0;padding-left:1.2em}
+.actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:space-between;align-items:center}
+.timer{font:500 .8rem var(--f-mono);color:var(--muted);font-variant-numeric:tabular-nums}
+.done{display:grid;gap:10px;text-align:left}
+
+.lo-grid{display:grid;gap:6px}
+.lo-tile{display:grid;grid-template-columns:auto 1fr auto;gap:8px;align-items:center;text-align:left;width:100%;background:transparent;border:1px solid var(--line);border-radius:8px;padding:6px 8px;cursor:pointer;color:var(--ink);font:inherit}
+.lo-tile:hover{border-color:var(--lc)}
+.lo-tile .id{font:500 .72rem var(--f-mono);color:var(--lc);white-space:nowrap}
+.lo-tile .t{font-size:.78rem;line-height:1.3}
+.lo-tile .dot{width:12px;height:12px;border-radius:50%;background:var(--line)}
+.dot.s-o{background:var(--once)} .dot.s-m{background:var(--bad)} .dot.s-M{background:var(--ok)}
+.legend{display:flex;flex-wrap:wrap;gap:10px;font-size:.72rem;color:var(--muted)}
+.legend span{display:inline-flex;gap:5px;align-items:center}
+.legend i{width:10px;height:10px;border-radius:50%;display:inline-block;background:var(--line)}
+.legend i.o{background:var(--once)} .legend i.m{background:var(--bad)} .legend i.M{background:var(--ok)}
+footer{color:var(--muted);font-size:.8rem;border-top:1px solid var(--line);padding-top:12px}
+@media (prefers-reduced-motion: no-preference){ .opt,.ent,.lo-tile{transition:border-color .12s, background .12s} }
+</style>
+
+<div class="wrap">
+<header>
+  <div>
+    <p class="meta">HoyaDocs · Block 5 · Genetics · HEM15</p>
+    <h1>HEM15 Molecular Genetics Builder</h1>
+    <p class="lede">Clinical molecular genetics, LO by LO: which test for which disease, sequencing ethics, and imprinting: build each structure box by box, then drill what you miss. Boxes tagged Rapid Review test the LO Rapid Review and Master Review checklists.</p>
+  </div>
+  <div class="hdr-actions">
+    <button class="btn primary" id="reviewBtn" type="button" aria-pressed="false">Review</button>
+    <button class="btn" id="themeBtn" type="button">Theme: auto</button>
+    <button class="btn" id="resetBtn" type="button">Reset progress</button>
+  </div>
+</header>
+
+<div class="bar">
+  <div class="seg" role="group" aria-label="Mode">
+    <span class="lab">Mode</span>
+    <button type="button" data-mode="build" aria-pressed="true">Build</button>
+    <button type="button" data-mode="drill" aria-pressed="false">Drill</button>
+  </div>
+  <div class="seg" role="group" aria-label="Section scope" id="scopeSeg">
+    <span class="lab">Scope</span>
+    <button type="button" data-scope="all" aria-pressed="true">All</button>
+    <button type="button" data-scope="F" aria-pressed="false">LO1 Techniques &amp; sequencing</button>
+    <button type="button" data-scope="D" aria-pressed="false">LO2 Imprinting</button>
+  </div>
+  <div class="seg" role="group" aria-label="Focus" id="focusSeg">
+    <span class="lab">Focus</span>
+    <button type="button" data-rr="0" aria-pressed="true">All boxes</button>
+    <button type="button" data-rr="1" aria-pressed="false">Rapid Review only</button>
+  </div>
+  <div class="stats" aria-live="polite">
+    <div class="stat"><b id="sScore">0</b><span>Score</span></div>
+    <div class="stat"><b id="sStreak">0</b><span>Streak</span></div>
+    <div class="stat"><b id="sAcc">—</b><span>Accuracy</span></div>
+    <div class="stat"><b id="sBoxes">0</b><span>Boxes mastered</span></div>
+    <div class="stat"><b id="sLos">0/2</b><span>LOs mastered</span></div>
+  </div>
+</div>
+
+<div class="main">
+  <aside class="panel side" aria-label="Structures">
+    <h2>Structures</h2>
+    <div id="entList"></div>
+  </aside>
+  <section class="card" id="card" aria-live="polite"></section>
+  <aside class="panel map" aria-label="Learning objective mastery map">
+    <h2>LO mastery map</h2>
+    <div class="legend"><span><i></i>untested</span><span><i class="m"></i>missed</span><span><i class="o"></i>got it once</span><span><i class="M"></i>mastered</span></div>
+
+    <p class="hint">Tap an LO to drill just that objective. Mastered = right twice in a row.</p>
+    <div class="lo-grid" id="loGrid"></div>
+  </aside>
+</div>
+
+<div class="rvw" id="rvw" data-lec="F" hidden>
+  <div class="rvw-bar">
+    <div class="seg" id="rvwTabs" role="group" aria-label="Section">
+      <button type="button" data-l="F" aria-pressed="true">LO1 Techniques &amp; sequencing</button>
+      <button type="button" data-l="D" aria-pressed="false">LO2 Imprinting</button>
+    </div>
+    <input id="rvwQ" type="search" placeholder="Search this review" autocomplete="off" aria-label="Search the review">
+    <span id="rvwCount"></span>
+    <button class="btn" type="button" id="rvwAll" aria-pressed="false">Expand all</button>
+    <button class="btn" type="button" id="rvwPrint">Print</button>
+    <button class="btn primary" type="button" id="rvwClose">Back to the game</button>
+  </div>
+  <nav class="rvw-toc" id="rvwToc" aria-label="Contents"></nav>
+  <div class="rvw-body" id="rvwBody"></div>
+  <div class="rvw-empty" id="rvwEmpty">Nothing in this section matches that search.</div>
+</div>
+
+
+<footer>HoyaDocs · HEM15 Molecular Genetics Builder · Updated October 8, 2026 · Revision 1.0. Yellow “HY” tags mark high-yield points, including Step 1. “Rapid Review” tags mark boxes built from the LO Rapid Review checklists.</footer>
+</div>
+
+<script>
+/* ================= LEARNING OBJECTIVES ================= */
+var LOS = {"1": "Techniques to analyze the genome: restriction digestion, OLA, multiplex PCR/MLPA, triplet-primed PCR, methylation analysis, Sanger/exome/genome sequencing and their ethical issues", "2": "Imprinting and its role in human disease"};
+var LOLEC = {"1": "F", "2": "D"};
+var LECS = [{"k": "F", "n": "LO1 Techniques & sequencing", "c": "arch"}, {"k": "D", "n": "LO2 Imprinting", "c": "face"}];
+var E = [{"id": "map", "lec": "F", "name": "Technique map", "sub": "Match the mutation type to the test", "b": [{"lo": "1", "rr": true, "hy": true, "t": "m", "q": "Select ALL correct technique → classic disease pairs (in-house).", "a": ["PCR + restriction digestion → achondroplasia", "Oligonucleotide ligation assay → cystic fibrosis", "Multiplex PCR / MLPA → Duchenne muscular dystrophy", "Triplet-primed PCR → fragile X", "Methylation-specific PCR → Prader-Willi / Angelman"], "o": ["Triplet-primed PCR → achondroplasia", "PCR + restriction digestion → fragile X"], "n": ["Repeat test, not a point mutation.", "Repeat expansion needs triplet-primed PCR (Southern blot uses restriction digestion, but PCR + digestion is the point-mutation test)."], "w": "Sanger sequencing → a single gene; exome/genome → all genes.", "p": "Know each disease's test."}, {"lo": "1", "rr": true, "hy": true, "t": "m", "q": "Select ALL correct mutation type → test pairs.", "a": ["Known point mutation → restriction digest or OLA", "Whole exon missing → multiplex PCR / MLPA", "Repeat too long → triplet-primed PCR (or Southern blot)", "Wrong parent's copy → methylation analysis", "Unknown mutation → sequencing"], "o": ["Large deletion → Sanger sequencing", "Repeat expansion → standard PCR alone"], "n": ["Sanger misses large deletions.", "Standard PCR can't amplify large expansions."], "w": "Choose the test that sees the mutation type.", "p": "Match mutation type to test."}]}, {"id": "ach", "lec": "F", "name": "Achondroplasia & restriction digestion", "sub": "FGFR3 · SfcI · incomplete dominance", "b": [{"lo": "1", "rr": true, "hy": true, "q": "What is the genetic basis of achondroplasia?", "a": "Autosomal dominant FGFR3 gain-of-function (constitutive activation) mutation", "o": ["Autosomal recessive FGFR3 loss of function", "X-linked dystrophin deletion", "CGG repeat expansion"], "n": ["It is AD gain of function.", "DMD.", "Fragile X."], "w": "FGFR3 normally limits bone growth; activation puts too much brake on growth. Most common short-limbed dwarfism.", "p": "FGFR3 GOF = too much brake."}, {"lo": "1", "rr": true, "hy": true, "q": "What fraction of achondroplasia is de novo, and on which parental allele?", "a": "≈80% de novo, exclusively on the paternally derived allele (advanced paternal age)", "o": ["≈5% de novo, maternal allele", "≈80% de novo, maternal allele", "All cases inherited"], "n": ["Most are de novo.", "Paternal.", "Most are new."], "w": "Paternal age effect from many spermatogonial divisions.", "p": "Old dads → achondroplasia."}, {"lo": "1", "rr": true, "hy": true, "q": "Which FGFR3 change causes most achondroplasia, and what type is it?", "a": "p.Gly380Arg; 99% c.1138G>A (a transition), 1% c.1138G>C (a transversion)", "o": ["p.Phe508del; a deletion", "p.Trp1282Ter; a nonsense change", "p.Gly551Asp; a gating mutation"], "n": ["CF.", "CF (Ashkenazi).", "CF."], "w": "Transition = purine → purine; transversion = purine → pyrimidine. Other FGFR3 variants: Gly375Cys, Gly346Glu, Ser279Cys.", "p": "G380R; G>A transition."}, {"lo": "1", "rr": true, "hy": true, "q": "A 164 bp FGFR3 exon 10 product is cut with SfcI. What pattern does a typical affected (heterozygous) person show?", "a": "164 + 109 + 55 bp", "o": ["164 bp only", "109 + 55 bp only", "107 + 57 bp only"], "n": ["Wild type.", "Homozygous (lethal).", "MspI-cut c.1138G>C homozygous."], "w": "The mutation creates the SfcI site, so the mutant allele gives the smaller bands; the uncut 164 is the normal allele.", "p": "Heterozygote = all three bands."}, {"lo": "1", "rr": true, "q": "Which enzyme detects the rarer c.1138G>C achondroplasia allele, and what bands result?", "a": "MspI → 107 + 57 bp", "o": ["SfcI → 109 + 55 bp", "EcoRI → 82 + 82 bp", "No enzyme can detect it"], "n": ["That's c.1138G>A.", "Not described.", "MspI does."], "w": "Each mutation creates a different new restriction site.", "p": "G>C → MspI."}, {"lo": "1", "rr": true, "t": "m", "q": "Select ALL indications for achondroplasia DNA testing.", "a": ["Confirm a clinical diagnosis", "Prenatal diagnosis when short limbs are seen on ultrasound in an unaffected couple", "Prenatal diagnosis when both parents have achondroplasia"], "o": ["Routine newborn screening of all infants", "Predicting intelligence"], "n": ["Not routine.", "Intelligence is normal."], "w": "Restriction digestion is fast and cheap for the known mutation.", "p": "Confirm, short-limb fetus, two affected parents."}, {"lo": "1", "rr": true, "hy": true, "q": "Two parents with achondroplasia (Aa × Aa) ask about their baby. Outcomes?", "a": "25% average stature (aa), 50% achondroplasia (Aa), 25% homozygous (AA, usually lethal)", "o": ["100% achondroplasia", "50% lethal, 50% average", "75% achondroplasia, 25% average"], "n": ["Not Mendelian.", "Mixed up.", "AA is distinct and lethal."], "w": "Among liveborns ≈2/3 have achondroplasia.", "p": "AA is lethal."}, {"lo": "1", "rr": true, "q": "Why is achondroplasia described as incomplete dominance?", "a": "The heterozygote phenotype is intermediate between the two homozygotes, so genotype can be read from phenotype", "o": ["Heterozygotes are unaffected", "Only homozygotes are affected", "Penetrance is 50%"], "n": ["They are affected.", "Heterozygotes are affected.", "Not the concept."], "w": "aa average, Aa achondroplasia, AA severe/lethal.", "p": "Three genotypes, three phenotypes."}, {"lo": "1", "hy": true, "t": "m", "q": "Select ALL clinical features of achondroplasia (standard references).", "a": ["Rhizomelic (proximal) limb shortening", "Macrocephaly with frontal bossing", "Normal intelligence", "Normal trunk length"], "o": ["Intellectual disability", "Long limbs with arachnodactyly"], "n": ["Intelligence is normal.", "Marfan."], "w": "Homozygous = lethal.", "p": "Short proximal limbs, big head, normal IQ."}]}, {"id": "cf", "lec": "F", "name": "Cystic fibrosis & the OLA", "sub": "Carrier frequencies · diagnosis · residual risk", "b": [{"lo": "1", "rr": true, "hy": true, "q": "What is the CF carrier frequency in Caucasians and Ashkenazi Jews?", "a": "1 in 25", "o": ["1 in 150", "1 in 62", "1 in 1,000"], "n": ["Asians.", "African Americans.", "Far too rare."], "w": "Hispanics 1/45; African Americans 1/62; Asians 1/150. Most common fatal AR disease in Caucasians.", "p": "Caucasian CF carrier 1/25."}, {"lo": "1", "rr": true, "t": "m", "q": "Select ALL correct CFTR facts (in-house).", "a": ["Located at 7q31", "27 exons over 250 kb", "Encodes a 1,480-amino-acid transmembrane glycoprotein (chloride channel)", ">2,000 pathogenic variants"], "o": ["Located on the X chromosome", "Fewer than 10 known variants"], "n": ["Autosomal.", "Thousands."], "w": "Some variants are ethnic-specific.", "p": "CFTR: 7q31, chloride channel."}, {"lo": "1", "rr": true, "hy": true, "t": "m", "q": "Select ALL correct CF variant → population pairs.", "a": ["ΔF508 (p.Phe508del) → most common overall", "W1282X (nonsense) → 60% of Ashkenazi CF chromosomes", "c.3120+1G>A → common in African Americans (12.3%)"], "o": ["ΔF508 → rare in Caucasians", "W1282X → most common in Asians"], "n": ["Most common.", "Ashkenazi."], "w": "ΔF508 protein misfolds and is degraded.", "p": "ΔF508 everywhere; W1282X Ashkenazi."}, {"lo": "1", "rr": true, "hy": true, "q": "What establishes a CF diagnosis?", "a": "A clinical feature, family history or positive newborn screen PLUS a positive sweat chloride on 2 occasions, two CFTR pathogenic variants, or abnormal nasal potential difference", "o": ["A single positive newborn screen alone", "One CFTR variant alone", "A chest X-ray"], "n": ["Needs confirmation.", "Carrier, not diagnosis.", "Not diagnostic."], "w": "Newborn screen = ↑ immunoreactive trypsinogen. Sweat chloride ≥60 mmol/L (standard references).", "p": "Clue + confirmation."}, {"lo": "1", "rr": true, "hy": true, "q": "How does the oligonucleotide ligation assay work?", "a": "Two adjacent probes are joined by DNA ligase only if the probe at the mutation site matches perfectly; normal and mutant products differ in size/color", "o": ["It cuts DNA at a new restriction site", "It counts CGG repeats with a third primer", "It converts unmethylated C to U"], "n": ["Restriction digestion.", "Triplet-primed PCR.", "Bisulfite methylation PCR."], "w": "A multiplex panel of known CFTR mutations in one reaction, read on a capillary instrument.", "p": "Ligase joins only perfect matches."}, {"lo": "1", "rr": true, "q": "An OLA shows ONLY the mutant ΔF508 peak. Interpretation?", "a": "Homozygous ΔF508", "o": ["Heterozygous carrier", "No mutation", "Test failure"], "n": ["Carrier shows normal + mutant.", "Would show normal only.", "A clear result."], "w": "Normal-only = no tested mutation; both = heterozygous carrier.", "p": "Mutant only = homozygous."}, {"lo": "1", "rr": true, "t": "m", "q": "Select ALL reasons to perform CF DNA testing.", "a": ["Genotype–phenotype correlation and variant-specific therapy", "Diagnosis when sweat chloride is equivocal or can't be done", "Prenatal diagnosis", "Routine prenatal carrier screening", "Male infertility work-up (congenital bilateral absence of the vas deferens)"], "o": ["Diagnosing achondroplasia", "Measuring sweat chloride"], "n": ["FGFR3.", "That's the sweat test."], "w": "CFTR modulators: ivacaftor for gating mutations (G551D); elexacaftor-tezacaftor-ivacaftor for ΔF508 (standard references).", "p": "Therapy, diagnosis, prenatal, carrier, infertility."}, {"lo": "1", "rr": true, "hy": true, "q": "A Caucasian woman has a negative CF carrier screen with 90% detection. Is her risk zero?", "a": "No: residual risk ≈1/241 by Bayes' theorem", "o": ["Yes, zero", "Still 1/25", "1/2"], "n": ["Panels test only common variants.", "The negative test lowers it.", "Far too high."], "w": "Residual risk = prior × (1 − detection) ÷ [1 − (prior × detection)].", "p": "Negative screen ≠ non-carrier."}, {"lo": "1", "rr": true, "q": "Why must labs still run the 23-variant CF panel even when using exome sequencing (2020 ACMG standard)?", "a": "Two pathogenic variants are deep intronic and missed by exome: c.2657+5G>A and c.3718−2477C>T", "o": ["Exome cannot detect ΔF508", "The panel is cheaper than exome", "Exome detects only deletions"], "n": ["It can.", "Not the reason.", "Not true."], "w": "Exome covers all exons ± 2 bp of splice sites.", "p": "Deep intronic variants hide from exome."}]}, {"id": "dmd", "lec": "F", "name": "Duchenne/Becker & deletion testing", "sub": "Huge gene · reading frame · therapy", "b": [{"lo": "1", "rr": true, "hy": true, "q": "Why are mutations so common in the dystrophin gene?", "a": "It is the largest human gene: 2.4 Mb, 79 exons (a big target for errors)", "o": ["It has no introns", "It sits on the Y chromosome", "It is a mitochondrial gene"], "n": ["It has many introns.", "X chromosome.", "Nuclear X gene."], "w": "X-linked recessive. One-third of DMD cases are new mutations.", "p": "Huge gene, many errors."}, {"lo": "1", "rr": true, "hy": true, "q": "What is the DMD mutation spectrum (in-house)?", "a": "Large deletions ≈60% (98% found by multiplex PCR), nonsense ≈15%, duplications ≈5%", "o": ["Repeat expansions ≈90%", "Point missense ≈80%", "Deletions ≈5%"], "n": ["Not DMD.", "Not the pattern.", "Deletions dominate."], "w": "Multiplex PCR: a missing band = deleted exon (works in males).", "p": "Mostly deletions."}, {"lo": "1", "rr": true, "hy": true, "q": "What can MLPA detect that multiplex PCR cannot (standard references)?", "a": "Exon duplications and female carriers, because it measures copy number (dosage) of every exon", "o": ["Point mutations", "Repeat expansions", "Methylation status"], "n": ["Needs sequencing.", "Needs triplet-primed PCR.", "Needs methylation PCR."], "w": "Multiplex PCR only shows missing products in a male with one X.", "p": "MLPA = dosage."}, {"lo": "1", "rr": true, "hy": true, "q": "What determines Duchenne vs Becker severity?", "a": "The reading frame, not deletion size: out-of-frame/nonsense → no dystrophin (Duchenne); in-frame → truncated, partly functional dystrophin (Becker)", "o": ["Deletion size alone", "Maternal age", "Number of CGG repeats"], "n": ["Size correlates poorly.", "Not the determinant.", "Fragile X."], "w": "Becker dystrophin keeps N- and C-termini with a shorter rod domain.", "p": "Frame, not size."}, {"lo": "1", "rr": true, "hy": true, "q": "A boy has an out-of-frame deletion of exons 48–50; his cousin has an in-frame deletion of exons 45–55. Prognoses?", "a": "Boy: Duchenne (severe); cousin: Becker (milder) despite a larger deletion", "o": ["Both Duchenne", "Both Becker", "Boy Becker; cousin Duchenne"], "n": ["Cousin is in-frame.", "Boy is out-of-frame.", "Reversed."], "w": "DMD: onset 3–5 y, wheelchair ≈12. Males with DMD don't reproduce; males with BMD can (all daughters carriers).", "p": "Bigger in-frame deletion can be milder."}, {"lo": "1", "rr": true, "t": "m", "q": "Select ALL mutation-guided DMD therapies.", "a": ["Eteplirsen: antisense exon 51 skipping restores the reading frame (Becker-like protein)", "Ataluren: ribosomal read-through of premature stop codons"], "o": ["Ivacaftor", "Arginine"], "n": ["CF.", "MELAS."], "w": "Therapy depends on the specific mutation.", "p": "Skip the exon or read through the stop."}, {"lo": "1", "rr": true, "hy": true, "q": "A mother's blood test is negative for her son's DMD deletion. Can she have another affected son?", "a": "Yes: gonadal (germline) mosaicism is well documented, so recurrence risk is several percent", "o": ["No, risk is zero", "Only if the father is affected", "Only daughters can be affected"], "n": ["Germline mosaicism.", "Fathers don't pass X to sons.", "Sons are the risk."], "w": "Females may also be manifesting carriers (skewed X-inactivation, cardiomyopathy).", "p": "Negative blood ≠ zero risk."}, {"lo": "1", "hy": true, "t": "m", "q": "Select ALL classic DMD features (standard references).", "a": ["Gowers sign", "Calf pseudohypertrophy", "Very high CK", "Dilated cardiomyopathy"], "o": ["Distal weakness first", "Myotonia"], "n": ["Proximal first.", "Myotonic dystrophy."], "w": "DMD = frameshift/nonsense, no dystrophin.", "p": "Gowers + big calves + high CK."}]}, {"id": "fx", "lec": "F", "name": "Repeat expansions & fragile X", "sub": "CGG categories · maternal expansion · triplet-primed PCR", "b": [{"lo": "1", "rr": true, "hy": true, "q": "What are dynamic mutations and what phenomenon do they cause?", "a": "Repeats that expand from generation to generation, causing anticipation", "o": ["Point mutations that revert", "Deletions that shrink", "Translocations that balance"], "n": ["Not the concept.", "Not the concept.", "Not the concept."], "w": "Can be tri-, tetra- or pentanucleotide repeats.", "p": "Expanding repeats → anticipation."}, {"lo": "1", "rr": true, "t": "m", "q": "Select ALL correct repeat disease pairs (standard references).", "a": ["Fragile X → CGG in FMR1 5′ UTR, expands via mother", "Huntington → CAG (polyglutamine), expands via father", "Myotonic dystrophy 1 → CTG in DMPK 3′ UTR, congenital form via mother", "Friedreich ataxia → GAA intronic (AR)", "Myotonic dystrophy 2 → CCTG tetranucleotide"], "o": ["Fragile X → CAG", "Huntington → CGG"], "n": ["CGG.", "CAG."], "w": "Repeat location and parent of expansion are classic board facts.", "p": "CGG X, CAG HD, CTG DM1, GAA FA."}, {"lo": "1", "rr": true, "hy": true, "q": "What causes fragile X syndrome?", "a": "CGG expansion >200 in the FMR1 5′ UTR → promoter methylation → gene silenced (loss of function)", "o": ["FMR1 gain of function", "CAG expansion in the coding region", "Deletion of the Y chromosome"], "n": ["Loss of function.", "Huntington.", "Not fragile X."], "w": "Most common inherited cause of ID in males. Rarely, FMR1 deletions or point mutations cause it (repeat test normal).", "p": "Too many CGG → methylated → silent."}, {"lo": "1", "rr": true, "hy": true, "t": "m", "q": "Select ALL correct FMR1 CGG repeat categories.", "a": ["6–44 → normal", "45–54 → intermediate (gray zone)", "55–200 → premutation", ">200 → full mutation"], "o": ["30–40 → full mutation", "1,000+ → normal"], "n": ["Normal.", "Full mutation."], "w": "Most normal alleles ≈29–30 repeats.", "p": "44 / 54 / 200."}, {"lo": "1", "rr": true, "hy": true, "t": "m", "q": "Select ALL features of FMR1 premutation carriers.", "a": ["Possible mild learning issues", "Females can have affected children", "Premature ovarian insufficiency (20% menopause <40, 40% <45)", "Fragile X tremor-ataxia syndrome (FXTAS) in older males (and some females)"], "o": ["Always severe ID in males", "Macroorchidism in all"], "n": ["That's the full mutation.", "Full mutation feature."], "w": "Family clues to test: POF, tremor/ataxia in a grandfather, ID/autism.", "p": "Premutation: POI + FXTAS."}, {"lo": "1", "rr": true, "hy": true, "q": "How are full-mutation males and females affected?", "a": "Males are always affected; about 1/3 of females are affected (X-inactivation)", "o": ["Both always affected", "Neither affected", "Females always more severe"], "n": ["Females vary.", "Full mutation affects males.", "Males are more severe."], "w": "In-house ≈1/3 of females; standard references cite ≈50% with some cognitive involvement. Clinical (standard references): long face, large ears, prominent jaw, macroorchidism, joint laxity, MVP, autism, ADHD.", "p": "Full mutation: all males, 1/3 females."}, {"lo": "1", "rr": true, "hy": true, "q": "Through which parent does a premutation expand to a full mutation, and what is the smallest premutation seen to do so in one generation?", "a": "Only through the mother; 56 repeats", "o": ["Only through the father; 200 repeats", "Either parent; 45 repeats", "Only through the father; 56 repeats"], "n": ["Maternal only.", "Maternal only.", "Maternal."], "w": "A premutation father is a “normal transmitting male.”", "p": "Mom expands; smallest 56."}, {"lo": "1", "rr": true, "hy": true, "q": "A man with a 100-CGG premutation asks about his children's risk of fragile X syndrome. Answer?", "a": "All daughters inherit a premutation (no expansion through males), no sons get his X; his children won't have fragile X, but his daughters' children are at risk", "o": ["50% of sons affected", "All children have the full mutation", "No risk to any descendants"], "n": ["Sons get his Y.", "No expansion through males.", "Grandchildren via daughters are at risk."], "w": "Normal transmitting male.", "p": "Premutation dad → carrier daughters."}, {"lo": "1", "rr": true, "q": "A woman with 30 and 90 CGG repeats has a son with severe ID. Son's likely genotype?", "a": "Full mutation (>200), from expansion of her 90-repeat premutation during maternal transmission", "o": ["Normal 30 repeats", "Premutation 90 repeats unchanged", "Huntington CAG expansion"], "n": ["Would not cause ID.", "Would not cause severe ID.", "Wrong repeat."], "w": "She is at risk of premature ovarian insufficiency.", "p": "Mom's premutation → son's full mutation."}, {"lo": "1", "rr": true, "hy": true, "q": "How does triplet-primed PCR detect large CGG expansions?", "a": "A labeled 5′ forward primer, a 3′ reverse primer, and a second reverse primer binding within the repeat create a ladder of products every 3 bp", "o": ["Bisulfite converts C to U", "Ligase joins matched probes", "An enzyme cuts at a new site"], "n": ["Methylation PCR.", "OLA.", "Restriction digest."], "w": "Run on a capillary sequencer. Example: female 29 and >200 → ladder continuing beyond the readable range.", "p": "Third primer → ladder."}, {"lo": "1", "rr": true, "q": "Triplet-primed PCR in a woman shows peaks at 20 and 64 repeats. Interpretation?", "a": "One normal allele and one premutation", "o": ["Two normal alleles", "Full mutation", "Intermediate gray zone only"], "n": ["64 is a premutation.", "Needs >200.", "45–54 is gray zone."], "w": "She can have affected children.", "p": "64 = premutation."}]}, {"id": "seq", "lec": "F", "name": "Sequencing & variant interpretation", "sub": "Sanger · ACMG tiers · exome vs genome", "b": [{"lo": "1", "rr": true, "hy": true, "q": "How does Sanger sequencing work?", "a": "Dideoxy chain termination: dideoxynucleotides lack the 3′ hydroxyl, stopping synthesis; fluorescent labels read the bases", "o": ["Massively parallel short reads of the whole genome", "Ligation of probes at mutation sites", "Bisulfite conversion"], "n": ["NGS.", "OLA.", "Methylation PCR."], "w": "Gold standard for one gene/amplicon.", "p": "No 3′-OH → chain stops."}, {"lo": "1", "rr": true, "hy": true, "t": "m", "q": "Select ALL limitations of Sanger sequencing.", "a": ["One sample/amplicon at a time", "Can't detect large deletions/duplications", "Not good for large repeat expansions", "Allelic dropout (polymorphism under a primer)", "May miss low-level mosaicism"], "o": ["Cannot detect point mutations", "Cannot detect small insertions/deletions"], "n": ["It detects them well.", "It detects them."], "w": "Detects missense, nonsense, synonymous, splice-site changes and small indels.", "p": "Gold standard, but…"}, {"lo": "1", "rr": true, "q": "What is allelic dropout?", "a": "One allele fails to amplify (e.g., a polymorphism under a primer), giving a false homozygous or normal result", "o": ["Loss of a chromosome in mitosis", "Deletion of an exon", "Methylation of the promoter"], "n": ["Not the term.", "Not the term.", "Not the term."], "w": "A pitfall of PCR-based tests including Sanger.", "p": "One allele silently missing."}, {"lo": "1", "rr": true, "hy": true, "q": "What are the five ACMG/AMP variant categories?", "a": "Pathogenic, likely pathogenic, variant of uncertain significance (VUS), likely benign, benign", "o": ["Positive, negative, unknown", "Dominant, recessive, X-linked, mitochondrial, sporadic", "Mild, moderate, severe, lethal, unknown"], "n": ["Too few.", "Inheritance patterns.", "Not ACMG."], "w": "A VUS is not actionable.", "p": "Five tiers."}, {"lo": "1", "rr": true, "t": "m", "q": "Select ALL ways to resolve a VUS (in-house).", "a": ["Find others with the same phenotype and variant (e.g., GeneMatcher)", "Lab work testing the variant's effect on the gene product", "Family segregation studies", "Reclassification over time"], "o": ["Use it for clinical decisions now", "Treat it as pathogenic by default"], "n": ["Not actionable.", "Not appropriate."], "w": "VUS should not drive clinical management.", "p": "Don't act on a VUS."}, {"lo": "1", "rr": true, "hy": true, "q": "How do exome and genome sequencing compare?", "a": "Exome covers 1–2% of the genome (most coding regions; ≈15,000–20,000 variants); genome covers nearly all (≈3 million variants)", "o": ["Exome covers 50%; genome 100%", "Both find the same number of variants", "Genome covers only exons"], "n": ["Exome is 1–2%.", "Very different.", "Genome includes noncoding."], "w": "85% of known Mendelian mutations are in exons/splice sites. Genome ≈$600/sample in-house.", "p": "Exome small slice; genome nearly all."}, {"lo": "1", "rr": true, "t": "m", "q": "Select ALL things exome sequencing MISSES.", "a": ["Undiscovered genes and unidentified/tissue-specific exons", "Noncoding regulatory elements", "Introns and deep intronic variants", "Non-canonical splice sites"], "o": ["Coding point mutations", "Small coding indels"], "n": ["Exome detects these.", "Exome detects these."], "w": "Genome misses high-GC regions, large repeats, centromeres and telomeres.", "p": "Exome misses what isn't exonic."}, {"lo": "1", "rr": true, "t": "m", "q": "Select ALL reasons exome/genome may give no answer.", "a": ["Genetic heterogeneity", "Mutation in a region not analyzed or poorly sequenced", "Homozygosity (consanguinity) leaving too many candidate variants", "Difficulty proving causation"], "o": ["Exome always finds the answer", "No variants are ever found"], "n": ["Yield 3–70%.", "Thousands are found."], "w": "≈4–5% of patients have two single-gene disorders (think of it with blended phenotypes, consanguinity, UPD).", "p": "Heterogeneity, coverage, too many candidates."}, {"lo": "1", "rr": true, "q": "What diagnostic yield does exome sequencing have (in-house)?", "a": "Widely variable: 3–70% (neurologic indications 22–68%)", "o": ["Always 100%", "Always <1%", "Exactly 50%"], "n": ["Not perfect.", "Higher.", "Variable."], "w": "Panels can cost ≈$6,000; exome/genome is now cost-effective.", "p": "3–70%."}]}, {"id": "eth", "lec": "F", "name": "Incidental findings, minors & DTC tests", "sub": "ACMG SF · counseling · consumer tests", "b": [{"lo": "1", "rr": true, "hy": true, "q": "What is the ACMG secondary findings list?", "a": "Genes whose pathogenic/likely pathogenic variants should be returned regardless of test indication because they are highly penetrant and medically actionable", "o": ["Genes that must never be reported", "A list of benign variants", "Genes tested only in newborns"], "n": ["Opposite.", "Not the purpose.", "Not the purpose."], "w": "ACMG-59 (2016) → SF v3.0 with 73 genes in-house; updated regularly. Examples: BRCA1/2, Lynch, FH, cardiomyopathy/arrhythmia genes.", "p": "Return actionable findings."}, {"lo": "1", "rr": true, "hy": true, "q": "Trio exome for a child's seizures reveals a pathogenic BRCA2 variant in the father. What should happen?", "a": "Return it (ACMG secondary finding), as covered in pre-test counseling; refer the father for confirmatory testing and risk management", "o": ["Never report unrelated findings", "Report only if the child has cancer", "Report to the employer"], "n": ["Actionable findings are returned.", "Benefit to the family now.", "Privacy violation."], "w": "Highly penetrant and actionable.", "p": "Actionable → return."}, {"lo": "1", "rr": true, "t": "m", "q": "Select ALL topics for pre-test counseling before exome/genome sequencing.", "a": ["VUS results", "Misattributed paternity may be revealed", "False positive and false negative results", "Incidental findings (carrier status, late-onset disorders, susceptibility alleles)"], "o": ["Guaranteed diagnosis", "No consent needed"], "n": ["Yield is variable.", "Consent is essential."], "w": "Counseling sets expectations.", "p": "VUS, paternity, errors, incidentals."}, {"lo": "1", "rr": true, "q": "How are minors handled for adult-onset disorders?", "a": "Normally not tested for adult-onset disorders (they choose at 18), but ACMG recommends returning some exome/genome findings because of benefit to the family", "o": ["Always tested at birth", "Never told anything, ever", "Tested only by DTC kits"], "n": ["Not routine.", "Some are returned.", "Not appropriate."], "w": "e.g., a parent may carry BRCA1.", "p": "Wait for adulthood, with exceptions."}, {"lo": "1", "rr": true, "hy": true, "t": "m", "q": "Select ALL limitations of direct-to-consumer genetic tests.", "a": ["Usually SNP-based; companies interpret risk differently", "DTC BRCA1/2 checks only 3 Ashkenazi variants → false reassurance", "≈40% of raw-data variants were false positives on confirmation", "Ancestry tests can reveal misattributed paternity and be used forensically"], "o": ["They are equivalent to clinical sequencing", "They need no confirmation"], "n": ["Not equivalent.", "Confirm in a CLIA lab."], "w": "Also dubious claims such as “talent” genes.", "p": "Confirm DTC results clinically."}]}, {"id": "syn", "lec": "D", "name": "Prader-Willi vs Angelman", "sub": "Clinical features · missing parent", "b": [{"lo": "2", "rr": true, "hy": true, "t": "m", "q": "Select ALL features of Prader-Willi syndrome.", "a": ["Severe neonatal hypotonia and feeding difficulty", "Later hyperphagia → morbid obesity", "Delayed motor and language milestones; cognitive impairment", "Hypogonadism", "Small hands and feet"], "o": ["Inappropriately happy demeanor with frequent laughter", "Absent speech with puppet-like ataxia"], "n": ["Angelman.", "Angelman."], "w": "Missing paternal 15q11–q13 genes (SNRPN, ZNF127). Frequency 1/10,000–1/20,000.", "p": "Floppy baby → hungry child."}, {"lo": "2", "rr": true, "hy": true, "t": "m", "q": "Select ALL features of Angelman syndrome.", "a": ["Severe intellectual disability", "Absent or minimal speech", "Gait ataxia (puppet-like)", "Inappropriately happy demeanor (laughing, smiling, excitability)", "Microcephaly and seizures"], "o": ["Hyperphagia and obesity", "Hypogonadism with small hands"], "n": ["Prader-Willi.", "Prader-Willi."], "w": "Missing maternal UBE3A. ≈1/20,000.", "p": "Happy puppet."}, {"lo": "2", "rr": true, "hy": true, "q": "Which parent's contribution is missing in each syndrome?", "a": "Prader-Willi: paternal (SNRPN, ZNF127); Angelman: maternal (UBE3A)", "o": ["Prader-Willi: maternal; Angelman: paternal", "Both paternal", "Both maternal"], "n": ["Reversed.", "Angelman is maternal.", "Prader-Willi is paternal."], "w": "Prader-Willi = Papa missing; Angelman = Angel Mom missing.", "p": "P = Papa; A = Angel Mom."}]}, {"id": "imp", "lec": "D", "name": "Imprinting", "sub": "Definition · terminology · reversal", "b": [{"lo": "2", "rr": true, "hy": true, "q": "What is genomic imprinting?", "a": "Differential modification and expression of a gene's alleles depending on the parent of origin", "o": ["A point mutation passed from the father", "Random X inactivation", "Loss of a whole chromosome"], "n": ["Not imprinting.", "Not parent-specific.", "Not imprinting."], "w": "“Sometimes it matters who gives you what.” Usually by DNA methylation.", "p": "Parent of origin decides expression."}, {"lo": "2", "rr": true, "hy": true, "q": "What does “imprinted allele” mean?", "a": "The silenced (inactivated) allele, usually by DNA methylation", "o": ["The only expressed allele", "A mutated allele", "A deleted allele"], "n": ["Opposite.", "Not necessarily.", "Not necessarily."], "w": "Imprinted = off.", "p": "Imprinted = silenced."}, {"lo": "2", "rr": true, "hy": true, "q": "Using the in-house convention, what is a “maternally imprinted” gene, and which one matters here?", "a": "The maternal copy is silenced, so it is expressed from the paternal allele: SNRPN/ZNF127 (loss → Prader-Willi)", "o": ["Expressed from the maternal allele: UBE3A", "Expressed from both alleles equally", "Never expressed"], "n": ["That's paternally imprinted (Angelman).", "Imprinted genes are monoallelic.", "Expressed from one allele."], "w": "Paternally imprinted = paternal copy silenced → expressed from the maternal allele (UBE3A; loss → Angelman).", "p": "Maternally imprinted → dad's copy works."}, {"lo": "2", "rr": true, "q": "What happens to imprints during gametogenesis?", "a": "They are erased and re-established according to the individual's own sex (imprint reversal)", "o": ["They are permanent across generations", "They are copied unchanged from each parent", "They are lost permanently"], "n": ["They reset.", "They reset by sex.", "They are re-established."], "w": "A man re-imprints the chromosome he got from his mother as “paternal” in his sperm.", "p": "Imprints reset each generation."}]}, {"id": "mech", "lec": "D", "name": "Mechanisms", "sub": "Deletion · UPD · imprinting defect · UBE3A", "b": [{"lo": "2", "rr": true, "hy": true, "t": "m", "q": "Select ALL correct Prader-Willi mechanism frequencies (in-house).", "a": ["Paternal 15q11–q13 deletion ≈70%", "Maternal uniparental disomy ≈25%", "Imprinting defect <5%", "Translocation <1%"], "o": ["UBE3A mutation ≈11%", "Paternal UPD ≈7%"], "n": ["Angelman.", "Angelman."], "w": "PWS has no single-gene or unknown category in-house.", "p": "PWS: 70 / 25 / <5 / <1."}, {"lo": "2", "rr": true, "hy": true, "t": "m", "q": "Select ALL correct Angelman mechanism frequencies (in-house).", "a": ["Maternal deletion ≈68%", "Paternal UPD ≈7%", "Imprinting defect ≈3%", "UBE3A mutation ≈11%", "Unknown ≈10%"], "o": ["Maternal UPD ≈25%", "Paternal deletion ≈70%"], "n": ["Prader-Willi.", "Prader-Willi."], "w": "Translocation <1%.", "p": "AS: 68 / 7 / 3 / 11 / 10."}, {"lo": "2", "rr": true, "hy": true, "q": "What is uniparental disomy?", "a": "Inheriting both copies of a chromosome (or gene) from one parent, often after trisomy rescue", "o": ["Inheriting one extra chromosome", "Loss of one chromosome", "Mosaicism for two cell lines"], "n": ["Trisomy.", "Monosomy.", "Mosaicism."], "w": "Maternal UPD 15 → Prader-Willi; paternal UPD 15 → Angelman.", "p": "Both from one parent."}, {"lo": "2", "rr": true, "hy": true, "q": "An obese, hyperphagic boy who was hypotonic as a baby has two maternal chromosome 15s and no paternal 15. Diagnosis, mechanism and recurrence?", "a": "Prader-Willi by maternal UPD (≈25% of PWS); recurrence <1/1,000", "o": ["Angelman by paternal UPD; recurrence 50%", "Prader-Willi by paternal deletion; recurrence 50%", "Fragile X; recurrence 50%"], "n": ["Wrong parent and syndrome.", "Mechanism is UPD.", "Wrong disorder."], "w": "No paternal copy of the expressed genes.", "p": "Two mom 15s → PWS."}]}, {"id": "meth", "lec": "D", "name": "Methylation analysis", "sub": "Bisulfite PCR · bands · detection rates", "b": [{"lo": "2", "rr": true, "hy": true, "q": "How does methylation-specific PCR distinguish maternal from paternal 15q11–q13 alleles?", "a": "Bisulfite converts unmethylated C → U; the methylated maternal allele keeps C (174 bp product), the unmethylated paternal allele has U (100 bp product)", "o": ["Restriction enzymes cut only maternal DNA", "Ligase joins only paternal probes", "Triplet primers count paternal repeats"], "n": ["Not the method.", "OLA.", "Triplet-primed PCR."], "w": ">96% of Cs are methylated on the maternal allele and none on the paternal in this region.", "p": "Maternal methylated = 174 bp."}, {"lo": "2", "rr": true, "hy": true, "t": "m", "q": "Select ALL correct methylation PCR interpretations.", "a": ["Both maternal and paternal bands → normal methylation", "Only maternal band → Prader-Willi", "Only paternal band → Angelman"], "o": ["Only maternal band → Angelman", "Normal pattern excludes Angelman completely"], "n": ["Reversed.", "UBE3A mutations have normal methylation."], "w": "No paternal band = no paternal contribution = PWS.", "p": "Maternal only = PWS."}, {"lo": "2", "rr": true, "hy": true, "q": "What fraction of PWS and AS does methylation analysis detect?", "a": "≈99% of Prader-Willi but only ≈78% of Angelman", "o": ["≈78% of PWS; ≈99% of AS", "100% of both", "≈50% of both"], "n": ["Reversed.", "Misses UBE3A and unknown AS.", "Too low."], "w": "Detects all deletion, UPD and imprinting-defect cases.", "p": "Methylation: 99% PWS, 78% AS."}, {"lo": "2", "rr": true, "hy": true, "q": "A child with severe ID, absent speech, seizures, frequent laughter and ataxia has NORMAL methylation studies. Next test?", "a": "UBE3A sequencing (≈11% of AS; recurrence up to 50% if the mother carries it)", "o": ["Repeat methylation PCR", "FMR1 triplet-primed PCR", "No further testing"], "n": ["Will stay normal.", "Not the phenotype.", "Diagnosis still likely."], "w": "Methylation is normal in UBE3A mutations.", "p": "Normal methylation + AS → sequence UBE3A."}, {"lo": "2", "rr": true, "hy": true, "q": "What is the best FIRST test for suspected Prader-Willi syndrome?", "a": "Methylation analysis of 15q11–q13 (≈99% detection), then FISH/microarray and UPD studies for mechanism", "o": ["Karyotype alone", "Exome sequencing", "Triplet-primed PCR"], "n": ["Misses most.", "Not first-line.", "Fragile X."], "w": "Mechanism matters for recurrence risk.", "p": "PWS → methylation first."}]}, {"id": "rec", "lec": "D", "name": "Recurrence risk", "sub": "Why the mechanism matters", "b": [{"lo": "2", "rr": true, "hy": true, "t": "m", "q": "Select ALL correct mechanism → recurrence risk pairs.", "a": ["Deletion or UPD → <1/1,000 (usually sporadic)", "Inherited imprinting center defect → up to 50%", "Chromosomal rearrangement (translocation) → up to 50%", "Maternally carried UBE3A mutation (AS) → up to 50%"], "o": ["Deletion → 50%", "UPD → 25%"], "n": ["Usually sporadic.", "Usually sporadic."], "w": "For a translocation, which syndrome appears depends on the sex of the transmitting parent.", "p": "Deletion/UPD low; IC, translocation, UBE3A high."}, {"lo": "2", "rr": true, "hy": true, "q": "Two cousins have Prader-Willi and Angelman syndromes respectively. What should you suspect?", "a": "A familial translocation involving 15q11–q13 (e.g., t(14;15)), causing PWS when passed by a father and AS when passed by a mother", "o": ["Two unrelated de novo deletions", "Maternal UPD in both", "Fragile X in the family"], "n": ["Unlikely in one family.", "Would give PWS only.", "Not related."], "w": "The same unbalanced chromosome gives different syndromes depending on the transmitting parent.", "p": "PWS + AS cousins = translocation."}, {"lo": "2", "rr": true, "q": "Why must you identify the mechanism after a positive methylation test?", "a": "Recurrence risk differs: <1/1,000 for deletion/UPD vs up to 50% for imprinting defects, translocations or UBE3A", "o": ["It changes the diagnosis to fragile X", "Treatment differs completely by mechanism", "It is never needed"], "n": ["Not the case.", "Not the main reason.", "It matters for counseling."], "w": "Use FISH/microarray, UPD studies and imprinting-center analysis.", "p": "Mechanism → recurrence."}]}];
+
+
+(function(){
+"use strict";
+var KEY="hd-hem15-molgen-builder-v1";
+var S={box:{},score:0,streak:0,best:0,tot:0,right:0,theme:"auto"};
+function load(){try{var j=JSON.parse(localStorage.getItem(KEY)||"null");if(j&&j.box)S=Object.assign(S,j);}catch(e){}}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}}
+load();
+
+var ALL=[]; E.forEach(function(e){e.b.forEach(function(b,i){b.id=e.id+"."+i;b.ent=e;ALL.push(b);});});
+function st(b){var r=S.box[b.id];return r?r.s:"u";}
+var rrOnly=false, mode="build", scope="all", loFilter=null, curEnt=null, idx=0, cur=null, answered=false, results={}, lastId=null, t0=0, tick=null;
+
+function shuffle(a){a=a.slice();for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=a[i];a[i]=a[j];a[j]=t;}return a;}
+function esc(s){return String(s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];});}
+function inScope(b){return (scope==="all"||b.ent.lec===scope)&&(!loFilter||b.lo===loFilter)&&(!rrOnly||b.rr);}
+
+/* ---------- theme ---------- */
+var themeBtn=document.getElementById("themeBtn");
+function applyTheme(){var r=document.documentElement;if(S.theme==="auto")r.removeAttribute("data-theme");else r.setAttribute("data-theme",S.theme);themeBtn.textContent="Theme: "+S.theme;}
+themeBtn.onclick=function(){S.theme={auto:"light",light:"dark",dark:"auto"}[S.theme];applyTheme();save();};
+applyTheme();
+document.getElementById("resetBtn").onclick=function(){
+  var b=this; if(b.dataset.confirm){S.box={};S.score=S.streak=S.tot=S.right=0;save();b.textContent="Reset progress";delete b.dataset.confirm;renderAll();next();return;}
+  b.dataset.confirm="1";b.textContent="Tap again to reset";setTimeout(function(){if(b.dataset.confirm){delete b.dataset.confirm;b.textContent="Reset progress";}},3000);
+};
+
+/* ---------- stats / side / map ---------- */
+function loStatus(lo){var bs=ALL.filter(function(b){return b.lo===lo;});var ss=bs.map(st);
+  var m=ss.filter(function(x){return x==="M";}).length;
+  if(m===bs.length)return{s:"M",m:m,n:bs.length};
+  if(ss.indexOf("m")>=0)return{s:"m",m:m,n:bs.length};
+  if(ss.some(function(x){return x!=="u";}))return{s:"o",m:m,n:bs.length};
+  return{s:"u",m:m,n:bs.length};}
+function renderStats(){
+  document.getElementById("sScore").textContent=S.score;
+  document.getElementById("sStreak").textContent=S.streak;
+  document.getElementById("sAcc").textContent=S.tot?Math.round(100*S.right/S.tot)+"%":"—";
+  document.getElementById("sBoxes").textContent=ALL.filter(function(b){return st(b)==="M";}).length+"/"+ALL.length;
+  var los=Object.keys(LOS);document.getElementById("sLos").textContent=los.filter(function(l){return loStatus(l).s==="M";}).length+"/"+los.length;
+}
+function renderSide(){
+  var h="";LECS.forEach(function(L){if(scope!=="all"&&scope!==L.k)return;
+    h+='<p class="lec-h l'+L.k+'" style="color:var(--lc)">HEM15 · '+esc(L.n)+'</p>';
+    E.filter(function(e){return e.lec===L.k;}).forEach(function(e){
+      var m=e.b.filter(function(b){return st(b)==="M";}).length,p=Math.round(100*m/e.b.length);
+      h+='<button type="button" class="ent l'+e.lec+'" data-ent="'+e.id+'"'+(curEnt===e&&mode==="build"?' aria-current="true"':'')+'><span class="n">'+esc(e.name)+'</span><span class="pct">'+m+'/'+e.b.length+'</span><span class="s">'+esc(e.sub)+'</span><span class="mini"><i style="width:'+p+'%"></i></span></button>';
+    });});
+  var el=document.getElementById("entList");el.innerHTML=h;
+  el.querySelectorAll(".ent").forEach(function(b){b.onclick=function(){setMode("build");startEnt(E.filter(function(e){return e.id===b.dataset.ent;})[0]);};});
+}
+function renderMap(){
+  var h="";Object.keys(LOS).forEach(function(lo){var lec=LOLEC[lo];if(scope!=="all"&&scope!==lec)return;var s=loStatus(lo);
+    h+='<button type="button" class="lo-tile l'+lec+'" data-lo="'+lo+'"'+(loFilter===lo?' style="border-color:var(--lc)"':'')+'><span class="id">'+(lo.slice(-1)==="X"?"Extra":"LO "+lo)+'</span><span class="t">'+esc(LOS[lo])+'</span><span class="dot s-'+s.s+'" title="'+s.m+'/'+s.n+' mastered"></span></button>';});
+  var g=document.getElementById("loGrid");g.innerHTML=h;
+  g.querySelectorAll(".lo-tile").forEach(function(b){b.onclick=function(){loFilter=(loFilter===b.dataset.lo?null:b.dataset.lo);setMode("drill");};});
+}
+function renderAll(){renderStats();renderSide();renderMap();}
+
+/* ---------- flow ---------- */
+function setMode(m){mode=m;document.querySelectorAll("[data-mode]").forEach(function(b){b.setAttribute("aria-pressed",String(b.dataset.mode===m));});
+  if(m==="build"){loFilter=null;if(rrOnly){rrOnly=false;setRR();}renderAll();if(!curEnt||!inScope(curEnt.b[0]))startEnt(firstEnt());else show();}
+  else{renderAll();next();}}
+function firstEnt(){var es=E.filter(function(e){return scope==="all"||e.lec===scope;});
+  for(var i=0;i<es.length;i++){if(es[i].b.some(function(b){return st(b)!=="M";}))return es[i];}return es[0];}
+document.querySelectorAll("[data-mode]").forEach(function(b){b.onclick=function(){setMode(b.dataset.mode);};});
+function setRR(){document.querySelectorAll("[data-rr]").forEach(function(x){x.setAttribute("aria-pressed",String((x.dataset.rr==="1")===rrOnly));});}
+document.querySelectorAll("[data-rr]").forEach(function(b){b.onclick=function(){rrOnly=b.dataset.rr==="1";setRR();setMode(rrOnly?"drill":mode);};});
+document.querySelectorAll("[data-scope]").forEach(function(b){b.onclick=function(){scope=b.dataset.scope;loFilter=null;
+  document.querySelectorAll("[data-scope]").forEach(function(x){x.setAttribute("aria-pressed",String(x===b));});
+  if(mode==="build"){curEnt=null;setMode("build");}else setMode("drill");};});
+
+function startEnt(e){curEnt=e;idx=0;results={};renderSide();cur=e.b[0];show();}
+function next(){
+  if(mode==="build"){idx++;if(idx>=curEnt.b.length){finishEnt();return;}cur=curEnt.b[idx];show();return;}
+  var pool=ALL.filter(inScope);if(!pool.length){cur=null;show();return;}
+  var rank={m:0,u:1,o:2,M:3};
+  pool=shuffle(pool).sort(function(a,b){return rank[st(a)]-rank[st(b)];});
+  var best=rank[st(pool[0])];var top=pool.filter(function(b){return rank[st(b)]===best&&b.id!==lastId;});
+  if(best===3)top=pool.filter(function(b){return b.id!==lastId;});
+  cur=(top.length?top:pool)[0];show();
+}
+function finishEnt(){
+  var ok=Object.keys(results).filter(function(k){return results[k];}).length,n=curEnt.b.length;
+  var i=E.indexOf(curEnt),nxt=null;for(var j=1;j<=E.length;j++){var c=E[(i+j)%E.length];if(scope==="all"||c.lec===scope){nxt=c;break;}}
+  var card=document.getElementById("card");card.className="card l"+curEnt.lec;
+  card.innerHTML='<div class="done"><p class="meta">Structure complete</p><h2>'+esc(curEnt.name)+': '+ok+' / '+n+' first try</h2>'+
+   '<p class="hint">'+(ok===n?"Clean build. It will count as mastered after one more clean pass.":"Missed boxes are queued first in Drill mode.")+'</p>'+
+   '<div class="actions"><button class="btn" type="button" id="again">Rebuild '+esc(curEnt.name)+'</button>'+(nxt?'<button class="btn primary" type="button" id="nextEnt">Next: '+esc(nxt.name)+' →</button>':'')+'</div></div>';
+  document.getElementById("again").onclick=function(){startEnt(curEnt);};
+  if(nxt)document.getElementById("nextEnt").onclick=function(){startEnt(nxt);};
+  var ne=document.getElementById("nextEnt");if(ne)ne.focus();
+}
+
+var picks=[];
+function show(){
+  answered=false;picks=[];clearInterval(tick);
+  var card=document.getElementById("card");
+  if(!cur){card.className="card";card.innerHTML='<p class="q">Nothing in this scope yet.</p>';return;}
+  var b=cur,e=b.ent;card.className="card l"+e.lec;
+  var head='<div class="card-top"><div><p class="meta">'+(mode==="build"?"Build · box "+(idx+1)+" of "+e.b.length:"Drill"+(rrOnly?" · Rapid Review":"")+(loFilter?" · LO "+loFilter:""))+'</p><h2>'+esc(e.name)+'</h2></div>'+
+    '<div style="display:flex;gap:6px;flex-wrap:wrap"><span class="tag lo">'+(b.lo.slice(-1)==="X"?"Extra":"LO "+b.lo)+'</span>'+(b.rr?'<span class="tag rr">Rapid Review</span>':'')+(b.hy?'<span class="tag hy">HY</span>':'')+'<span class="timer" id="timer">0.0s</span></div></div>';
+  if(mode==="build"){head+='<div class="boxes" aria-hidden="true">'+e.b.map(function(x,i){var c=i===idx?"cur":(x.id in results?(results[x.id]?"done-ok":"done-bad"):"");return '<i class="'+c+'"></i>';}).join("")+'</div>';}
+  var body='<p class="q">'+esc(b.q)+'</p>';
+  if(!b.t){b._opts=shuffle([b.a].concat(b.o));
+    body+='<div class="opts">'+b._opts.map(function(o,i){return '<button type="button" class="opt" data-i="'+i+'"><span class="k">'+(i+1)+'</span><span>'+esc(o)+'</span></button>';}).join("")+'</div>';}
+  else if(b.t==="m"){b._opts=shuffle(b.a.concat(b.o));
+    body+='<p class="hint">Select all that apply, then check.</p><div class="opts">'+b._opts.map(function(o,i){return '<button type="button" class="opt" aria-pressed="false" data-i="'+i+'"><span class="k">'+(i+1)+'</span><span>'+esc(o)+'</span></button>';}).join("")+'</div>';}
+  else{b._opts=shuffle(b.a);
+    body+='<p class="hint">Tap items in order. Tap a placed item to remove it.</p><ol class="ordered" id="ordList"><li class="empty" style="cursor:default">Your order appears here</li></ol><div class="opts">'+b._opts.map(function(o,i){return '<button type="button" class="opt" data-i="'+i+'"><span class="k">+</span><span>'+esc(o)+'</span></button>';}).join("")+'</div>';}
+  var act='<div id="fb"></div><div class="actions"><span class="hint">'+(b.t?"Enter to check":"Keys 1–"+b._opts.length+" to answer")+'</span><div style="display:flex;gap:8px">'+
+    (mode==="build"?'<button class="btn" type="button" id="skipBtn">Skip structure</button>':'')+
+    (b.t?'<button class="btn primary" type="button" id="checkBtn"'+(b.t==="o"?" disabled":"")+'>Check</button>':'')+
+    '<button class="btn primary" type="button" id="nextBtn" hidden>Next box →</button></div></div>';
+  card.innerHTML=head+body+act;
+  t0=Date.now();tick=setInterval(function(){var t=document.getElementById("timer");if(t)t.textContent=((Date.now()-t0)/1000).toFixed(1)+"s";},100);
+  var opts=card.querySelectorAll(".opt");
+  if(!b.t)opts.forEach(function(o){o.onclick=function(){if(!answered)grade([+o.dataset.i]);};});
+  else if(b.t==="m")opts.forEach(function(o){o.onclick=function(){if(answered)return;var on=o.getAttribute("aria-pressed")!=="true";o.setAttribute("aria-pressed",String(on));o.classList.toggle("sel",on);};});
+  else opts.forEach(function(o){o.onclick=function(){if(answered||o.disabled)return;picks.push(+o.dataset.i);o.disabled=true;o.style.opacity=".4";drawOrd();};});
+  var cb=document.getElementById("checkBtn");if(cb)cb.onclick=function(){if(answered)return;
+    if(b.t==="m"){var sel=[];opts.forEach(function(o){if(o.getAttribute("aria-pressed")==="true")sel.push(+o.dataset.i);});grade(sel);}else grade(picks);};
+  var sk=document.getElementById("skipBtn");if(sk)sk.onclick=function(){var i=E.indexOf(curEnt);for(var j=1;j<=E.length;j++){var c=E[(i+j)%E.length];if(scope==="all"||c.lec===scope){startEnt(c);return;}}};
+  document.getElementById("nextBtn").onclick=function(){lastId=cur.id;next();};
+}
+function drawOrd(){var b=cur,ol=document.getElementById("ordList");
+  ol.innerHTML=picks.length?picks.map(function(i,k){return '<li data-k="'+k+'">'+esc(b._opts[i])+'</li>';}).join(""):'<li class="empty" style="cursor:default">Your order appears here</li>';
+  ol.querySelectorAll("li[data-k]").forEach(function(li){li.onclick=function(){if(answered)return;var k=+li.dataset.k,i=picks[k];picks.splice(k,1);
+    var o=document.querySelector('.opt[data-i="'+i+'"]');o.disabled=false;o.style.opacity="";drawOrd();};});
+  document.getElementById("checkBtn").disabled=picks.length!==b.a.length;}
+
+function grade(sel){
+  answered=true;clearInterval(tick);var b=cur,ok,card=document.getElementById("card"),opts=card.querySelectorAll(".opt");
+  if(!b.t){ok=b._opts[sel[0]]===b.a;opts.forEach(function(o){var t=b._opts[+o.dataset.i];o.disabled=true;if(t===b.a)o.classList.add("right");else if(+o.dataset.i===sel[0])o.classList.add("wrong");});}
+  else if(b.t==="m"){var chosen=sel.map(function(i){return b._opts[i];});ok=chosen.length===b.a.length&&chosen.every(function(c){return b.a.indexOf(c)>=0;});
+    opts.forEach(function(o){var t=b._opts[+o.dataset.i],isA=b.a.indexOf(t)>=0,isS=chosen.indexOf(t)>=0;o.disabled=true;o.classList.remove("sel");
+      if(isA&&isS)o.classList.add("right");else if(isA)o.classList.add("missed");else if(isS)o.classList.add("wrong");});}
+  else{var got=sel.map(function(i){return b._opts[i];});ok=got.every(function(g,k){return g===b.a[k];});
+    document.querySelectorAll("#ordList li[data-k]").forEach(function(li,k){li.classList.add(got[k]===b.a[k]?"right":"wrong");});
+    opts.forEach(function(o){o.disabled=true;});}
+  var r=S.box[b.id]||{n:0,c:0,s:"u"};r.n++;
+  if(ok){r.c++;r.s=r.c>=2?"M":"o";S.streak++;S.best=Math.max(S.best,S.streak);S.right++;S.score+=10+Math.min(S.streak,10);}
+  else{r.c=0;r.s="m";S.streak=0;}
+  S.tot++;S.box[b.id]=r;if(!(b.id in results))results[b.id]=ok;save();
+  var fb='<div class="fb '+(ok?"ok":"bad")+'"><span class="v">'+(ok?"Correct":"Not quite")+'</span>';
+  if(!b.t)fb+='<span class="ans">Answer: <b>'+esc(b.a)+'</b></span>';
+  else if(b.t==="m")fb+='<span class="ans">Answer: <b>'+b.a.map(esc).join(" · ")+'</b></span>';
+  else fb+='<span class="ans">Correct order:</span><ol>'+b.a.map(function(x){return "<li>"+esc(x)+"</li>";}).join("")+'</ol>';
+  fb+='<div class="fbexp">'+String(b.w||"").split(/\n\n+/).filter(Boolean).map(function(t){return '<p>'+esc(t)+'</p>';}).join("")+'</div>';
+  if(b.n&&b.n.length&&b.o&&b.o.length){
+    var rows=b.o.map(function(x,i){return b.n[i]?'<li><b>'+esc(x)+'</b> — '+esc(b.n[i])+'</li>':"";}).join("");
+    if(rows)fb+='<ul class="fbnotes">'+rows+'</ul>';
+  }
+  if(b.p)fb+='<div class="fbpearl"><b>High-yield</b>'+esc(b.p)+'</div>';
+  fb+='</div>';
+  document.getElementById("fb").innerHTML=fb;
+  var cb=document.getElementById("checkBtn");if(cb)cb.hidden=true;
+  var nb=document.getElementById("nextBtn");nb.hidden=false;nb.textContent=(mode==="build"&&idx===curEnt.b.length-1)?"Finish structure →":"Next box →";nb.focus();
+  renderAll();
+}
+document.addEventListener("keydown",function(ev){
+  if(ev.target.tagName==="INPUT"||ev.metaKey||ev.ctrlKey||ev.altKey)return;
+  if(ev.key==="Enter"){var nb=document.getElementById("nextBtn"),cb=document.getElementById("checkBtn");
+    if(nb&&!nb.hidden){ev.preventDefault();nb.click();}else if(cb&&!cb.hidden&&!cb.disabled){ev.preventDefault();cb.click();}return;}
+  var n=parseInt(ev.key,10);if(!cur||answered||isNaN(n))return;var o=document.querySelector('.opt[data-i="'+(n-1)+'"]');if(o&&!o.disabled)o.click();
+});
+
+renderAll();startEnt(firstEnt());
+})();
+
+/* ---------- Review: the compiled version of everything the answers teach ---------- */
+var REVIEW = {"F": "<h3 class=\"rh\">Technique map</h3>\n<div class=\"rtbl\"><table><thead><tr><th>Technique</th><th>Detects</th><th>Classic disease</th></tr></thead><tbody>\n<tr><td>PCR + restriction digest</td><td>Known point mutation that creates/destroys a site</td><td>Achondroplasia</td></tr>\n<tr><td>Oligonucleotide ligation assay</td><td>Panel of known mutations</td><td>Cystic fibrosis</td></tr>\n<tr><td>Multiplex PCR / MLPA</td><td>Exon deletions/duplications</td><td>Duchenne/Becker</td></tr>\n<tr><td>Triplet-primed PCR</td><td>Repeat expansions</td><td>Fragile X</td></tr>\n<tr><td>Methylation-specific PCR</td><td>Parent of origin</td><td>Prader-Willi / Angelman</td></tr>\n<tr><td>Sanger</td><td>Point mutations, small indels in one gene</td><td>Any single gene</td></tr>\n<tr><td>Exome / genome</td><td>All genes</td><td>Undiagnosed, heterogeneous</td></tr></tbody></table></div>\n<div class=\"rmem\"><b>Match mutation type to test</b>Known point mutation → digest/OLA · missing exon → multiplex PCR/MLPA · repeat too long → triplet-primed PCR · wrong parent → methylation · unknown → sequencing.</div>\n<h3 class=\"rh\">Achondroplasia</h3>\n<p>AD, <b>FGFR3 gain of function</b>; ≈80% de novo on the paternal allele (older fathers). p.Gly380Arg: 99% c.1138G&gt;A (transition), 1% c.1138G&gt;C (transversion).</p>\n<div class=\"rtbl\"><table><thead><tr><th>Genotype</th><th>SfcI bands (164 bp product)</th></tr></thead><tbody>\n<tr><td>Wild type</td><td>164</td></tr><tr><td>Heterozygous (affected)</td><td>164 + 109 + 55</td></tr><tr><td>Homozygous</td><td>109 + 55</td></tr></tbody></table></div>\n<p>c.1138G&gt;C → MspI → 107 + 57. Aa × Aa: 25% aa, 50% Aa, 25% AA (lethal) — incomplete dominance.</p>\n<h3 class=\"rh\">Cystic fibrosis</h3>\n<p>AR; carriers 1/25 Caucasian/Ashkenazi, 1/45 Hispanic, 1/62 African American, 1/150 Asian. CFTR 7q31; ΔF508 most common; W1282X Ashkenazi; c.3120+1G&gt;A African American.</p>\n<ul class=\"rlist\"><li><b>Diagnosis:</b> clinical feature/family history/positive newborn screen + sweat chloride ×2, two variants, or abnormal nasal PD.</li><li><b>OLA:</b> ligase joins adjacent probes only on a perfect match. Mutant-only peak = homozygous.</li><li><b>DNA testing:</b> therapy (modulators), equivocal sweat test, prenatal, carrier screening, CBAVD.</li></ul>\n<div class=\"rtrap\"><b>Residual risk</b>Negative screen ≠ non-carrier: 1/25 prior, 90% detection → ≈1/241 (Bayes). Exome misses 2 deep intronic CFTR variants → still run the 23-variant panel.</div>\n<h3 class=\"rh\">Duchenne / Becker</h3>\n<p>X-linked; dystrophin 2.4 Mb, 79 exons. Deletions ≈60% (multiplex PCR), nonsense ≈15%, duplications ≈5%. MLPA adds duplications and female carriers.</p>\n<div class=\"rhy\"><b>USMLE: reading frame</b>Out-of-frame/nonsense → no dystrophin → Duchenne. In-frame → partial dystrophin → Becker. Size doesn't predict severity. Eteplirsen (exon 51 skipping), ataluren (read-through). Gonadal mosaicism → recurrence even with a negative maternal blood test.</div>\n<h3 class=\"rh\">Fragile X &amp; repeats</h3>\n<div class=\"rtbl\"><table><thead><tr><th>CGG</th><th>Category</th></tr></thead><tbody>\n<tr><td>6–44</td><td>Normal</td></tr><tr><td>45–54</td><td>Intermediate</td></tr><tr><td>55–200</td><td>Premutation: POI, FXTAS, can have affected children</td></tr><tr><td>&gt;200</td><td>Full: FMR1 methylated; males always, ≈1/3 females</td></tr></tbody></table></div>\n<div class=\"rhy\"><b>USMLE: expansion via mother only</b>Smallest premutation to expand in one generation = 56. Premutation father → premutation to all daughters, no affected children.</div>\n<p>Triplet-primed PCR: labeled 5′ primer, 3′ primer, and a repeat-binding primer → ladder every 3 bp. Other repeats: CAG Huntington (father), CTG DM1 (mother), GAA Friedreich, CCTG DM2.</p>\n<h3 class=\"rh\">Sequencing &amp; ethics</h3>\n<ul class=\"rlist\"><li><b>Sanger:</b> chain termination; misses large deletions, expansions, low mosaicism; allelic dropout.</li><li><b>ACMG tiers:</b> pathogenic, likely pathogenic, VUS, likely benign, benign. Don't act on a VUS.</li><li><b>Exome</b> 1–2% of genome, 15–20k variants; <b>genome</b> ≈3M variants. Yield 3–70%; ≈4–5% have two diagnoses.</li><li><b>Secondary findings:</b> ACMG SF v3.0 (73 genes, in-house) returned regardless of indication. Counsel on VUS, paternity, false results, incidentals. Minors: usually wait for adulthood.</li><li><b>DTC:</b> SNP-based; BRCA test covers 3 Ashkenazi variants; ≈40% false positives → confirm in a CLIA lab.</li></ul>\n", "D": "<h3 class=\"rh\">LO2 · Prader-Willi vs Angelman</h3>\n<div class=\"rtbl\"><table><thead><tr><th></th><th>Prader-Willi</th><th>Angelman</th></tr></thead><tbody>\n<tr><td>Missing</td><td><b>Paternal</b> 15q11–q13 (SNRPN, ZNF127)</td><td><b>Maternal</b> UBE3A</td></tr>\n<tr><td>Infancy</td><td>Severe hypotonia, feeding difficulty</td><td>Developmental delay</td></tr>\n<tr><td>Later</td><td>Hyperphagia, obesity, hypogonadism, small hands/feet</td><td>Severe ID, no speech, ataxia, happy demeanor, microcephaly, seizures</td></tr></tbody></table></div>\n<div class=\"rmem\"><b>Papa vs Angel Mom</b>Prader-Willi = missing Papa; Angelman = missing (Angel) Mom.</div>\n<h3 class=\"rh\">Imprinting</h3>\n<ul class=\"rlist\"><li>Parent-of-origin expression; the <b>imprinted allele is silenced</b> (methylated).</li><li>In-house convention: <b>maternally imprinted</b> → expressed from paternal (SNRPN; loss → PWS). <b>Paternally imprinted</b> → expressed from maternal (UBE3A; loss → AS).</li><li>Imprints are erased and reset in gametogenesis by the person's own sex.</li></ul>\n<h3 class=\"rh\">Mechanisms</h3>\n<div class=\"rtbl\"><table><thead><tr><th>Mechanism</th><th>PWS</th><th>AS</th></tr></thead><tbody>\n<tr><td>Deletion</td><td>70% paternal</td><td>68% maternal</td></tr>\n<tr><td>UPD</td><td>25% maternal</td><td>7% paternal</td></tr>\n<tr><td>Imprinting defect</td><td>&lt;5%</td><td>3%</td></tr>\n<tr><td>Translocation</td><td>&lt;1%</td><td>&lt;1%</td></tr>\n<tr><td>UBE3A</td><td>—</td><td>11%</td></tr>\n<tr><td>Unknown</td><td>—</td><td>10%</td></tr></tbody></table></div>\n<h3 class=\"rh\">Methylation PCR</h3>\n<p>Bisulfite: unmethylated C → U. Maternal (methylated) allele = 174 bp; paternal = 100 bp. Maternal only → <b>PWS</b>; paternal only → <b>AS</b>; both → normal (doesn't exclude UBE3A AS).</p>\n<div class=\"rhy\"><b>USMLE: first test for PWS</b>Methylation (≈99% of PWS, ≈78% of AS). Normal methylation in an AS phenotype → sequence UBE3A.</div>\n<h3 class=\"rh\">Recurrence</h3>\n<div class=\"rtbl\"><table><thead><tr><th>Mechanism</th><th>Risk</th></tr></thead><tbody>\n<tr><td>Deletion, UPD</td><td>&lt;1/1,000</td></tr>\n<tr><td>Inherited imprinting defect</td><td>Up to 50%</td></tr>\n<tr><td>Translocation</td><td>Up to 50% (syndrome depends on parent)</td></tr>\n<tr><td>Maternal UBE3A</td><td>Up to 50%</td></tr></tbody></table></div>\n<div class=\"rtrap\"><b>PWS and AS in cousins</b>Suspect a familial 15q11–q13 translocation: PWS via father, AS via mother.</div>\n"};
+var RVW_NAME = {"F":"LO1 Techniques & sequencing","D":"LO2 Imprinting"};
+(function(){
+  var panel=document.getElementById("rvw"), body=document.getElementById("rvwBody"),
+      toc=document.getElementById("rvwToc"), q=document.getElementById("rvwQ"),
+      cnt=document.getElementById("rvwCount"), empty=document.getElementById("rvwEmpty"),
+      btn=document.getElementById("reviewBtn"), lec="F", secs=[];
+  var TYPES={rrule:1,rtrap:1,rmem:1,rhy:1};
+  function collapse(sec){
+    [].slice.call(sec.querySelectorAll(".rrule,.rtrap,.rmem,.rhy")).forEach(function(d){
+      var type=d.className.trim(); if(!TYPES[type])return;
+      var lbl=d.querySelector("b"), label=lbl?lbl.textContent:"Note";
+      if(lbl)lbl.parentNode.removeChild(lbl);
+      var det=document.createElement("details"); det.className="cx "+type;
+      var sum=document.createElement("summary");
+      sum.innerHTML='<span class="lbl"></span><span class="pk"></span>';
+      sum.querySelector(".lbl").textContent=label;
+      sum.querySelector(".pk").textContent=d.textContent.replace(/\s+/g," ").trim().slice(0,110);
+      var cb=document.createElement("div"); cb.className="cbody";
+      while(d.firstChild)cb.appendChild(d.firstChild);
+      det.appendChild(sum); det.appendChild(cb);
+      d.parentNode.replaceChild(det,d);
+    });
+    var h=sec.querySelector(".rh"), hys=[].slice.call(sec.querySelectorAll("details.rhy"));
+    if(h&&hys.length){ var ref=h.nextSibling; hys.forEach(function(x){ sec.insertBefore(x,ref); }); }
+    var kids=[].slice.call(sec.children), i=0;
+    while(i<kids.length){
+      if(kids[i].tagName==="DETAILS"){
+        var run=[kids[i]], cls=kids[i].className, j=i+1;
+        while(j<kids.length&&kids[j].tagName==="DETAILS"&&kids[j].className===cls){run.push(kids[j]);j++;}
+        if(run.length>1){
+          var g=document.createElement("div"); g.className="cgrid";
+          sec.insertBefore(g,run[0]); run.forEach(function(x){g.appendChild(x);});
+        }
+        i=j;
+      } else i++;
+    }
+  }
+  function group(){
+    var kids=[].slice.call(body.childNodes), out=[], cur=null;
+    kids.forEach(function(n){
+      if(n.nodeType===1&&n.tagName==="H3"){cur=document.createElement("section");cur.className="rsec";out.push(cur);}
+      if(!cur){cur=document.createElement("section");cur.className="rsec";out.push(cur);}
+      cur.appendChild(n);
+    });
+    body.innerHTML="";
+    out.forEach(function(s,i){ s.id="rs"+i; collapse(s); s._t=s.textContent.toLowerCase(); body.appendChild(s); });
+    return out;
+  }
+  function setAll(open){
+    [].slice.call(body.querySelectorAll("details.cx")).forEach(function(d){d.open=open;});
+    var t=document.getElementById("rvwAll");
+    if(t){t.textContent=open?"Collapse all":"Expand all";t.setAttribute("aria-pressed",String(open));}
+  }
+  function buildToc(){
+    toc.innerHTML=secs.map(function(s){
+      var h=s.querySelector(".rh"); return h?'<a href="#'+s.id+'">'+h.textContent+'</a>':'';
+    }).join("");
+  }
+  function filter(){
+    var terms=q.value.toLowerCase().split(/\s+/).filter(Boolean), n=0;
+    secs.forEach(function(s){
+      var on=terms.every(function(t){return s._t.indexOf(t)!==-1;});
+      s.classList.toggle("hide",!on); if(on)n++;
+    });
+    empty.classList.toggle("on",n===0);
+    cnt.textContent = n===secs.length ? secs.length+" sections" : n+" of "+secs.length;
+    toc.style.display = q.value ? "none" : "";
+  }
+  function load(l){
+    lec=l; panel.setAttribute("data-lec",l);
+    body.innerHTML=REVIEW[l]||"";
+    secs=group(); buildToc(); q.value=""; filter();
+    var t=document.getElementById("rvwAll"); if(t){t.textContent="Expand all";t.setAttribute("aria-pressed","false");}
+  }
+  function open(){
+    document.querySelector(".bar").style.display="none";
+    document.querySelector(".main").style.display="none";
+    panel.hidden=false; if(!secs.length)load(lec);
+    btn.setAttribute("aria-pressed","true");
+    window.scrollTo(0,0); q.focus({preventScroll:true});
+  }
+  function close(){
+    panel.hidden=true;
+    document.querySelector(".bar").style.display="";
+    document.querySelector(".main").style.display="";
+    btn.setAttribute("aria-pressed","false");
+    window.scrollTo(0,0);
+  }
+  btn.onclick=function(){ panel.hidden?open():close(); };
+  document.getElementById("rvwClose").onclick=close;
+  document.getElementById("rvwPrint").onclick=function(){window.print();};
+  var allBtn=document.getElementById("rvwAll");
+  if(allBtn)allBtn.onclick=function(){ setAll(this.getAttribute("aria-pressed")!=="true"); };
+  var reclose=[];
+  window.addEventListener("beforeprint",function(){
+    reclose=[];
+    [].slice.call(body.querySelectorAll("details.cx")).forEach(function(d){ if(!d.open){reclose.push(d);d.open=true;} });
+  });
+  window.addEventListener("afterprint",function(){ reclose.forEach(function(d){d.open=false;}); reclose=[]; });
+  document.getElementById("rvwTabs").onclick=function(e){
+    var b=e.target.closest("button"); if(!b)return;
+    [].forEach.call(this.children,function(c){c.setAttribute("aria-pressed",String(c===b));});
+    load(b.dataset.l); window.scrollTo(0,0);
+  };
+  q.addEventListener("input",filter);
+  document.addEventListener("keydown",function(e){
+    if(e.key==="Escape"&&!panel.hidden){ if(document.activeElement===q&&q.value){q.value="";filter();} else close(); }
+  });
+})();
+
+</script>

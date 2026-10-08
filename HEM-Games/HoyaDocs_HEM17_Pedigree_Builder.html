@@ -1,0 +1,556 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HEM17 Pedigree Builder</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,600;8..60,700&family=Public+Sans:wght@400;600;700&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+/* Layout: toolbar + stats on top; structure list | question card | LO mastery map. Stacks to one column on phones. */
+:root{
+  --bg:#f3f5f6; --surface:#ffffff; --ink:#18212b; --muted:#5a6570; --line:#dbe0e5; --chip:#eceff2;
+  --arch:#2c55a0; --face:#a3263f; --eye:#2c55a0; --accent:#a3263f;
+  --ok:#1d7a3e; --ok-bg:#e3f4e8; --bad:#b3261e; --bad-bg:#fbe7e5; --once:#b7791f; --once-bg:#fdf1dc; --mem:#c2621a;
+  --hy-bg:#fff6cc; --hy-line:#c9a227; --hy-ink:#4a3a00;
+  --f-display:"Source Serif 4", Georgia, serif; --f-body:"Public Sans", Arial, sans-serif; --f-mono:"IBM Plex Mono", ui-monospace, monospace;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#11161c; --surface:#19212a; --ink:#e6eaee; --muted:#9aa6b2; --line:#2c3642; --chip:#232c36;
+  --arch:#8fb1f0; --face:#f08a9b; --eye:#8fb1f0; --accent:#f08a9b;
+  --ok:#6fd08f; --ok-bg:#16301f; --bad:#f28b82; --bad-bg:#3a1b19; --once:#f0c070; --once-bg:#3a2e12; --mem:#f0a05c;
+  --hy-bg:#3a3110; --hy-line:#b8952a; --hy-ink:#f5e6a8; color-scheme:dark }}
+:root[data-theme="dark"]{
+  --bg:#11161c; --surface:#19212a; --ink:#e6eaee; --muted:#9aa6b2; --line:#2c3642; --chip:#232c36;
+  --arch:#8fb1f0; --face:#f08a9b; --eye:#8fb1f0; --accent:#f08a9b;
+  --ok:#6fd08f; --ok-bg:#16301f; --bad:#f28b82; --bad-bg:#3a1b19; --once:#f0c070; --once-bg:#3a2e12; --mem:#f0a05c;
+  --hy-bg:#3a3110; --hy-line:#b8952a; --hy-ink:#f5e6a8; color-scheme:dark }
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font:15px/1.5 var(--f-body);margin:0}
+.wrap{max-width:1180px;margin:0 auto;padding-inline:16px;padding-block:22px 48px;display:grid;gap:16px}
+h1,h2,h3{font-family:var(--f-display);margin:0;text-wrap:balance;line-height:1.2}
+.meta{font:500 .74rem var(--f-mono);letter-spacing:.07em;text-transform:uppercase;color:var(--muted);margin:0}
+header{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:end;gap:12px}
+header h1{font-size:1.9rem}
+header p.lede{margin:4px 0 0;color:var(--muted);max-width:62ch}
+.btn{font:600 .85rem var(--f-body);background:var(--chip);color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:7px 12px;cursor:pointer}
+.btn:hover{border-color:var(--ink)}
+.btn:focus-visible,.opt:focus-visible,.seg button:focus-visible,.ent:focus-visible,.lo-tile:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.btn.primary{background:var(--accent);color:var(--surface);border-color:var(--accent)}
+.btn[disabled]{opacity:.45;cursor:default}
+.hdr-actions{display:flex;gap:8px;flex-wrap:wrap}
+.wrap{grid-template-columns:minmax(0,1fr)} .rvw{min-width:0}
+
+.bar{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 12px}
+.seg{display:inline-flex;background:var(--chip);border-radius:10px;padding:3px;gap:2px;flex-wrap:wrap}
+.seg button{font:600 .82rem var(--f-body);border:0;background:transparent;color:var(--ink);padding:6px 11px;border-radius:8px;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--surface);box-shadow:0 1px 2px rgba(0,0,0,.12)}
+.seg .lab{font:500 .7rem var(--f-mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);align-self:center;padding:0 6px}
+.stats{display:flex;gap:18px;flex-wrap:wrap}
+.stat b{display:block;font:700 1.15rem var(--f-body);font-variant-numeric:tabular-nums}
+.stat span{font:500 .68rem var(--f-mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+
+.main{display:grid;grid-template-columns:250px minmax(0,1fr) 270px;gap:16px;align-items:start}
+@media (max-width:1000px){ .main{grid-template-columns:minmax(0,1fr)} .side{order:2} .map{order:3} }
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px;display:grid;gap:8px;min-width:0}
+.panel h2{font-size:1rem}
+.lec-h{font:700 .72rem var(--f-body);letter-spacing:.07em;text-transform:uppercase;margin-top:6px}
+.ent{display:grid;grid-template-columns:1fr auto;gap:2px 8px;text-align:left;width:100%;background:transparent;border:1px solid transparent;border-radius:8px;padding:7px 8px;cursor:pointer;color:var(--ink);font:inherit}
+.ent:hover{background:var(--chip)}
+.ent[aria-current="true"]{border-color:var(--lc);background:var(--chip)}
+.ent .n{font-weight:600;font-size:.9rem}
+.ent .s{grid-column:1;font-size:.75rem;color:var(--muted)}
+.ent .pct{grid-row:1/3;grid-column:2;align-self:center;font:500 .75rem var(--f-mono);color:var(--muted);font-variant-numeric:tabular-nums}
+.ent .mini{grid-column:1/3;height:4px;border-radius:2px;background:var(--line);overflow:hidden}
+.ent .mini i{display:block;height:100%;background:var(--lc)}
+.lF{--lc:var(--arch)} .lD{--lc:var(--face)} .lT{--lc:var(--tcol)}
+:root{--tcol:#1d7a5f} @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--tcol:#6fd0b0}} :root[data-theme="dark"]{--tcol:#6fd0b0}
+.tag.rr{background:var(--chip);color:var(--ink);border:1px solid var(--line)}
+
+.card{background:var(--surface);border:1px solid var(--line);border-top:5px solid var(--lc);border-radius:12px;padding:18px;display:grid;gap:14px;min-width:0}
+.card-top{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px;align-items:baseline}
+.card-top h2{font-size:1.35rem}
+.tag{font:500 .7rem var(--f-mono);letter-spacing:.06em;text-transform:uppercase;padding:3px 8px;border-radius:999px;background:var(--chip);color:var(--muted)}
+.tag.lo{color:var(--lc)}
+.tag.hy{background:var(--hy-bg);color:var(--hy-ink);border:1px solid var(--hy-line)}
+.boxes{display:flex;gap:4px;flex-wrap:wrap}
+.boxes i{width:18px;height:6px;border-radius:3px;background:var(--line)}
+.boxes i.done-ok{background:var(--ok)} .boxes i.done-bad{background:var(--bad)} .boxes i.cur{background:var(--lc)}
+.q{font:600 1.08rem/1.45 var(--f-body);margin:0}
+.hint{font-size:.8rem;color:var(--muted);margin:0}
+.opts{display:grid;gap:8px}
+.opt{display:grid;grid-template-columns:auto 1fr;gap:10px;align-items:start;text-align:left;width:100%;font:inherit;color:var(--ink);background:var(--bg);border:1.5px solid var(--line);border-radius:10px;padding:10px 12px;cursor:pointer}
+.opt:hover:not([disabled]){border-color:var(--lc)}
+.opt .k{font:500 .75rem var(--f-mono);color:var(--muted);border:1px solid var(--line);border-radius:5px;padding:1px 6px;margin-top:1px}
+.opt.sel{border-color:var(--lc);background:var(--chip)}
+.opt.right{border-color:var(--ok);background:var(--ok-bg)}
+.opt.wrong{border-color:var(--bad);background:var(--bad-bg)}
+.opt.missed{border-color:var(--ok);border-style:dashed}
+.opt[disabled]{cursor:default}
+.ordered{display:grid;gap:6px;counter-reset:ord;padding:0;margin:0;list-style:none;min-height:44px;border:1.5px dashed var(--line);border-radius:10px;padding:8px}
+.ordered li{counter-increment:ord;display:grid;grid-template-columns:auto 1fr;gap:8px;align-items:center;background:var(--chip);border-radius:8px;padding:7px 10px;cursor:pointer}
+.ordered li::before{content:counter(ord);font:500 .78rem var(--f-mono);color:var(--lc)}
+.ordered li.right{background:var(--ok-bg)} .ordered li.wrong{background:var(--bad-bg)}
+.ordered .empty{color:var(--muted);font-size:.85rem;padding:4px}
+/* ---------- Review ---------- */
+.rvw{margin-top:14px}
+.rvw-bar{position:sticky;top:0;z-index:8;background:var(--bg);border-bottom:1px solid var(--line);padding:10px 0;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.rvw-bar .seg{display:flex;gap:2px;background:var(--chip);border:1px solid var(--line);border-radius:9px;padding:3px}
+.rvw-bar .seg button{background:transparent;border:0;border-radius:7px;padding:6px 12px;font:inherit;font-size:13.5px;color:var(--muted);cursor:pointer}
+.rvw-bar .seg button[aria-pressed="true"]{background:var(--surface);color:var(--ink);font-weight:600;box-shadow:0 1px 2px rgba(0,0,0,.08)}
+#rvwQ{flex:1 1 180px;min-width:140px;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:7px 10px;font:inherit;font-size:14px;color:inherit}
+#rvwCount{font-family:var(--f-mono);font-size:11px;color:var(--muted);white-space:nowrap}
+.rvw-toc{display:flex;flex-wrap:wrap;gap:6px;margin:12px 0 2px}
+.rvw-toc a{font-size:12.5px;text-decoration:none;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:4px 10px}
+.rvw-toc a:hover{color:var(--ink);border-color:var(--muted)}
+.rvw-body{max-width:none}
+.rsec{padding:6px 0 10px;scroll-margin-top:64px}
+.rsec.hide{display:none}
+.rh{font-family:var(--f-display);font-size:1.5rem;font-weight:650;margin:26px 0 4px;padding-bottom:6px;border-bottom:2px solid var(--acc)}
+.rsh{font-family:var(--f-display);font-size:1.12rem;font-weight:650;margin:18px 0 4px}
+.rvw-body p{margin:8px 0;line-height:1.62}
+ul.rlist{margin:8px 0;padding-left:1.15em;display:grid;gap:5px}
+ul.rlist li{line-height:1.55}
+.rtbl{overflow-x:auto;margin:12px 0;border:1px solid var(--line);border-radius:10px;background:var(--surface)}
+.rtbl table{border-collapse:collapse;width:100%;font-size:14px}
+.rtbl th,.rtbl td{text-align:left;vertical-align:top;padding:8px 11px;border-bottom:1px solid var(--line)}
+.rtbl thead th{background:var(--chip);font-family:var(--f-mono);font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);white-space:nowrap}
+.rtbl tbody tr:last-child td{border-bottom:0}
+.rtbl td b{font-weight:600}
+.rseq{margin:12px 0;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 14px 12px 10px}
+.rseq ol{margin:0;padding-left:1.3em;display:grid;gap:7px}
+.rseq li{line-height:1.55;padding-left:2px}
+.rseq li b{color:var(--acc)}
+.cgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(330px,1fr));gap:10px;margin:12px 0;align-items:start}
+.cgrid>details{margin:0}
+details.cx{margin:11px 0;border-radius:9px;border:1px solid var(--line);background:var(--surface);overflow:hidden}
+details.cx>summary{list-style:none;cursor:pointer;display:flex;align-items:baseline;gap:9px;padding:9px 12px;border-left:3px solid var(--line);font-size:14px}
+details.cx>summary::-webkit-details-marker{display:none}
+details.cx>summary::after{content:"+";margin-left:auto;font-family:var(--f-mono);font-size:14px;color:var(--muted);line-height:1}
+details.cx[open]>summary::after{content:"\2013"}
+details.cx>summary .lbl{font-family:var(--f-mono);font-size:10px;letter-spacing:.11em;text-transform:uppercase;font-weight:700;white-space:nowrap}
+details.cx>summary .pk{color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1}
+details.cx[open]>summary .pk{display:none}
+details.cx .cbody{padding:2px 13px 12px;line-height:1.56;font-size:14.6px;border-left:3px solid var(--line)}
+details.cx .cbody b{font-weight:600}
+details.rrule>summary,details.rrule .cbody{border-left-color:var(--acc)}
+details.rtrap>summary,details.rtrap .cbody{border-left-color:var(--bad)}
+details.rmem>summary,details.rmem .cbody{border-left-color:var(--mem)}
+details.rrule>summary .lbl{color:var(--acc)} details.rtrap>summary .lbl{color:var(--bad)} details.rmem>summary .lbl{color:var(--mem)}
+details.rhy{background:var(--hy-bg);border-color:var(--hy-line);color:var(--hy-ink)}
+details.rhy>summary,details.rhy .cbody{border-left-color:var(--hy-line)}
+details.rhy>summary .lbl{color:var(--hy-ink);opacity:.9}
+details.rhy>summary .pk,details.rhy>summary::after{color:var(--hy-ink);opacity:.75}
+.rvw-empty{display:none;text-align:center;color:var(--muted);border:1px dashed var(--line);border-radius:10px;padding:28px;margin-top:16px}
+.rvw-empty.on{display:block}
+.rvw[data-lec="F"]{--acc:var(--arch)} .rvw[data-lec="D"]{--acc:var(--face)} .rvw[data-lec="T"]{--acc:var(--tcol)}
+@media print{
+  header,.bar,.main,.rvw-bar,.rvw-toc,.rvw-empty{display:none!important}
+  .rvw{margin:0}
+  body{background:#fff}
+  .rsec{break-before:page;break-inside:auto}
+  .rsec:first-of-type{break-before:auto}
+  .rtbl,.rseq,details.cx{break-inside:avoid}
+  details.cx>summary::after{display:none}
+  .cgrid{grid-template-columns:1fr 1fr}
+}
+.fb .ans{font-size:.95rem}
+.fbexp{display:grid;gap:8px}
+.fbexp p{margin:0;line-height:1.6}
+.fbnotes{list-style:none;margin:2px 0 0;padding:0;display:grid;gap:6px}
+.fbnotes li{font-size:.9rem;line-height:1.5;color:var(--muted);padding-left:10px;border-left:2px solid var(--line)}
+.fbnotes li b{color:var(--ink);font-weight:600}
+.fbpearl{margin-top:2px;background:var(--hy-bg);border:1px solid var(--hy-line);border-left-width:3px;border-radius:9px;padding:9px 12px;font-size:.92rem;line-height:1.5;color:var(--hy-ink)}
+.fbpearl b{display:block;font:700 .66rem var(--f-mono);letter-spacing:.14em;text-transform:uppercase;color:var(--hy-line);margin-bottom:3px}
+.fb{border-radius:10px;padding:12px 14px;display:grid;gap:6px}
+.fb.ok{background:var(--ok-bg)} .fb.bad{background:var(--bad-bg)}
+.fb .v{font-weight:700}
+.fb.ok .v{color:var(--ok)} .fb.bad .v{color:var(--bad)}
+.fb ol{margin:0;padding-left:1.2em}
+.actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:space-between;align-items:center}
+.timer{font:500 .8rem var(--f-mono);color:var(--muted);font-variant-numeric:tabular-nums}
+.done{display:grid;gap:10px;text-align:left}
+
+.lo-grid{display:grid;gap:6px}
+.lo-tile{display:grid;grid-template-columns:auto 1fr auto;gap:8px;align-items:center;text-align:left;width:100%;background:transparent;border:1px solid var(--line);border-radius:8px;padding:6px 8px;cursor:pointer;color:var(--ink);font:inherit}
+.lo-tile:hover{border-color:var(--lc)}
+.lo-tile .id{font:500 .72rem var(--f-mono);color:var(--lc);white-space:nowrap}
+.lo-tile .t{font-size:.78rem;line-height:1.3}
+.lo-tile .dot{width:12px;height:12px;border-radius:50%;background:var(--line)}
+.dot.s-o{background:var(--once)} .dot.s-m{background:var(--bad)} .dot.s-M{background:var(--ok)}
+.legend{display:flex;flex-wrap:wrap;gap:10px;font-size:.72rem;color:var(--muted)}
+.legend span{display:inline-flex;gap:5px;align-items:center}
+.legend i{width:10px;height:10px;border-radius:50%;display:inline-block;background:var(--line)}
+.legend i.o{background:var(--once)} .legend i.m{background:var(--bad)} .legend i.M{background:var(--ok)}
+footer{color:var(--muted);font-size:.8rem;border-top:1px solid var(--line);padding-top:12px}
+@media (prefers-reduced-motion: no-preference){ .opt,.ent,.lo-tile{transition:border-color .12s, background .12s} }
+</style>
+
+<div class="wrap">
+<header>
+  <div>
+    <p class="meta">HoyaDocs · Block 5 · Genetics · HEM17</p>
+    <h1>HEM17 Pedigree Builder</h1>
+    <p class="lede">Mendelian inheritance and pedigree analysis, LO by LO: symbols, AD, AR and the 2/3 rule, X- and Y-linked patterns, and complicating factors: build each structure box by box, then drill what you miss. Boxes tagged Rapid Review test the LO Rapid Review and Master Review checklists.</p>
+  </div>
+  <div class="hdr-actions">
+    <button class="btn primary" id="reviewBtn" type="button" aria-pressed="false">Review</button>
+    <button class="btn" id="themeBtn" type="button">Theme: auto</button>
+    <button class="btn" id="resetBtn" type="button">Reset progress</button>
+  </div>
+</header>
+
+<div class="bar">
+  <div class="seg" role="group" aria-label="Mode">
+    <span class="lab">Mode</span>
+    <button type="button" data-mode="build" aria-pressed="true">Build</button>
+    <button type="button" data-mode="drill" aria-pressed="false">Drill</button>
+  </div>
+  <div class="seg" role="group" aria-label="Section scope" id="scopeSeg">
+    <span class="lab">Scope</span>
+    <button type="button" data-scope="all" aria-pressed="true">All</button>
+    <button type="button" data-scope="F" aria-pressed="false">LO1–3 Symbols, AD &amp; AR</button>
+    <button type="button" data-scope="D" aria-pressed="false">LO4 X- &amp; Y-linked</button>
+    <button type="button" data-scope="T" aria-pressed="false">LO5 Complicating factors</button>
+  </div>
+  <div class="seg" role="group" aria-label="Focus" id="focusSeg">
+    <span class="lab">Focus</span>
+    <button type="button" data-rr="0" aria-pressed="true">All boxes</button>
+    <button type="button" data-rr="1" aria-pressed="false">Rapid Review only</button>
+  </div>
+  <div class="stats" aria-live="polite">
+    <div class="stat"><b id="sScore">0</b><span>Score</span></div>
+    <div class="stat"><b id="sStreak">0</b><span>Streak</span></div>
+    <div class="stat"><b id="sAcc">—</b><span>Accuracy</span></div>
+    <div class="stat"><b id="sBoxes">0</b><span>Boxes mastered</span></div>
+    <div class="stat"><b id="sLos">0/5</b><span>LOs mastered</span></div>
+  </div>
+</div>
+
+<div class="main">
+  <aside class="panel side" aria-label="Structures">
+    <h2>Structures</h2>
+    <div id="entList"></div>
+  </aside>
+  <section class="card" id="card" aria-live="polite"></section>
+  <aside class="panel map" aria-label="Learning objective mastery map">
+    <h2>LO mastery map</h2>
+    <div class="legend"><span><i></i>untested</span><span><i class="m"></i>missed</span><span><i class="o"></i>got it once</span><span><i class="M"></i>mastered</span></div>
+
+    <p class="hint">Tap an LO to drill just that objective. Mastered = right twice in a row.</p>
+    <div class="lo-grid" id="loGrid"></div>
+  </aside>
+</div>
+
+<div class="rvw" id="rvw" data-lec="F" hidden>
+  <div class="rvw-bar">
+    <div class="seg" id="rvwTabs" role="group" aria-label="Section">
+      <button type="button" data-l="F" aria-pressed="true">LO1–3 Symbols, AD &amp; AR</button>
+      <button type="button" data-l="D" aria-pressed="false">LO4 X- &amp; Y-linked</button>
+      <button type="button" data-l="T" aria-pressed="false">LO5 Complicating factors</button>
+    </div>
+    <input id="rvwQ" type="search" placeholder="Search this review" autocomplete="off" aria-label="Search the review">
+    <span id="rvwCount"></span>
+    <button class="btn" type="button" id="rvwAll" aria-pressed="false">Expand all</button>
+    <button class="btn" type="button" id="rvwPrint">Print</button>
+    <button class="btn primary" type="button" id="rvwClose">Back to the game</button>
+  </div>
+  <nav class="rvw-toc" id="rvwToc" aria-label="Contents"></nav>
+  <div class="rvw-body" id="rvwBody"></div>
+  <div class="rvw-empty" id="rvwEmpty">Nothing in this section matches that search.</div>
+</div>
+
+
+<footer>HoyaDocs · HEM17 Pedigree Builder · Updated October 8, 2026 · Revision 1.0. Yellow “HY” tags mark high-yield points, including Step 1. “Rapid Review” tags mark boxes built from the LO Rapid Review checklists.</footer>
+</div>
+
+<script>
+/* ================= LEARNING OBJECTIVES ================= */
+var LOS = {"1": "Basic transmission genetics and pedigree symbols", "2": "Autosomal dominant inheritance and risks", "3": "Autosomal recessive inheritance and risks (including the 2/3 carrier risk)", "4": "X-linked recessive, X-linked dominant and Y-linked inheritance; X inactivation", "5": "Complicating factors: new mutations, age of onset, penetrance, expressivity, predisposition testing"};
+var LOLEC = {"1": "F", "2": "F", "3": "F", "4": "D", "5": "T"};
+var LECS = [{"k": "F", "n": "LO1–3 Symbols, AD & AR", "c": "arch"}, {"k": "D", "n": "LO4 X- & Y-linked", "c": "face"}, {"k": "T", "n": "LO5 Complicating factors", "c": "eye"}];
+var E = [{"id": "basic", "lec": "F", "name": "Transmission basics", "sub": "Chromosomes · alleles · zygosity", "b": [{"lo": "1", "rr": true, "q": "How are human chromosomes organized?", "a": "46 chromosomes in 23 pairs: autosomes 1–22 (same in both sexes) and pair 23 sex chromosomes (XX female, XY male)", "o": ["23 chromosomes total", "46 pairs", "22 pairs of sex chromosomes"], "n": ["That's a gamete.", "Too many.", "Only one sex pair."], "w": "Chromosomes come in pairs, so genes come in pairs (alleles).", "p": "23 pairs."}, {"lo": "1", "rr": true, "hy": true, "q": "What is the chance a parent passes a given allele to a given child?", "a": "50%", "o": ["25%", "100%", "Depends on sex of the child for autosomes"], "n": ["Not for one allele.", "Only one of two copies goes into each gamete.", "Not for autosomes."], "w": "We receive one copy from each parent and pass one copy into each gamete.", "p": "Any allele: 50%."}, {"lo": "1", "rr": true, "t": "m", "q": "Select ALL correct zygosity terms (standard references).", "a": ["Homozygous → two identical alleles", "Heterozygous → two different alleles", "Compound heterozygous → two different pathogenic alleles of the same gene", "Hemizygous → one copy (X-linked genes in males)"], "o": ["Hemizygous → two copies of the X", "Compound heterozygous → one normal + one pathogenic allele"], "n": ["Males have one X.", "That's a simple heterozygote."], "w": "AR disease appears in homozygous or compound heterozygous states.", "p": "Homo, hetero, compound, hemi."}]}, {"id": "sym", "lec": "F", "name": "Pedigree symbols", "sub": "Read every symbol", "b": [{"lo": "1", "rr": true, "hy": true, "t": "m", "q": "Select ALL correct pedigree symbols.", "a": ["Square → male", "Circle → female", "Diamond → sex unknown", "Filled symbol → affected", "Diagonal slash → deceased", "P inside → ongoing pregnancy", "Small triangle → miscarriage", "Number n inside → multiple individuals"], "o": ["Diamond → deceased", "Triangle → proband"], "n": ["Slash = deceased.", "Arrow = proband."], "w": "Generations labeled with Roman numerals.", "p": "Square male, circle female, diamond unknown."}, {"lo": "1", "rr": true, "hy": true, "q": "What do an arrow and a double line between partners mean (standard references)?", "a": "Arrow = proband; double line = consanguinity", "o": ["Arrow = deceased; double line = divorce", "Arrow = carrier; double line = twins", "Arrow = pregnancy; double line = adoption"], "n": ["Not the symbols.", "Not the symbols.", "Not the symbols."], "w": "The proband is the person who brought the family to attention.", "p": "Arrow proband; double line related."}, {"lo": "1", "rr": true, "q": "What does a half-filled symbol or a dot in the center indicate?", "a": "A carrier (heterozygote); a central dot often marks an X-linked carrier female", "o": ["Affected", "Deceased", "Miscarriage"], "n": ["Fully filled.", "Slash.", "Triangle."], "w": "Standard references.", "p": "Half or dot = carrier."}]}, {"id": "ad", "lec": "F", "name": "Autosomal dominant", "sub": "Vertical · male-to-male · 50%", "b": [{"lo": "2", "rr": true, "hy": true, "t": "m", "q": "Select ALL features of autosomal dominant inheritance.", "a": ["Gene on an autosome", "Affected in every generation (vertical)", "Males and females equally affected", "Male-to-male transmission occurs", "½ of offspring of an affected person affected"], "o": ["Typically skips generations", "Only males affected"], "n": ["AD is vertical; a skip only with reduced penetrance.", "Both sexes."], "w": "For a couple to have an affected child, a parent must be affected (exceptions: new mutation, reduced penetrance, germline mosaicism).", "p": "Vertical + male-to-male."}, {"lo": "2", "rr": true, "hy": true, "q": "Which pedigree feature rules OUT X-linked inheritance and supports autosomal dominant?", "a": "Male-to-male (father-to-son) transmission", "o": ["Affected females", "Affected in every generation", "Equal sex ratio alone"], "n": ["X-linked dominant affects females.", "XLD also does.", "Not specific."], "w": "Fathers give sons a Y, never an X.", "p": "Father → son = not X-linked."}, {"lo": "2", "rr": true, "hy": true, "q": "A man with Marfan syndrome and an unaffected wife ask the chance their son is affected. Answer?", "a": "50%; sons can inherit an AD condition from their father", "o": ["0%; fathers don't pass to sons", "25%", "100%"], "n": ["That's X-linked.", "Not AR.", "Not certain."], "w": "Aa × aa → half Aa.", "p": "One affected parent → 50%."}, {"lo": "2", "hy": true, "t": "m", "q": "Select ALL autosomal dominant conditions (standard references).", "a": ["Huntington disease", "Achondroplasia", "Neurofibromatosis 1", "Marfan syndrome", "Familial hypercholesterolemia", "Adult polycystic kidney disease", "Hereditary spherocytosis", "BRCA1/2"], "o": ["Cystic fibrosis", "Hemophilia A"], "n": ["AR.", "XLR."], "w": "Also NF2, Lynch, FAP, tuberous sclerosis, vWD type 1. AD disorders often involve structural proteins or receptors.", "p": "Structural/receptor = AD."}]}, {"id": "ar", "lec": "F", "name": "Autosomal recessive", "sub": "Horizontal · carriers · 25% · 2/3", "b": [{"lo": "3", "rr": true, "hy": true, "t": "m", "q": "Select ALL features of autosomal recessive inheritance.", "a": ["Typically not in multiple generations (horizontal)", "Parents are unaffected carriers", "¼ of offspring of two carriers affected", "Males and females equally affected", "Disease only in homozygous or compound heterozygous state"], "o": ["Male-to-male transmission is the key clue", "Every generation affected"], "n": ["That's AD's clue.", "That's AD."], "w": "Both parents must be at least carriers of the same disorder. Consanguinity raises risk.", "p": "Horizontal, carrier parents, 25%."}, {"lo": "3", "rr": true, "hy": true, "q": "How can an AR condition mimic AD (pseudodominance)?", "a": "Complex consanguinity or a high carrier frequency (e.g., sickle cell, hemochromatosis) so affected people marry carriers", "o": ["New mutations in every generation", "X inactivation", "Mitochondrial heteroplasmy"], "n": ["Not the mechanism.", "Not relevant.", "Not relevant."], "w": "An AR condition in three consecutive generations of a consanguineous family = pseudodominance.", "p": "Common carriers → looks dominant."}, {"lo": "3", "rr": true, "hy": true, "t": "m", "q": "Select ALL correct AR risk figures.", "a": ["Child of two carriers → 25% affected, 50% carrier, 25% non-carrier", "Child of an affected person and a carrier → 50% affected", "Child of an affected person and a non-carrier → 0% affected, all carriers", "Sibling of an affected person (status unknown) → 25% affected", "Unaffected sibling of an affected person → 2/3 carrier"], "o": ["Unaffected sibling → 1/2 carrier", "Affected × non-carrier → 25% affected"], "n": ["2/3 (remove aa).", "0%."], "w": "Know these cold for calculations.", "p": "25 / 50 / 0 / 25 / 2/3."}, {"lo": "3", "rr": true, "hy": true, "q": "Why is an unaffected sibling of a person with an AR disease a carrier with probability 2/3, not 1/2?", "a": "Knowing they're unaffected removes the aa box; 2 of the remaining 3 equally likely boxes are carriers", "o": ["Because carriers are more common in siblings", "Because one parent is always affected", "Because of X inactivation"], "n": ["Not the reason.", "Parents are carriers.", "Not relevant."], "w": "AA, Aa, aA → 2/3 carriers.", "p": "Remove aa → 2/3."}, {"lo": "3", "rr": true, "hy": true, "q": "The healthy brother of a CF patient (carrier risk 2/3) marries a woman with no family history (carrier risk 1/25). Risk their child has CF?", "a": "1/150", "o": ["1/100", "1/50", "1/4"], "n": ["Wrong math.", "Wrong math.", "Only if both known carriers."], "w": "2/3 × 1/25 × 1/4 = 1/150.", "p": "2/3 × carrier × 1/4."}, {"lo": "3", "rr": true, "hy": true, "q": "A healthy woman's brother has Tay-Sachs; her husband (no family history) has a 1/30 carrier risk. Risk their child is affected?", "a": "1/180", "o": ["1/120", "1/90", "1/60"], "n": ["Wrong math.", "Wrong math.", "Wrong math."], "w": "2/3 × 1/30 × 1/4 = 1/180.", "p": "Multiply the three probabilities."}, {"lo": "3", "rr": true, "q": "A man with sickle cell disease marries a woman with sickle cell trait. Risk each child has the disease?", "a": "50%", "o": ["25%", "0%", "100%"], "n": ["Two carriers.", "That's affected × non-carrier.", "Not certain."], "w": "aa × Aa → half aa, half Aa.", "p": "Affected × carrier = 50%."}, {"lo": "3", "rr": true, "q": "Without a family history, how is a person's AR carrier risk estimated (standard references)?", "a": "From population incidence (Hardy-Weinberg)", "o": ["Always assumed to be 2/3", "Always zero", "From blood type"], "n": ["Only for unaffected sibs.", "Not zero.", "Not related."], "w": "e.g., CF 1/25 in Caucasians.", "p": "No history → population frequency."}, {"lo": "3", "hy": true, "t": "m", "q": "Select ALL autosomal recessive conditions (standard references).", "a": ["Cystic fibrosis", "Sickle cell disease", "Thalassemias", "Hereditary hemochromatosis", "Tay-Sachs", "Phenylketonuria", "Wilson disease", "Spinal muscular atrophy"], "o": ["Huntington disease", "Duchenne muscular dystrophy"], "n": ["AD.", "XLR."], "w": "Most enzyme deficiencies (inborn errors) are AR.", "p": "Enzymes = AR."}]}, {"id": "lyon", "lec": "D", "name": "X inactivation (Lyon hypothesis)", "sub": "Dosage compensation · random · clonal", "b": [{"lo": "4", "rr": true, "hy": true, "q": "What is the Lyon hypothesis?", "a": "One X in each female somatic cell is inactivated, giving dosage compensation", "o": ["Both X chromosomes are always active", "The Y is inactivated in males", "Only paternal X genes are expressed"], "n": ["One is inactivated.", "Not the concept.", "Random, not paternal-only."], "w": "Gene product levels end up similar in males and females.", "p": "One X off per cell."}, {"lo": "4", "rr": true, "hy": true, "t": "m", "q": "Select ALL features of X inactivation.", "a": ["Occurs early in embryonic development", "Random (paternal X in ≈50% of cells, maternal in ≈50%)", "Permanent and clonal: descendants keep the same inactive X", "The inactive X forms a Barr body"], "o": ["Reversible in each cell division", "Occurs only after puberty"], "n": ["Permanent.", "Early embryo."], "w": "A carrier female is therefore a mosaic of normal- and mutant-expressing cells.", "p": "Early, random, permanent, clonal."}]}, {"id": "xlr", "lec": "D", "name": "X-linked recessive", "sub": "No male-to-male · carrier mothers · skipping", "b": [{"lo": "4", "rr": true, "hy": true, "t": "m", "q": "Select ALL features of X-linked recessive inheritance.", "a": ["No father-to-son transmission", "All daughters of affected males are carriers", "½ of sons of carrier females are affected", "Skipped generations through carrier females", "Unaffected males do not transmit the gene", "Heterozygous females usually unaffected, but some express it"], "o": ["Male-to-male transmission", "Affected father → all daughters affected"], "n": ["Rules out X-linked.", "That's XLD."], "w": "For a couple to have an affected child, typically the mother must be a carrier.", "p": "Carrier moms, affected sons, no father → son."}, {"lo": "4", "rr": true, "hy": true, "q": "A carrier mother and a normal father: outcomes for their children?", "a": "Sons: 50% affected; daughters: 50% carriers (none affected, barring skewing)", "o": ["All sons affected", "All daughters affected", "25% of all children affected regardless of sex"], "n": ["Half.", "Daughters are carriers.", "Sex matters."], "w": "XᴬXᵃ × XᴬY.", "p": "Half the sons."}, {"lo": "4", "rr": true, "hy": true, "q": "An affected father and a normal mother: outcomes?", "a": "All daughters are carriers; all sons unaffected", "o": ["All sons affected", "50% of daughters affected", "All children affected"], "n": ["Sons get his Y.", "Carriers, not affected.", "Not XLR."], "w": "XᵃY × XᴬXᴬ.", "p": "Affected dad → carrier daughters."}, {"lo": "4", "rr": true, "hy": true, "t": "m", "q": "Select ALL ways a female can be affected by an XLR disorder.", "a": ["Skewed X inactivation (normal X preferentially inactivated)", "Turner syndrome (45,X) with the mutation on her only X", "Other X-chromosome abnormalities (e.g., X-autosome translocation)", "Affected father × carrier mother → homozygous daughter (standard references)"], "o": ["Random 50/50 X inactivation always", "Inheriting the gene from her father alone with a normal maternal X and random inactivation"], "n": ["Usually leaves her unaffected.", "She'd usually be a carrier."], "w": "Manifesting carriers have variable severity.", "p": "Skew, Turner, X rearrangement, homozygous."}, {"lo": "4", "rr": true, "q": "A girl has severe hemophilia A; her father is unaffected, her mother is a carrier, and her karyotype is 45,X. Explanation?", "a": "Turner syndrome: her single X carries the mutation", "o": ["Skewed inactivation of two X's", "Paternal transmission", "Autosomal dominant hemophilia"], "n": ["She has only one X.", "Father unaffected.", "XLR."], "w": "No second X to compensate.", "p": "One X → acts like a male."}, {"lo": "4", "hy": true, "t": "m", "q": "Select ALL X-linked recessive conditions (standard references).", "a": ["Hemophilia A and B", "Duchenne/Becker muscular dystrophy", "G6PD deficiency", "Lesch-Nyhan", "Bruton agammaglobulinemia", "Wiskott-Aldrich", "Fabry", "Ornithine transcarbamylase deficiency"], "o": ["Rett syndrome", "Hypophosphatemic rickets"], "n": ["XLD.", "XLD."], "w": "Also Hunter syndrome and red-green color blindness; fragile X is X-linked with special rules.", "p": "Hemophilia, DMD, G6PD, Lesch-Nyhan…"}]}, {"id": "xld", "lec": "D", "name": "X-linked dominant & Y-linked", "sub": "Affected father → all daughters · father → all sons", "b": [{"lo": "4", "rr": true, "hy": true, "t": "m", "q": "Select ALL features of X-linked dominant inheritance.", "a": ["No father-to-son transmission", "Affected father → all daughters affected, no sons", "Affected mother → 50% of children of either sex", "Skipped generations uncommon", "Often lethal in males (mostly affected females, miscarriages)"], "o": ["Male-to-male transmission", "Affected father → 50% of sons affected"], "n": ["Not X-linked.", "Sons get his Y."], "w": "A parent must be affected for a child to be affected.", "p": "Affected dad → every daughter."}, {"lo": "4", "rr": true, "hy": true, "q": "An affected father has 4 affected daughters and 3 unaffected sons; affected mothers have affected sons and daughters. Pattern?", "a": "X-linked dominant (e.g., hypophosphatemic rickets)", "o": ["Autosomal dominant", "X-linked recessive", "Y-linked"], "n": ["Would allow father → son.", "Daughters would be carriers, not affected.", "Would affect sons only."], "w": "Other XLD: Rett (MECP2), incontinentia pigmenti, most Alport syndrome.", "p": "All daughters of affected father = XLD."}, {"lo": "4", "rr": true, "q": "How are Y-linked traits transmitted?", "a": "From a father to all his sons, never to daughters", "o": ["Mother to all children", "Father to all daughters", "Either parent to 50% of children"], "n": ["Mitochondrial.", "XLD-like.", "AD."], "w": "Most Y genes relate to male differentiation (SRY) and spermatogenesis (AZF deletions → infertility, so few are passed on).", "p": "Y: father → every son."}, {"lo": "4", "rr": true, "q": "Which pattern: all children of an affected woman are affected, children of affected men never are?", "a": "Mitochondrial (maternal) inheritance", "o": ["X-linked dominant", "Autosomal dominant", "Y-linked"], "n": ["Affected father → daughters.", "Fathers transmit.", "Fathers → sons."], "w": "Covered in detail in HEM12.", "p": "Only mothers transmit = mitochondrial."}]}, {"id": "oblig", "lec": "D", "name": "Obligate carriers & pedigree reading", "sub": "Who must be a carrier", "b": [{"lo": "4", "rr": true, "hy": true, "t": "m", "q": "Select ALL obligate carriers of an XLR disorder.", "a": ["Any woman with an affected father", "Any woman with an affected brother and an affected child", "A woman with two affected sons (standard references)"], "o": ["A woman with one affected maternal cousin only", "Any woman with an affected son and no other family history"], "n": ["Not obligate.", "Could be a new mutation (1/3)."], "w": "If only one male is affected, ≈1/3 of the time it's a new mutation (2/3 the mother is a carrier).", "p": "Affected father = obligate carrier."}, {"lo": "4", "rr": true, "hy": true, "q": "A woman's father has hemophilia A; she marries an unaffected man. Risks?", "a": "She is an obligate carrier: 50% of sons affected, 50% of daughters carriers", "o": ["No risk", "All sons affected", "25% of daughters affected"], "n": ["She is a carrier.", "Half.", "Daughters are carriers."], "w": "Daughters aren't affected unless skewed inactivation.", "p": "Dad with hemophilia → she carries."}, {"lo": "4", "rr": true, "hy": true, "q": "A man with Becker MD has a son and a daughter. Which child can pass the disease to grandchildren?", "a": "The daughter (obligate carrier) → 50% of her sons affected", "o": ["The son", "Both", "Neither"], "n": ["He got his father's Y.", "Son can't.", "Daughter can."], "w": "Men with Becker can reproduce, unlike Duchenne.", "p": "Through daughters only."}, {"lo": "4", "rr": true, "q": "A boy, his maternal uncle and his mother's maternal uncle are affected; his mother and maternal grandmother are healthy. Pattern?", "a": "X-linked recessive", "o": ["Autosomal dominant", "Y-linked", "Mitochondrial"], "n": ["Skips healthy women.", "Wouldn't pass through women.", "Mothers would be affected."], "w": "Carrier females, affected males, skipped generations.", "p": "Through healthy women to males = XLR."}]}, {"id": "newm", "lec": "T", "name": "New mutations", "sub": "Offspring 50% · siblings low · XLR 1/3", "b": [{"lo": "5", "rr": true, "hy": true, "q": "What is a new (de novo) mutation?", "a": "A change arising during gametogenesis in a parent: present in all of the child's cells but in none of the parent's other cells", "o": ["A mutation inherited from both parents", "A somatic mutation in a tumor only", "A mutation present in all of the parent's cells"], "n": ["That's homozygous inheritance.", "Not germline.", "Then the parent would be affected."], "w": "The child has a 50% chance to pass it on.", "p": "New in the gamete."}, {"lo": "5", "rr": true, "hy": true, "q": "A child has an AD disorder from a new mutation. Risk to the child's offspring vs the child's siblings?", "a": "Offspring 50%; siblings low (near population risk, small residual from germline mosaicism)", "o": ["Both 50%", "Both 0%", "Offspring 25%; siblings 50%"], "n": ["Siblings low if de novo.", "Offspring 50%.", "Reversed."], "w": "Whether or not it was a new mutation, the affected person's offspring risk is 50%.", "p": "New AD → kids 50%, sibs low."}, {"lo": "5", "rr": true, "hy": true, "q": "A baby has achondroplasia; both parents are average height; the father is 52. Most likely explanation?", "a": "De novo mutation associated with advanced paternal age (>80% of achondroplasia is new)", "o": ["Autosomal recessive inheritance", "Maternal UPD", "Mitochondrial inheritance"], "n": ["AD.", "Not the mechanism.", "Not mitochondrial."], "w": "Baby's future children: 50%. Future siblings: low.", "p": "Old dad + new AD case."}, {"lo": "5", "rr": true, "hy": true, "t": "m", "q": "Select ALL explanations when a child has an AD disorder but both parents are unaffected.", "a": ["De novo mutation (often advanced paternal age)", "Reduced penetrance in a parent", "Germline (gonadal) mosaicism", "Misattributed paternity"], "o": ["Autosomal recessive inheritance by definition", "X inactivation"], "n": ["Still AD.", "Not relevant."], "w": "Germline mosaicism explains recurrence in siblings despite normal parental blood tests.", "p": "De novo, penetrance, mosaicism, paternity."}, {"lo": "5", "rr": true, "hy": true, "q": "A boy has DMD with no other affected relatives. Chance his mother is a carrier?", "a": "≈2/3 (≈1/3 of isolated XLR cases are new mutations)", "o": ["100%", "1/2", "0"], "n": ["Not certain.", "Not the figure.", "Not zero."], "w": "Offer maternal carrier testing; remember germline mosaicism.", "p": "Isolated XLR male: 1/3 new, 2/3 carrier mom."}]}, {"id": "onset", "lec": "T", "name": "Age of onset & presymptomatic testing", "sub": "Huntington · counseling · GINA", "b": [{"lo": "5", "rr": true, "q": "Why can late age of onset mislead a pedigree risk assessment?", "a": "Young “unaffected” relatives may still develop the disease later", "o": ["Late-onset diseases are never genetic", "Onset age never matters", "Young relatives are always affected"], "n": ["Many are.", "It matters.", "Not true."], "w": "Conditions can begin in the neonatal period, childhood or adulthood.", "p": "Unaffected yet ≠ unaffected forever."}, {"lo": "5", "rr": true, "hy": true, "q": "What are the in-house Huntington disease onset and survival figures?", "a": "Mean onset 35–44; mean survival 15–18 years after symptoms", "o": ["Onset at birth; survival 2 years", "Onset 70–80; survival 40 years", "Onset in adolescence always"], "n": ["Not HD.", "Not HD.", "Juvenile HD is uncommon."], "w": "Standard references: AD, CAG repeat in HTT, anticipation through fathers.", "p": "HD: 35–44, 15–18 y."}, {"lo": "5", "rr": true, "hy": true, "q": "What is presymptomatic testing?", "a": "Testing for a disorder that will eventually occur (penetrance nearly 100%) before symptoms appear, e.g., Huntington disease", "o": ["Testing for increased susceptibility with reduced penetrance", "Newborn screening for metabolic disease", "Carrier testing for AR disease"], "n": ["Predisposition testing.", "Different purpose.", "Different purpose."], "w": "A positive result means disease will occur, but DNA can't say when.", "p": "Presymptomatic = will happen."}, {"lo": "5", "rr": true, "t": "m", "q": "Select ALL reasons people choose Huntington testing.", "a": ["Relieve intense daily anxiety", "Adjust choice of employment", "Make financial arrangements for family", "Make family-planning decisions"], "o": ["To get a cure", "To learn the exact age of onset"], "n": ["No cure.", "DNA can't predict timing."], "w": "Concerns: depression, suicide, discrimination.", "p": "Anxiety, job, money, family."}, {"lo": "5", "rr": true, "hy": true, "q": "A 25-year-old woman whose father has Huntington disease asks for testing. What should happen first?", "a": "Pre-test genetic counseling and psychological assessment at an experienced center; the decision is hers", "o": ["Test immediately without counseling", "Refuse testing until age 50", "Test her minor children first"], "n": ["Counseling is essential.", "Her choice now.", "Minors generally not tested."], "w": "Discuss benefits (planning, anxiety relief) and risks (depression, suicide, discrimination, no cure, no onset prediction).", "p": "Counsel before HD testing."}, {"lo": "5", "hy": true, "q": "What does GINA (2008) protect against, and what doesn't it cover (standard references)?", "a": "Genetic discrimination in health insurance and employment; NOT life, disability or long-term-care insurance", "o": ["All types of insurance and employment", "Only life insurance", "Nothing; it was repealed"], "n": ["Not all insurance.", "Opposite.", "Still law."], "w": "Minors are generally not tested for adult-onset conditions like HD.", "p": "GINA: health + jobs only."}]}, {"id": "pen", "lec": "T", "name": "Penetrance, expressivity & predisposition", "sub": "All-or-none vs extent · split hand · NF1 · BRCA", "b": [{"lo": "5", "rr": true, "hy": true, "q": "How do penetrance and expressivity differ?", "a": "Penetrance = probability a genotype shows any phenotype (all-or-none); expressivity = extent/severity among those who show it", "o": ["They are the same", "Penetrance = severity; expressivity = probability", "Both describe recessive traits only"], "n": ["Different.", "Reversed.", "Not limited."], "w": "Penetrance = Present or not; Expressivity = Extent.", "p": "P = present; E = extent."}, {"lo": "5", "rr": true, "hy": true, "q": "An AD pedigree skips a generation. Most likely explanation?", "a": "Reduced penetrance (a non-penetrant carrier parent), not recessive inheritance", "o": ["Autosomal recessive inheritance", "Mitochondrial inheritance", "Variable expressivity"], "n": ["Still AD.", "Not the pattern.", "Expressivity never gives zero phenotype."], "w": "A non-penetrant carrier can have affected children.", "p": "Skipped AD generation = penetrance."}, {"lo": "5", "rr": true, "hy": true, "q": "A 70%-penetrant AD disorder affects an unaffected woman's mother and son. Her genotype?", "a": "She must carry the gene but is non-penetrant (an obligate carrier with no phenotype)", "o": ["She is not a carrier", "She is homozygous normal", "She has a new mutation"], "n": ["She passed it on.", "She passed it on.", "She inherited it."], "w": "In-house example: split-hand deformity ≈70% penetrant.", "p": "Passed it on → carries it."}, {"lo": "5", "rr": true, "hy": true, "q": "In one NF1 family, a mother has a few café-au-lait spots while her son has plexiform neurofibromas and an optic glioma. Concept?", "a": "Variable expressivity", "o": ["Reduced penetrance", "Anticipation", "Imprinting"], "n": ["Both express it.", "Not repeat-based.", "Not relevant."], "w": "NF1 ≈1/3,000; café-au-lait spots, neurofibromas, Lisch nodules, malignancy risk; ½ of cases are new mutations.", "p": "Same gene, different severity."}, {"lo": "5", "rr": true, "hy": true, "t": "m", "q": "Select ALL correct presymptomatic vs predisposition testing contrasts.", "a": ["Presymptomatic → penetrance nearly 100% (Huntington)", "Predisposition → reduced penetrance (BRCA1/2, Lynch)", "Presymptomatic positive → disease will occur, timing unknown", "Predisposition positive → increased risk only; act with screening and risk reduction"], "o": ["Predisposition positive → disease is certain", "Presymptomatic testing applies to BRCA"], "n": ["Reduced penetrance.", "BRCA is predisposition."], "w": "Cancer predisposition results raise job and insurance concerns.", "p": "HD = will; BRCA = might."}, {"lo": "5", "rr": true, "q": "An AD condition appears in a grandmother and grandson, but the middle-generation mother is unaffected. Explanation?", "a": "Reduced penetrance: the mother is a non-penetrant carrier", "o": ["The grandson has an AR disease", "The grandmother was misdiagnosed", "X-linked dominant inheritance"], "n": ["Pattern fits AD.", "No reason to assume.", "Would affect the mother."], "w": "Penetrance is all-or-none.", "p": "Skipped mom = non-penetrant."}]}, {"id": "drill", "lec": "T", "name": "Pattern drill", "sub": "Name the pattern", "b": [{"lo": "5", "rr": true, "t": "m", "q": "Select ALL correct pedigree clue → pattern pairs.", "a": ["Every generation + affected father with affected son → autosomal dominant", "Affected boy and girl, healthy first-cousin parents → autosomal recessive", "Affected males through healthy carrier females → X-linked recessive", "Affected father → all daughters, no sons → X-linked dominant", "Father → all sons only → Y-linked", "Only mothers transmit, to all children → mitochondrial"], "o": ["Father → son transmission → X-linked recessive", "Affected siblings with carrier parents → autosomal dominant"], "n": ["Rules out X-linked.", "That's AR."], "w": "Use the pattern finder: generations, sexes, male-to-male, parent of transmission.", "p": "Six patterns, six clues."}]}];
+
+
+(function(){
+"use strict";
+var KEY="hd-hem17-pedigree-builder-v1";
+var S={box:{},score:0,streak:0,best:0,tot:0,right:0,theme:"auto"};
+function load(){try{var j=JSON.parse(localStorage.getItem(KEY)||"null");if(j&&j.box)S=Object.assign(S,j);}catch(e){}}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}}
+load();
+
+var ALL=[]; E.forEach(function(e){e.b.forEach(function(b,i){b.id=e.id+"."+i;b.ent=e;ALL.push(b);});});
+function st(b){var r=S.box[b.id];return r?r.s:"u";}
+var rrOnly=false, mode="build", scope="all", loFilter=null, curEnt=null, idx=0, cur=null, answered=false, results={}, lastId=null, t0=0, tick=null;
+
+function shuffle(a){a=a.slice();for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=a[i];a[i]=a[j];a[j]=t;}return a;}
+function esc(s){return String(s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];});}
+function inScope(b){return (scope==="all"||b.ent.lec===scope)&&(!loFilter||b.lo===loFilter)&&(!rrOnly||b.rr);}
+
+/* ---------- theme ---------- */
+var themeBtn=document.getElementById("themeBtn");
+function applyTheme(){var r=document.documentElement;if(S.theme==="auto")r.removeAttribute("data-theme");else r.setAttribute("data-theme",S.theme);themeBtn.textContent="Theme: "+S.theme;}
+themeBtn.onclick=function(){S.theme={auto:"light",light:"dark",dark:"auto"}[S.theme];applyTheme();save();};
+applyTheme();
+document.getElementById("resetBtn").onclick=function(){
+  var b=this; if(b.dataset.confirm){S.box={};S.score=S.streak=S.tot=S.right=0;save();b.textContent="Reset progress";delete b.dataset.confirm;renderAll();next();return;}
+  b.dataset.confirm="1";b.textContent="Tap again to reset";setTimeout(function(){if(b.dataset.confirm){delete b.dataset.confirm;b.textContent="Reset progress";}},3000);
+};
+
+/* ---------- stats / side / map ---------- */
+function loStatus(lo){var bs=ALL.filter(function(b){return b.lo===lo;});var ss=bs.map(st);
+  var m=ss.filter(function(x){return x==="M";}).length;
+  if(m===bs.length)return{s:"M",m:m,n:bs.length};
+  if(ss.indexOf("m")>=0)return{s:"m",m:m,n:bs.length};
+  if(ss.some(function(x){return x!=="u";}))return{s:"o",m:m,n:bs.length};
+  return{s:"u",m:m,n:bs.length};}
+function renderStats(){
+  document.getElementById("sScore").textContent=S.score;
+  document.getElementById("sStreak").textContent=S.streak;
+  document.getElementById("sAcc").textContent=S.tot?Math.round(100*S.right/S.tot)+"%":"—";
+  document.getElementById("sBoxes").textContent=ALL.filter(function(b){return st(b)==="M";}).length+"/"+ALL.length;
+  var los=Object.keys(LOS);document.getElementById("sLos").textContent=los.filter(function(l){return loStatus(l).s==="M";}).length+"/"+los.length;
+}
+function renderSide(){
+  var h="";LECS.forEach(function(L){if(scope!=="all"&&scope!==L.k)return;
+    h+='<p class="lec-h l'+L.k+'" style="color:var(--lc)">HEM17 · '+esc(L.n)+'</p>';
+    E.filter(function(e){return e.lec===L.k;}).forEach(function(e){
+      var m=e.b.filter(function(b){return st(b)==="M";}).length,p=Math.round(100*m/e.b.length);
+      h+='<button type="button" class="ent l'+e.lec+'" data-ent="'+e.id+'"'+(curEnt===e&&mode==="build"?' aria-current="true"':'')+'><span class="n">'+esc(e.name)+'</span><span class="pct">'+m+'/'+e.b.length+'</span><span class="s">'+esc(e.sub)+'</span><span class="mini"><i style="width:'+p+'%"></i></span></button>';
+    });});
+  var el=document.getElementById("entList");el.innerHTML=h;
+  el.querySelectorAll(".ent").forEach(function(b){b.onclick=function(){setMode("build");startEnt(E.filter(function(e){return e.id===b.dataset.ent;})[0]);};});
+}
+function renderMap(){
+  var h="";Object.keys(LOS).forEach(function(lo){var lec=LOLEC[lo];if(scope!=="all"&&scope!==lec)return;var s=loStatus(lo);
+    h+='<button type="button" class="lo-tile l'+lec+'" data-lo="'+lo+'"'+(loFilter===lo?' style="border-color:var(--lc)"':'')+'><span class="id">'+(lo.slice(-1)==="X"?"Extra":"LO "+lo)+'</span><span class="t">'+esc(LOS[lo])+'</span><span class="dot s-'+s.s+'" title="'+s.m+'/'+s.n+' mastered"></span></button>';});
+  var g=document.getElementById("loGrid");g.innerHTML=h;
+  g.querySelectorAll(".lo-tile").forEach(function(b){b.onclick=function(){loFilter=(loFilter===b.dataset.lo?null:b.dataset.lo);setMode("drill");};});
+}
+function renderAll(){renderStats();renderSide();renderMap();}
+
+/* ---------- flow ---------- */
+function setMode(m){mode=m;document.querySelectorAll("[data-mode]").forEach(function(b){b.setAttribute("aria-pressed",String(b.dataset.mode===m));});
+  if(m==="build"){loFilter=null;if(rrOnly){rrOnly=false;setRR();}renderAll();if(!curEnt||!inScope(curEnt.b[0]))startEnt(firstEnt());else show();}
+  else{renderAll();next();}}
+function firstEnt(){var es=E.filter(function(e){return scope==="all"||e.lec===scope;});
+  for(var i=0;i<es.length;i++){if(es[i].b.some(function(b){return st(b)!=="M";}))return es[i];}return es[0];}
+document.querySelectorAll("[data-mode]").forEach(function(b){b.onclick=function(){setMode(b.dataset.mode);};});
+function setRR(){document.querySelectorAll("[data-rr]").forEach(function(x){x.setAttribute("aria-pressed",String((x.dataset.rr==="1")===rrOnly));});}
+document.querySelectorAll("[data-rr]").forEach(function(b){b.onclick=function(){rrOnly=b.dataset.rr==="1";setRR();setMode(rrOnly?"drill":mode);};});
+document.querySelectorAll("[data-scope]").forEach(function(b){b.onclick=function(){scope=b.dataset.scope;loFilter=null;
+  document.querySelectorAll("[data-scope]").forEach(function(x){x.setAttribute("aria-pressed",String(x===b));});
+  if(mode==="build"){curEnt=null;setMode("build");}else setMode("drill");};});
+
+function startEnt(e){curEnt=e;idx=0;results={};renderSide();cur=e.b[0];show();}
+function next(){
+  if(mode==="build"){idx++;if(idx>=curEnt.b.length){finishEnt();return;}cur=curEnt.b[idx];show();return;}
+  var pool=ALL.filter(inScope);if(!pool.length){cur=null;show();return;}
+  var rank={m:0,u:1,o:2,M:3};
+  pool=shuffle(pool).sort(function(a,b){return rank[st(a)]-rank[st(b)];});
+  var best=rank[st(pool[0])];var top=pool.filter(function(b){return rank[st(b)]===best&&b.id!==lastId;});
+  if(best===3)top=pool.filter(function(b){return b.id!==lastId;});
+  cur=(top.length?top:pool)[0];show();
+}
+function finishEnt(){
+  var ok=Object.keys(results).filter(function(k){return results[k];}).length,n=curEnt.b.length;
+  var i=E.indexOf(curEnt),nxt=null;for(var j=1;j<=E.length;j++){var c=E[(i+j)%E.length];if(scope==="all"||c.lec===scope){nxt=c;break;}}
+  var card=document.getElementById("card");card.className="card l"+curEnt.lec;
+  card.innerHTML='<div class="done"><p class="meta">Structure complete</p><h2>'+esc(curEnt.name)+': '+ok+' / '+n+' first try</h2>'+
+   '<p class="hint">'+(ok===n?"Clean build. It will count as mastered after one more clean pass.":"Missed boxes are queued first in Drill mode.")+'</p>'+
+   '<div class="actions"><button class="btn" type="button" id="again">Rebuild '+esc(curEnt.name)+'</button>'+(nxt?'<button class="btn primary" type="button" id="nextEnt">Next: '+esc(nxt.name)+' →</button>':'')+'</div></div>';
+  document.getElementById("again").onclick=function(){startEnt(curEnt);};
+  if(nxt)document.getElementById("nextEnt").onclick=function(){startEnt(nxt);};
+  var ne=document.getElementById("nextEnt");if(ne)ne.focus();
+}
+
+var picks=[];
+function show(){
+  answered=false;picks=[];clearInterval(tick);
+  var card=document.getElementById("card");
+  if(!cur){card.className="card";card.innerHTML='<p class="q">Nothing in this scope yet.</p>';return;}
+  var b=cur,e=b.ent;card.className="card l"+e.lec;
+  var head='<div class="card-top"><div><p class="meta">'+(mode==="build"?"Build · box "+(idx+1)+" of "+e.b.length:"Drill"+(rrOnly?" · Rapid Review":"")+(loFilter?" · LO "+loFilter:""))+'</p><h2>'+esc(e.name)+'</h2></div>'+
+    '<div style="display:flex;gap:6px;flex-wrap:wrap"><span class="tag lo">'+(b.lo.slice(-1)==="X"?"Extra":"LO "+b.lo)+'</span>'+(b.rr?'<span class="tag rr">Rapid Review</span>':'')+(b.hy?'<span class="tag hy">HY</span>':'')+'<span class="timer" id="timer">0.0s</span></div></div>';
+  if(mode==="build"){head+='<div class="boxes" aria-hidden="true">'+e.b.map(function(x,i){var c=i===idx?"cur":(x.id in results?(results[x.id]?"done-ok":"done-bad"):"");return '<i class="'+c+'"></i>';}).join("")+'</div>';}
+  var body='<p class="q">'+esc(b.q)+'</p>';
+  if(!b.t){b._opts=shuffle([b.a].concat(b.o));
+    body+='<div class="opts">'+b._opts.map(function(o,i){return '<button type="button" class="opt" data-i="'+i+'"><span class="k">'+(i+1)+'</span><span>'+esc(o)+'</span></button>';}).join("")+'</div>';}
+  else if(b.t==="m"){b._opts=shuffle(b.a.concat(b.o));
+    body+='<p class="hint">Select all that apply, then check.</p><div class="opts">'+b._opts.map(function(o,i){return '<button type="button" class="opt" aria-pressed="false" data-i="'+i+'"><span class="k">'+(i+1)+'</span><span>'+esc(o)+'</span></button>';}).join("")+'</div>';}
+  else{b._opts=shuffle(b.a);
+    body+='<p class="hint">Tap items in order. Tap a placed item to remove it.</p><ol class="ordered" id="ordList"><li class="empty" style="cursor:default">Your order appears here</li></ol><div class="opts">'+b._opts.map(function(o,i){return '<button type="button" class="opt" data-i="'+i+'"><span class="k">+</span><span>'+esc(o)+'</span></button>';}).join("")+'</div>';}
+  var act='<div id="fb"></div><div class="actions"><span class="hint">'+(b.t?"Enter to check":"Keys 1–"+b._opts.length+" to answer")+'</span><div style="display:flex;gap:8px">'+
+    (mode==="build"?'<button class="btn" type="button" id="skipBtn">Skip structure</button>':'')+
+    (b.t?'<button class="btn primary" type="button" id="checkBtn"'+(b.t==="o"?" disabled":"")+'>Check</button>':'')+
+    '<button class="btn primary" type="button" id="nextBtn" hidden>Next box →</button></div></div>';
+  card.innerHTML=head+body+act;
+  t0=Date.now();tick=setInterval(function(){var t=document.getElementById("timer");if(t)t.textContent=((Date.now()-t0)/1000).toFixed(1)+"s";},100);
+  var opts=card.querySelectorAll(".opt");
+  if(!b.t)opts.forEach(function(o){o.onclick=function(){if(!answered)grade([+o.dataset.i]);};});
+  else if(b.t==="m")opts.forEach(function(o){o.onclick=function(){if(answered)return;var on=o.getAttribute("aria-pressed")!=="true";o.setAttribute("aria-pressed",String(on));o.classList.toggle("sel",on);};});
+  else opts.forEach(function(o){o.onclick=function(){if(answered||o.disabled)return;picks.push(+o.dataset.i);o.disabled=true;o.style.opacity=".4";drawOrd();};});
+  var cb=document.getElementById("checkBtn");if(cb)cb.onclick=function(){if(answered)return;
+    if(b.t==="m"){var sel=[];opts.forEach(function(o){if(o.getAttribute("aria-pressed")==="true")sel.push(+o.dataset.i);});grade(sel);}else grade(picks);};
+  var sk=document.getElementById("skipBtn");if(sk)sk.onclick=function(){var i=E.indexOf(curEnt);for(var j=1;j<=E.length;j++){var c=E[(i+j)%E.length];if(scope==="all"||c.lec===scope){startEnt(c);return;}}};
+  document.getElementById("nextBtn").onclick=function(){lastId=cur.id;next();};
+}
+function drawOrd(){var b=cur,ol=document.getElementById("ordList");
+  ol.innerHTML=picks.length?picks.map(function(i,k){return '<li data-k="'+k+'">'+esc(b._opts[i])+'</li>';}).join(""):'<li class="empty" style="cursor:default">Your order appears here</li>';
+  ol.querySelectorAll("li[data-k]").forEach(function(li){li.onclick=function(){if(answered)return;var k=+li.dataset.k,i=picks[k];picks.splice(k,1);
+    var o=document.querySelector('.opt[data-i="'+i+'"]');o.disabled=false;o.style.opacity="";drawOrd();};});
+  document.getElementById("checkBtn").disabled=picks.length!==b.a.length;}
+
+function grade(sel){
+  answered=true;clearInterval(tick);var b=cur,ok,card=document.getElementById("card"),opts=card.querySelectorAll(".opt");
+  if(!b.t){ok=b._opts[sel[0]]===b.a;opts.forEach(function(o){var t=b._opts[+o.dataset.i];o.disabled=true;if(t===b.a)o.classList.add("right");else if(+o.dataset.i===sel[0])o.classList.add("wrong");});}
+  else if(b.t==="m"){var chosen=sel.map(function(i){return b._opts[i];});ok=chosen.length===b.a.length&&chosen.every(function(c){return b.a.indexOf(c)>=0;});
+    opts.forEach(function(o){var t=b._opts[+o.dataset.i],isA=b.a.indexOf(t)>=0,isS=chosen.indexOf(t)>=0;o.disabled=true;o.classList.remove("sel");
+      if(isA&&isS)o.classList.add("right");else if(isA)o.classList.add("missed");else if(isS)o.classList.add("wrong");});}
+  else{var got=sel.map(function(i){return b._opts[i];});ok=got.every(function(g,k){return g===b.a[k];});
+    document.querySelectorAll("#ordList li[data-k]").forEach(function(li,k){li.classList.add(got[k]===b.a[k]?"right":"wrong");});
+    opts.forEach(function(o){o.disabled=true;});}
+  var r=S.box[b.id]||{n:0,c:0,s:"u"};r.n++;
+  if(ok){r.c++;r.s=r.c>=2?"M":"o";S.streak++;S.best=Math.max(S.best,S.streak);S.right++;S.score+=10+Math.min(S.streak,10);}
+  else{r.c=0;r.s="m";S.streak=0;}
+  S.tot++;S.box[b.id]=r;if(!(b.id in results))results[b.id]=ok;save();
+  var fb='<div class="fb '+(ok?"ok":"bad")+'"><span class="v">'+(ok?"Correct":"Not quite")+'</span>';
+  if(!b.t)fb+='<span class="ans">Answer: <b>'+esc(b.a)+'</b></span>';
+  else if(b.t==="m")fb+='<span class="ans">Answer: <b>'+b.a.map(esc).join(" · ")+'</b></span>';
+  else fb+='<span class="ans">Correct order:</span><ol>'+b.a.map(function(x){return "<li>"+esc(x)+"</li>";}).join("")+'</ol>';
+  fb+='<div class="fbexp">'+String(b.w||"").split(/\n\n+/).filter(Boolean).map(function(t){return '<p>'+esc(t)+'</p>';}).join("")+'</div>';
+  if(b.n&&b.n.length&&b.o&&b.o.length){
+    var rows=b.o.map(function(x,i){return b.n[i]?'<li><b>'+esc(x)+'</b> — '+esc(b.n[i])+'</li>':"";}).join("");
+    if(rows)fb+='<ul class="fbnotes">'+rows+'</ul>';
+  }
+  if(b.p)fb+='<div class="fbpearl"><b>High-yield</b>'+esc(b.p)+'</div>';
+  fb+='</div>';
+  document.getElementById("fb").innerHTML=fb;
+  var cb=document.getElementById("checkBtn");if(cb)cb.hidden=true;
+  var nb=document.getElementById("nextBtn");nb.hidden=false;nb.textContent=(mode==="build"&&idx===curEnt.b.length-1)?"Finish structure →":"Next box →";nb.focus();
+  renderAll();
+}
+document.addEventListener("keydown",function(ev){
+  if(ev.target.tagName==="INPUT"||ev.metaKey||ev.ctrlKey||ev.altKey)return;
+  if(ev.key==="Enter"){var nb=document.getElementById("nextBtn"),cb=document.getElementById("checkBtn");
+    if(nb&&!nb.hidden){ev.preventDefault();nb.click();}else if(cb&&!cb.hidden&&!cb.disabled){ev.preventDefault();cb.click();}return;}
+  var n=parseInt(ev.key,10);if(!cur||answered||isNaN(n))return;var o=document.querySelector('.opt[data-i="'+(n-1)+'"]');if(o&&!o.disabled)o.click();
+});
+
+renderAll();startEnt(firstEnt());
+})();
+
+/* ---------- Review: the compiled version of everything the answers teach ---------- */
+var REVIEW = {"F": "<h3 class=\"rh\">Pattern finder</h3>\n<div class=\"rtbl\"><table><thead><tr><th>Pattern</th><th>Generations</th><th>Key clue</th><th>Risk</th></tr></thead><tbody>\n<tr><td>Autosomal dominant</td><td>Every (vertical)</td><td><b>Male-to-male</b></td><td>50% from one affected parent</td></tr>\n<tr><td>Autosomal recessive</td><td>Skips (horizontal)</td><td>Carrier parents; consanguinity</td><td>25% from two carriers</td></tr>\n<tr><td>X-linked recessive</td><td>Skips</td><td>Mostly males; no male-to-male</td><td>Carrier mom: 50% sons</td></tr>\n<tr><td>X-linked dominant</td><td>Every</td><td>Affected dad → all daughters</td><td>Affected mom: 50% each sex</td></tr>\n<tr><td>Y-linked</td><td>Every</td><td>Father → all sons</td><td>All sons</td></tr>\n<tr><td>Mitochondrial</td><td>Variable</td><td>Only mothers transmit</td><td>Variable</td></tr></tbody></table></div>\n<h3 class=\"rh\">LO1 · Basics &amp; symbols</h3>\n<p>23 pairs (autosomes 1–22 + XX/XY); one allele from each parent; <b>50%</b> chance of passing any allele. Homozygous, heterozygous, compound heterozygous, hemizygous.</p>\n<div class=\"rmem\"><b>Symbols</b>Square male · circle female · diamond unknown · filled affected · slash deceased · P pregnancy · triangle miscarriage · n multiple · arrow proband · double line consanguinity · half/dot carrier.</div>\n<h3 class=\"rh\">LO2 · Autosomal dominant</h3>\n<p>Every generation, both sexes, male-to-male, ½ of offspring. A parent must be affected (exceptions: new mutation, reduced penetrance, germline mosaicism).</p>\n<div class=\"rhy\"><b>USMLE: AD examples</b>Huntington, achondroplasia, NF1/2, Marfan, FH, ADPKD, hereditary spherocytosis, BRCA, Lynch, FAP, tuberous sclerosis, vWD type 1. Structural proteins and receptors.</div>\n<h3 class=\"rh\">LO3 · Autosomal recessive</h3>\n<p>Horizontal; carrier parents; ¼ affected; both sexes; pseudodominance with consanguinity or common carriers (sickle cell, hemochromatosis).</p>\n<div class=\"rtbl\"><table><thead><tr><th>Situation</th><th>Risk</th></tr></thead><tbody>\n<tr><td>Two carriers</td><td>25% affected · 50% carrier · 25% non-carrier</td></tr>\n<tr><td>Affected × carrier</td><td>50% affected</td></tr>\n<tr><td>Affected × non-carrier</td><td>0% affected; all carriers</td></tr>\n<tr><td>Sib of affected</td><td>25% affected</td></tr>\n<tr><td>Unaffected sib</td><td><b>2/3 carrier</b></td></tr></tbody></table></div>\n<div class=\"rrule\"><b>The classic calculation</b>Healthy CF sib (2/3) × partner (1/25) × 1/4 = <b>1/150</b>. Tay-Sachs sib with a 1/30 partner = <b>1/180</b>.</div>\n<div class=\"rhy\"><b>USMLE: AR examples</b>CF, sickle cell, thalassemias, hemochromatosis, Tay-Sachs, PKU and most enzyme deficiencies, Wilson, SMA, Friedreich ataxia.</div>\n", "D": "<h3 class=\"rh\">LO4 · X inactivation</h3>\n<p>Lyon hypothesis: one X per female somatic cell is inactivated — <b>early, random, permanent, clonal</b> (Barr body) → dosage compensation; carrier females are mosaics.</p>\n<h3 class=\"rh\">X-linked recessive</h3>\n<ul class=\"rlist\"><li>No father → son; all daughters of affected males are carriers; ½ of carriers' sons affected; skipped generations; unaffected males don't transmit.</li><li>Carrier mom × normal dad → 50% sons affected, 50% daughters carriers. Affected dad × normal mom → all daughters carriers, all sons normal.</li></ul>\n<div class=\"rtrap\"><b>Affected females</b>Skewed X inactivation, Turner (45,X), X-chromosome rearrangements, or affected father × carrier mother.</div>\n<div class=\"rhy\"><b>USMLE: XLR examples</b>Hemophilia A/B, DMD/BMD, G6PD, Lesch-Nyhan, Bruton, Wiskott-Aldrich, Fabry, Hunter, OTC deficiency, color blindness.</div>\n<h3 class=\"rh\">X-linked dominant &amp; Y-linked</h3>\n<ul class=\"rlist\"><li><b>XLD:</b> affected father → all daughters, no sons; affected mother → 50% of each sex; often lethal in males. Hypophosphatemic rickets, Rett, incontinentia pigmenti, Alport.</li><li><b>Y-linked:</b> father → all sons; SRY, spermatogenesis (AZF).</li></ul>\n<div class=\"rrule\"><b>Obligate carriers (XLR)</b>A woman with an affected father, or with an affected brother and an affected child (or two affected sons). A single affected male: ≈1/3 new mutation, 2/3 carrier mother.</div>\n", "T": "<h3 class=\"rh\">LO5 · New mutations</h3>\n<p>Arise in a parent's gamete. Affected person's offspring: <b>50%</b>; siblings: low (germline mosaicism residual). Achondroplasia &gt;80% de novo (paternal age). Isolated XLR male (DMD): ≈1/3 new, 2/3 carrier mother.</p>\n<div class=\"rhy\"><b>USMLE: AD child, unaffected parents</b>De novo (paternal age) · reduced penetrance · germline mosaicism · misattributed paternity.</div>\n<h3 class=\"rh\">Age of onset &amp; presymptomatic testing</h3>\n<p>Late onset can hide risk. Huntington: onset 35–44, survival 15–18 y. Presymptomatic testing (≈100% penetrance): reasons — anxiety relief, jobs, finances, family planning; concerns — depression, suicide, discrimination; no cure, timing unknown. Counsel first at an experienced center.</p>\n<div class=\"rtrap\"><b>GINA (2008)</b>Protects health insurance and employment, not life, disability or long-term-care insurance. Minors generally not tested for adult-onset disease.</div>\n<h3 class=\"rh\">Penetrance vs expressivity</h3>\n<div class=\"rtbl\"><table><thead><tr><th></th><th>Penetrance</th><th>Expressivity</th></tr></thead><tbody>\n<tr><td>Meaning</td><td>Any phenotype? (all-or-none)</td><td>How severe?</td></tr>\n<tr><td>Reduced/variable</td><td>Skipped generations; non-penetrant carriers</td><td>Mild to severe, never absent</td></tr>\n<tr><td>Example</td><td>Split-hand ≈70%</td><td>NF1 (½ new mutations)</td></tr></tbody></table></div>\n<div class=\"rmem\"><b>P = Present · E = Extent</b>A skipped generation in an AD pedigree = reduced penetrance, not recessive.</div>\n<div class=\"rtbl\"><table><thead><tr><th></th><th>Presymptomatic</th><th>Predisposition</th></tr></thead><tbody>\n<tr><td>Penetrance</td><td>≈100%</td><td>Reduced</td></tr>\n<tr><td>Positive means</td><td>Will occur</td><td>Increased risk</td></tr>\n<tr><td>Example</td><td>Huntington</td><td>BRCA1/2</td></tr>\n<tr><td>Action</td><td>Planning</td><td>Screening, risk reduction</td></tr></tbody></table></div>\n"};
+var RVW_NAME = {"F":"LO1–3 Symbols, AD & AR","D":"LO4 X- & Y-linked","T":"LO5 Complicating factors"};
+(function(){
+  var panel=document.getElementById("rvw"), body=document.getElementById("rvwBody"),
+      toc=document.getElementById("rvwToc"), q=document.getElementById("rvwQ"),
+      cnt=document.getElementById("rvwCount"), empty=document.getElementById("rvwEmpty"),
+      btn=document.getElementById("reviewBtn"), lec="F", secs=[];
+  var TYPES={rrule:1,rtrap:1,rmem:1,rhy:1};
+  function collapse(sec){
+    [].slice.call(sec.querySelectorAll(".rrule,.rtrap,.rmem,.rhy")).forEach(function(d){
+      var type=d.className.trim(); if(!TYPES[type])return;
+      var lbl=d.querySelector("b"), label=lbl?lbl.textContent:"Note";
+      if(lbl)lbl.parentNode.removeChild(lbl);
+      var det=document.createElement("details"); det.className="cx "+type;
+      var sum=document.createElement("summary");
+      sum.innerHTML='<span class="lbl"></span><span class="pk"></span>';
+      sum.querySelector(".lbl").textContent=label;
+      sum.querySelector(".pk").textContent=d.textContent.replace(/\s+/g," ").trim().slice(0,110);
+      var cb=document.createElement("div"); cb.className="cbody";
+      while(d.firstChild)cb.appendChild(d.firstChild);
+      det.appendChild(sum); det.appendChild(cb);
+      d.parentNode.replaceChild(det,d);
+    });
+    var h=sec.querySelector(".rh"), hys=[].slice.call(sec.querySelectorAll("details.rhy"));
+    if(h&&hys.length){ var ref=h.nextSibling; hys.forEach(function(x){ sec.insertBefore(x,ref); }); }
+    var kids=[].slice.call(sec.children), i=0;
+    while(i<kids.length){
+      if(kids[i].tagName==="DETAILS"){
+        var run=[kids[i]], cls=kids[i].className, j=i+1;
+        while(j<kids.length&&kids[j].tagName==="DETAILS"&&kids[j].className===cls){run.push(kids[j]);j++;}
+        if(run.length>1){
+          var g=document.createElement("div"); g.className="cgrid";
+          sec.insertBefore(g,run[0]); run.forEach(function(x){g.appendChild(x);});
+        }
+        i=j;
+      } else i++;
+    }
+  }
+  function group(){
+    var kids=[].slice.call(body.childNodes), out=[], cur=null;
+    kids.forEach(function(n){
+      if(n.nodeType===1&&n.tagName==="H3"){cur=document.createElement("section");cur.className="rsec";out.push(cur);}
+      if(!cur){cur=document.createElement("section");cur.className="rsec";out.push(cur);}
+      cur.appendChild(n);
+    });
+    body.innerHTML="";
+    out.forEach(function(s,i){ s.id="rs"+i; collapse(s); s._t=s.textContent.toLowerCase(); body.appendChild(s); });
+    return out;
+  }
+  function setAll(open){
+    [].slice.call(body.querySelectorAll("details.cx")).forEach(function(d){d.open=open;});
+    var t=document.getElementById("rvwAll");
+    if(t){t.textContent=open?"Collapse all":"Expand all";t.setAttribute("aria-pressed",String(open));}
+  }
+  function buildToc(){
+    toc.innerHTML=secs.map(function(s){
+      var h=s.querySelector(".rh"); return h?'<a href="#'+s.id+'">'+h.textContent+'</a>':'';
+    }).join("");
+  }
+  function filter(){
+    var terms=q.value.toLowerCase().split(/\s+/).filter(Boolean), n=0;
+    secs.forEach(function(s){
+      var on=terms.every(function(t){return s._t.indexOf(t)!==-1;});
+      s.classList.toggle("hide",!on); if(on)n++;
+    });
+    empty.classList.toggle("on",n===0);
+    cnt.textContent = n===secs.length ? secs.length+" sections" : n+" of "+secs.length;
+    toc.style.display = q.value ? "none" : "";
+  }
+  function load(l){
+    lec=l; panel.setAttribute("data-lec",l);
+    body.innerHTML=REVIEW[l]||"";
+    secs=group(); buildToc(); q.value=""; filter();
+    var t=document.getElementById("rvwAll"); if(t){t.textContent="Expand all";t.setAttribute("aria-pressed","false");}
+  }
+  function open(){
+    document.querySelector(".bar").style.display="none";
+    document.querySelector(".main").style.display="none";
+    panel.hidden=false; if(!secs.length)load(lec);
+    btn.setAttribute("aria-pressed","true");
+    window.scrollTo(0,0); q.focus({preventScroll:true});
+  }
+  function close(){
+    panel.hidden=true;
+    document.querySelector(".bar").style.display="";
+    document.querySelector(".main").style.display="";
+    btn.setAttribute("aria-pressed","false");
+    window.scrollTo(0,0);
+  }
+  btn.onclick=function(){ panel.hidden?open():close(); };
+  document.getElementById("rvwClose").onclick=close;
+  document.getElementById("rvwPrint").onclick=function(){window.print();};
+  var allBtn=document.getElementById("rvwAll");
+  if(allBtn)allBtn.onclick=function(){ setAll(this.getAttribute("aria-pressed")!=="true"); };
+  var reclose=[];
+  window.addEventListener("beforeprint",function(){
+    reclose=[];
+    [].slice.call(body.querySelectorAll("details.cx")).forEach(function(d){ if(!d.open){reclose.push(d);d.open=true;} });
+  });
+  window.addEventListener("afterprint",function(){ reclose.forEach(function(d){d.open=false;}); reclose=[]; });
+  document.getElementById("rvwTabs").onclick=function(e){
+    var b=e.target.closest("button"); if(!b)return;
+    [].forEach.call(this.children,function(c){c.setAttribute("aria-pressed",String(c===b));});
+    load(b.dataset.l); window.scrollTo(0,0);
+  };
+  q.addEventListener("input",filter);
+  document.addEventListener("keydown",function(e){
+    if(e.key==="Escape"&&!panel.hidden){ if(document.activeElement===q&&q.value){q.value="";filter();} else close(); }
+  });
+})();
+
+</script>

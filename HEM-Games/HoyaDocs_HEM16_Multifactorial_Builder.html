@@ -1,0 +1,556 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HEM16 Multifactorial Builder</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,600;8..60,700&family=Public+Sans:wght@400;600;700&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+/* Layout: toolbar + stats on top; structure list | question card | LO mastery map. Stacks to one column on phones. */
+:root{
+  --bg:#f3f5f6; --surface:#ffffff; --ink:#18212b; --muted:#5a6570; --line:#dbe0e5; --chip:#eceff2;
+  --arch:#2c55a0; --face:#a3263f; --eye:#2c55a0; --accent:#a3263f;
+  --ok:#1d7a3e; --ok-bg:#e3f4e8; --bad:#b3261e; --bad-bg:#fbe7e5; --once:#b7791f; --once-bg:#fdf1dc; --mem:#c2621a;
+  --hy-bg:#fff6cc; --hy-line:#c9a227; --hy-ink:#4a3a00;
+  --f-display:"Source Serif 4", Georgia, serif; --f-body:"Public Sans", Arial, sans-serif; --f-mono:"IBM Plex Mono", ui-monospace, monospace;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#11161c; --surface:#19212a; --ink:#e6eaee; --muted:#9aa6b2; --line:#2c3642; --chip:#232c36;
+  --arch:#8fb1f0; --face:#f08a9b; --eye:#8fb1f0; --accent:#f08a9b;
+  --ok:#6fd08f; --ok-bg:#16301f; --bad:#f28b82; --bad-bg:#3a1b19; --once:#f0c070; --once-bg:#3a2e12; --mem:#f0a05c;
+  --hy-bg:#3a3110; --hy-line:#b8952a; --hy-ink:#f5e6a8; color-scheme:dark }}
+:root[data-theme="dark"]{
+  --bg:#11161c; --surface:#19212a; --ink:#e6eaee; --muted:#9aa6b2; --line:#2c3642; --chip:#232c36;
+  --arch:#8fb1f0; --face:#f08a9b; --eye:#8fb1f0; --accent:#f08a9b;
+  --ok:#6fd08f; --ok-bg:#16301f; --bad:#f28b82; --bad-bg:#3a1b19; --once:#f0c070; --once-bg:#3a2e12; --mem:#f0a05c;
+  --hy-bg:#3a3110; --hy-line:#b8952a; --hy-ink:#f5e6a8; color-scheme:dark }
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font:15px/1.5 var(--f-body);margin:0}
+.wrap{max-width:1180px;margin:0 auto;padding-inline:16px;padding-block:22px 48px;display:grid;gap:16px}
+h1,h2,h3{font-family:var(--f-display);margin:0;text-wrap:balance;line-height:1.2}
+.meta{font:500 .74rem var(--f-mono);letter-spacing:.07em;text-transform:uppercase;color:var(--muted);margin:0}
+header{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:end;gap:12px}
+header h1{font-size:1.9rem}
+header p.lede{margin:4px 0 0;color:var(--muted);max-width:62ch}
+.btn{font:600 .85rem var(--f-body);background:var(--chip);color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:7px 12px;cursor:pointer}
+.btn:hover{border-color:var(--ink)}
+.btn:focus-visible,.opt:focus-visible,.seg button:focus-visible,.ent:focus-visible,.lo-tile:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.btn.primary{background:var(--accent);color:var(--surface);border-color:var(--accent)}
+.btn[disabled]{opacity:.45;cursor:default}
+.hdr-actions{display:flex;gap:8px;flex-wrap:wrap}
+.wrap{grid-template-columns:minmax(0,1fr)} .rvw{min-width:0}
+
+.bar{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 12px}
+.seg{display:inline-flex;background:var(--chip);border-radius:10px;padding:3px;gap:2px;flex-wrap:wrap}
+.seg button{font:600 .82rem var(--f-body);border:0;background:transparent;color:var(--ink);padding:6px 11px;border-radius:8px;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--surface);box-shadow:0 1px 2px rgba(0,0,0,.12)}
+.seg .lab{font:500 .7rem var(--f-mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);align-self:center;padding:0 6px}
+.stats{display:flex;gap:18px;flex-wrap:wrap}
+.stat b{display:block;font:700 1.15rem var(--f-body);font-variant-numeric:tabular-nums}
+.stat span{font:500 .68rem var(--f-mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+
+.main{display:grid;grid-template-columns:250px minmax(0,1fr) 270px;gap:16px;align-items:start}
+@media (max-width:1000px){ .main{grid-template-columns:minmax(0,1fr)} .side{order:2} .map{order:3} }
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px;display:grid;gap:8px;min-width:0}
+.panel h2{font-size:1rem}
+.lec-h{font:700 .72rem var(--f-body);letter-spacing:.07em;text-transform:uppercase;margin-top:6px}
+.ent{display:grid;grid-template-columns:1fr auto;gap:2px 8px;text-align:left;width:100%;background:transparent;border:1px solid transparent;border-radius:8px;padding:7px 8px;cursor:pointer;color:var(--ink);font:inherit}
+.ent:hover{background:var(--chip)}
+.ent[aria-current="true"]{border-color:var(--lc);background:var(--chip)}
+.ent .n{font-weight:600;font-size:.9rem}
+.ent .s{grid-column:1;font-size:.75rem;color:var(--muted)}
+.ent .pct{grid-row:1/3;grid-column:2;align-self:center;font:500 .75rem var(--f-mono);color:var(--muted);font-variant-numeric:tabular-nums}
+.ent .mini{grid-column:1/3;height:4px;border-radius:2px;background:var(--line);overflow:hidden}
+.ent .mini i{display:block;height:100%;background:var(--lc)}
+.lF{--lc:var(--arch)} .lD{--lc:var(--face)} .lT{--lc:var(--tcol)}
+:root{--tcol:#1d7a5f} @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--tcol:#6fd0b0}} :root[data-theme="dark"]{--tcol:#6fd0b0}
+.tag.rr{background:var(--chip);color:var(--ink);border:1px solid var(--line)}
+
+.card{background:var(--surface);border:1px solid var(--line);border-top:5px solid var(--lc);border-radius:12px;padding:18px;display:grid;gap:14px;min-width:0}
+.card-top{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px;align-items:baseline}
+.card-top h2{font-size:1.35rem}
+.tag{font:500 .7rem var(--f-mono);letter-spacing:.06em;text-transform:uppercase;padding:3px 8px;border-radius:999px;background:var(--chip);color:var(--muted)}
+.tag.lo{color:var(--lc)}
+.tag.hy{background:var(--hy-bg);color:var(--hy-ink);border:1px solid var(--hy-line)}
+.boxes{display:flex;gap:4px;flex-wrap:wrap}
+.boxes i{width:18px;height:6px;border-radius:3px;background:var(--line)}
+.boxes i.done-ok{background:var(--ok)} .boxes i.done-bad{background:var(--bad)} .boxes i.cur{background:var(--lc)}
+.q{font:600 1.08rem/1.45 var(--f-body);margin:0}
+.hint{font-size:.8rem;color:var(--muted);margin:0}
+.opts{display:grid;gap:8px}
+.opt{display:grid;grid-template-columns:auto 1fr;gap:10px;align-items:start;text-align:left;width:100%;font:inherit;color:var(--ink);background:var(--bg);border:1.5px solid var(--line);border-radius:10px;padding:10px 12px;cursor:pointer}
+.opt:hover:not([disabled]){border-color:var(--lc)}
+.opt .k{font:500 .75rem var(--f-mono);color:var(--muted);border:1px solid var(--line);border-radius:5px;padding:1px 6px;margin-top:1px}
+.opt.sel{border-color:var(--lc);background:var(--chip)}
+.opt.right{border-color:var(--ok);background:var(--ok-bg)}
+.opt.wrong{border-color:var(--bad);background:var(--bad-bg)}
+.opt.missed{border-color:var(--ok);border-style:dashed}
+.opt[disabled]{cursor:default}
+.ordered{display:grid;gap:6px;counter-reset:ord;padding:0;margin:0;list-style:none;min-height:44px;border:1.5px dashed var(--line);border-radius:10px;padding:8px}
+.ordered li{counter-increment:ord;display:grid;grid-template-columns:auto 1fr;gap:8px;align-items:center;background:var(--chip);border-radius:8px;padding:7px 10px;cursor:pointer}
+.ordered li::before{content:counter(ord);font:500 .78rem var(--f-mono);color:var(--lc)}
+.ordered li.right{background:var(--ok-bg)} .ordered li.wrong{background:var(--bad-bg)}
+.ordered .empty{color:var(--muted);font-size:.85rem;padding:4px}
+/* ---------- Review ---------- */
+.rvw{margin-top:14px}
+.rvw-bar{position:sticky;top:0;z-index:8;background:var(--bg);border-bottom:1px solid var(--line);padding:10px 0;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.rvw-bar .seg{display:flex;gap:2px;background:var(--chip);border:1px solid var(--line);border-radius:9px;padding:3px}
+.rvw-bar .seg button{background:transparent;border:0;border-radius:7px;padding:6px 12px;font:inherit;font-size:13.5px;color:var(--muted);cursor:pointer}
+.rvw-bar .seg button[aria-pressed="true"]{background:var(--surface);color:var(--ink);font-weight:600;box-shadow:0 1px 2px rgba(0,0,0,.08)}
+#rvwQ{flex:1 1 180px;min-width:140px;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:7px 10px;font:inherit;font-size:14px;color:inherit}
+#rvwCount{font-family:var(--f-mono);font-size:11px;color:var(--muted);white-space:nowrap}
+.rvw-toc{display:flex;flex-wrap:wrap;gap:6px;margin:12px 0 2px}
+.rvw-toc a{font-size:12.5px;text-decoration:none;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:4px 10px}
+.rvw-toc a:hover{color:var(--ink);border-color:var(--muted)}
+.rvw-body{max-width:none}
+.rsec{padding:6px 0 10px;scroll-margin-top:64px}
+.rsec.hide{display:none}
+.rh{font-family:var(--f-display);font-size:1.5rem;font-weight:650;margin:26px 0 4px;padding-bottom:6px;border-bottom:2px solid var(--acc)}
+.rsh{font-family:var(--f-display);font-size:1.12rem;font-weight:650;margin:18px 0 4px}
+.rvw-body p{margin:8px 0;line-height:1.62}
+ul.rlist{margin:8px 0;padding-left:1.15em;display:grid;gap:5px}
+ul.rlist li{line-height:1.55}
+.rtbl{overflow-x:auto;margin:12px 0;border:1px solid var(--line);border-radius:10px;background:var(--surface)}
+.rtbl table{border-collapse:collapse;width:100%;font-size:14px}
+.rtbl th,.rtbl td{text-align:left;vertical-align:top;padding:8px 11px;border-bottom:1px solid var(--line)}
+.rtbl thead th{background:var(--chip);font-family:var(--f-mono);font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);white-space:nowrap}
+.rtbl tbody tr:last-child td{border-bottom:0}
+.rtbl td b{font-weight:600}
+.rseq{margin:12px 0;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 14px 12px 10px}
+.rseq ol{margin:0;padding-left:1.3em;display:grid;gap:7px}
+.rseq li{line-height:1.55;padding-left:2px}
+.rseq li b{color:var(--acc)}
+.cgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(330px,1fr));gap:10px;margin:12px 0;align-items:start}
+.cgrid>details{margin:0}
+details.cx{margin:11px 0;border-radius:9px;border:1px solid var(--line);background:var(--surface);overflow:hidden}
+details.cx>summary{list-style:none;cursor:pointer;display:flex;align-items:baseline;gap:9px;padding:9px 12px;border-left:3px solid var(--line);font-size:14px}
+details.cx>summary::-webkit-details-marker{display:none}
+details.cx>summary::after{content:"+";margin-left:auto;font-family:var(--f-mono);font-size:14px;color:var(--muted);line-height:1}
+details.cx[open]>summary::after{content:"\2013"}
+details.cx>summary .lbl{font-family:var(--f-mono);font-size:10px;letter-spacing:.11em;text-transform:uppercase;font-weight:700;white-space:nowrap}
+details.cx>summary .pk{color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1}
+details.cx[open]>summary .pk{display:none}
+details.cx .cbody{padding:2px 13px 12px;line-height:1.56;font-size:14.6px;border-left:3px solid var(--line)}
+details.cx .cbody b{font-weight:600}
+details.rrule>summary,details.rrule .cbody{border-left-color:var(--acc)}
+details.rtrap>summary,details.rtrap .cbody{border-left-color:var(--bad)}
+details.rmem>summary,details.rmem .cbody{border-left-color:var(--mem)}
+details.rrule>summary .lbl{color:var(--acc)} details.rtrap>summary .lbl{color:var(--bad)} details.rmem>summary .lbl{color:var(--mem)}
+details.rhy{background:var(--hy-bg);border-color:var(--hy-line);color:var(--hy-ink)}
+details.rhy>summary,details.rhy .cbody{border-left-color:var(--hy-line)}
+details.rhy>summary .lbl{color:var(--hy-ink);opacity:.9}
+details.rhy>summary .pk,details.rhy>summary::after{color:var(--hy-ink);opacity:.75}
+.rvw-empty{display:none;text-align:center;color:var(--muted);border:1px dashed var(--line);border-radius:10px;padding:28px;margin-top:16px}
+.rvw-empty.on{display:block}
+.rvw[data-lec="F"]{--acc:var(--arch)} .rvw[data-lec="D"]{--acc:var(--face)} .rvw[data-lec="T"]{--acc:var(--tcol)}
+@media print{
+  header,.bar,.main,.rvw-bar,.rvw-toc,.rvw-empty{display:none!important}
+  .rvw{margin:0}
+  body{background:#fff}
+  .rsec{break-before:page;break-inside:auto}
+  .rsec:first-of-type{break-before:auto}
+  .rtbl,.rseq,details.cx{break-inside:avoid}
+  details.cx>summary::after{display:none}
+  .cgrid{grid-template-columns:1fr 1fr}
+}
+.fb .ans{font-size:.95rem}
+.fbexp{display:grid;gap:8px}
+.fbexp p{margin:0;line-height:1.6}
+.fbnotes{list-style:none;margin:2px 0 0;padding:0;display:grid;gap:6px}
+.fbnotes li{font-size:.9rem;line-height:1.5;color:var(--muted);padding-left:10px;border-left:2px solid var(--line)}
+.fbnotes li b{color:var(--ink);font-weight:600}
+.fbpearl{margin-top:2px;background:var(--hy-bg);border:1px solid var(--hy-line);border-left-width:3px;border-radius:9px;padding:9px 12px;font-size:.92rem;line-height:1.5;color:var(--hy-ink)}
+.fbpearl b{display:block;font:700 .66rem var(--f-mono);letter-spacing:.14em;text-transform:uppercase;color:var(--hy-line);margin-bottom:3px}
+.fb{border-radius:10px;padding:12px 14px;display:grid;gap:6px}
+.fb.ok{background:var(--ok-bg)} .fb.bad{background:var(--bad-bg)}
+.fb .v{font-weight:700}
+.fb.ok .v{color:var(--ok)} .fb.bad .v{color:var(--bad)}
+.fb ol{margin:0;padding-left:1.2em}
+.actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:space-between;align-items:center}
+.timer{font:500 .8rem var(--f-mono);color:var(--muted);font-variant-numeric:tabular-nums}
+.done{display:grid;gap:10px;text-align:left}
+
+.lo-grid{display:grid;gap:6px}
+.lo-tile{display:grid;grid-template-columns:auto 1fr auto;gap:8px;align-items:center;text-align:left;width:100%;background:transparent;border:1px solid var(--line);border-radius:8px;padding:6px 8px;cursor:pointer;color:var(--ink);font:inherit}
+.lo-tile:hover{border-color:var(--lc)}
+.lo-tile .id{font:500 .72rem var(--f-mono);color:var(--lc);white-space:nowrap}
+.lo-tile .t{font-size:.78rem;line-height:1.3}
+.lo-tile .dot{width:12px;height:12px;border-radius:50%;background:var(--line)}
+.dot.s-o{background:var(--once)} .dot.s-m{background:var(--bad)} .dot.s-M{background:var(--ok)}
+.legend{display:flex;flex-wrap:wrap;gap:10px;font-size:.72rem;color:var(--muted)}
+.legend span{display:inline-flex;gap:5px;align-items:center}
+.legend i{width:10px;height:10px;border-radius:50%;display:inline-block;background:var(--line)}
+.legend i.o{background:var(--once)} .legend i.m{background:var(--bad)} .legend i.M{background:var(--ok)}
+footer{color:var(--muted);font-size:.8rem;border-top:1px solid var(--line);padding-top:12px}
+@media (prefers-reduced-motion: no-preference){ .opt,.ent,.lo-tile{transition:border-color .12s, background .12s} }
+</style>
+
+<div class="wrap">
+<header>
+  <div>
+    <p class="meta">HoyaDocs · Block 5 · Genetics · HEM16</p>
+    <h1>HEM16 Multifactorial Builder</h1>
+    <p class="lede">Multifactorial inheritance, LO by LO: recurrence rules, twin studies, NTDs, clefts, type 2 diabetes and the isolated-vs-syndromic approach: build each structure box by box, then drill what you miss. Boxes tagged Rapid Review test the LO Rapid Review and Master Review checklists.</p>
+  </div>
+  <div class="hdr-actions">
+    <button class="btn primary" id="reviewBtn" type="button" aria-pressed="false">Review</button>
+    <button class="btn" id="themeBtn" type="button">Theme: auto</button>
+    <button class="btn" id="resetBtn" type="button">Reset progress</button>
+  </div>
+</header>
+
+<div class="bar">
+  <div class="seg" role="group" aria-label="Mode">
+    <span class="lab">Mode</span>
+    <button type="button" data-mode="build" aria-pressed="true">Build</button>
+    <button type="button" data-mode="drill" aria-pressed="false">Drill</button>
+  </div>
+  <div class="seg" role="group" aria-label="Section scope" id="scopeSeg">
+    <span class="lab">Scope</span>
+    <button type="button" data-scope="all" aria-pressed="true">All</button>
+    <button type="button" data-scope="F" aria-pressed="false">LO1–2 Multifactorial &amp; twins</button>
+    <button type="button" data-scope="D" aria-pressed="false">LO3–4 NTDs &amp; clefts</button>
+    <button type="button" data-scope="T" aria-pressed="false">LO5–6 Diabetes &amp; syndromes</button>
+  </div>
+  <div class="seg" role="group" aria-label="Focus" id="focusSeg">
+    <span class="lab">Focus</span>
+    <button type="button" data-rr="0" aria-pressed="true">All boxes</button>
+    <button type="button" data-rr="1" aria-pressed="false">Rapid Review only</button>
+  </div>
+  <div class="stats" aria-live="polite">
+    <div class="stat"><b id="sScore">0</b><span>Score</span></div>
+    <div class="stat"><b id="sStreak">0</b><span>Streak</span></div>
+    <div class="stat"><b id="sAcc">—</b><span>Accuracy</span></div>
+    <div class="stat"><b id="sBoxes">0</b><span>Boxes mastered</span></div>
+    <div class="stat"><b id="sLos">0/6</b><span>LOs mastered</span></div>
+  </div>
+</div>
+
+<div class="main">
+  <aside class="panel side" aria-label="Structures">
+    <h2>Structures</h2>
+    <div id="entList"></div>
+  </aside>
+  <section class="card" id="card" aria-live="polite"></section>
+  <aside class="panel map" aria-label="Learning objective mastery map">
+    <h2>LO mastery map</h2>
+    <div class="legend"><span><i></i>untested</span><span><i class="m"></i>missed</span><span><i class="o"></i>got it once</span><span><i class="M"></i>mastered</span></div>
+
+    <p class="hint">Tap an LO to drill just that objective. Mastered = right twice in a row.</p>
+    <div class="lo-grid" id="loGrid"></div>
+  </aside>
+</div>
+
+<div class="rvw" id="rvw" data-lec="F" hidden>
+  <div class="rvw-bar">
+    <div class="seg" id="rvwTabs" role="group" aria-label="Section">
+      <button type="button" data-l="F" aria-pressed="true">LO1–2 Multifactorial &amp; twins</button>
+      <button type="button" data-l="D" aria-pressed="false">LO3–4 NTDs &amp; clefts</button>
+      <button type="button" data-l="T" aria-pressed="false">LO5–6 Diabetes &amp; syndromes</button>
+    </div>
+    <input id="rvwQ" type="search" placeholder="Search this review" autocomplete="off" aria-label="Search the review">
+    <span id="rvwCount"></span>
+    <button class="btn" type="button" id="rvwAll" aria-pressed="false">Expand all</button>
+    <button class="btn" type="button" id="rvwPrint">Print</button>
+    <button class="btn primary" type="button" id="rvwClose">Back to the game</button>
+  </div>
+  <nav class="rvw-toc" id="rvwToc" aria-label="Contents"></nav>
+  <div class="rvw-body" id="rvwBody"></div>
+  <div class="rvw-empty" id="rvwEmpty">Nothing in this section matches that search.</div>
+</div>
+
+
+<footer>HoyaDocs · HEM16 Multifactorial Builder · Updated October 8, 2026 · Revision 1.0. Yellow “HY” tags mark high-yield points, including Step 1. “Rapid Review” tags mark boxes built from the LO Rapid Review checklists.</footer>
+</div>
+
+<script>
+/* ================= LEARNING OBJECTIVES ================= */
+var LOS = {"1": "Categories of genetic conditions; multifactorial inheritance, familial aggregation and recurrence risk", "2": "Twin studies: MZ vs DZ concordance and limitations", "3": "Neural tube defects: embryology, types, causes, folic acid prevention, syndromic NTDs", "4": "Oral clefts: embryology, epidemiology, recurrence, genes, exposures, syndromic clefts", "5": "Type 2 diabetes as a common adult multifactorial disease", "6": "Isolated vs syndromic malformations and the clinical approach"};
+var LOLEC = {"1": "F", "2": "F", "3": "D", "4": "D", "5": "T", "6": "T"};
+var LECS = [{"k": "F", "n": "LO1–2 Multifactorial & twins", "c": "arch"}, {"k": "D", "n": "LO3–4 NTDs & clefts", "c": "face"}, {"k": "T", "n": "LO5–6 Diabetes & syndromes", "c": "eye"}];
+var E = [{"id": "cat", "lec": "F", "name": "Categories & definition", "sub": "Frequencies · multifactorial · familial aggregation", "b": [{"lo": "1", "rr": true, "hy": true, "q": "Which category of genetic condition is by far the most common (in-house)?", "a": "Multifactorial conditions (20–40%)", "o": ["Single-gene conditions (1/500–1/100)", "Chromosome conditions (0.5–0.7%)", "Mitochondrial conditions (rare)"], "n": ["Less common.", "Less common.", "Rare."], "w": "Most congenital malformations and most common pediatric and adult diseases are multifactorial.", "p": "Multifactorial = most common."}, {"lo": "1", "rr": true, "hy": true, "q": "What defines a multifactorial condition?", "a": "Caused by the interaction of multiple genes and environmental factors", "o": ["A single dominant gene", "A whole extra chromosome", "A mitochondrial mutation"], "n": ["Single-gene.", "Chromosomal.", "Mitochondrial."], "w": "Examples: heart defects, clefts, NTDs, diabetes, schizophrenia, hypertension.", "p": "Many genes + environment."}, {"lo": "1", "rr": true, "hy": true, "q": "What is familial aggregation?", "a": "A disorder occurring more often in some families than in the general population, without a clean Mendelian pattern", "o": ["A 25% recurrence in every family", "Transmission only through mothers", "A condition present in every generation at 50%"], "n": ["AR ratio.", "Mitochondrial.", "AD."], "w": "Recurrence is increased in first-degree relatives (50% shared genes) and highest in MZ twins (100%).", "p": "Clusters, no ratio."}, {"lo": "1", "rr": true, "t": "m", "q": "Select ALL first-degree relatives (sharing 50% of genes).", "a": ["Parents", "Full siblings", "Children"], "o": ["First cousins", "Grandparents"], "n": ["Third-degree (12.5%).", "Second-degree (25%)."], "w": "Multifactorial recurrence is highest in first-degree relatives.", "p": "Parents, siblings, children."}, {"lo": "1", "rr": true, "t": "m", "q": "Select ALL multifactorial conditions.", "a": ["Neural tube defects", "Cleft lip/palate", "Pyloric stenosis", "Congenital heart defects", "Type 2 diabetes", "Schizophrenia"], "o": ["Cystic fibrosis", "Huntington disease"], "n": ["Autosomal recessive.", "Autosomal dominant."], "w": "Also hip dysplasia, clubfoot, hypertension.", "p": "Common defects and common diseases."}]}, {"id": "risk", "lec": "F", "name": "Liability-threshold & recurrence rules", "sub": "Threshold · more relatives · severity · rarer sex", "b": [{"lo": "1", "rr": true, "hy": true, "q": "What is the liability-threshold model (standard references)?", "a": "Many small genetic and environmental contributions form a bell-shaped liability; disease appears only when liability passes a threshold", "o": ["One gene determines disease with 100% penetrance", "Disease occurs at random", "Only the environment matters"], "n": ["Single-gene.", "Not the model.", "Genes matter too."], "w": "Explains why recurrence rises with more affected relatives and severity.", "p": "Cross the threshold → disease."}, {"lo": "1", "rr": true, "hy": true, "t": "m", "q": "Select ALL factors that RAISE multifactorial recurrence risk.", "a": ["Closer relationship to the proband (first-degree highest)", "More affected relatives", "Greater severity of the defect in the proband", "An affected proband of the less commonly affected sex"], "o": ["More distant relationship", "Milder defect in the proband"], "n": ["Risk falls quickly with distance.", "Lower risk."], "w": "Typical recurrence for first-degree relatives of an isolated malformation ≈2–5%.", "p": "Close, many, severe, rarer sex."}, {"lo": "1", "rr": true, "hy": true, "q": "Pyloric stenosis is ≈5× more common in boys. Whose siblings have the higher recurrence risk?", "a": "The siblings of an affected girl (Carter effect)", "o": ["The siblings of an affected boy", "Equal risk", "Neither has increased risk"], "n": ["Boys need less liability.", "Not equal.", "Risk is increased."], "w": "The rarer sex needs more liability to cross the threshold, so the family carries more risk factors.", "p": "Affected rarer sex → higher family risk."}, {"lo": "1", "rr": true, "q": "How does cleft recurrence change with the number of affected children?", "a": "≈5% after one affected child, ≈8% after two", "o": ["25% after one, 50% after two", "Unchanged at 5%", "Falls after two"], "n": ["Not Mendelian.", "It rises.", "It rises."], "w": "Each affected relative signals more family liability.", "p": "More affected → more risk."}, {"lo": "1", "rr": true, "hy": true, "q": "What is the typical recurrence risk for a first-degree relative of a child with an isolated multifactorial malformation?", "a": "≈2–5%", "o": ["≈25%", "≈50%", "≈0.01%"], "n": ["AR.", "AD.", "Too low."], "w": "Higher than the general population, far lower than Mendelian risks.", "p": "Isolated → few percent."}]}, {"id": "cause", "lec": "F", "name": "Causes of malformations", "sub": "Holmes 1989 · examples", "b": [{"lo": "1", "rr": true, "hy": true, "q": "In the Holmes (1989) series of malformed infants, what were the two largest cause categories?", "a": "Unknown (43.2%) and familial/multifactorial (37.5%)", "o": ["Chromosomal (43%) and teratogens (37%)", "Single genes (50%) and uterine factors (30%)", "Twinning (40%) and teratogens (30%)"], "n": ["Chromosomal 10.1%, teratogens 3.2%.", "Single genes 3.1%, uterine 2.5%.", "Twinning 0.4%."], "w": "After unknown, multifactorial is the biggest known cause, far ahead of chromosomes, single genes or teratogens.", "p": "Unknown > multifactorial > chromosomal."}, {"lo": "1", "rr": true, "t": "m", "q": "Select ALL correct condition → frequency pairs (in-house).", "a": ["Oral clefts → 1/500–1/1,500", "Neural tube defects → 1/2,500", "Congenital heart defects → 1/100", "Diabetes → 1/10", "Schizophrenia → 1/100"], "o": ["Congenital heart defects → 1/100,000", "Diabetes → 1/1,000"], "n": ["Far more common.", "Far more common."], "w": "Clefts and NTDs vary by ethnicity.", "p": "Know the rough frequencies."}]}, {"id": "twin", "lec": "F", "name": "Twin studies", "sub": "MZ vs DZ concordance · reared apart · limits", "b": [{"lo": "2", "rr": true, "hy": true, "q": "What does twin concordance mean, and how much DNA do MZ and DZ twins share?", "a": "Both twins affected; MZ share 100% of genes, DZ 50% (both share the womb)", "o": ["One twin affected; MZ 50%, DZ 25%", "Both unaffected; MZ 100%, DZ 100%", "Twins born the same day; both share 50%"], "n": ["Wrong.", "Wrong.", "Wrong."], "w": "Since both twin types share the uterine environment, higher MZ concordance points to genes.", "p": "MZ 100%, DZ 50%."}, {"lo": "2", "rr": true, "hy": true, "t": "m", "q": "Select ALL correct twin concordance patterns.", "a": ["Purely genetic → MZ 100%; DZ similar to siblings", "Purely environmental → MZ = DZ", "Multifactorial → MZ higher than DZ but <100%"], "o": ["Purely genetic → MZ = DZ", "Multifactorial → MZ 100%"], "n": ["That's environmental.", "MZ <100% shows environment matters."], "w": "MZ > DZ → genetic contribution; MZ < 100% → environment or chance.", "p": "Compare MZ vs DZ, then MZ vs 100%."}, {"lo": "2", "rr": true, "hy": true, "q": "A condition has 25% concordance in MZ twins and 24% in DZ twins. Interpretation?", "a": "Mostly environmental", "o": ["Purely genetic", "Multifactorial with strong genetic component", "Mitochondrial"], "n": ["MZ would be 100%.", "MZ would clearly exceed DZ.", "Not inferable."], "w": "Sharing more genes doesn't raise the risk.", "p": "MZ ≈ DZ = environment."}, {"lo": "2", "rr": true, "hy": true, "q": "Twin data: MZ concordance 100%, DZ 50%. What kind of disease?", "a": "Purely genetic (e.g., single-gene)", "o": ["Purely environmental", "Multifactorial", "Chance only"], "n": ["MZ would equal DZ.", "MZ would be <100%.", "Not the pattern."], "w": "DZ resembles sibling risk.", "p": "MZ 100% = genetic."}, {"lo": "2", "rr": true, "hy": true, "t": "m", "q": "Select ALL correct in-house twin concordance figures.", "a": ["Oral cleft: MZ 35–40% vs DZ 4–5%", "Type 2 diabetes: MZ ≈70% vs DZ 20–30%"], "o": ["Oral cleft: MZ 100% vs DZ 50%", "Type 2 diabetes: MZ 10% vs DZ 10%"], "n": ["Would be purely genetic.", "Would be environmental."], "w": "Both are multifactorial (MZ > DZ, MZ < 100%).", "p": "Cleft 35–40 vs 4–5; DM2 70 vs 20–30."}, {"lo": "2", "rr": true, "q": "What did studies of MZ twins reared apart show?", "a": "Remarkable concordance, especially for behavioral traits such as alcoholism → strong genetic influence", "o": ["No concordance for anything", "Concordance only for height", "Identical environments explain everything"], "n": ["Concordance was found.", "Behavioral too.", "Environments differed."], "w": "Identical genotypes in different environments.", "p": "Reared apart still alike."}, {"lo": "2", "rr": true, "hy": true, "t": "m", "q": "Select ALL limitations of twin studies.", "a": ["Somatic mutations can make MZ twins genetically different", "Epigenetic differences change gene expression", "Random X inactivation adds variability in females", "Few MZ twins are reared apart", "Ethical issues (e.g., deliberately separated triplets)"], "o": ["MZ twins never differ in any way", "DZ twins share 100% of genes"], "n": ["They can differ.", "DZ share 50%."], "w": "Example: MZ twin girls discordant for an X-linked condition.", "p": "Somatic, epigenetic, X-inactivation, numbers, ethics."}]}, {"id": "ntdemb", "lec": "D", "name": "NTD embryology & types", "sub": "Days 18–30 · anencephaly · encephalocele · spina bifida", "b": [{"lo": "3", "rr": true, "hy": true, "q": "When does the neural tube form, and why does that matter?", "a": "18–30 days after conception, often before a woman knows she is pregnant", "o": ["Weeks 12–16", "Third trimester", "After birth"], "n": ["Too late.", "Too late.", "Too late."], "w": "Neural folds rise and fuse; standard references: anterior neuropore closes ≈day 25, posterior ≈day 28. ≈90% of NTDs are isolated.", "p": "Days 18–30 → folate before pregnancy."}, {"lo": "3", "rr": true, "hy": true, "t": "m", "q": "Select ALL correct NTD type → description pairs.", "a": ["Anencephaly → failure of the anterior neuropore; fatal; polyhydramnios; very ↑ AFP", "Encephalocele → brain herniates through a skull defect (usually occipital)", "Spina bifida occulta → vertebral arch defect, skin intact, tuft of hair; normal AFP", "Meningocele → meninges herniate", "Myelomeningocele → meninges + cord/nerves herniate; paralysis, neurogenic bladder, Chiari II"], "o": ["Encephalocele → herniation through the spine", "Spina bifida occulta → markedly ↑ AFP"], "n": ["Skull defect; spinal herniation is (myelo)meningocele.", "Closed defect, normal AFP."], "w": "An in-house slide says encephalocele herniates through the “spine”; it is a skull defect.", "p": "Skull = encephalocele; spine = meningocele."}, {"lo": "3", "rr": true, "q": "Why should an encephalocele prompt a search for a syndrome?", "a": "It is rare and often syndromic (e.g., Meckel-Gruber), with frequent intellectual and neurologic deficits", "o": ["It is always isolated", "It is always caused by folate deficiency", "It never affects development"], "n": ["Often syndromic.", "Not always.", "It often does."], "w": "Syndromic cases change recurrence risk.", "p": "Encephalocele → look for a syndrome."}, {"lo": "3", "rr": true, "hy": true, "q": "Which prenatal findings point to an open NTD?", "a": "↑ maternal serum and amniotic fluid AFP and ↑ amniotic acetylcholinesterase; ultrasound lemon and banana signs", "o": ["↓ AFP with ↑ hCG", "Normal AFP with thick nuchal translucency", "↑ estriol"], "n": ["Down pattern.", "Aneuploidy marker.", "Not an NTD marker."], "w": "Spina bifida occulta has normal AFP. Next step after high AFP: targeted ultrasound.", "p": "Open NTD → high AFP."}, {"lo": "3", "rr": true, "q": "Second-trimester maternal serum AFP is markedly elevated. Next step?", "a": "Targeted (level II) ultrasound to confirm dates and look for an open NTD, abdominal wall defect or twins", "o": ["Immediate termination", "Repeat AFP in a year", "Folic acid 4 mg and no imaging"], "n": ["Not diagnostic yet.", "Too late.", "Imaging needed."], "w": "Amniocentesis for AFP/acetylcholinesterase if needed.", "p": "High AFP → ultrasound."}]}, {"id": "ntdcause", "lec": "D", "name": "NTD epidemiology & causes", "sub": "Incidence · MTHFR · environmental risks", "b": [{"lo": "3", "rr": true, "q": "What is the NTD incidence now, and which US group has the highest rate of spina bifida?", "a": "≈1/2,500 (was ≈1/1,000 before fortification); Hispanic women", "o": ["≈1/50; non-Hispanic white women", "≈1/100,000; black women", "≈1/10; Asian women"], "n": ["Too common.", "Too rare.", "Too common."], "w": "Considerable worldwide variation.", "p": "1/2,500; Hispanic highest."}, {"lo": "3", "rr": true, "hy": true, "t": "m", "q": "Select ALL genes linked to NTDs (in-house).", "a": ["GRHL3 (hindgut endoderm proliferation)", "CELSR1 (planar cell polarity)", "VANGL2 (neurulation)", "MTHFR (folate metabolism)"], "o": ["FGFR3", "CFTR"], "n": ["Achondroplasia.", "Cystic fibrosis."], "w": "MTHFR is best studied; mothers of infants with NTDs have a high rate of mutant MTHFR homozygosity.", "p": "GRHL3, CELSR1, VANGL2, MTHFR."}, {"lo": "3", "rr": true, "hy": true, "q": "What does the MTHFR 677C>T variant do?", "a": "Reduces conversion of folate to the form needed to turn homocysteine into methionine → ↓ folate, ↑ homocysteine", "o": ["Increases folate levels", "Lowers homocysteine", "Blocks vitamin K recycling"], "n": ["Opposite.", "Opposite.", "Not MTHFR."], "w": "Most common MTHFR variant; risk factor for NTDs and clefts. Adult homozygosity → age-related hearing loss, heart problems, stroke.", "p": "677C>T → high homocysteine."}, {"lo": "3", "rr": true, "hy": true, "t": "m", "q": "Select ALL environmental risk factors for NTDs.", "a": ["Maternal obesity", "Poorly controlled pregestational diabetes", "Valproate, carbamazepine, phenytoin", "Methotrexate (antifolate)", "Excessive alcohol", "Hyperthermia (fever, hot tubs)", "Low dietary folate"], "o": ["Folic acid supplementation", "Maternal age under 20 alone"], "n": ["Protective.", "Not a listed factor."], "w": "Mnemonic FOLD: Folate deficiency, Obesity, Low-control diabetes, Drugs (+ heat, alcohol).", "p": "FOLD + heat + alcohol."}, {"lo": "3", "rr": true, "q": "A woman with epilepsy on valproate is planning pregnancy. NTD counseling?", "a": "Valproate (and carbamazepine, phenytoin) ↑ NTD risk → review/switch with neurology before conception, high-dose folic acid, prenatal AFP and ultrasound", "o": ["No change needed", "Stop all medications abruptly", "Folic acid is contraindicated"], "n": ["Risk is real.", "Dangerous.", "It is recommended."], "w": "Valproate spina bifida risk ≈1–2% (standard references).", "p": "Plan AED changes before conception."}]}, {"id": "folate", "lec": "D", "name": "Folic acid prevention", "sub": "Fortification · doses", "b": [{"lo": "3", "rr": true, "hy": true, "q": "What folic acid dose is recommended for ALL women of reproductive age?", "a": "0.4–0.8 mg (400–800 μg) daily", "o": ["4 mg daily", "40 mg daily", "None unless pregnant"], "n": ["For a prior NTD pregnancy.", "Far too high.", "Half of pregnancies are unplanned."], "w": "Prevents up to 70% of NTDs.", "p": "Everyone: 0.4 mg."}, {"lo": "3", "rr": true, "hy": true, "q": "A woman whose first baby had myelomeningocele plans another pregnancy. Folic acid regimen?", "a": "4 mg daily, starting ≥1 month before conception through the first trimester", "o": ["0.4 mg once she learns she is pregnant", "4 mg starting in the third trimester", "No folic acid; risk is unchanged"], "n": ["Too low and too late.", "Too late.", "It lowers risk."], "w": "10× the standard dose. Often also used with antiepileptics or diabetes/obesity (standard references).", "p": "Prior NTD: 4 mg, before conception."}, {"lo": "3", "rr": true, "t": "m", "q": "Select ALL correct statements about US folic acid fortification.", "a": ["Began in 1998 for cereal grain products", "Decreased NTDs by 27–35%", "Reaches women with unplanned pregnancies", "Similar to iron and iodine fortification"], "o": ["Eliminated all NTDs", "Began in 2015"], "n": ["Not all.", "1998."], "w": "Better outreach to minority women is still needed.", "p": "1998, −27–35%."}]}, {"id": "ntdsyn", "lec": "D", "name": "Syndromic NTDs", "sub": "FAS · Meckel-Gruber", "b": [{"lo": "3", "rr": true, "hy": true, "t": "m", "q": "Select ALL features of fetal alcohol syndrome.", "a": ["Growth retardation", "Microcephaly, short palpebral fissures, smooth philtrum, thin upper lip", "Hypoplastic distal phalanges, small fifth fingernails", "Intellectual disability, learning and attention problems"], "o": ["Diagnosis by a single-gene test", "Lower lip pits"], "n": ["Diagnosis is clinical; no genetic test.", "Van der Woude."], "w": "Also hypertelorism, midface hypoplasia, cardiac, renal and eye anomalies. The in-house case: repaired spina bifida + FAS confirmed by records.", "p": "FAS: clinical diagnosis."}, {"lo": "3", "rr": true, "hy": true, "q": "A newborn has an occipital encephalocele, polydactyly and large cystic kidneys; the parents are first cousins. Diagnosis and recurrence?", "a": "Meckel-Gruber syndrome: autosomal recessive (a ciliopathy), 25% recurrence", "o": ["Isolated NTD: 2–3% recurrence", "Trisomy 21: 1% recurrence", "Van der Woude: 50% recurrence"], "n": ["Syndromic.", "Not these features.", "Lip pits and clefts."], "w": "Also small eyes, oral cleft, short neck, poorly developed genitalia, seizures, poor survival. Counsel: carrier testing, high-risk pregnancy care, high-resolution ultrasound.", "p": "Encephalocele + polydactyly + cystic kidneys = Meckel-Gruber."}, {"lo": "3", "rr": true, "q": "Why does the isolated vs syndromic distinction matter for NTDs?", "a": "Isolated NTDs recur at a few percent and respond to folate; syndromic ones like Meckel-Gruber recur at 25% and folate won't prevent them", "o": ["They have identical recurrence risks", "Syndromic NTDs always respond to folate", "Isolated NTDs recur at 50%"], "n": ["Different.", "Not Meckel-Gruber.", "Low risk."], "w": "The cause sets the counseling.", "p": "Syndromic changes everything."}]}, {"id": "cleft", "lec": "D", "name": "Oral clefts", "sub": "Embryology · incidence · genes · environment", "b": [{"lo": "4", "rr": true, "hy": true, "q": "What causes cleft lip embryologically, and when do the lip and palate close?", "a": "Failure of the frontonasal (medial nasal) process to fuse with the maxillary process ≈day 35; lips close by 8 weeks, palate by 12 weeks", "o": ["Failure of neural tube closure at day 18", "Palatal shelves fuse by week 4", "Failure of the second pharyngeal arch only"], "n": ["NTD.", "Palate closes by 12 weeks.", "Not the mechanism."], "w": "Cleft palate = failure of the palatal shelves to fuse.", "p": "Lip day 35 / 8 wk; palate 12 wk."}, {"lo": "4", "rr": true, "hy": true, "q": "What is the in-house CL/P incidence by ancestry?", "a": "1/1,000 Caucasians, 1.7/1,000 Japanese, 0.4/1,000 African Americans", "o": ["Equal in all groups", "Highest in African Americans", "1/10 in Caucasians"], "n": ["Varies.", "Lowest.", "Far too high."], "w": "Higher in Asian populations.", "p": "Asian > Caucasian > African American."}, {"lo": "4", "rr": true, "hy": true, "q": "What fraction of clefts are isolated vs syndromic?", "a": "85% isolated, 15% syndromic", "o": ["15% isolated, 85% syndromic", "50/50", "100% isolated"], "n": ["Reversed.", "Not the figure.", "Some are syndromic."], "w": "The clinician must decide which; managed by a craniofacial team (plastic surgery, ENT, audiology, speech, dental). Standard references: ≈70% of CL/P and ≈50% of isolated cleft palate are nonsyndromic.", "p": "Most clefts are isolated."}, {"lo": "4", "rr": true, "q": "Parents of a child with an isolated cleft lip and palate ask the recurrence risk. And after a second affected child?", "a": "≈5% after one; ≈8% after two", "o": ["25% after one; 50% after two", "50% after one", "0%"], "n": ["Not AR.", "Not AD.", "Risk is increased."], "w": "Multifactorial risk rises with the number of affected relatives.", "p": "5% → 8%."}, {"lo": "4", "rr": true, "t": "m", "q": "Select ALL nonsyndromic cleft susceptibility genes (in-house list).", "a": ["IRF6", "MSX1", "TGFA", "MTHFR", "FOXE1", "VAX1"], "o": ["FMR1", "DMD"], "n": ["Fragile X.", "Duchenne."], "w": "Also TGFB3, MYH9, MAFB, ABCA4, BMP4, FGFR2, CRISPLD2, SUMO1, PVRL1, FGF8, PDGFC, GSTT1. IRF6 causes van der Woude and contributes to nonsyndromic clefts.", "p": "Many small-effect genes."}, {"lo": "4", "rr": true, "hy": true, "t": "m", "q": "Select ALL prenatal exposures linked to oral clefts.", "a": ["Smoking", "Alcohol", "Folic acid deficiency", "Corticosteroids", "Phenytoin (hydantoin) and valproic acid"], "o": ["Folic acid supplementation", "Vitamin D"], "n": ["Protective.", "Not listed."], "w": "Clefts and NTDs share folate and antiepileptic risks.", "p": "Smoke, drink, low folate, steroids, AEDs."}, {"lo": "4", "rr": true, "hy": true, "q": "Smoking raises cleft risk most in mothers lacking which enzyme, and what concept does this show?", "a": "Glutathione S-transferase (GSTT1-null), a gene–environment interaction", "o": ["MTHFR; imprinting", "G6PD; X-linked inheritance", "CYP2D6; pharmacokinetics only"], "n": ["Not the example.", "Not the example.", "Not the example."], "w": "Infant MSX1 variants also interact with smoking.", "p": "Same exposure, different genotype."}]}, {"id": "cleftsyn", "lec": "D", "name": "Syndromic clefts", "sub": "Fetal hydantoin · van der Woude", "b": [{"lo": "4", "rr": true, "hy": true, "q": "A newborn has cleft lip, hypertelorism, a short nose, small nails and hypoplastic distal phalanges; the mother has epilepsy. Exposure?", "a": "Phenytoin → fetal hydantoin syndrome", "o": ["Alcohol", "Isotretinoin", "Warfarin"], "n": ["FAS can share hypertelorism and small nails, but the maternal epilepsy points to an antiepileptic; FAS hallmarks are a smooth philtrum and short palpebral fissures.", "Ear/heart/CNS defects.", "Nasal hypoplasia, stippled epiphyses."], "w": "Also growth retardation, depressed nasal bridge, learning/attention problems.", "p": "Phenytoin → clefts + small nails."}, {"lo": "4", "rr": true, "hy": true, "t": "m", "q": "Select ALL features of van der Woude syndrome.", "a": ["Lower lip pits", "Cleft lip with or without cleft palate", "Hypodontia", "IRF6 gene on chromosome 1", "Autosomal dominant with variable expressivity"], "o": ["Autosomal recessive", "Encephalocele and cystic kidneys"], "n": ["Dominant.", "Meckel-Gruber."], "w": "Most common syndromic cleft (≈2% of clefts; standard references). Other anomalies: CHD, finger webbing.", "p": "Lip pits + cleft = van der Woude."}, {"lo": "4", "rr": true, "hy": true, "q": "A child has bilateral cleft lip; his father has two small lower-lip depressions and missing teeth. Diagnosis and recurrence?", "a": "Van der Woude syndrome (IRF6, AD) → 50% per pregnancy", "o": ["Isolated cleft → 5%", "Meckel-Gruber → 25%", "Fetal hydantoin → 0% if avoided"], "n": ["Lip pits make it syndromic.", "Not these features.", "No exposure."], "w": "Minor anomalies converted an “isolated” cleft into an AD syndrome.", "p": "Check the inner lower lip."}, {"lo": "4", "rr": true, "q": "An in-house slide says van der Woude has “penetrance 100%.” What do standard references say, and what's the difference between the terms?", "a": "High but incomplete penetrance (≈90%+) with variable expressivity; penetrance = proportion of carriers who show the trait, expressivity = how severely", "o": ["Penetrance is 10%", "Expressivity means the proportion of carriers affected", "Penetrance and expressivity are the same"], "n": ["Too low.", "That's penetrance.", "Different concepts."], "w": "Some carriers have only lip pits or only hypodontia.", "p": "Penetrance = whether; expressivity = how much."}]}, {"id": "dm", "lec": "T", "name": "Type 2 diabetes: burden & environment", "sub": "1 in 10 · lifestyle", "b": [{"lo": "5", "rr": true, "t": "m", "q": "Select ALL correct statements about diabetes burden (in-house).", "a": [">34 million Americans (1 in 10) have diabetes", "90–95% are type 2", "88 million more have prediabetes (>1 in 3)", "Population risk ≈1–5% worldwide, ≈10% in the USA"], "o": ["Type 1 accounts for most cases", "Prevalence is the same in every population"], "n": ["Type 2 dominates.", "Varies by population."], "w": "More common among African Americans, Alaska Natives, American Indians, Asian Americans, Hispanic/Latino people and Pacific Islanders. Note: the in-house figure is 1–5% worldwide; standard references (IDF) now estimate ≈10% of adults worldwide.", "p": "1 in 10 Americans; mostly type 2."}, {"lo": "5", "rr": true, "hy": true, "t": "m", "q": "Select ALL environmental/lifestyle risk factors for type 2 diabetes.", "a": ["High BMI", "Prior gestational diabetes", "Diet", "Lack of exercise", "High blood pressure, cholesterol or triglycerides", "Stress"], "o": ["Folic acid intake", "Blood type O"], "n": ["Not a listed factor.", "Not a factor."], "w": "The global epidemic shows the power of environment.", "p": "Weight, diet, inactivity."}, {"lo": "5", "rr": true, "q": "Which complications make type 2 diabetes a major public health problem?", "a": "Blindness, kidney failure, heart attack, stroke and lower-limb amputation", "o": ["Hemophilia and anemia", "Hearing loss only", "Skin cancer"], "n": ["Not diabetic complications.", "Too narrow.", "Not linked."], "w": "Results from disturbed insulin secretion and insulin resistance.", "p": "Eyes, kidneys, heart, brain, feet."}]}, {"id": "dmgen", "lec": "T", "name": "Type 2 diabetes: genetics & recurrence", "sub": "Polygenic · family risk · twins · genes", "b": [{"lo": "5", "rr": true, "hy": true, "t": "m", "q": "Select ALL correct type 2 diabetes family-risk figures (in-house).", "a": ["One affected parent → ≈40% lifetime risk", "Both parents affected → ≈70%", "First-degree relative affected → 3× more likely", "MZ twin concordance ≈70%; DZ 20–30%"], "o": ["One affected parent → 100%", "MZ concordance = DZ concordance"], "n": ["Not certain.", "MZ > DZ."], "w": "Multifactorial: MZ > DZ but <100%.", "p": "40 / 70 / 3× / 70 vs 20–30."}, {"lo": "5", "rr": true, "hy": true, "q": "How is type 2 diabetes inherited?", "a": "Polygenic: >150 loci, each adding a small effect; risk grows with each additional variant", "o": ["Autosomal dominant single gene", "X-linked recessive", "Mitochondrial"], "n": ["That's MODY.", "Not DM2.", "Not DM2."], "w": "Not everyone with a risk variant gets diabetes; affected people usually carry one or more.", "p": "Many small-effect genes."}, {"lo": "5", "rr": true, "t": "m", "q": "Select ALL correct type 2 diabetes gene → function pairs.", "a": ["TCF7L2 → transcription factor (strongest common risk locus)", "ABCC8 → regulates insulin secretion (SUR1 of the K-ATP channel)", "CAPN10 → calpain-10, associated in Mexican Americans", "GLUT2 (SLC2A2) → moves glucose into pancreatic β-cells", "GCGR → glucagon receptor", "PTPN1 → protein tyrosine phosphatase (insulin signaling)"], "o": ["TCF7L2 → chloride channel", "GLUT2 → muscle glucose uptake controlled by insulin"], "n": ["That's CFTR.", "That's GLUT4."], "w": "The in-house slide's “CF7L2” is a typo for TCF7L2.", "p": "TCF7L2 tops the list."}, {"lo": "5", "rr": true, "q": "Why is genetic testing of type 2 diabetes risk variants of limited value?", "a": "Each variant adds little risk, so environmental modification (exercise, weight loss, active life) matters most", "o": ["The variants are always deterministic", "Testing is unavailable", "Variants guarantee disease"], "n": ["Not deterministic.", "Some tests exist.", "Not guaranteed."], "w": "Lifestyle is modifiable even when genetic risk is high.", "p": "Change the environment."}, {"lo": "5", "rr": true, "hy": true, "q": "Both parents of a 30-year-old have type 2 diabetes. Her lifetime risk, and what lowers it?", "a": "≈70%; weight loss, exercise and diet substantially lower it", "o": ["100%; nothing helps", "≈5%; no action needed", "≈25%; insulin prophylaxis"], "n": ["Not certain; lifestyle helps.", "Much higher.", "Not the figure or plan."], "w": "Environment remains modifiable.", "p": "Two parents → 70%, lifestyle helps."}, {"lo": "5", "hy": true, "q": "How do type 1 and type 2 diabetes genetics differ (standard references)?", "a": "Type 2: stronger twin concordance (MZ ≈70–90%), polygenic, no HLA link; type 1: MZ ≈30–50%, HLA-DR3/DR4", "o": ["Type 1 has stronger concordance than type 2", "Both are HLA-linked", "Type 2 is autosomal dominant"], "n": ["Reversed.", "Only type 1.", "MODY is AD, not type 2."], "w": "MODY (glucokinase, HNF1A) is monogenic autosomal dominant, not multifactorial.", "p": "Type 2 more genetic; type 1 HLA."}]}, {"id": "iso", "lec": "T", "name": "Isolated vs syndromic malformations", "sub": "Why it matters · recurrence", "b": [{"lo": "6", "rr": true, "hy": true, "q": "How does an isolated malformation differ from a syndromic one?", "a": "Isolated: no other anomalies, multifactorial, low recurrence (≈2–5%). Syndromic: a cluster of major/minor anomalies ± growth/developmental problems, with a specific cause", "o": ["Isolated malformations are always genetic syndromes", "Syndromic malformations always have 0% recurrence", "They have identical recurrence"], "n": ["Opposite.", "Depends on cause.", "Different."], "w": "The distinction changes recurrence and work-up.", "p": "Alone = multifactorial; cluster = syndrome."}, {"lo": "6", "rr": true, "hy": true, "t": "m", "q": "Select ALL correct syndromic cause → recurrence pairs.", "a": ["Teratogen avoided (alcohol, phenytoin) → ≈0% added risk (background only)", "Autosomal recessive (Meckel-Gruber) → 25%", "Autosomal dominant (van der Woude) → 50%"], "o": ["Autosomal recessive → 50%", "Autosomal dominant → 2–5%"], "n": ["25%.", "50%."], "w": "Chromosomal causes (e.g., trisomy 13) have their own risks.", "p": "0 / 25 / 50."}, {"lo": "6", "rr": true, "t": "m", "q": "Select ALL in-house examples of SYNDROMIC malformations.", "a": ["Spina bifida + fetal alcohol syndrome", "Encephalocele + Meckel-Gruber", "Cleft + fetal hydantoin syndrome", "Cleft + lip pits (van der Woude)"], "o": ["Isolated lumbar myelomeningocele", "Isolated unilateral cleft lip"], "n": ["Isolated.", "Isolated."], "w": "Each syndrome changes the counseling.", "p": "Look for the cluster."}, {"lo": "6", "rr": true, "q": "A newborn has an isolated lumbar myelomeningocele and no affected relatives. Recurrence risk and prevention?", "a": "Multifactorial, a few percent (≈2–3%) → 4 mg folic acid before and during the next pregnancy plus prenatal AFP/ultrasound", "o": ["25%; carrier testing", "50%; genetic testing of the father", "0%; nothing needed"], "n": ["Not AR.", "Not AD.", "Risk is increased."], "w": "Folic acid lowers recurrence.", "p": "Isolated NTD → 4 mg folate next time."}, {"lo": "6", "rr": true, "q": "A child with a repaired cleft lip also has growth delay, short palpebral fissures, a smooth philtrum and attention problems. Next step?", "a": "Suspect FAS: take a careful prenatal exposure history and obtain records; diagnosis is clinical", "o": ["Order an FAS gene test", "Call it isolated and quote 5%", "Order a muscle biopsy"], "n": ["No genetic test exists.", "Syndromic features.", "Not relevant."], "w": "The cleft is syndromic, not isolated.", "p": "Cleft + FAS face = syndromic."}]}, {"id": "appr", "lec": "T", "name": "The clinical approach", "sub": "History · minor anomalies · records · privacy", "b": [{"lo": "6", "rr": true, "hy": true, "t": "m", "q": "Select ALL steps in the clinical approach to a child with a malformation.", "a": ["Listen to the family's concerns", "Take a good history (pregnancy exposures, relatives, consanguinity)", "Examine for minor anomalies (lip pits, palpebral fissures, philtrum, nails, digits)", "Obtain old medical records and photos", "When everything fails, re-examine the patient"], "o": ["Skip the exam if imaging is normal", "Post photos on social media for opinions"], "n": ["Exam finds minor anomalies.", "Violates privacy."], "w": "Photographs (and facial-analysis software) help, but privacy must be respected.", "p": "History, exam, records, re-examine."}, {"lo": "6", "rr": true, "hy": true, "q": "Why are minor anomalies so important?", "a": "They are clues that convert an apparently isolated malformation into a syndrome, changing recurrence risk (e.g., lip pits → van der Woude, 50%)", "o": ["They are always cosmetic only", "They never affect counseling", "They prove a malformation is multifactorial"], "n": ["They carry diagnostic weight.", "They change counseling.", "Opposite."], "w": "The toddler “told he has no syndrome” had lower lip pits.", "p": "Look closely (inner lower lip!)."}, {"lo": "6", "rr": true, "q": "What role did old medical records play in the in-house FAS case?", "a": "They confirmed prenatal alcohol exposure in a toddler in foster care", "o": ["They showed a chromosome abnormality", "They ruled out FAS", "They revealed a single-gene mutation"], "n": ["Not the case.", "They confirmed it.", "Not the case."], "w": "FAS diagnosis is clinical, so history and records are essential.", "p": "Records can make the diagnosis."}, {"lo": "6", "q": "A firstborn boy has pyloric stenosis. What should the parents be told about the next child?", "a": "Multifactorial, low recurrence (a few percent); it would be higher if a girl had been affected", "o": ["25% (autosomal recessive)", "50% (autosomal dominant)", "0%"], "n": ["Not AR.", "Not AD.", "Slightly increased."], "w": "Carter effect.", "p": "Pyloric stenosis = multifactorial."}]}];
+
+
+(function(){
+"use strict";
+var KEY="hd-hem16-multifactorial-builder-v1";
+var S={box:{},score:0,streak:0,best:0,tot:0,right:0,theme:"auto"};
+function load(){try{var j=JSON.parse(localStorage.getItem(KEY)||"null");if(j&&j.box)S=Object.assign(S,j);}catch(e){}}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}}
+load();
+
+var ALL=[]; E.forEach(function(e){e.b.forEach(function(b,i){b.id=e.id+"."+i;b.ent=e;ALL.push(b);});});
+function st(b){var r=S.box[b.id];return r?r.s:"u";}
+var rrOnly=false, mode="build", scope="all", loFilter=null, curEnt=null, idx=0, cur=null, answered=false, results={}, lastId=null, t0=0, tick=null;
+
+function shuffle(a){a=a.slice();for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=a[i];a[i]=a[j];a[j]=t;}return a;}
+function esc(s){return String(s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];});}
+function inScope(b){return (scope==="all"||b.ent.lec===scope)&&(!loFilter||b.lo===loFilter)&&(!rrOnly||b.rr);}
+
+/* ---------- theme ---------- */
+var themeBtn=document.getElementById("themeBtn");
+function applyTheme(){var r=document.documentElement;if(S.theme==="auto")r.removeAttribute("data-theme");else r.setAttribute("data-theme",S.theme);themeBtn.textContent="Theme: "+S.theme;}
+themeBtn.onclick=function(){S.theme={auto:"light",light:"dark",dark:"auto"}[S.theme];applyTheme();save();};
+applyTheme();
+document.getElementById("resetBtn").onclick=function(){
+  var b=this; if(b.dataset.confirm){S.box={};S.score=S.streak=S.tot=S.right=0;save();b.textContent="Reset progress";delete b.dataset.confirm;renderAll();next();return;}
+  b.dataset.confirm="1";b.textContent="Tap again to reset";setTimeout(function(){if(b.dataset.confirm){delete b.dataset.confirm;b.textContent="Reset progress";}},3000);
+};
+
+/* ---------- stats / side / map ---------- */
+function loStatus(lo){var bs=ALL.filter(function(b){return b.lo===lo;});var ss=bs.map(st);
+  var m=ss.filter(function(x){return x==="M";}).length;
+  if(m===bs.length)return{s:"M",m:m,n:bs.length};
+  if(ss.indexOf("m")>=0)return{s:"m",m:m,n:bs.length};
+  if(ss.some(function(x){return x!=="u";}))return{s:"o",m:m,n:bs.length};
+  return{s:"u",m:m,n:bs.length};}
+function renderStats(){
+  document.getElementById("sScore").textContent=S.score;
+  document.getElementById("sStreak").textContent=S.streak;
+  document.getElementById("sAcc").textContent=S.tot?Math.round(100*S.right/S.tot)+"%":"—";
+  document.getElementById("sBoxes").textContent=ALL.filter(function(b){return st(b)==="M";}).length+"/"+ALL.length;
+  var los=Object.keys(LOS);document.getElementById("sLos").textContent=los.filter(function(l){return loStatus(l).s==="M";}).length+"/"+los.length;
+}
+function renderSide(){
+  var h="";LECS.forEach(function(L){if(scope!=="all"&&scope!==L.k)return;
+    h+='<p class="lec-h l'+L.k+'" style="color:var(--lc)">HEM16 · '+esc(L.n)+'</p>';
+    E.filter(function(e){return e.lec===L.k;}).forEach(function(e){
+      var m=e.b.filter(function(b){return st(b)==="M";}).length,p=Math.round(100*m/e.b.length);
+      h+='<button type="button" class="ent l'+e.lec+'" data-ent="'+e.id+'"'+(curEnt===e&&mode==="build"?' aria-current="true"':'')+'><span class="n">'+esc(e.name)+'</span><span class="pct">'+m+'/'+e.b.length+'</span><span class="s">'+esc(e.sub)+'</span><span class="mini"><i style="width:'+p+'%"></i></span></button>';
+    });});
+  var el=document.getElementById("entList");el.innerHTML=h;
+  el.querySelectorAll(".ent").forEach(function(b){b.onclick=function(){setMode("build");startEnt(E.filter(function(e){return e.id===b.dataset.ent;})[0]);};});
+}
+function renderMap(){
+  var h="";Object.keys(LOS).forEach(function(lo){var lec=LOLEC[lo];if(scope!=="all"&&scope!==lec)return;var s=loStatus(lo);
+    h+='<button type="button" class="lo-tile l'+lec+'" data-lo="'+lo+'"'+(loFilter===lo?' style="border-color:var(--lc)"':'')+'><span class="id">'+(lo.slice(-1)==="X"?"Extra":"LO "+lo)+'</span><span class="t">'+esc(LOS[lo])+'</span><span class="dot s-'+s.s+'" title="'+s.m+'/'+s.n+' mastered"></span></button>';});
+  var g=document.getElementById("loGrid");g.innerHTML=h;
+  g.querySelectorAll(".lo-tile").forEach(function(b){b.onclick=function(){loFilter=(loFilter===b.dataset.lo?null:b.dataset.lo);setMode("drill");};});
+}
+function renderAll(){renderStats();renderSide();renderMap();}
+
+/* ---------- flow ---------- */
+function setMode(m){mode=m;document.querySelectorAll("[data-mode]").forEach(function(b){b.setAttribute("aria-pressed",String(b.dataset.mode===m));});
+  if(m==="build"){loFilter=null;if(rrOnly){rrOnly=false;setRR();}renderAll();if(!curEnt||!inScope(curEnt.b[0]))startEnt(firstEnt());else show();}
+  else{renderAll();next();}}
+function firstEnt(){var es=E.filter(function(e){return scope==="all"||e.lec===scope;});
+  for(var i=0;i<es.length;i++){if(es[i].b.some(function(b){return st(b)!=="M";}))return es[i];}return es[0];}
+document.querySelectorAll("[data-mode]").forEach(function(b){b.onclick=function(){setMode(b.dataset.mode);};});
+function setRR(){document.querySelectorAll("[data-rr]").forEach(function(x){x.setAttribute("aria-pressed",String((x.dataset.rr==="1")===rrOnly));});}
+document.querySelectorAll("[data-rr]").forEach(function(b){b.onclick=function(){rrOnly=b.dataset.rr==="1";setRR();setMode(rrOnly?"drill":mode);};});
+document.querySelectorAll("[data-scope]").forEach(function(b){b.onclick=function(){scope=b.dataset.scope;loFilter=null;
+  document.querySelectorAll("[data-scope]").forEach(function(x){x.setAttribute("aria-pressed",String(x===b));});
+  if(mode==="build"){curEnt=null;setMode("build");}else setMode("drill");};});
+
+function startEnt(e){curEnt=e;idx=0;results={};renderSide();cur=e.b[0];show();}
+function next(){
+  if(mode==="build"){idx++;if(idx>=curEnt.b.length){finishEnt();return;}cur=curEnt.b[idx];show();return;}
+  var pool=ALL.filter(inScope);if(!pool.length){cur=null;show();return;}
+  var rank={m:0,u:1,o:2,M:3};
+  pool=shuffle(pool).sort(function(a,b){return rank[st(a)]-rank[st(b)];});
+  var best=rank[st(pool[0])];var top=pool.filter(function(b){return rank[st(b)]===best&&b.id!==lastId;});
+  if(best===3)top=pool.filter(function(b){return b.id!==lastId;});
+  cur=(top.length?top:pool)[0];show();
+}
+function finishEnt(){
+  var ok=Object.keys(results).filter(function(k){return results[k];}).length,n=curEnt.b.length;
+  var i=E.indexOf(curEnt),nxt=null;for(var j=1;j<=E.length;j++){var c=E[(i+j)%E.length];if(scope==="all"||c.lec===scope){nxt=c;break;}}
+  var card=document.getElementById("card");card.className="card l"+curEnt.lec;
+  card.innerHTML='<div class="done"><p class="meta">Structure complete</p><h2>'+esc(curEnt.name)+': '+ok+' / '+n+' first try</h2>'+
+   '<p class="hint">'+(ok===n?"Clean build. It will count as mastered after one more clean pass.":"Missed boxes are queued first in Drill mode.")+'</p>'+
+   '<div class="actions"><button class="btn" type="button" id="again">Rebuild '+esc(curEnt.name)+'</button>'+(nxt?'<button class="btn primary" type="button" id="nextEnt">Next: '+esc(nxt.name)+' →</button>':'')+'</div></div>';
+  document.getElementById("again").onclick=function(){startEnt(curEnt);};
+  if(nxt)document.getElementById("nextEnt").onclick=function(){startEnt(nxt);};
+  var ne=document.getElementById("nextEnt");if(ne)ne.focus();
+}
+
+var picks=[];
+function show(){
+  answered=false;picks=[];clearInterval(tick);
+  var card=document.getElementById("card");
+  if(!cur){card.className="card";card.innerHTML='<p class="q">Nothing in this scope yet.</p>';return;}
+  var b=cur,e=b.ent;card.className="card l"+e.lec;
+  var head='<div class="card-top"><div><p class="meta">'+(mode==="build"?"Build · box "+(idx+1)+" of "+e.b.length:"Drill"+(rrOnly?" · Rapid Review":"")+(loFilter?" · LO "+loFilter:""))+'</p><h2>'+esc(e.name)+'</h2></div>'+
+    '<div style="display:flex;gap:6px;flex-wrap:wrap"><span class="tag lo">'+(b.lo.slice(-1)==="X"?"Extra":"LO "+b.lo)+'</span>'+(b.rr?'<span class="tag rr">Rapid Review</span>':'')+(b.hy?'<span class="tag hy">HY</span>':'')+'<span class="timer" id="timer">0.0s</span></div></div>';
+  if(mode==="build"){head+='<div class="boxes" aria-hidden="true">'+e.b.map(function(x,i){var c=i===idx?"cur":(x.id in results?(results[x.id]?"done-ok":"done-bad"):"");return '<i class="'+c+'"></i>';}).join("")+'</div>';}
+  var body='<p class="q">'+esc(b.q)+'</p>';
+  if(!b.t){b._opts=shuffle([b.a].concat(b.o));
+    body+='<div class="opts">'+b._opts.map(function(o,i){return '<button type="button" class="opt" data-i="'+i+'"><span class="k">'+(i+1)+'</span><span>'+esc(o)+'</span></button>';}).join("")+'</div>';}
+  else if(b.t==="m"){b._opts=shuffle(b.a.concat(b.o));
+    body+='<p class="hint">Select all that apply, then check.</p><div class="opts">'+b._opts.map(function(o,i){return '<button type="button" class="opt" aria-pressed="false" data-i="'+i+'"><span class="k">'+(i+1)+'</span><span>'+esc(o)+'</span></button>';}).join("")+'</div>';}
+  else{b._opts=shuffle(b.a);
+    body+='<p class="hint">Tap items in order. Tap a placed item to remove it.</p><ol class="ordered" id="ordList"><li class="empty" style="cursor:default">Your order appears here</li></ol><div class="opts">'+b._opts.map(function(o,i){return '<button type="button" class="opt" data-i="'+i+'"><span class="k">+</span><span>'+esc(o)+'</span></button>';}).join("")+'</div>';}
+  var act='<div id="fb"></div><div class="actions"><span class="hint">'+(b.t?"Enter to check":"Keys 1–"+b._opts.length+" to answer")+'</span><div style="display:flex;gap:8px">'+
+    (mode==="build"?'<button class="btn" type="button" id="skipBtn">Skip structure</button>':'')+
+    (b.t?'<button class="btn primary" type="button" id="checkBtn"'+(b.t==="o"?" disabled":"")+'>Check</button>':'')+
+    '<button class="btn primary" type="button" id="nextBtn" hidden>Next box →</button></div></div>';
+  card.innerHTML=head+body+act;
+  t0=Date.now();tick=setInterval(function(){var t=document.getElementById("timer");if(t)t.textContent=((Date.now()-t0)/1000).toFixed(1)+"s";},100);
+  var opts=card.querySelectorAll(".opt");
+  if(!b.t)opts.forEach(function(o){o.onclick=function(){if(!answered)grade([+o.dataset.i]);};});
+  else if(b.t==="m")opts.forEach(function(o){o.onclick=function(){if(answered)return;var on=o.getAttribute("aria-pressed")!=="true";o.setAttribute("aria-pressed",String(on));o.classList.toggle("sel",on);};});
+  else opts.forEach(function(o){o.onclick=function(){if(answered||o.disabled)return;picks.push(+o.dataset.i);o.disabled=true;o.style.opacity=".4";drawOrd();};});
+  var cb=document.getElementById("checkBtn");if(cb)cb.onclick=function(){if(answered)return;
+    if(b.t==="m"){var sel=[];opts.forEach(function(o){if(o.getAttribute("aria-pressed")==="true")sel.push(+o.dataset.i);});grade(sel);}else grade(picks);};
+  var sk=document.getElementById("skipBtn");if(sk)sk.onclick=function(){var i=E.indexOf(curEnt);for(var j=1;j<=E.length;j++){var c=E[(i+j)%E.length];if(scope==="all"||c.lec===scope){startEnt(c);return;}}};
+  document.getElementById("nextBtn").onclick=function(){lastId=cur.id;next();};
+}
+function drawOrd(){var b=cur,ol=document.getElementById("ordList");
+  ol.innerHTML=picks.length?picks.map(function(i,k){return '<li data-k="'+k+'">'+esc(b._opts[i])+'</li>';}).join(""):'<li class="empty" style="cursor:default">Your order appears here</li>';
+  ol.querySelectorAll("li[data-k]").forEach(function(li){li.onclick=function(){if(answered)return;var k=+li.dataset.k,i=picks[k];picks.splice(k,1);
+    var o=document.querySelector('.opt[data-i="'+i+'"]');o.disabled=false;o.style.opacity="";drawOrd();};});
+  document.getElementById("checkBtn").disabled=picks.length!==b.a.length;}
+
+function grade(sel){
+  answered=true;clearInterval(tick);var b=cur,ok,card=document.getElementById("card"),opts=card.querySelectorAll(".opt");
+  if(!b.t){ok=b._opts[sel[0]]===b.a;opts.forEach(function(o){var t=b._opts[+o.dataset.i];o.disabled=true;if(t===b.a)o.classList.add("right");else if(+o.dataset.i===sel[0])o.classList.add("wrong");});}
+  else if(b.t==="m"){var chosen=sel.map(function(i){return b._opts[i];});ok=chosen.length===b.a.length&&chosen.every(function(c){return b.a.indexOf(c)>=0;});
+    opts.forEach(function(o){var t=b._opts[+o.dataset.i],isA=b.a.indexOf(t)>=0,isS=chosen.indexOf(t)>=0;o.disabled=true;o.classList.remove("sel");
+      if(isA&&isS)o.classList.add("right");else if(isA)o.classList.add("missed");else if(isS)o.classList.add("wrong");});}
+  else{var got=sel.map(function(i){return b._opts[i];});ok=got.every(function(g,k){return g===b.a[k];});
+    document.querySelectorAll("#ordList li[data-k]").forEach(function(li,k){li.classList.add(got[k]===b.a[k]?"right":"wrong");});
+    opts.forEach(function(o){o.disabled=true;});}
+  var r=S.box[b.id]||{n:0,c:0,s:"u"};r.n++;
+  if(ok){r.c++;r.s=r.c>=2?"M":"o";S.streak++;S.best=Math.max(S.best,S.streak);S.right++;S.score+=10+Math.min(S.streak,10);}
+  else{r.c=0;r.s="m";S.streak=0;}
+  S.tot++;S.box[b.id]=r;if(!(b.id in results))results[b.id]=ok;save();
+  var fb='<div class="fb '+(ok?"ok":"bad")+'"><span class="v">'+(ok?"Correct":"Not quite")+'</span>';
+  if(!b.t)fb+='<span class="ans">Answer: <b>'+esc(b.a)+'</b></span>';
+  else if(b.t==="m")fb+='<span class="ans">Answer: <b>'+b.a.map(esc).join(" · ")+'</b></span>';
+  else fb+='<span class="ans">Correct order:</span><ol>'+b.a.map(function(x){return "<li>"+esc(x)+"</li>";}).join("")+'</ol>';
+  fb+='<div class="fbexp">'+String(b.w||"").split(/\n\n+/).filter(Boolean).map(function(t){return '<p>'+esc(t)+'</p>';}).join("")+'</div>';
+  if(b.n&&b.n.length&&b.o&&b.o.length){
+    var rows=b.o.map(function(x,i){return b.n[i]?'<li><b>'+esc(x)+'</b> — '+esc(b.n[i])+'</li>':"";}).join("");
+    if(rows)fb+='<ul class="fbnotes">'+rows+'</ul>';
+  }
+  if(b.p)fb+='<div class="fbpearl"><b>High-yield</b>'+esc(b.p)+'</div>';
+  fb+='</div>';
+  document.getElementById("fb").innerHTML=fb;
+  var cb=document.getElementById("checkBtn");if(cb)cb.hidden=true;
+  var nb=document.getElementById("nextBtn");nb.hidden=false;nb.textContent=(mode==="build"&&idx===curEnt.b.length-1)?"Finish structure →":"Next box →";nb.focus();
+  renderAll();
+}
+document.addEventListener("keydown",function(ev){
+  if(ev.target.tagName==="INPUT"||ev.metaKey||ev.ctrlKey||ev.altKey)return;
+  if(ev.key==="Enter"){var nb=document.getElementById("nextBtn"),cb=document.getElementById("checkBtn");
+    if(nb&&!nb.hidden){ev.preventDefault();nb.click();}else if(cb&&!cb.hidden&&!cb.disabled){ev.preventDefault();cb.click();}return;}
+  var n=parseInt(ev.key,10);if(!cur||answered||isNaN(n))return;var o=document.querySelector('.opt[data-i="'+(n-1)+'"]');if(o&&!o.disabled)o.click();
+});
+
+renderAll();startEnt(firstEnt());
+})();
+
+/* ---------- Review: the compiled version of everything the answers teach ---------- */
+var REVIEW = {"F": "<h3 class=\"rh\">LO1 · Multifactorial inheritance</h3>\n<div class=\"rtbl\"><table><thead><tr><th>Category</th><th>Frequency (in-house)</th></tr></thead><tbody>\n<tr><td>Single-gene</td><td>1/500–1/100</td></tr><tr><td>Chromosomal</td><td>0.5–0.7%</td></tr><tr><td><b>Multifactorial</b></td><td><b>20–40%</b></td></tr><tr><td>Mitochondrial</td><td>Rare</td></tr></tbody></table></div>\n<p>Multifactorial = many genes + environment → <b>familial aggregation</b> without Mendelian ratios. Risk highest in first-degree relatives (50% shared) and MZ twins.</p>\n<div class=\"rmem\"><b>Liability-threshold</b>Small genetic and environmental contributions add up; disease appears once liability crosses the threshold.</div>\n<div class=\"rhy\"><b>USMLE: recurrence rules</b>≈2–5% for first-degree relatives of an isolated malformation; ↑ with more affected relatives (cleft 5% → 8%), more severe defects, and an affected member of the rarer sex (Carter effect: pyloric stenosis in a girl). Falls quickly with distance.</div>\n<p>Malformation causes (Holmes 1989): unknown 43.2%, multifactorial 37.5%, chromosomal 10.1%, teratogens 3.2%, single genes 3.1%, uterine 2.5%, twinning 0.4%.</p>\n<h3 class=\"rh\">LO2 · Twin studies</h3>\n<div class=\"rtbl\"><table><thead><tr><th>Condition</th><th>MZ</th><th>DZ</th></tr></thead><tbody>\n<tr><td>Purely genetic</td><td>100%</td><td>Like siblings</td></tr><tr><td>Purely environmental</td><td>= DZ</td><td>= MZ</td></tr><tr><td>Multifactorial</td><td>&gt; DZ, &lt;100%</td><td>Lower</td></tr></tbody></table></div>\n<p>In-house: cleft MZ 35–40% vs DZ 4–5%; type 2 diabetes MZ ≈70% vs DZ 20–30%. MZ reared apart: concordance for behavioral traits (alcoholism).</p>\n<div class=\"rtrap\"><b>Limitations</b>Somatic mutations, epigenetics, random X-inactivation, few twins reared apart, ethics.</div>\n", "D": "<h3 class=\"rh\">LO3 · Neural tube defects</h3>\n<p>Neural tube forms <b>days 18–30</b>; ≈90% isolated; incidence ≈1/2,500 (was 1/1,000); highest in Hispanic women (US).</p>\n<div class=\"rtbl\"><table><thead><tr><th>Type</th><th>Defect</th></tr></thead><tbody>\n<tr><td>Anencephaly</td><td>Anterior neuropore; fatal; polyhydramnios</td></tr>\n<tr><td>Encephalocele</td><td>Brain through a <b>skull</b> defect; often syndromic</td></tr>\n<tr><td>Spina bifida occulta</td><td>Arch defect, skin intact, hair tuft; normal AFP</td></tr>\n<tr><td>Meningocele</td><td>Meninges herniate</td></tr>\n<tr><td>Myelomeningocele</td><td>Meninges + cord; paralysis, neurogenic bladder, Chiari II</td></tr></tbody></table></div>\n<div class=\"rhy\"><b>USMLE: detection</b>Open NTD → ↑ MSAFP, ↑ amniotic AFP and acetylcholinesterase; ultrasound lemon/banana signs.</div>\n<ul class=\"rlist\"><li><b>Genes:</b> GRHL3, CELSR1, VANGL2, <b>MTHFR 677C&gt;T</b> (↓ folate, ↑ homocysteine).</li><li><b>Environment (FOLD):</b> Folate deficiency/methotrexate, Obesity, Low-control diabetes, Drugs (valproate, carbamazepine, phenytoin); + alcohol, heat.</li></ul>\n<div class=\"rrule\"><b>Folic acid</b>All women: 0.4–0.8 mg daily (prevents up to 70%). Prior NTD: <b>4 mg</b> from ≥1 month before conception through the first trimester. Fortification since 1998 (−27–35%).</div>\n<div class=\"rtrap\"><b>Syndromic NTDs</b>FAS with spina bifida (clinical diagnosis, no gene test). Meckel-Gruber: encephalocele + polydactyly + cystic kidneys, AR ciliopathy, 25% recurrence; folate won't prevent it.</div>\n<h3 class=\"rh\">LO4 · Oral clefts</h3>\n<p>Cleft lip = frontonasal + maxillary fusion failure ≈day 35; lip closes by 8 wk, palate by 12 wk. CL/P: 1/1,000 Caucasian, 1.7/1,000 Japanese, 0.4/1,000 African American. 85% isolated, 15% syndromic; recurrence 5% → 8%. Craniofacial team care.</p>\n<ul class=\"rlist\"><li><b>Genes:</b> IRF6, MSX1, TGFA, MTHFR, FOXE1, VAX1, many more.</li><li><b>Exposures:</b> smoking, alcohol, low folate, steroids, phenytoin, valproate.</li></ul>\n<div class=\"rhy\"><b>USMLE: gene–environment interaction</b>Smoking raises cleft risk most in GSTT1-null mothers.</div>\n<div class=\"rtbl\"><table><thead><tr><th>Syndrome</th><th>Clues</th></tr></thead><tbody>\n<tr><td>Fetal hydantoin</td><td>Cleft, hypertelorism, short nose, small nails, hypoplastic distal phalanges, growth and learning problems</td></tr>\n<tr><td>Van der Woude</td><td>Lower lip pits, CL ± P, hypodontia; IRF6 (chr 1); AD, variable expressivity; 50% recurrence</td></tr></tbody></table></div>\n<div class=\"rtrap\"><b>Penetrance vs expressivity</b>In-house slide says “penetrance 100%”; standard references: high but incomplete (≈90%+). Penetrance = whether carriers show it; expressivity = how much.</div>\n", "T": "<h3 class=\"rh\">LO5 · Type 2 diabetes</h3>\n<p>&gt;34 million Americans (1 in 10), 90–95% type 2; 88 million with prediabetes. Population risk 1–5% worldwide, ≈10% US; higher in several ethnic groups. Risk factors: BMI, prior gestational diabetes, diet, inactivity, BP/lipids, stress.</p>\n<div class=\"rtbl\"><table><thead><tr><th>Family history</th><th>Risk</th></tr></thead><tbody>\n<tr><td>One parent</td><td>≈40%</td></tr><tr><td>Both parents</td><td>≈70%</td></tr><tr><td>First-degree relative</td><td>3×</td></tr><tr><td>MZ / DZ concordance</td><td>≈70% / 20–30%</td></tr></tbody></table></div>\n<p>Polygenic: &gt;150 loci, each small. Genes: <b>TCF7L2</b> (in-house typo “CF7L2”), ABCC8, CAPN10, GLUT2, GCGR, PTPN1. Lifestyle change matters most.</p>\n<div class=\"rhy\"><b>USMLE: type 1 vs type 2</b>Type 2: stronger concordance, polygenic, no HLA. Type 1: MZ ≈30–50%, HLA-DR3/DR4. MODY = monogenic AD.</div>\n<h3 class=\"rh\">LO6 · Isolated vs syndromic</h3>\n<div class=\"rtbl\"><table><thead><tr><th></th><th>Isolated</th><th>Syndromic</th></tr></thead><tbody>\n<tr><td>Other anomalies</td><td>None</td><td>Cluster of major/minor anomalies</td></tr>\n<tr><td>Cause</td><td>Multifactorial</td><td>Teratogen, single gene, chromosomal</td></tr>\n<tr><td>Recurrence</td><td>≈2–5%</td><td>0% (teratogen avoided) · 25% (AR) · 50% (AD)</td></tr></tbody></table></div>\n<div class=\"rmem\"><b>The clinical approach</b>Listen · history (exposures, relatives, consanguinity) · examine for minor anomalies · get records and photos (respect privacy) · re-examine when stuck.</div>\n<div class=\"rtrap\"><b>Minor anomalies</b>Lip pits turned an “isolated” cleft into van der Woude (50% recurrence). Records confirmed alcohol in the FAS case.</div>\n"};
+var RVW_NAME = {"F":"LO1–2 Multifactorial & twins","D":"LO3–4 NTDs & clefts","T":"LO5–6 Diabetes & syndromes"};
+(function(){
+  var panel=document.getElementById("rvw"), body=document.getElementById("rvwBody"),
+      toc=document.getElementById("rvwToc"), q=document.getElementById("rvwQ"),
+      cnt=document.getElementById("rvwCount"), empty=document.getElementById("rvwEmpty"),
+      btn=document.getElementById("reviewBtn"), lec="F", secs=[];
+  var TYPES={rrule:1,rtrap:1,rmem:1,rhy:1};
+  function collapse(sec){
+    [].slice.call(sec.querySelectorAll(".rrule,.rtrap,.rmem,.rhy")).forEach(function(d){
+      var type=d.className.trim(); if(!TYPES[type])return;
+      var lbl=d.querySelector("b"), label=lbl?lbl.textContent:"Note";
+      if(lbl)lbl.parentNode.removeChild(lbl);
+      var det=document.createElement("details"); det.className="cx "+type;
+      var sum=document.createElement("summary");
+      sum.innerHTML='<span class="lbl"></span><span class="pk"></span>';
+      sum.querySelector(".lbl").textContent=label;
+      sum.querySelector(".pk").textContent=d.textContent.replace(/\s+/g," ").trim().slice(0,110);
+      var cb=document.createElement("div"); cb.className="cbody";
+      while(d.firstChild)cb.appendChild(d.firstChild);
+      det.appendChild(sum); det.appendChild(cb);
+      d.parentNode.replaceChild(det,d);
+    });
+    var h=sec.querySelector(".rh"), hys=[].slice.call(sec.querySelectorAll("details.rhy"));
+    if(h&&hys.length){ var ref=h.nextSibling; hys.forEach(function(x){ sec.insertBefore(x,ref); }); }
+    var kids=[].slice.call(sec.children), i=0;
+    while(i<kids.length){
+      if(kids[i].tagName==="DETAILS"){
+        var run=[kids[i]], cls=kids[i].className, j=i+1;
+        while(j<kids.length&&kids[j].tagName==="DETAILS"&&kids[j].className===cls){run.push(kids[j]);j++;}
+        if(run.length>1){
+          var g=document.createElement("div"); g.className="cgrid";
+          sec.insertBefore(g,run[0]); run.forEach(function(x){g.appendChild(x);});
+        }
+        i=j;
+      } else i++;
+    }
+  }
+  function group(){
+    var kids=[].slice.call(body.childNodes), out=[], cur=null;
+    kids.forEach(function(n){
+      if(n.nodeType===1&&n.tagName==="H3"){cur=document.createElement("section");cur.className="rsec";out.push(cur);}
+      if(!cur){cur=document.createElement("section");cur.className="rsec";out.push(cur);}
+      cur.appendChild(n);
+    });
+    body.innerHTML="";
+    out.forEach(function(s,i){ s.id="rs"+i; collapse(s); s._t=s.textContent.toLowerCase(); body.appendChild(s); });
+    return out;
+  }
+  function setAll(open){
+    [].slice.call(body.querySelectorAll("details.cx")).forEach(function(d){d.open=open;});
+    var t=document.getElementById("rvwAll");
+    if(t){t.textContent=open?"Collapse all":"Expand all";t.setAttribute("aria-pressed",String(open));}
+  }
+  function buildToc(){
+    toc.innerHTML=secs.map(function(s){
+      var h=s.querySelector(".rh"); return h?'<a href="#'+s.id+'">'+h.textContent+'</a>':'';
+    }).join("");
+  }
+  function filter(){
+    var terms=q.value.toLowerCase().split(/\s+/).filter(Boolean), n=0;
+    secs.forEach(function(s){
+      var on=terms.every(function(t){return s._t.indexOf(t)!==-1;});
+      s.classList.toggle("hide",!on); if(on)n++;
+    });
+    empty.classList.toggle("on",n===0);
+    cnt.textContent = n===secs.length ? secs.length+" sections" : n+" of "+secs.length;
+    toc.style.display = q.value ? "none" : "";
+  }
+  function load(l){
+    lec=l; panel.setAttribute("data-lec",l);
+    body.innerHTML=REVIEW[l]||"";
+    secs=group(); buildToc(); q.value=""; filter();
+    var t=document.getElementById("rvwAll"); if(t){t.textContent="Expand all";t.setAttribute("aria-pressed","false");}
+  }
+  function open(){
+    document.querySelector(".bar").style.display="none";
+    document.querySelector(".main").style.display="none";
+    panel.hidden=false; if(!secs.length)load(lec);
+    btn.setAttribute("aria-pressed","true");
+    window.scrollTo(0,0); q.focus({preventScroll:true});
+  }
+  function close(){
+    panel.hidden=true;
+    document.querySelector(".bar").style.display="";
+    document.querySelector(".main").style.display="";
+    btn.setAttribute("aria-pressed","false");
+    window.scrollTo(0,0);
+  }
+  btn.onclick=function(){ panel.hidden?open():close(); };
+  document.getElementById("rvwClose").onclick=close;
+  document.getElementById("rvwPrint").onclick=function(){window.print();};
+  var allBtn=document.getElementById("rvwAll");
+  if(allBtn)allBtn.onclick=function(){ setAll(this.getAttribute("aria-pressed")!=="true"); };
+  var reclose=[];
+  window.addEventListener("beforeprint",function(){
+    reclose=[];
+    [].slice.call(body.querySelectorAll("details.cx")).forEach(function(d){ if(!d.open){reclose.push(d);d.open=true;} });
+  });
+  window.addEventListener("afterprint",function(){ reclose.forEach(function(d){d.open=false;}); reclose=[]; });
+  document.getElementById("rvwTabs").onclick=function(e){
+    var b=e.target.closest("button"); if(!b)return;
+    [].forEach.call(this.children,function(c){c.setAttribute("aria-pressed",String(c===b));});
+    load(b.dataset.l); window.scrollTo(0,0);
+  };
+  q.addEventListener("input",filter);
+  document.addEventListener("keydown",function(e){
+    if(e.key==="Escape"&&!panel.hidden){ if(document.activeElement===q&&q.value){q.value="";filter();} else close(); }
+  });
+})();
+
+</script>
