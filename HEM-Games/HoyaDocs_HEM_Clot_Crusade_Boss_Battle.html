@@ -1,0 +1,2177 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Clot Crusade</title>
+<meta name="description" content="HoyaDocs HEM boss battle: hemostasis and coagulation review questions mapped to in-house heme lectures.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;900&family=Chakra+Petch:wght@500;600;700&family=Public+Sans:wght@400;500;600;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&display=swap">
+<style>
+/* Layout: a darkfield microscope stage. The boss lives in the eyepiece; each vignette sits on a bright glass slide. */
+:root{
+  color-scheme: dark;
+  --stage:#0D1320;        /* darkfield stage */
+  --stage-2:#141C2D;      /* raised panel */
+  --stage-3:#1C2639;      /* hover / chip */
+  --rule:#2A3650;         /* hairline on stage */
+  --mist:#E7ECF6;         /* text on stage */
+  --mist-2:#9AA7C0;       /* secondary text on stage */
+  --azure:#5B8CE8;        /* methylene blue: UI accent */
+  --azure-deep:#3C69C4;
+  --eosin:#EE6F93;        /* eosin pink: player / damage */
+  --slide:#FBFAF7;        /* glass slide */
+  --slide-edge:#E4E1DA;
+  --ink:#1D2433;          /* text on slide */
+  --ink-2:#556079;
+  --good:#2E9E68; --good-bg:#E5F5EC;
+  --bad:#D44459;  --bad-bg:#FBE8EB;
+  --hy-bg:#FFF5C2; --hy-border:#C99A00; --hy-ink:#4A3A00;   /* USMLE high-yield callout */
+  --ih-bg:#E8EFFC; --ih-border:#7FA0E0; --ih-ink:#1F3566;   /* in-house note */
+  --gold:#F2C14E;
+  --f-display:"Big Shoulders Display","Arial Narrow",Impact,sans-serif;
+  --f-hud:"Chakra Petch","Courier New",monospace;
+  --f-ui:"Public Sans","Helvetica Neue",Arial,sans-serif;
+  --f-read:"Source Serif 4",Georgia,"Times New Roman",serif;
+  --r:6px;
+}
+*{box-sizing:border-box}
+html,body{background:var(--stage);color:var(--mist)}
+body{font-family:var(--f-ui);font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased;margin:0}
+button{font-family:inherit;color:inherit;cursor:pointer}
+:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+.wrap{max-width:980px;margin:0 auto;padding-inline:18px;padding-block:22px 48px}
+.screen{display:none}.screen.on{display:block}
+h1,h2,h3{margin:0;text-wrap:balance}
+.hud{font-family:var(--f-hud);text-transform:uppercase;letter-spacing:.08em;font-size:12px;font-weight:600}
+.btn{font-family:var(--f-hud);font-weight:700;letter-spacing:.06em;text-transform:uppercase;font-size:13px;
+  background:var(--stage-2);border:1px solid var(--rule);border-radius:var(--r);padding:12px 20px;color:var(--mist);
+  transition:background .15s,border-color .15s,transform .08s}
+.btn:hover{background:var(--stage-3);border-color:var(--azure)}
+.btn:active{transform:translateY(1px)}
+.btn.primary{background:var(--azure);border-color:var(--azure);color:#fff;box-shadow:0 3px 0 var(--azure-deep)}
+.btn.primary:hover{background:#6C9AF0}
+.btn.ghost{background:transparent}
+.btn.small{padding:8px 12px;font-size:11px}
+.btn[disabled]{opacity:.35;cursor:not-allowed;transform:none}
+
+/* ---------- title ---------- */
+#title{display:none;padding-block:12px 0}
+#title.on{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.05fr);gap:34px;align-items:center}
+.eyepiece{position:relative;aspect-ratio:1;max-width:100%;border-radius:50%;
+  box-shadow:0 0 0 10px #05080F,0 0 0 12px var(--rule),0 30px 60px rgba(0,0,0,.55)}
+.eyepiece canvas{width:100%;height:100%;border-radius:50%;display:block}
+.brand{font-family:var(--f-hud);font-size:12px;letter-spacing:.18em;color:var(--azure);text-transform:uppercase}
+.game-name{font-family:var(--f-display);font-weight:900;font-size:clamp(56px,10vw,112px);line-height:.86;
+  letter-spacing:.01em;text-transform:uppercase;margin-top:10px}
+.game-name span{display:block;color:var(--eosin)}
+.tagline{font-family:var(--f-read);font-size:18px;line-height:1.55;color:var(--mist-2);max-width:46ch;margin:18px 0 22px}
+.statrow{display:flex;gap:26px;flex-wrap:wrap;margin-bottom:24px}
+.statrow div{display:flex;flex-direction:column}
+.statrow b{font-family:var(--f-display);font-size:40px;line-height:1;font-weight:900;font-variant-numeric:tabular-nums}
+.statrow span{font-family:var(--f-hud);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--mist-2)}
+.optrow{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+.toggle{display:inline-flex;align-items:center;gap:10px;font-size:14px;color:var(--mist-2);cursor:pointer;user-select:none}
+.toggle input{appearance:none;width:38px;height:22px;border-radius:11px;background:var(--stage-3);border:1px solid var(--rule);position:relative;cursor:pointer;margin:0;flex:none}
+.toggle input::after{content:"";position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;background:var(--mist-2);transition:left .15s,background .15s}
+.toggle input:checked{background:var(--azure-deep);border-color:var(--azure)}
+.toggle input:checked::after{left:18px;background:#fff}
+.foot{margin-top:28px;font-size:12px;color:var(--mist-2);line-height:1.6}
+.foot b{color:var(--mist)}
+
+/* ---------- map ---------- */
+.map-head{display:flex;justify-content:space-between;align-items:flex-end;gap:18px;flex-wrap:wrap;margin-bottom:20px}
+.map-head h2{font-family:var(--f-display);font-size:44px;font-weight:900;text-transform:uppercase;line-height:1}
+.camp{min-width:220px;flex:0 1 300px}
+.camp .bar{height:8px;background:var(--stage-3);border-radius:4px;overflow:hidden;margin-top:6px}
+.camp .bar i{display:block;height:100%;background:linear-gradient(90deg,var(--azure),var(--eosin));width:0;transition:width .4s}
+.bossgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:14px}
+.bcard{position:relative;display:grid;grid-template-columns:76px minmax(0,1fr);gap:14px;align-items:start;text-align:left;
+  background:var(--stage-2);border:1px solid var(--rule);border-radius:10px;padding:14px;transition:border-color .15s,transform .15s}
+.bcard:hover:not([disabled]){border-color:var(--bh,var(--azure));transform:translateY(-2px)}
+.bcard canvas{width:76px;height:76px;border-radius:50%;background:#05080F}
+.bcard .nm{font-family:var(--f-display);font-weight:900;font-size:24px;line-height:1.02;text-transform:uppercase}
+.bcard .ep{font-size:12px;color:var(--mist-2);font-style:italic;margin-top:2px}
+.bcard .tp{font-size:13px;color:var(--mist);margin-top:8px;line-height:1.4}
+.chips{display:flex;flex-wrap:wrap;gap:5px;margin-top:9px}
+.chip{font-family:var(--f-hud);font-size:10px;font-weight:600;letter-spacing:.06em;padding:2px 7px;border-radius:3px;background:var(--stage-3);color:var(--mist-2)}
+.bstatus{position:absolute;top:12px;right:12px;font-family:var(--f-hud);font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--mist-2)}
+.bstatus.won{color:var(--gold)}
+.bcard.final{grid-column:1/-1;background:linear-gradient(120deg,#1E1A10,var(--stage-2) 60%);border-color:#5B4A1E}
+.bcard[disabled]{opacity:.55;cursor:not-allowed}
+.maprow{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:center;margin-top:22px;font-size:12px;color:var(--mist-2)}
+.confirm{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+
+/* ---------- battle ---------- */
+.arena{display:grid;grid-template-columns:132px minmax(0,1fr);gap:18px;align-items:center;background:var(--stage-2);
+  border:1px solid var(--rule);border-radius:12px;padding:14px 16px;position:sticky;top:env(safe-area-inset-top,0px);z-index:5}
+@media (max-width:760px){.arena{position:relative}}
+.arena .eye{width:132px;height:132px;border-radius:50%;position:relative;box-shadow:0 0 0 4px #05080F,0 0 0 5px var(--rule)}
+.arena .eye canvas{width:100%;height:100%;border-radius:50%;display:block}
+.taunt{position:absolute;left:118px;top:-6px;z-index:6;width:max-content;max-width:240px;background:var(--slide);color:var(--ink);font-family:var(--f-read);
+  font-style:italic;font-size:14px;line-height:1.35;padding:8px 11px;border-radius:8px;box-shadow:0 6px 18px rgba(0,0,0,.4);
+  opacity:0;transform:translateY(4px);transition:opacity .2s,transform .2s;pointer-events:none}
+.taunt.on{opacity:1;transform:none}
+.bt-top{display:flex;justify-content:space-between;gap:12px;align-items:baseline;flex-wrap:wrap}
+.bt-name{font-family:var(--f-display);font-weight:900;font-size:30px;line-height:1;text-transform:uppercase}
+.bt-ep{font-size:12px;color:var(--mist-2);font-style:italic}
+.hp{display:flex;gap:4px;margin-top:10px}
+.hp i{flex:1;height:12px;border-radius:2px;background:var(--bh,var(--eosin));transition:background .3s,opacity .3s;box-shadow:inset 0 -3px 0 rgba(0,0,0,.25)}
+.hp i.gone{background:var(--stage-3);box-shadow:none}
+.hudrow{display:flex;gap:18px;flex-wrap:wrap;align-items:center;margin-top:10px}
+.hearts{display:flex;gap:5px}
+.hearts svg{width:20px;height:18px}
+.hudrow .hud{color:var(--mist-2)}
+.hudrow .hud b{color:var(--mist);font-variant-numeric:tabular-nums}
+.timer b.low{color:var(--eosin)}
+.streak b{color:var(--gold)}
+.arena-tools{display:flex;gap:8px;margin-left:auto}
+.arena.shake{animation:shake .35s}
+@keyframes shake{20%{transform:translateX(-6px)}40%{transform:translateX(5px)}60%{transform:translateX(-3px)}80%{transform:translateX(2px)}}
+.flash{position:fixed;inset:0;pointer-events:none;background:var(--eosin);opacity:0;z-index:20}
+.flash.on{animation:fl .4s}
+@keyframes fl{0%{opacity:.22}100%{opacity:0}}
+
+.slide{background:var(--slide);color:var(--ink);border-radius:10px;margin-top:16px;padding:24px 26px 26px;
+  box-shadow:0 0 0 1px var(--slide-edge),0 16px 40px rgba(0,0,0,.35)}
+.itemline{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;font-family:var(--f-hud);font-size:11px;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--ink-2);border-bottom:1px solid var(--slide-edge);padding-bottom:10px;margin-bottom:16px}
+.stem{font-family:var(--f-read);font-size:17px;line-height:1.65;max-width:72ch}
+.stem p{margin:0 0 12px}
+.ask{font-family:var(--f-read);font-size:17px;font-weight:600;margin:18px 0 14px;max-width:72ch}
+.exhibit{margin:16px 0 6px;border:1px solid var(--slide-edge);border-radius:8px;overflow:hidden;background:#fff;max-width:640px}
+.exhibit .cap{font-family:var(--f-hud);font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-2);padding:8px 12px;
+  background:#F3F1EC;border-bottom:1px solid var(--slide-edge);display:flex;justify-content:space-between;gap:8px;align-items:center}
+.labs{overflow-x:auto}
+.labs table{border-collapse:collapse;width:100%;font-size:14.5px;min-width:420px}
+.labs td{padding:7px 14px;border-bottom:1px solid #EFECE6}
+.labs tr:last-child td{border-bottom:0}
+.labs td:nth-child(2){font-weight:600;font-variant-numeric:tabular-nums;white-space:nowrap}
+.labs td:nth-child(3){color:var(--ink-2);font-size:12.5px;white-space:nowrap;font-variant-numeric:tabular-nums}
+.smearbox canvas{display:block;width:100%;height:auto;background:#F1E6EA}
+.smearbox .desc{font-size:13.5px;color:var(--ink);padding:9px 12px;border-top:1px solid var(--slide-edge);background:#FBF8F2}
+.linkbtn{background:none;border:0;padding:0;font-family:var(--f-hud);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--azure-deep);text-decoration:underline;text-underline-offset:3px}
+
+.choices{display:grid;gap:8px;max-width:640px}
+.choice{display:grid;grid-template-columns:28px minmax(0,1fr) 30px;align-items:center;gap:8px;background:#fff;border:1.5px solid var(--slide-edge);
+  border-radius:7px;padding:9px 8px 9px 12px;cursor:pointer;transition:border-color .12s,background .12s;text-align:left;font-size:15.5px;color:var(--ink)}
+.choice:hover{border-color:#B9C6E2}
+.choice .lt{width:24px;height:24px;border-radius:50%;border:1.5px solid #B5BCCB;display:grid;place-items:center;font-family:var(--f-hud);font-size:11px;font-weight:700;color:var(--ink-2)}
+.choice.sel{border-color:var(--azure);background:#F2F6FE}
+.choice.sel .lt{background:var(--azure);border-color:var(--azure);color:#fff}
+.choice.struck .tx{text-decoration:line-through;color:#A0A6B3}
+.strike{background:none;border:0;width:30px;height:30px;border-radius:5px;color:#9AA1AE;font-size:12px;font-family:var(--f-hud);text-decoration:line-through}
+.strike:hover{background:#F0EEE9;color:var(--ink)}
+.choice.right{border-color:var(--good);background:var(--good-bg)}
+.choice.right .lt{background:var(--good);border-color:var(--good);color:#fff}
+.choice.wrong{border-color:var(--bad);background:var(--bad-bg)}
+.choice.wrong .lt{background:var(--bad);border-color:var(--bad);color:#fff}
+.choice.locked{cursor:default}
+.actions{display:flex;gap:10px;margin-top:18px;flex-wrap:wrap;align-items:center}
+.keyhint{font-size:12px;color:var(--ink-2)}
+
+.explain{margin-top:22px;border-top:2px solid var(--slide-edge);padding-top:18px;display:grid;gap:16px;max-width:72ch}
+.verdict{font-family:var(--f-display);font-weight:900;font-size:28px;text-transform:uppercase;line-height:1}
+.verdict.ok{color:var(--good)}.verdict.no{color:var(--bad)}
+.ans{font-size:15.5px}
+.ans b{font-weight:700}
+.sec h4{margin:0 0 6px;font-family:var(--f-hud);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-2)}
+.sec p{margin:0;font-family:var(--f-read);font-size:16px;line-height:1.6}
+.clues{margin:0;padding:0;list-style:none;display:grid;gap:6px}
+.clues li{font-size:14.5px;line-height:1.45;padding-left:16px;position:relative}
+.clues li::before{content:"";position:absolute;left:0;top:.55em;width:7px;height:7px;border-radius:2px;background:var(--azure)}
+.whynot{margin:0;padding:0;list-style:none;display:grid;gap:8px}
+.whynot li{display:grid;grid-template-columns:24px minmax(0,1fr);gap:8px;font-size:14.5px;line-height:1.45}
+.whynot li .l{font-family:var(--f-hud);font-weight:700;color:var(--ink-2)}
+.whynot li.k .l{color:var(--good)}
+.whynot li em{font-style:normal;font-weight:600}
+.call{border-radius:8px;padding:12px 14px;font-size:14.5px;line-height:1.5;border:1.5px solid}
+.call .h{display:block;font-family:var(--f-hud);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;font-weight:700;margin-bottom:4px}
+.call.hy{background:var(--hy-bg);border-color:var(--hy-border);color:var(--hy-ink)}
+.call.ih{background:var(--ih-bg);border-color:var(--ih-border);color:var(--ih-ink)}
+
+/* ---------- lab drawer ---------- */
+.drawer{position:fixed;top:0;right:0;bottom:0;width:min(380px,100%);background:var(--slide);color:var(--ink);z-index:30;
+  box-shadow:-20px 0 40px rgba(0,0,0,.45);transform:translateX(105%);transition:transform .22s;display:flex;flex-direction:column;
+  padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+.drawer.on{transform:none}
+.drawer header{display:flex;justify-content:space-between;align-items:center;padding:14px 16px;border-bottom:1px solid var(--slide-edge)}
+.drawer header h3{font-family:var(--f-hud);font-size:13px;letter-spacing:.1em;text-transform:uppercase}
+.drawer .body{overflow:auto;padding:6px 16px 20px}
+.drawer h5{font-family:var(--f-hud);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-2);margin:16px 0 6px}
+.drawer table{width:100%;border-collapse:collapse;font-size:13px}
+.drawer td{padding:5px 0;border-bottom:1px solid #EFECE6;vertical-align:top}
+.drawer td:last-child{text-align:right;font-variant-numeric:tabular-nums;color:var(--ink-2);padding-left:10px}
+.drawer .x{background:var(--stage-3);color:var(--mist);border:0;border-radius:5px;padding:6px 10px;font-family:var(--f-hud);font-size:11px}
+
+/* ---------- result ---------- */
+.result{text-align:center;padding-block:10px 0}
+.result .eyepiece{width:min(220px,60vw);margin:0 auto 18px}
+.result h2{font-family:var(--f-display);font-weight:900;font-size:clamp(46px,8vw,76px);text-transform:uppercase;line-height:.9}
+.result .sub{font-family:var(--f-read);font-size:18px;color:var(--mist-2);margin:10px auto 0;max-width:48ch}
+.stars{display:flex;justify-content:center;gap:8px;margin:18px 0 6px}
+.stars svg{width:34px;height:34px}
+.rstats{display:flex;justify-content:center;gap:28px;flex-wrap:wrap;margin:16px 0 22px}
+.rstats div{display:flex;flex-direction:column;align-items:center}
+.rstats b{font-family:var(--f-display);font-size:34px;font-weight:900;line-height:1;font-variant-numeric:tabular-nums}
+.rstats span{font-family:var(--f-hud);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--mist-2)}
+.rbtns{display:flex;justify-content:center;gap:10px;flex-wrap:wrap}
+.recap{max-width:760px;margin:30px auto 0;text-align:left;display:grid;gap:8px}
+.recap h3{font-family:var(--f-hud);font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--mist-2);margin-bottom:4px}
+.recap details{background:var(--stage-2);border:1px solid var(--rule);border-radius:8px}
+.recap summary{cursor:pointer;padding:11px 14px;display:grid;grid-template-columns:22px minmax(0,1fr) auto;gap:10px;align-items:center;font-size:14px;list-style:none}
+.recap summary::-webkit-details-marker{display:none}
+.recap .dot{width:12px;height:12px;border-radius:50%}
+.recap .rk{font-family:var(--f-hud);font-size:10.5px;color:var(--mist-2);letter-spacing:.06em}
+.recap .inner{padding:0 14px 14px}
+.recap .inner .slide{margin-top:4px;padding:16px 18px}
+
+@media (max-width:760px){
+  #title.on{grid-template-columns:1fr;gap:22px}
+  #title .eyepiece{width:min(300px,78vw);margin:12px auto 0;order:-1}
+  .arena{grid-template-columns:76px minmax(0,1fr);gap:12px;padding:10px 12px}
+  .arena .eye{width:76px;height:76px}
+  .taunt{left:62px;max-width:200px;font-size:13px}
+  .bt-name{font-size:22px}
+  .slide{padding:18px 16px 20px}
+  .stem,.ask{font-size:16px}
+  .arena-tools{margin-left:0}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+
+
+<div class="flash" id="flash"></div>
+<div class="wrap">
+
+<!-- ======== TITLE ======== -->
+<section id="title" class="screen on">
+  <div>
+    <div class="brand">HoyaDocs &middot; Block 5 Hematology</div>
+    <h1 class="game-name">Clot<span>Crusade</span></h1>
+    <p class="tagline">Three hemostasis bosses and a final king guard the coagulation exam. Every item is a hemodynamics review question that maps to in-house heme teaching, with a full teardown after each answer and in-house notes where our lectures differ.</p>
+    <div class="statrow">
+      <div><b id="stQ">13</b><span>Items</span></div>
+      <div><b>4</b><span>Bosses</span></div>
+      <div><b>3</b><span>Hearts per fight</span></div>
+    </div>
+    <div class="optrow">
+      <button class="btn primary" id="startBtn">Enter the campaign</button>
+      <label class="toggle" for="timerOpt"><input type="checkbox" id="timerOpt"> Exam pace: 90 s per item</label>
+    </div>
+    <p class="foot"><b>HoyaDocs</b> &middot; Updated October 9, 2026 &middot; Revision 1.0<br>Covers HEM07, 08, 09 and 10. Edema, shock, embolism and infarction questions were left out because the in-house heme lectures do not teach them.</p>
+  </div>
+  <div class="eyepiece"><canvas id="titleCanvas" width="600" height="600" aria-hidden="true"></canvas></div>
+</section>
+
+<!-- ======== MAP ======== -->
+<section id="map" class="screen">
+  <div class="map-head">
+    <div><div class="brand">Campaign map</div><h2>Choose your boss</h2></div>
+    <div class="camp"><div class="hud" style="color:var(--mist-2)"><span id="campN">0 of 3</span> lieutenants defeated</div><div class="bar"><i id="campBar"></i></div></div>
+  </div>
+  <div class="bossgrid" id="bossGrid"></div>
+  <div class="maprow">
+    <span>Progress is saved in this browser only.</span>
+    <span class="confirm" id="resetWrap"><button class="btn ghost small" id="labBtnMap">Lab values</button><button class="btn ghost small" id="titleBtn">Title screen</button><button class="btn ghost small" id="resetBtn">Reset progress</button></span>
+  </div>
+</section>
+
+<!-- ======== BATTLE ======== -->
+<section id="battle" class="screen">
+  <div class="arena" id="arena">
+    <div class="eye"><canvas id="bossCanvas" width="264" height="264" aria-hidden="true"></canvas><div class="taunt" id="taunt"></div></div>
+    <div style="min-width:0">
+      <div class="bt-top"><div><div class="bt-name" id="bName"></div><div class="bt-ep" id="bEp"></div></div></div>
+      <div class="hp" id="hp" aria-label="Boss health"></div>
+      <div class="hudrow">
+        <div class="hearts" id="hearts" aria-label="Your hearts"></div>
+        <div class="hud streak">Streak <b id="streak">0</b></div>
+        <div class="hud">Score <b id="score">0</b></div>
+        <div class="hud timer" id="timerWrap" hidden>Time <b id="timer">90</b></div>
+        <div class="arena-tools"><button class="btn ghost small" id="labBtn">Lab values</button><button class="btn ghost small" id="retreat">Retreat</button></div>
+      </div>
+    </div>
+  </div>
+  <div class="slide" id="qcard"></div>
+</section>
+
+<!-- ======== RESULT ======== -->
+<section id="result" class="screen">
+  <div class="result">
+    <div class="eyepiece"><canvas id="resCanvas" width="440" height="440" aria-hidden="true"></canvas></div>
+    <div class="brand" id="rEyebrow"></div>
+    <h2 id="rTitle"></h2>
+    <p class="sub" id="rSub"></p>
+    <div class="stars" id="rStars"></div>
+    <div class="rstats" id="rStats"></div>
+    <div class="rbtns"><button class="btn primary" id="rMap">Campaign map</button><button class="btn" id="rRetry">Fight again</button></div>
+    <div class="recap" id="recap"></div>
+  </div>
+</section>
+</div>
+
+<aside class="drawer" id="drawer" aria-label="Laboratory reference values">
+  <header><h3>Lab values</h3><button class="x" id="drawerX">Close</button></header>
+  <div class="body" id="drawerBody"></div>
+</aside>
+
+<script>
+// Clot Crusade question data. Choices are sorted alphabetically at runtime (exam convention).
+// ch: [text, note]; a = index of the correct choice as authored (before sorting).
+const BOSSES = [
+{
+"id": "b1",
+"name": "The Plug Warden",
+"epithet": "Keeper of the Primary Plug",
+"lec": [
+"HEM07",
+"HEM08",
+"HEM10"
+],
+"topic": "Primary hemostasis: vasoconstriction, vWF adhesion, ADP and aggregation, aspirin, petechiae",
+"sprite": "platelet",
+"hue": "#B58AF0",
+"taunts": [
+"Seconds matter. Do you know what happens first?",
+"GPIb, GPIIb/IIIa. Which one glues me to the wall?",
+"My dense granules hold the spark.",
+"Aspirin? I barely noticed for ten days."
+],
+"defeat": "The plug holds. The bleeding stops."
+},
+{
+"id": "b2",
+"name": "The Missing Factor",
+"epithet": "Prolonger of Clotting Times",
+"lec": [
+"HEM08",
+"HEM09",
+"HEM10"
+],
+"topic": "Secondary hemostasis: hemophilia A, isolated PT prolongation, bleeding patterns",
+"sprite": "web",
+"hue": "#E89A4A",
+"taunts": [
+"Mix me 1:1. I dare you.",
+"No thrombin burst for you.",
+"II, VII, IX, X. Count them.",
+"A target joint never forgets."
+],
+"defeat": "The factors return. The cascade runs again."
+},
+{
+"id": "b3",
+"name": "Clotlord Leiden",
+"epithet": "He Who Will Not Be Cleaved",
+"lec": [
+"HEM08",
+"HEM09",
+"HEM10"
+],
+"topic": "Clot control and thrombophilia: thrombomodulin, tPA, factor V Leiden, antiphospholipid antibodies",
+"sprite": "clot",
+"hue": "#D9536B",
+"taunts": [
+"Activated protein C cannot cut me.",
+"A prolonged PTT and a stroke. Delightful.",
+"Plasmin is sleeping.",
+"Normal PT, normal PTT, and still I clot."
+],
+"defeat": "Protein C cleaves. The clot dissolves."
+},
+{
+"id": "final",
+"name": "The Hemostatic King",
+"epithet": "Lord of Plug and Cascade",
+"lec": [
+"HEM07",
+"HEM08",
+"HEM09",
+"HEM10"
+],
+"topic": "Final boss: all 13 items, reshuffled, in one fight",
+"sprite": "king",
+"hue": "#F2C14E",
+"final": true,
+"taunts": [
+"All of it. At once.",
+"You beat my lieutenants. Now beat their sums.",
+"Bleeding or clotting? Choose.",
+"Every pathway leads back to me."
+],
+"defeat": "Hemostasis restored. The campaign is won."
+}
+];
+
+const QUESTIONS = {
+"b1": [
+{
+"id": "b1-1",
+"lec": "HEM10",
+"stem": "A 23-year-old man nicks the skin of his upper lip with a razor while shaving. A small bead of blood appears, and within a few seconds the bleeding from the cut stops on its own. He is healthy, takes no medications, and has no history of easy bruising or prolonged bleeding.",
+"ask": "Which of the following mechanisms is most responsible for limiting blood loss from the injured dermal arteriole in these first few seconds?",
+"ch": [
+[
+"Vasoconstriction",
+"Correct. The first response to arteriolar injury is reflex neurogenic and endothelin-mediated smooth muscle contraction. It is fast but transient, so it buys time for the platelet plug to form."
+],
+[
+"Platelet aggregation",
+"Real and essential, but aggregation (after adhesion, activation and ADP and TXA2 release) takes minutes, not seconds."
+],
+[
+"Fibrin polymerization",
+"Fibrin forms in secondary hemostasis to stabilize the plug, after the initial closure."
+],
+[
+"Neutrophil chemotaxis",
+"Neutrophils belong to inflammation. They are not needed for hemostasis."
+],
+[
+"Protein C activation",
+"Protein C is an anticoagulant. It limits clot growth; it does not stop bleeding."
+]
+],
+"a": 0,
+"clues": [
+"\"Within a few seconds\" → the earliest step in hemostasis",
+"Arteriole → has smooth muscle that can contract",
+"Healthy man, no bleeding history → normal sequence, no defect"
+],
+"why": "Hemostasis runs in order: (1) transient arteriolar vasoconstriction, (2) primary hemostasis, where vWF bridges exposed collagen to platelet GPIb, platelets activate and release granules, and GPIIb/IIIa binds fibrinogen to aggregate them into a plug, (3) secondary hemostasis, where tissue factor starts the cascade that ends with thrombin turning fibrinogen into fibrin, cross-linked by factor XIII, and (4) clot limitation by anticoagulants and fibrinolysis. Only vasoconstriction acts within seconds.",
+"hy": "Order of hemostasis: vasoconstriction → platelet adhesion (vWF–GPIb) → activation and granule release (ADP, TXA2) → aggregation (fibrinogen–GPIIb/IIIa) → fibrin (thrombin, factor XIII) → limitation (protein C/S, antithrombin, tPA). Questions often ask which step acts in \"seconds\" (vasoconstriction) versus \"minutes\" (platelets).",
+"ih": "In-house (HEM10): \"the first step in a vascular injury is vasoconstriction.\" Activated platelets add to it by releasing thromboxane A2, a vasoconstrictor."
+},
+{
+"id": "b1-2",
+"lec": "HEM08",
+"stem": "A 26-year-old woman presents with frequent nosebleeds for several years and heavy menstrual periods that soak through a pad every hour on the first two days. Physical examination shows scattered petechiae and purpura on the skin of her arms and legs. There is no joint swelling or deformity. Laboratory studies are shown below.",
+"ex": {
+"type": "labs",
+"rows": [
+[
+"Platelet count",
+"245,000/mm³",
+"150,000–400,000"
+],
+[
+"Prothrombin time",
+"12 sec",
+"11–15"
+],
+[
+"Partial thromboplastin time",
+"33 sec",
+"25–40"
+],
+[
+"von Willebrand factor activity",
+"28%",
+"50–150%"
+]
+]
+},
+"ask": "This patient most likely has a defect in which of the following steps of hemostasis?",
+"ch": [
+[
+"Platelet adhesion",
+"Correct. vWF is the bridge between subendothelial collagen and platelet GPIb. Without enough functional vWF, platelets cannot stick to the injured wall."
+],
+[
+"Platelet aggregation",
+"Aggregation depends on fibrinogen binding GPIIb/IIIa (defective in Glanzmann thrombasthenia), not on vWF."
+],
+[
+"Prothrombin generation",
+"The normal PT argues against a factor deficiency in the extrinsic or common pathway."
+],
+[
+"Prothrombin inhibition",
+"An inhibitor would prolong clotting tests and would not lower vWF activity."
+],
+[
+"Fibrin polymerization",
+"Fibrin formation is secondary hemostasis; this is a mucocutaneous (platelet-type) bleeding pattern."
+],
+[
+"Vasoconstriction",
+"Vascular smooth muscle function does not depend on vWF."
+]
+],
+"a": 0,
+"clues": [
+"Epistaxis + menorrhagia + petechiae/purpura → mucocutaneous (platelet-type) bleeding",
+"Normal platelet count → a function problem, not a number problem",
+"Low vWF activity → von Willebrand disease",
+"Normal PTT does not exclude vWD (factor VIII may be only mildly low)"
+],
+"why": "von Willebrand disease is the most common inherited bleeding disorder. vWF does two jobs: it anchors platelets to exposed collagen through GPIb (adhesion) and it carries and protects factor VIII in plasma. Most patients (type 1) have a mild quantitative deficiency, so they bleed from mucosa and skin, and the PTT may be normal or only mildly prolonged.",
+"hy": "vWD: mucocutaneous bleeding, normal platelet count, ↑bleeding time, normal or ↑PTT, ↓ristocetin cofactor activity. Type 1 (autosomal dominant) is most common. DDAVP releases stored vWF from endothelium.",
+"ih": "In-house: vWF binds exposed collagen and platelet GPIb binds vWF; vWF activity is measured as the ristocetin cofactor assay. In-house also points out that blood type O is associated with lower vWF levels."
+},
+{
+"id": "b1-3",
+"lec": "HEM07",
+"stem": "In a laboratory study of platelet function, a substance is isolated from the dense (delta) granules of pooled platelets from healthy donors. When it is added to platelets from healthy control subjects, the platelets aggregate. When it is added to platelets from a group of patients with a lifelong bleeding disorder, no aggregation occurs.",
+"ask": "Which of the following substances was most likely isolated?",
+"ch": [
+[
+"Adenosine diphosphate",
+"Correct. ADP is stored in dense granules and is a strong aggregation agonist that recruits more platelets and triggers further ADP release."
+],
+[
+"Thromboxane A2",
+"A strong aggregator, but it is made on demand by platelet COX-1, not stored in granules."
+],
+[
+"Fibrinogen",
+"Fibrinogen is the bridge between GPIIb/IIIa receptors, but it is stored in α granules, not dense granules."
+],
+[
+"Fibronectin",
+"An extracellular matrix adhesive protein, found in α granules, not dense granules."
+],
+[
+"Antithrombin III",
+"A plasma anticoagulant made by the liver; it inhibits thrombin and factor Xa."
+],
+[
+"Plasminogen",
+"The precursor of plasmin; it drives fibrinolysis, not aggregation."
+]
+],
+"a": 0,
+"clues": [
+"Dense (delta) granules → ADP, calcium, serotonin, histamine",
+"Aggregates normal platelets → an aggregation agonist",
+"No response in a lifelong bleeding disorder → the patients may lack the final aggregation receptor (GPIIb/IIIa, as in Glanzmann thrombasthenia)"
+],
+"why": "Platelet granules divide neatly. α granules hold adhesive and coagulation proteins (vWF, fibrinogen, fibronectin, factor V, PF4). Dense granules hold small molecules (ADP, Ca²⁺, serotonin, histamine) that amplify activation. ADP binds platelet P2Y12 receptors, which exposes GPIIb/IIIa so fibrinogen can link neighboring platelets. Patients whose platelets do not aggregate to ADP, as in Glanzmann thrombasthenia (absent or defective GPIIb/IIIa), bleed even though platelet count and size are normal.",
+"hy": "Glanzmann thrombasthenia: GPIIb/IIIa defect, autosomal recessive, no aggregation to any agonist except ristocetin, normal count and size. Bernard-Soulier: GPIb defect, giant platelets, low count, no response to ristocetin. P2Y12 (ADP receptor) blockers: clopidogrel, prasugrel, ticagrelor.",
+"ih": "In-house (HEM07): dense granules contain Ca²⁺ ions, histamine, serotonin and ADP and play a key role in amplifying aggregation. α granules store vWF and fibrinogen plus FV, FXI, FXIII, prothrombin and HMWK."
+},
+{
+"id": "b1-4",
+"lec": "HEM10",
+"stem": "A 59-year-old woman with type 2 diabetes mellitus and a BMI of 35 kg/m² had a myocardial infarction 3 months ago. She is now taking low-dose aspirin every day to lower her risk of another arterial thrombosis.",
+"ask": "Aspirin has its greatest effect on which of the following steps in hemostasis?",
+"ch": [
+[
+"Aggregation of platelets",
+"Correct. Aspirin irreversibly acetylates platelet COX-1, so platelets cannot make thromboxane A2, a key promoter of aggregation and vasoconstriction."
+],
+[
+"Adhesion of platelets to collagen",
+"Adhesion is mediated by vWF binding platelet GPIb and is not affected by aspirin."
+],
+[
+"Production of tissue factor",
+"Tissue factor comes from injured endothelium and subendothelial cells and does not depend on platelets."
+],
+[
+"Synthesis of von Willebrand factor",
+"Endothelial cells and megakaryocytes make vWF independent of COX."
+],
+[
+"Synthesis of antithrombin III",
+"Antithrombin is made by the liver; aspirin does not change it."
+]
+],
+"a": 0,
+"clues": [
+"Low-dose aspirin for secondary prevention after MI",
+"Arterial thrombi are platelet-rich, so antiplatelet drugs are used"
+],
+"why": "Aspirin acetylates COX-1 and blocks arachidonic acid metabolism to thromboxane A2. Platelets have no nucleus and cannot make new COX, so the effect lasts the life of the platelet (about 7–10 days). Less TXA2 means less aggregation and less vasoconstriction. The bleeding time is prolonged, while the PT and PTT stay normal.",
+"hy": "Aspirin: irreversible COX-1 (and COX-2) inhibition → ↓TXA2 → ↓aggregation. ↑bleeding time, normal PT/PTT/platelet count. Effect lasts the platelet lifespan, so it is stopped about 7 days before surgery.",
+"ih": "In-house (HEM10): thromboxane A2 release by platelets is \"how aspirin inhibits platelet function.\" HEM07 lists aspirin among acquired causes of platelet dysfunction."
+},
+{
+"id": "b1-5",
+"lec": "HEM07",
+"stem": "An autopsy study compares patterns of hemorrhage with their underlying causes. In one group of patients, the heart shows the pattern in the image below. These patients had very little total blood loss, but the same pattern was present on the surfaces of many other organs.",
+"ex": {
+"type": "smear",
+"kind": "petechiae",
+"cap": "Gross specimen: epicardial surface (stylized)",
+"desc": "The epicardial surface of the heart, with yellow epicardial fat along a coronary artery, is dotted with many tiny, pinpoint (1–2 mm) dark red hemorrhages. There are no larger blotches and no pooled blood."
+},
+"ask": "Which of the following terms best describes this pattern of hemorrhage?",
+"ch": [
+[
+"Petechiae",
+"Correct. Petechiae are pinpoint (1–2 mm) hemorrhages into skin, mucosa or serosal surfaces. Widespread petechiae point to a low platelet count or poor platelet function."
+],
+[
+"Purpura",
+"Purpura are slightly larger hemorrhages, about 3 mm or more."
+],
+[
+"Ecchymosis",
+"Ecchymoses are larger blotches, about 1–2 cm, such as a bruise after trauma."
+],
+[
+"Hematoma",
+"A hematoma is a mass-like collection of blood within tissue or a potential space."
+],
+[
+"Congestion",
+"Congestion is passive pooling of blood in dilated vessels, not bleeding out of them."
+]
+],
+"a": 0,
+"clues": [
+"Tiny pinpoint dots → petechiae (by size)",
+"Minimal blood loss but many organs involved → a systemic problem with the platelet plug",
+"Platelets seal the small defects in capillaries that happen every day"
+],
+"why": "The size of a hemorrhage carries diagnostic meaning. Petechiae (1–2 mm) come from small capillary leaks that platelets normally plug, so they appear with thrombocytopenia or platelet dysfunction. Purpura (≥3 mm) and ecchymoses (1–2 cm) are larger. Coagulation factor deficiencies instead cause deep bleeding: hematomas in muscle and soft tissue and hemarthroses.",
+"hy": "Platelet-type bleeding (ITP, TTP, vWD, Glanzmann, Bernard-Soulier): petechiae, purpura, epistaxis, gum bleeding, menorrhagia. Factor-type bleeding (hemophilia): hemarthroses, deep muscle hematomas, delayed bleeding after surgery.",
+"ih": "In-house (HEM07/08): platelet disorders present with petechiae and mucocutaneous bleeding, while hemophilia presents with deep tissue, muscle and joint bleeding."
+}
+],
+"b2": [
+{
+"id": "b2-1",
+"lec": "HEM08",
+"stem": "A 12-year-old boy is evaluated for a bleeding disorder. He has had repeated soft tissue hemorrhages since early childhood, and last year he needed emergency care for upper airway obstruction from a hematoma in his neck. Physical examination shows reduced range of motion of the knees and ankles. There are no petechiae or purpura. Laboratory studies are shown below.",
+"ex": {
+"type": "labs",
+"rows": [
+[
+"Platelet count",
+"260,000/mm³",
+"150,000–400,000"
+],
+[
+"Prothrombin time",
+"13 sec",
+"11–15"
+],
+[
+"Partial thromboplastin time",
+"68 sec",
+"25–40"
+],
+[
+"Factor VIII activity",
+"2%",
+"50–150%"
+]
+]
+},
+"ask": "Which of the following mechanisms best explains the development of this patient's disease?",
+"ch": [
+[
+"Decrease in production of thrombin",
+"Correct. Factor VIIIa is the cofactor for factor IXa in the tenase complex that activates factor X. Without it, the thrombin burst that builds a stable fibrin clot fails."
+],
+[
+"Failure of platelet aggregation",
+"Platelet function is normal, and he has no petechiae or mucosal bleeding."
+],
+[
+"Failure of fibrin polymerization",
+"Fibrin cross-linking depends on factor XIII, which is not measured by the PTT."
+],
+[
+"Decrease in membrane phospholipid",
+"Platelets provide the phospholipid surface for factor assembly; nothing here suggests that is abnormal."
+],
+[
+"Inability of platelets to release thromboxane A2",
+"That is the aspirin effect, which causes platelet-type bleeding."
+],
+[
+"Inability to neutralize antithrombin III",
+"Antithrombin is an anticoagulant; a problem neutralizing it is not a recognized cause of hemophilia."
+]
+],
+"a": 0,
+"clues": [
+"Boy, bleeding since childhood → X-linked hemophilia",
+"Deep soft tissue hematomas and damaged knees and ankles (hemarthroses) → factor-type bleeding",
+"No petechiae, normal platelets → primary hemostasis intact",
+"Isolated ↑PTT with factor VIII at 2% → hemophilia A (moderate)"
+],
+"why": "Hemophilia A is an X-linked recessive deficiency of factor VIII. Factor VIIIa and IXa together (tenase) activate factor X on the platelet surface, and Xa with Va (prothrombinase) makes thrombin. Lack of VIII sharply reduces thrombin generation, so the platelet plug forms but is never reinforced with fibrin. Bleeding is deep and often delayed, and repeated joint bleeds lead to arthropathy.",
+"hy": "Hemophilia A (VIII) and B (IX): X-linked recessive, ↑PTT, normal PT, normal platelet count and bleeding time. Hemarthroses and deep hematomas. Mixing study corrects (deficiency). Severe = <1% factor activity.",
+"ih": "In-house (HEM08): the tenase complex (VIIIa + IXa) activates X; patients often have one \"target joint\"; severe disease (<1%) bleeds spontaneously into joints and muscles. Females can be affected through extreme lyonization or Turner syndrome."
+},
+{
+"id": "b2-2",
+"lec": "HEM08",
+"stem": "A 55-year-old man has had episodes of prolonged nosebleeds over the past 6 months. He has obesity and type 2 diabetes mellitus. A stool test is positive for occult blood. Coagulation studies are shown below. When his plasma is mixed 1:1 with normal plasma, the prothrombin time corrects to normal.",
+"ex": {
+"type": "labs",
+"rows": [
+[
+"Platelet count",
+"210,000/mm³",
+"150,000–400,000"
+],
+[
+"Platelet function testing",
+"Normal",
+"—"
+],
+[
+"Prothrombin time",
+"19 sec",
+"11–15"
+],
+[
+"Partial thromboplastin time",
+"34 sec",
+"25–40"
+]
+]
+},
+"ask": "Which of the following underlying conditions is most likely associated with these findings?",
+"ch": [
+[
+"Nonalcoholic steatohepatitis",
+"Correct. An isolated PT that corrects on mixing means a factor deficiency in the extrinsic pathway. The liver makes factors II, VII, IX and X, and factor VII (shortest half-life) falls first when synthetic function drops."
+],
+[
+"Hemophilia A",
+"Hemophilia A prolongs the PTT, not the PT."
+],
+[
+"Antiphospholipid syndrome",
+"Antiphospholipid antibodies are an inhibitor: the clotting time does not correct on mixing, and patients clot rather than bleed."
+],
+[
+"Factor V Leiden mutation",
+"Factor V Leiden causes thrombosis, and the PT and PTT are normal."
+],
+[
+"Sepsis with Escherichia coli",
+"Sepsis-related DIC prolongs both PT and PTT and lowers the platelet count."
+],
+[
+"von Willebrand disease",
+"vWD is a platelet adhesion defect with a normal PT; platelet function testing would be abnormal."
+]
+],
+"a": 0,
+"clues": [
+"Isolated ↑PT with normal PTT → extrinsic pathway (factor VII)",
+"Corrects on 1:1 mixing → deficiency, not an inhibitor",
+"Normal platelets and platelet function → not a primary hemostasis problem",
+"Obesity and diabetes → fatty liver disease"
+],
+"why": "Interpret clotting tests in two steps: which test is long, and whether mixing corrects it. Isolated PT prolongation points to factor VII, the first factor to fall when the liver makes fewer vitamin K–dependent factors, whether from liver disease, vitamin K deficiency or warfarin. Correction with normal plasma confirms a deficiency. Steatohepatitis reduces hepatic synthetic function.",
+"hy": "Isolated ↑PT: early liver disease, vitamin K deficiency, warfarin, factor VII deficiency. Isolated ↑PTT: heparin, hemophilia A/B, factor XI or XII deficiency, lupus anticoagulant. Both ↑: DIC, advanced liver disease, common pathway (X, V, II, fibrinogen) deficiency. Mixing corrects = deficiency; does not correct = inhibitor.",
+"ih": "Heads up: in-house teaching (HEM09) says that in liver disease both the PT and PTT would be prolonged, because most factors are made in the liver. Robbins expects an isolated PT here, which fits early or mild liver disease (factor VII falls first). Expect \"both prolonged\" on in-house exams."
+},
+{
+"id": "b2-3",
+"lec": "HEM10",
+"stem": "A 58-year-old man has had episodes of prolonged nosebleeds over the past 6 months, and a stool test is positive for occult blood. He takes no medications. Laboratory studies are shown below.",
+"ex": {
+"type": "labs",
+"rows": [
+[
+"Platelet count",
+"230,000/mm³",
+"150,000–400,000"
+],
+[
+"Platelet function testing",
+"Normal",
+"—"
+],
+[
+"Prothrombin time",
+"21 sec",
+"11–15"
+],
+[
+"Partial thromboplastin time",
+"36 sec",
+"25–40"
+],
+[
+"1:1 mixing study (PT)",
+"Corrects",
+"—"
+]
+]
+},
+"ask": "Which of the following underlying conditions is most likely associated with these findings?",
+"ch": [
+[
+"Vitamin K deficiency",
+"Correct. Vitamin K is needed to γ-carboxylate factors II, VII, IX and X (and proteins C and S). Factor VII has the shortest half-life, so the PT prolongs first, and adding normal plasma replaces the missing factors."
+],
+[
+"Scurvy",
+"Vitamin C deficiency weakens collagen in vessel walls (perifollicular hemorrhage, gum bleeding) with normal clotting tests."
+],
+[
+"Hemophilia A",
+"Factor VIII deficiency prolongs the PTT, not the PT."
+],
+[
+"Antiphospholipid syndrome",
+"An inhibitor that does not correct on mixing, and it causes thrombosis."
+],
+[
+"Factor V Leiden mutation",
+"A thrombophilia with normal PT and PTT."
+],
+[
+"Sepsis with Escherichia coli",
+"DIC prolongs both PT and PTT and consumes platelets."
+]
+],
+"a": 0,
+"clues": [
+"Isolated ↑PT → factor VII first",
+"Corrects with normal plasma → a factor deficiency",
+"Normal platelets and function → primary hemostasis intact",
+"Mucosal and GI bleeding from a coagulopathy"
+],
+"why": "Vitamin K deficiency (poor intake, malabsorption, broad-spectrum antibiotics that kill gut flora, or the newborn period) and warfarin both lower functional factors II, VII, IX and X. Because factor VII has a half-life of only about 6 hours, the PT rises before the PTT. Treatment is vitamin K, and fresh frozen plasma or prothrombin complex concentrate for serious bleeding.",
+"hy": "Vitamin K–dependent factors: II, VII, IX, X, protein C, protein S. Newborns get vitamin K at birth to prevent hemorrhagic disease of the newborn. Warfarin inhibits vitamin K epoxide reductase (VKORC1) and is monitored with the PT/INR.",
+"ih": "In-house (HEM10): if the case is about a neonate, think of vitamin K; vitamin K deficiency is \"not a major concern in first-world countries\" in adults. Warfarin is a competitive inhibitor of VKORC1, and protein C falls early, so patients are briefly hypercoagulable in the first days of therapy."
+},
+{
+"id": "b2-4",
+"lec": "HEM08",
+"stem": "An 85-year-old man slips in the bathtub and strikes the back of his head. Over the next 24 hours he becomes more and more drowsy. A CT scan of the head shows a collection of blood beneath the dura that compresses the left cerebral hemisphere.",
+"ask": "Which of the following terms best describes this collection of blood?",
+"ch": [
+[
+"Hematoma",
+"Correct. A hematoma is a collection of blood in a tissue or a potential space, here the subdural space after torn bridging veins."
+],
+[
+"Ecchymosis",
+"An ecchymosis is a 1–2 cm blotchy bleed under skin or mucosa, like the bruise he probably has on his scalp."
+],
+[
+"Purpura",
+"Purpura are small (≥3 mm) flat hemorrhages of skin, mucosa or serosa."
+],
+[
+"Petechiae",
+"Petechiae are 1–2 mm pinpoint hemorrhages from capillary leaks."
+],
+[
+"Congestion",
+"Congestion is pooling of blood inside dilated vessels."
+]
+],
+"a": 0,
+"clues": [
+"Fall with head trauma in an older adult → torn bridging veins",
+"Blood collecting in a space (beneath the dura) → hematoma",
+"Slow neurologic decline over hours → venous bleeding"
+],
+"why": "Hemorrhage terms describe size and location. Petechiae (1–2 mm), purpura (≥3 mm) and ecchymoses (1–2 cm) are flat bleeds into skin, mucosa or serosa. A hematoma is a mass-forming collection of blood in tissue or a potential space and can be trivial (a bruise-like lump) or fatal (a subdural or retroperitoneal hematoma). Spontaneous deep hematomas suggest a coagulation factor problem.",
+"hy": "Hematomas and hemarthroses = coagulation factor bleeding (hemophilia, anticoagulants). Petechiae and purpura = platelet bleeding. Older adults on anticoagulants are at high risk of subdural hematoma after minor falls.",
+"ih": "In-house (HEM08/10): intramuscular and post-traumatic hematomas are listed as the bleeding pattern of coagulation factor disorders, in contrast to the petechiae of platelet disorders."
+}
+],
+"b3": [
+{
+"id": "b3-1",
+"lec": "HEM08",
+"stem": "In an experiment on thrombus formation, a small artery is injured and a thrombus forms at the site of injury. The thrombus does not extend into the neighboring normal artery. Investigators identify a substance on the intact endothelium that keeps the thrombus from spreading. It binds thrombin and changes thrombin from a procoagulant into an activator of protein C.",
+"ask": "Which of the following substances is most likely responsible for this effect?",
+"ch": [
+[
+"Thrombomodulin",
+"Correct. Thrombomodulin on healthy endothelium binds thrombin; the complex activates protein C, which with protein S cleaves factors Va and VIIIa."
+],
+[
+"Platelet factor 4",
+"PF4 comes from platelet α granules and neutralizes heparin; it does not activate protein C."
+],
+[
+"Prothrombin",
+"Prothrombin is the inactive precursor that becomes thrombin."
+],
+[
+"Fibrin",
+"Fibrin is the end product of coagulation, the mesh of the clot."
+],
+[
+"Calcium",
+"Calcium is a cofactor that helps the cascade along (EDTA tubes bind it to stop clotting)."
+],
+[
+"Tumor necrosis factor",
+"TNF is an inflammatory cytokine; it can make endothelium more procoagulant."
+]
+],
+"a": 0,
+"clues": [
+"Intact endothelium next to the injury → natural anticoagulant surface",
+"Binds thrombin → thrombomodulin",
+"Activates protein C → cleaves Va and VIIIa"
+],
+"why": "Thrombin is both a procoagulant (it cleaves fibrinogen, activates factors V, VIII, XI and XIII and activates platelets) and, when bound to thrombomodulin, an anticoagulant. The thrombin–thrombomodulin complex activates protein C, and activated protein C with its cofactor protein S inactivates Va and VIIIa. This keeps the clot confined to the injured segment.",
+"hy": "Natural anticoagulants: thrombomodulin → protein C/S (cleave Va, VIIIa); antithrombin (inhibits thrombin, Xa, others; potentiated by heparin); TFPI; tPA → plasmin. Factor V Leiden makes Va resistant to activated protein C.",
+"ih": "In-house (HEM08): thrombin binding to thrombomodulin makes thrombin lose its procoagulant function and activate protein C; proteins C and S degrade factors Va and VIIIa."
+},
+{
+"id": "b3-2",
+"lec": "HEM08",
+"stem": "A 66-year-old woman develops sudden chest pain that spreads to her neck and left arm. Thirty minutes later in the emergency department, she is sweating and hypotensive. Her serum troponin I level is elevated, and the decision is made to give emergency thrombolytic therapy.",
+"ask": "Which of the following drugs is most likely to be given?",
+"ch": [
+[
+"Tissue plasminogen activator",
+"Correct. tPA converts plasminogen to plasmin, which cleaves fibrin and dissolves the existing thrombus."
+],
+[
+"Acetylsalicylic acid (aspirin)",
+"Aspirin is given in MI to stop new platelet aggregation, but it does not dissolve a clot."
+],
+[
+"Low-molecular-weight heparin",
+"Heparin activates antithrombin to prevent clot growth; it does not break down fibrin."
+],
+[
+"Nitric oxide",
+"A vasodilator and inhibitor of platelet aggregation, not a thrombolytic."
+],
+[
+"Vitamin K",
+"Vitamin K helps make clotting factors; it reverses warfarin."
+]
+],
+"a": 0,
+"clues": [
+"Acute MI → occlusive coronary thrombus",
+"\"Thrombolytic\" → a drug that dissolves fibrin",
+"Only tPA acts on an existing clot"
+],
+"why": "Anticoagulants (heparin, warfarin) and antiplatelets (aspirin) prevent new clot. Thrombolytics break down clot that has already formed. tPA, made naturally by endothelium, activates plasminogen trapped in the clot to plasmin, which digests fibrin and fibrinogen. Recombinant tPA (alteplase) is used for MI when PCI is not quickly available, and for ischemic stroke and massive PE.",
+"hy": "Fibrinolysis: tPA activates plasminogen → plasmin → cleaves fibrin → D-dimers and fibrin degradation products. Antidote for thrombolytic bleeding: aminocaproic acid or tranexamic acid. Major risk: intracranial hemorrhage.",
+"ih": "In-house (HEM08/HEM10): normal endothelium is naturally anticoagulant and produces tPA, which converts plasminogen (trapped in the clot) to plasmin; plasmin digests fibrin and fibrinogen to dissolve the clot."
+},
+{
+"id": "b3-3",
+"lec": "HEM08",
+"stem": "A 21-year-old woman has had several episodes of deep venous thrombosis in her legs over the past 10 years and one pulmonary embolism last year. She does not smoke and takes no medications. Laboratory studies are shown below.",
+"ex": {
+"type": "labs",
+"rows": [
+[
+"Platelet count",
+"280,000/mm³",
+"150,000–400,000"
+],
+[
+"Platelet function testing",
+"Normal",
+"—"
+],
+[
+"Prothrombin time",
+"12 sec",
+"11–15"
+],
+[
+"Partial thromboplastin time",
+"31 sec",
+"25–40"
+]
+]
+},
+"ask": "Which of the following is the most common cause of this type of disorder?",
+"ch": [
+[
+"Factor V mutation",
+"Correct. Factor V Leiden is the most common inherited cause of recurrent venous thrombosis. Mutant factor Va resists cleavage by activated protein C, so it keeps driving thrombin formation."
+],
+[
+"Mutation in protein C",
+"A real inherited thrombophilia, but far less common than factor V Leiden."
+],
+[
+"Antithrombin III deficiency",
+"Also inherited and severe, but rare compared with factor V Leiden."
+],
+[
+"Hyperhomocysteinemia",
+"A less common risk factor, linked to both venous and arterial (atherosclerotic) thrombosis."
+],
+[
+"Occult malignancy",
+"Cancer causes hypercoagulability (Trousseau syndrome), but a 10-year history starting in adolescence argues against it."
+],
+[
+"Oral contraceptive use",
+"Estrogen raises thrombosis risk, but she takes no medications."
+],
+[
+"Smoking cigarettes",
+"Smoking mainly promotes atherosclerosis and arterial thrombosis, and she does not smoke."
+]
+],
+"a": 0,
+"clues": [
+"Young age + recurrent DVT + PE → inherited thrombophilia",
+"Normal PT and PTT → the defect does not show on routine clotting tests",
+"\"Most common\" → factor V Leiden"
+],
+"why": "Factor V Leiden is a point mutation (G1691A, Arg506Gln) at an activated protein C cleavage site in factor V. Factor Va stays active longer, so thrombin generation is increased, mostly on the venous side. Routine clotting tests are normal; diagnosis is by an APC resistance assay or genetic testing. Homozygotes have a much higher risk than heterozygotes.",
+"hy": "Inherited thrombophilias, most to least common: factor V Leiden > prothrombin G20210A > protein C, protein S and antithrombin deficiency. Antithrombin deficiency → heparin resistance. Protein C deficiency → warfarin-induced skin necrosis.",
+"ih": "In-house (HEM08): heterozygosity is 3–8% in the US (Robbins says 2–15%) and homozygosity about 1 in 5,000 with much higher risk. It is more common in European populations and rare in Asian, African and Indigenous populations. In-house describes it as recurrent deep vein thromboses."
+},
+{
+"id": "b3-4",
+"lec": "HEM09",
+"stem": "A 23-year-old woman is brought to the emergency department with 24 hours of confusion and slurred speech. A head CT scan shows a hemorrhagic infarct in the right temporal lobe, and cerebral angiography shows occlusion of a distal branch of the right middle cerebral artery. She had a pulmonary embolism 3 years ago, and a pregnancy 18 months ago ended in miscarriage. A serologic test for syphilis was positive, but confirmatory treponemal testing was negative. Laboratory studies are shown below.",
+"ex": {
+"type": "labs",
+"rows": [
+[
+"Platelet count",
+"240,000/mm³",
+"150,000–400,000"
+],
+[
+"Prothrombin time",
+"13 sec",
+"11–15"
+],
+[
+"Partial thromboplastin time",
+"52 sec",
+"25–40"
+]
+]
+},
+"ask": "Which of the following is the most likely cause of these findings?",
+"ch": [
+[
+"Antiphospholipid antibody",
+"Correct. Arterial and venous thrombosis, pregnancy loss, a false-positive syphilis test and a prolonged PTT are the picture of antiphospholipid syndrome."
+],
+[
+"Disseminated intravascular coagulation",
+"DIC prolongs both PT and PTT and lowers the platelet count."
+],
+[
+"Factor V mutation",
+"Factor V Leiden causes mainly venous clots, and the PTT is normal."
+],
+[
+"Hypercholesterolemia",
+"It causes arterial thrombosis through atherosclerosis over decades, with normal clotting tests."
+],
+[
+"von Willebrand disease",
+"vWD causes bleeding, not thrombosis."
+]
+],
+"a": 0,
+"clues": [
+"Young woman with a stroke (arterial) and a PE (venous) → thrombosis in both circulations",
+"Miscarriage → pregnancy loss is a criterion",
+"False-positive syphilis test → anticardiolipin antibodies react with the cardiolipin antigen in VDRL/RPR",
+"Prolonged PTT but clotting, not bleeding → lupus anticoagulant paradox"
+],
+"why": "Antiphospholipid antibodies (lupus anticoagulant, anticardiolipin, anti-β2-glycoprotein I) bind phospholipid–protein complexes. In the test tube they tie up the phospholipid that the PTT needs, so the PTT is prolonged and does not correct on mixing. In the body they cause a hypercoagulable state with arterial and venous thrombosis and recurrent pregnancy loss. They occur with SLE or on their own.",
+"hy": "Antiphospholipid syndrome: thrombosis (arterial or venous) or pregnancy loss + persistent antibodies. ↑PTT that does not correct on mixing; confirm with dRVVT. False-positive VDRL/RPR. Treat with long-term warfarin (heparin in pregnancy).",
+"ih": "In-house (HEM09 case 3) presents lupus anticoagulant with an ischemic stroke and a differential of factor VIII inhibitor and Bernard-Soulier. In that case both the PT and PTT were prolonged, and the confirmatory test was the dRVVT, which corrects with excess phospholipid. Lupus anticoagulants and anticardiolipin antibodies together are called antiphospholipid antibodies."
+}
+],
+"final": [
+{
+"id": "f-b1-1",
+"lec": "HEM10",
+"stem": "A 23-year-old man nicks the skin of his upper lip with a razor while shaving. A small bead of blood appears, and within a few seconds the bleeding from the cut stops on its own. He is healthy, takes no medications, and has no history of easy bruising or prolonged bleeding.",
+"ask": "Which of the following mechanisms is most responsible for limiting blood loss from the injured dermal arteriole in these first few seconds?",
+"ch": [
+[
+"Vasoconstriction",
+"Correct. The first response to arteriolar injury is reflex neurogenic and endothelin-mediated smooth muscle contraction. It is fast but transient, so it buys time for the platelet plug to form."
+],
+[
+"Platelet aggregation",
+"Real and essential, but aggregation (after adhesion, activation and ADP and TXA2 release) takes minutes, not seconds."
+],
+[
+"Fibrin polymerization",
+"Fibrin forms in secondary hemostasis to stabilize the plug, after the initial closure."
+],
+[
+"Neutrophil chemotaxis",
+"Neutrophils belong to inflammation. They are not needed for hemostasis."
+],
+[
+"Protein C activation",
+"Protein C is an anticoagulant. It limits clot growth; it does not stop bleeding."
+]
+],
+"a": 0,
+"clues": [
+"\"Within a few seconds\" → the earliest step in hemostasis",
+"Arteriole → has smooth muscle that can contract",
+"Healthy man, no bleeding history → normal sequence, no defect"
+],
+"why": "Hemostasis runs in order: (1) transient arteriolar vasoconstriction, (2) primary hemostasis, where vWF bridges exposed collagen to platelet GPIb, platelets activate and release granules, and GPIIb/IIIa binds fibrinogen to aggregate them into a plug, (3) secondary hemostasis, where tissue factor starts the cascade that ends with thrombin turning fibrinogen into fibrin, cross-linked by factor XIII, and (4) clot limitation by anticoagulants and fibrinolysis. Only vasoconstriction acts within seconds.",
+"hy": "Order of hemostasis: vasoconstriction → platelet adhesion (vWF–GPIb) → activation and granule release (ADP, TXA2) → aggregation (fibrinogen–GPIIb/IIIa) → fibrin (thrombin, factor XIII) → limitation (protein C/S, antithrombin, tPA). Questions often ask which step acts in \"seconds\" (vasoconstriction) versus \"minutes\" (platelets).",
+"ih": "In-house (HEM10): \"the first step in a vascular injury is vasoconstriction.\" Activated platelets add to it by releasing thromboxane A2, a vasoconstrictor."
+},
+{
+"id": "f-b1-2",
+"lec": "HEM08",
+"stem": "A 26-year-old woman presents with frequent nosebleeds for several years and heavy menstrual periods that soak through a pad every hour on the first two days. Physical examination shows scattered petechiae and purpura on the skin of her arms and legs. There is no joint swelling or deformity. Laboratory studies are shown below.",
+"ex": {
+"type": "labs",
+"rows": [
+[
+"Platelet count",
+"245,000/mm³",
+"150,000–400,000"
+],
+[
+"Prothrombin time",
+"12 sec",
+"11–15"
+],
+[
+"Partial thromboplastin time",
+"33 sec",
+"25–40"
+],
+[
+"von Willebrand factor activity",
+"28%",
+"50–150%"
+]
+]
+},
+"ask": "This patient most likely has a defect in which of the following steps of hemostasis?",
+"ch": [
+[
+"Platelet adhesion",
+"Correct. vWF is the bridge between subendothelial collagen and platelet GPIb. Without enough functional vWF, platelets cannot stick to the injured wall."
+],
+[
+"Platelet aggregation",
+"Aggregation depends on fibrinogen binding GPIIb/IIIa (defective in Glanzmann thrombasthenia), not on vWF."
+],
+[
+"Prothrombin generation",
+"The normal PT argues against a factor deficiency in the extrinsic or common pathway."
+],
+[
+"Prothrombin inhibition",
+"An inhibitor would prolong clotting tests and would not lower vWF activity."
+],
+[
+"Fibrin polymerization",
+"Fibrin formation is secondary hemostasis; this is a mucocutaneous (platelet-type) bleeding pattern."
+],
+[
+"Vasoconstriction",
+"Vascular smooth muscle function does not depend on vWF."
+]
+],
+"a": 0,
+"clues": [
+"Epistaxis + menorrhagia + petechiae/purpura → mucocutaneous (platelet-type) bleeding",
+"Normal platelet count → a function problem, not a number problem",
+"Low vWF activity → von Willebrand disease",
+"Normal PTT does not exclude vWD (factor VIII may be only mildly low)"
+],
+"why": "von Willebrand disease is the most common inherited bleeding disorder. vWF does two jobs: it anchors platelets to exposed collagen through GPIb (adhesion) and it carries and protects factor VIII in plasma. Most patients (type 1) have a mild quantitative deficiency, so they bleed from mucosa and skin, and the PTT may be normal or only mildly prolonged.",
+"hy": "vWD: mucocutaneous bleeding, normal platelet count, ↑bleeding time, normal or ↑PTT, ↓ristocetin cofactor activity. Type 1 (autosomal dominant) is most common. DDAVP releases stored vWF from endothelium.",
+"ih": "In-house: vWF binds exposed collagen and platelet GPIb binds vWF; vWF activity is measured as the ristocetin cofactor assay. In-house also points out that blood type O is associated with lower vWF levels."
+},
+{
+"id": "f-b1-3",
+"lec": "HEM07",
+"stem": "In a laboratory study of platelet function, a substance is isolated from the dense (delta) granules of pooled platelets from healthy donors. When it is added to platelets from healthy control subjects, the platelets aggregate. When it is added to platelets from a group of patients with a lifelong bleeding disorder, no aggregation occurs.",
+"ask": "Which of the following substances was most likely isolated?",
+"ch": [
+[
+"Adenosine diphosphate",
+"Correct. ADP is stored in dense granules and is a strong aggregation agonist that recruits more platelets and triggers further ADP release."
+],
+[
+"Thromboxane A2",
+"A strong aggregator, but it is made on demand by platelet COX-1, not stored in granules."
+],
+[
+"Fibrinogen",
+"Fibrinogen is the bridge between GPIIb/IIIa receptors, but it is stored in α granules, not dense granules."
+],
+[
+"Fibronectin",
+"An extracellular matrix adhesive protein, found in α granules, not dense granules."
+],
+[
+"Antithrombin III",
+"A plasma anticoagulant made by the liver; it inhibits thrombin and factor Xa."
+],
+[
+"Plasminogen",
+"The precursor of plasmin; it drives fibrinolysis, not aggregation."
+]
+],
+"a": 0,
+"clues": [
+"Dense (delta) granules → ADP, calcium, serotonin, histamine",
+"Aggregates normal platelets → an aggregation agonist",
+"No response in a lifelong bleeding disorder → the patients may lack the final aggregation receptor (GPIIb/IIIa, as in Glanzmann thrombasthenia)"
+],
+"why": "Platelet granules divide neatly. α granules hold adhesive and coagulation proteins (vWF, fibrinogen, fibronectin, factor V, PF4). Dense granules hold small molecules (ADP, Ca²⁺, serotonin, histamine) that amplify activation. ADP binds platelet P2Y12 receptors, which exposes GPIIb/IIIa so fibrinogen can link neighboring platelets. Patients whose platelets do not aggregate to ADP, as in Glanzmann thrombasthenia (absent or defective GPIIb/IIIa), bleed even though platelet count and size are normal.",
+"hy": "Glanzmann thrombasthenia: GPIIb/IIIa defect, autosomal recessive, no aggregation to any agonist except ristocetin, normal count and size. Bernard-Soulier: GPIb defect, giant platelets, low count, no response to ristocetin. P2Y12 (ADP receptor) blockers: clopidogrel, prasugrel, ticagrelor.",
+"ih": "In-house (HEM07): dense granules contain Ca²⁺ ions, histamine, serotonin and ADP and play a key role in amplifying aggregation. α granules store vWF and fibrinogen plus FV, FXI, FXIII, prothrombin and HMWK."
+},
+{
+"id": "f-b1-4",
+"lec": "HEM10",
+"stem": "A 59-year-old woman with type 2 diabetes mellitus and a BMI of 35 kg/m² had a myocardial infarction 3 months ago. She is now taking low-dose aspirin every day to lower her risk of another arterial thrombosis.",
+"ask": "Aspirin has its greatest effect on which of the following steps in hemostasis?",
+"ch": [
+[
+"Aggregation of platelets",
+"Correct. Aspirin irreversibly acetylates platelet COX-1, so platelets cannot make thromboxane A2, a key promoter of aggregation and vasoconstriction."
+],
+[
+"Adhesion of platelets to collagen",
+"Adhesion is mediated by vWF binding platelet GPIb and is not affected by aspirin."
+],
+[
+"Production of tissue factor",
+"Tissue factor comes from injured endothelium and subendothelial cells and does not depend on platelets."
+],
+[
+"Synthesis of von Willebrand factor",
+"Endothelial cells and megakaryocytes make vWF independent of COX."
+],
+[
+"Synthesis of antithrombin III",
+"Antithrombin is made by the liver; aspirin does not change it."
+]
+],
+"a": 0,
+"clues": [
+"Low-dose aspirin for secondary prevention after MI",
+"Arterial thrombi are platelet-rich, so antiplatelet drugs are used"
+],
+"why": "Aspirin acetylates COX-1 and blocks arachidonic acid metabolism to thromboxane A2. Platelets have no nucleus and cannot make new COX, so the effect lasts the life of the platelet (about 7–10 days). Less TXA2 means less aggregation and less vasoconstriction. The bleeding time is prolonged, while the PT and PTT stay normal.",
+"hy": "Aspirin: irreversible COX-1 (and COX-2) inhibition → ↓TXA2 → ↓aggregation. ↑bleeding time, normal PT/PTT/platelet count. Effect lasts the platelet lifespan, so it is stopped about 7 days before surgery.",
+"ih": "In-house (HEM10): thromboxane A2 release by platelets is \"how aspirin inhibits platelet function.\" HEM07 lists aspirin among acquired causes of platelet dysfunction."
+},
+{
+"id": "f-b1-5",
+"lec": "HEM07",
+"stem": "An autopsy study compares patterns of hemorrhage with their underlying causes. In one group of patients, the heart shows the pattern in the image below. These patients had very little total blood loss, but the same pattern was present on the surfaces of many other organs.",
+"ex": {
+"type": "smear",
+"kind": "petechiae",
+"cap": "Gross specimen: epicardial surface (stylized)",
+"desc": "The epicardial surface of the heart, with yellow epicardial fat along a coronary artery, is dotted with many tiny, pinpoint (1–2 mm) dark red hemorrhages. There are no larger blotches and no pooled blood."
+},
+"ask": "Which of the following terms best describes this pattern of hemorrhage?",
+"ch": [
+[
+"Petechiae",
+"Correct. Petechiae are pinpoint (1–2 mm) hemorrhages into skin, mucosa or serosal surfaces. Widespread petechiae point to a low platelet count or poor platelet function."
+],
+[
+"Purpura",
+"Purpura are slightly larger hemorrhages, about 3 mm or more."
+],
+[
+"Ecchymosis",
+"Ecchymoses are larger blotches, about 1–2 cm, such as a bruise after trauma."
+],
+[
+"Hematoma",
+"A hematoma is a mass-like collection of blood within tissue or a potential space."
+],
+[
+"Congestion",
+"Congestion is passive pooling of blood in dilated vessels, not bleeding out of them."
+]
+],
+"a": 0,
+"clues": [
+"Tiny pinpoint dots → petechiae (by size)",
+"Minimal blood loss but many organs involved → a systemic problem with the platelet plug",
+"Platelets seal the small defects in capillaries that happen every day"
+],
+"why": "The size of a hemorrhage carries diagnostic meaning. Petechiae (1–2 mm) come from small capillary leaks that platelets normally plug, so they appear with thrombocytopenia or platelet dysfunction. Purpura (≥3 mm) and ecchymoses (1–2 cm) are larger. Coagulation factor deficiencies instead cause deep bleeding: hematomas in muscle and soft tissue and hemarthroses.",
+"hy": "Platelet-type bleeding (ITP, TTP, vWD, Glanzmann, Bernard-Soulier): petechiae, purpura, epistaxis, gum bleeding, menorrhagia. Factor-type bleeding (hemophilia): hemarthroses, deep muscle hematomas, delayed bleeding after surgery.",
+"ih": "In-house (HEM07/08): platelet disorders present with petechiae and mucocutaneous bleeding, while hemophilia presents with deep tissue, muscle and joint bleeding."
+},
+{
+"id": "f-b2-1",
+"lec": "HEM08",
+"stem": "A 12-year-old boy is evaluated for a bleeding disorder. He has had repeated soft tissue hemorrhages since early childhood, and last year he needed emergency care for upper airway obstruction from a hematoma in his neck. Physical examination shows reduced range of motion of the knees and ankles. There are no petechiae or purpura. Laboratory studies are shown below.",
+"ex": {
+"type": "labs",
+"rows": [
+[
+"Platelet count",
+"260,000/mm³",
+"150,000–400,000"
+],
+[
+"Prothrombin time",
+"13 sec",
+"11–15"
+],
+[
+"Partial thromboplastin time",
+"68 sec",
+"25–40"
+],
+[
+"Factor VIII activity",
+"2%",
+"50–150%"
+]
+]
+},
+"ask": "Which of the following mechanisms best explains the development of this patient's disease?",
+"ch": [
+[
+"Decrease in production of thrombin",
+"Correct. Factor VIIIa is the cofactor for factor IXa in the tenase complex that activates factor X. Without it, the thrombin burst that builds a stable fibrin clot fails."
+],
+[
+"Failure of platelet aggregation",
+"Platelet function is normal, and he has no petechiae or mucosal bleeding."
+],
+[
+"Failure of fibrin polymerization",
+"Fibrin cross-linking depends on factor XIII, which is not measured by the PTT."
+],
+[
+"Decrease in membrane phospholipid",
+"Platelets provide the phospholipid surface for factor assembly; nothing here suggests that is abnormal."
+],
+[
+"Inability of platelets to release thromboxane A2",
+"That is the aspirin effect, which causes platelet-type bleeding."
+],
+[
+"Inability to neutralize antithrombin III",
+"Antithrombin is an anticoagulant; a problem neutralizing it is not a recognized cause of hemophilia."
+]
+],
+"a": 0,
+"clues": [
+"Boy, bleeding since childhood → X-linked hemophilia",
+"Deep soft tissue hematomas and damaged knees and ankles (hemarthroses) → factor-type bleeding",
+"No petechiae, normal platelets → primary hemostasis intact",
+"Isolated ↑PTT with factor VIII at 2% → hemophilia A (moderate)"
+],
+"why": "Hemophilia A is an X-linked recessive deficiency of factor VIII. Factor VIIIa and IXa together (tenase) activate factor X on the platelet surface, and Xa with Va (prothrombinase) makes thrombin. Lack of VIII sharply reduces thrombin generation, so the platelet plug forms but is never reinforced with fibrin. Bleeding is deep and often delayed, and repeated joint bleeds lead to arthropathy.",
+"hy": "Hemophilia A (VIII) and B (IX): X-linked recessive, ↑PTT, normal PT, normal platelet count and bleeding time. Hemarthroses and deep hematomas. Mixing study corrects (deficiency). Severe = <1% factor activity.",
+"ih": "In-house (HEM08): the tenase complex (VIIIa + IXa) activates X; patients often have one \"target joint\"; severe disease (<1%) bleeds spontaneously into joints and muscles. Females can be affected through extreme lyonization or Turner syndrome."
+},
+{
+"id": "f-b2-2",
+"lec": "HEM08",
+"stem": "A 55-year-old man has had episodes of prolonged nosebleeds over the past 6 months. He has obesity and type 2 diabetes mellitus. A stool test is positive for occult blood. Coagulation studies are shown below. When his plasma is mixed 1:1 with normal plasma, the prothrombin time corrects to normal.",
+"ex": {
+"type": "labs",
+"rows": [
+[
+"Platelet count",
+"210,000/mm³",
+"150,000–400,000"
+],
+[
+"Platelet function testing",
+"Normal",
+"—"
+],
+[
+"Prothrombin time",
+"19 sec",
+"11–15"
+],
+[
+"Partial thromboplastin time",
+"34 sec",
+"25–40"
+]
+]
+},
+"ask": "Which of the following underlying conditions is most likely associated with these findings?",
+"ch": [
+[
+"Nonalcoholic steatohepatitis",
+"Correct. An isolated PT that corrects on mixing means a factor deficiency in the extrinsic pathway. The liver makes factors II, VII, IX and X, and factor VII (shortest half-life) falls first when synthetic function drops."
+],
+[
+"Hemophilia A",
+"Hemophilia A prolongs the PTT, not the PT."
+],
+[
+"Antiphospholipid syndrome",
+"Antiphospholipid antibodies are an inhibitor: the clotting time does not correct on mixing, and patients clot rather than bleed."
+],
+[
+"Factor V Leiden mutation",
+"Factor V Leiden causes thrombosis, and the PT and PTT are normal."
+],
+[
+"Sepsis with Escherichia coli",
+"Sepsis-related DIC prolongs both PT and PTT and lowers the platelet count."
+],
+[
+"von Willebrand disease",
+"vWD is a platelet adhesion defect with a normal PT; platelet function testing would be abnormal."
+]
+],
+"a": 0,
+"clues": [
+"Isolated ↑PT with normal PTT → extrinsic pathway (factor VII)",
+"Corrects on 1:1 mixing → deficiency, not an inhibitor",
+"Normal platelets and platelet function → not a primary hemostasis problem",
+"Obesity and diabetes → fatty liver disease"
+],
+"why": "Interpret clotting tests in two steps: which test is long, and whether mixing corrects it. Isolated PT prolongation points to factor VII, the first factor to fall when the liver makes fewer vitamin K–dependent factors, whether from liver disease, vitamin K deficiency or warfarin. Correction with normal plasma confirms a deficiency. Steatohepatitis reduces hepatic synthetic function.",
+"hy": "Isolated ↑PT: early liver disease, vitamin K deficiency, warfarin, factor VII deficiency. Isolated ↑PTT: heparin, hemophilia A/B, factor XI or XII deficiency, lupus anticoagulant. Both ↑: DIC, advanced liver disease, common pathway (X, V, II, fibrinogen) deficiency. Mixing corrects = deficiency; does not correct = inhibitor.",
+"ih": "Heads up: in-house teaching (HEM09) says that in liver disease both the PT and PTT would be prolonged, because most factors are made in the liver. Robbins expects an isolated PT here, which fits early or mild liver disease (factor VII falls first). Expect \"both prolonged\" on in-house exams."
+},
+{
+"id": "f-b2-3",
+"lec": "HEM10",
+"stem": "A 58-year-old man has had episodes of prolonged nosebleeds over the past 6 months, and a stool test is positive for occult blood. He takes no medications. Laboratory studies are shown below.",
+"ex": {
+"type": "labs",
+"rows": [
+[
+"Platelet count",
+"230,000/mm³",
+"150,000–400,000"
+],
+[
+"Platelet function testing",
+"Normal",
+"—"
+],
+[
+"Prothrombin time",
+"21 sec",
+"11–15"
+],
+[
+"Partial thromboplastin time",
+"36 sec",
+"25–40"
+],
+[
+"1:1 mixing study (PT)",
+"Corrects",
+"—"
+]
+]
+},
+"ask": "Which of the following underlying conditions is most likely associated with these findings?",
+"ch": [
+[
+"Vitamin K deficiency",
+"Correct. Vitamin K is needed to γ-carboxylate factors II, VII, IX and X (and proteins C and S). Factor VII has the shortest half-life, so the PT prolongs first, and adding normal plasma replaces the missing factors."
+],
+[
+"Scurvy",
+"Vitamin C deficiency weakens collagen in vessel walls (perifollicular hemorrhage, gum bleeding) with normal clotting tests."
+],
+[
+"Hemophilia A",
+"Factor VIII deficiency prolongs the PTT, not the PT."
+],
+[
+"Antiphospholipid syndrome",
+"An inhibitor that does not correct on mixing, and it causes thrombosis."
+],
+[
+"Factor V Leiden mutation",
+"A thrombophilia with normal PT and PTT."
+],
+[
+"Sepsis with Escherichia coli",
+"DIC prolongs both PT and PTT and consumes platelets."
+]
+],
+"a": 0,
+"clues": [
+"Isolated ↑PT → factor VII first",
+"Corrects with normal plasma → a factor deficiency",
+"Normal platelets and function → primary hemostasis intact",
+"Mucosal and GI bleeding from a coagulopathy"
+],
+"why": "Vitamin K deficiency (poor intake, malabsorption, broad-spectrum antibiotics that kill gut flora, or the newborn period) and warfarin both lower functional factors II, VII, IX and X. Because factor VII has a half-life of only about 6 hours, the PT rises before the PTT. Treatment is vitamin K, and fresh frozen plasma or prothrombin complex concentrate for serious bleeding.",
+"hy": "Vitamin K–dependent factors: II, VII, IX, X, protein C, protein S. Newborns get vitamin K at birth to prevent hemorrhagic disease of the newborn. Warfarin inhibits vitamin K epoxide reductase (VKORC1) and is monitored with the PT/INR.",
+"ih": "In-house (HEM10): if the case is about a neonate, think of vitamin K; vitamin K deficiency is \"not a major concern in first-world countries\" in adults. Warfarin is a competitive inhibitor of VKORC1, and protein C falls early, so patients are briefly hypercoagulable in the first days of therapy."
+},
+{
+"id": "f-b2-4",
+"lec": "HEM08",
+"stem": "An 85-year-old man slips in the bathtub and strikes the back of his head. Over the next 24 hours he becomes more and more drowsy. A CT scan of the head shows a collection of blood beneath the dura that compresses the left cerebral hemisphere.",
+"ask": "Which of the following terms best describes this collection of blood?",
+"ch": [
+[
+"Hematoma",
+"Correct. A hematoma is a collection of blood in a tissue or a potential space, here the subdural space after torn bridging veins."
+],
+[
+"Ecchymosis",
+"An ecchymosis is a 1–2 cm blotchy bleed under skin or mucosa, like the bruise he probably has on his scalp."
+],
+[
+"Purpura",
+"Purpura are small (≥3 mm) flat hemorrhages of skin, mucosa or serosa."
+],
+[
+"Petechiae",
+"Petechiae are 1–2 mm pinpoint hemorrhages from capillary leaks."
+],
+[
+"Congestion",
+"Congestion is pooling of blood inside dilated vessels."
+]
+],
+"a": 0,
+"clues": [
+"Fall with head trauma in an older adult → torn bridging veins",
+"Blood collecting in a space (beneath the dura) → hematoma",
+"Slow neurologic decline over hours → venous bleeding"
+],
+"why": "Hemorrhage terms describe size and location. Petechiae (1–2 mm), purpura (≥3 mm) and ecchymoses (1–2 cm) are flat bleeds into skin, mucosa or serosa. A hematoma is a mass-forming collection of blood in tissue or a potential space and can be trivial (a bruise-like lump) or fatal (a subdural or retroperitoneal hematoma). Spontaneous deep hematomas suggest a coagulation factor problem.",
+"hy": "Hematomas and hemarthroses = coagulation factor bleeding (hemophilia, anticoagulants). Petechiae and purpura = platelet bleeding. Older adults on anticoagulants are at high risk of subdural hematoma after minor falls.",
+"ih": "In-house (HEM08/10): intramuscular and post-traumatic hematomas are listed as the bleeding pattern of coagulation factor disorders, in contrast to the petechiae of platelet disorders."
+},
+{
+"id": "f-b3-1",
+"lec": "HEM08",
+"stem": "In an experiment on thrombus formation, a small artery is injured and a thrombus forms at the site of injury. The thrombus does not extend into the neighboring normal artery. Investigators identify a substance on the intact endothelium that keeps the thrombus from spreading. It binds thrombin and changes thrombin from a procoagulant into an activator of protein C.",
+"ask": "Which of the following substances is most likely responsible for this effect?",
+"ch": [
+[
+"Thrombomodulin",
+"Correct. Thrombomodulin on healthy endothelium binds thrombin; the complex activates protein C, which with protein S cleaves factors Va and VIIIa."
+],
+[
+"Platelet factor 4",
+"PF4 comes from platelet α granules and neutralizes heparin; it does not activate protein C."
+],
+[
+"Prothrombin",
+"Prothrombin is the inactive precursor that becomes thrombin."
+],
+[
+"Fibrin",
+"Fibrin is the end product of coagulation, the mesh of the clot."
+],
+[
+"Calcium",
+"Calcium is a cofactor that helps the cascade along (EDTA tubes bind it to stop clotting)."
+],
+[
+"Tumor necrosis factor",
+"TNF is an inflammatory cytokine; it can make endothelium more procoagulant."
+]
+],
+"a": 0,
+"clues": [
+"Intact endothelium next to the injury → natural anticoagulant surface",
+"Binds thrombin → thrombomodulin",
+"Activates protein C → cleaves Va and VIIIa"
+],
+"why": "Thrombin is both a procoagulant (it cleaves fibrinogen, activates factors V, VIII, XI and XIII and activates platelets) and, when bound to thrombomodulin, an anticoagulant. The thrombin–thrombomodulin complex activates protein C, and activated protein C with its cofactor protein S inactivates Va and VIIIa. This keeps the clot confined to the injured segment.",
+"hy": "Natural anticoagulants: thrombomodulin → protein C/S (cleave Va, VIIIa); antithrombin (inhibits thrombin, Xa, others; potentiated by heparin); TFPI; tPA → plasmin. Factor V Leiden makes Va resistant to activated protein C.",
+"ih": "In-house (HEM08): thrombin binding to thrombomodulin makes thrombin lose its procoagulant function and activate protein C; proteins C and S degrade factors Va and VIIIa."
+},
+{
+"id": "f-b3-2",
+"lec": "HEM08",
+"stem": "A 66-year-old woman develops sudden chest pain that spreads to her neck and left arm. Thirty minutes later in the emergency department, she is sweating and hypotensive. Her serum troponin I level is elevated, and the decision is made to give emergency thrombolytic therapy.",
+"ask": "Which of the following drugs is most likely to be given?",
+"ch": [
+[
+"Tissue plasminogen activator",
+"Correct. tPA converts plasminogen to plasmin, which cleaves fibrin and dissolves the existing thrombus."
+],
+[
+"Acetylsalicylic acid (aspirin)",
+"Aspirin is given in MI to stop new platelet aggregation, but it does not dissolve a clot."
+],
+[
+"Low-molecular-weight heparin",
+"Heparin activates antithrombin to prevent clot growth; it does not break down fibrin."
+],
+[
+"Nitric oxide",
+"A vasodilator and inhibitor of platelet aggregation, not a thrombolytic."
+],
+[
+"Vitamin K",
+"Vitamin K helps make clotting factors; it reverses warfarin."
+]
+],
+"a": 0,
+"clues": [
+"Acute MI → occlusive coronary thrombus",
+"\"Thrombolytic\" → a drug that dissolves fibrin",
+"Only tPA acts on an existing clot"
+],
+"why": "Anticoagulants (heparin, warfarin) and antiplatelets (aspirin) prevent new clot. Thrombolytics break down clot that has already formed. tPA, made naturally by endothelium, activates plasminogen trapped in the clot to plasmin, which digests fibrin and fibrinogen. Recombinant tPA (alteplase) is used for MI when PCI is not quickly available, and for ischemic stroke and massive PE.",
+"hy": "Fibrinolysis: tPA activates plasminogen → plasmin → cleaves fibrin → D-dimers and fibrin degradation products. Antidote for thrombolytic bleeding: aminocaproic acid or tranexamic acid. Major risk: intracranial hemorrhage.",
+"ih": "In-house (HEM08/HEM10): normal endothelium is naturally anticoagulant and produces tPA, which converts plasminogen (trapped in the clot) to plasmin; plasmin digests fibrin and fibrinogen to dissolve the clot."
+},
+{
+"id": "f-b3-3",
+"lec": "HEM08",
+"stem": "A 21-year-old woman has had several episodes of deep venous thrombosis in her legs over the past 10 years and one pulmonary embolism last year. She does not smoke and takes no medications. Laboratory studies are shown below.",
+"ex": {
+"type": "labs",
+"rows": [
+[
+"Platelet count",
+"280,000/mm³",
+"150,000–400,000"
+],
+[
+"Platelet function testing",
+"Normal",
+"—"
+],
+[
+"Prothrombin time",
+"12 sec",
+"11–15"
+],
+[
+"Partial thromboplastin time",
+"31 sec",
+"25–40"
+]
+]
+},
+"ask": "Which of the following is the most common cause of this type of disorder?",
+"ch": [
+[
+"Factor V mutation",
+"Correct. Factor V Leiden is the most common inherited cause of recurrent venous thrombosis. Mutant factor Va resists cleavage by activated protein C, so it keeps driving thrombin formation."
+],
+[
+"Mutation in protein C",
+"A real inherited thrombophilia, but far less common than factor V Leiden."
+],
+[
+"Antithrombin III deficiency",
+"Also inherited and severe, but rare compared with factor V Leiden."
+],
+[
+"Hyperhomocysteinemia",
+"A less common risk factor, linked to both venous and arterial (atherosclerotic) thrombosis."
+],
+[
+"Occult malignancy",
+"Cancer causes hypercoagulability (Trousseau syndrome), but a 10-year history starting in adolescence argues against it."
+],
+[
+"Oral contraceptive use",
+"Estrogen raises thrombosis risk, but she takes no medications."
+],
+[
+"Smoking cigarettes",
+"Smoking mainly promotes atherosclerosis and arterial thrombosis, and she does not smoke."
+]
+],
+"a": 0,
+"clues": [
+"Young age + recurrent DVT + PE → inherited thrombophilia",
+"Normal PT and PTT → the defect does not show on routine clotting tests",
+"\"Most common\" → factor V Leiden"
+],
+"why": "Factor V Leiden is a point mutation (G1691A, Arg506Gln) at an activated protein C cleavage site in factor V. Factor Va stays active longer, so thrombin generation is increased, mostly on the venous side. Routine clotting tests are normal; diagnosis is by an APC resistance assay or genetic testing. Homozygotes have a much higher risk than heterozygotes.",
+"hy": "Inherited thrombophilias, most to least common: factor V Leiden > prothrombin G20210A > protein C, protein S and antithrombin deficiency. Antithrombin deficiency → heparin resistance. Protein C deficiency → warfarin-induced skin necrosis.",
+"ih": "In-house (HEM08): heterozygosity is 3–8% in the US (Robbins says 2–15%) and homozygosity about 1 in 5,000 with much higher risk. It is more common in European populations and rare in Asian, African and Indigenous populations. In-house describes it as recurrent deep vein thromboses."
+},
+{
+"id": "f-b3-4",
+"lec": "HEM09",
+"stem": "A 23-year-old woman is brought to the emergency department with 24 hours of confusion and slurred speech. A head CT scan shows a hemorrhagic infarct in the right temporal lobe, and cerebral angiography shows occlusion of a distal branch of the right middle cerebral artery. She had a pulmonary embolism 3 years ago, and a pregnancy 18 months ago ended in miscarriage. A serologic test for syphilis was positive, but confirmatory treponemal testing was negative. Laboratory studies are shown below.",
+"ex": {
+"type": "labs",
+"rows": [
+[
+"Platelet count",
+"240,000/mm³",
+"150,000–400,000"
+],
+[
+"Prothrombin time",
+"13 sec",
+"11–15"
+],
+[
+"Partial thromboplastin time",
+"52 sec",
+"25–40"
+]
+]
+},
+"ask": "Which of the following is the most likely cause of these findings?",
+"ch": [
+[
+"Antiphospholipid antibody",
+"Correct. Arterial and venous thrombosis, pregnancy loss, a false-positive syphilis test and a prolonged PTT are the picture of antiphospholipid syndrome."
+],
+[
+"Disseminated intravascular coagulation",
+"DIC prolongs both PT and PTT and lowers the platelet count."
+],
+[
+"Factor V mutation",
+"Factor V Leiden causes mainly venous clots, and the PTT is normal."
+],
+[
+"Hypercholesterolemia",
+"It causes arterial thrombosis through atherosclerosis over decades, with normal clotting tests."
+],
+[
+"von Willebrand disease",
+"vWD causes bleeding, not thrombosis."
+]
+],
+"a": 0,
+"clues": [
+"Young woman with a stroke (arterial) and a PE (venous) → thrombosis in both circulations",
+"Miscarriage → pregnancy loss is a criterion",
+"False-positive syphilis test → anticardiolipin antibodies react with the cardiolipin antigen in VDRL/RPR",
+"Prolonged PTT but clotting, not bleeding → lupus anticoagulant paradox"
+],
+"why": "Antiphospholipid antibodies (lupus anticoagulant, anticardiolipin, anti-β2-glycoprotein I) bind phospholipid–protein complexes. In the test tube they tie up the phospholipid that the PTT needs, so the PTT is prolonged and does not correct on mixing. In the body they cause a hypercoagulable state with arterial and venous thrombosis and recurrent pregnancy loss. They occur with SLE or on their own.",
+"hy": "Antiphospholipid syndrome: thrombosis (arterial or venous) or pregnancy loss + persistent antibodies. ↑PTT that does not correct on mixing; confirm with dRVVT. False-positive VDRL/RPR. Treat with long-term warfarin (heparin in pregnancy).",
+"ih": "In-house (HEM09 case 3) presents lupus anticoagulant with an ischemic stroke and a differential of factor VIII inhibitor and Bernard-Soulier. In that case both the PT and PTT were prolonged, and the confirmatory test was the dRVVT, which corrects with excess phospholipid. Lupus anticoagulants and anticardiolipin antibodies together are called antiphospholipid antibodies."
+}
+]
+};
+</script>
+<script>
+(function(){
+'use strict';
+const $=s=>document.querySelector(s);
+const STORE='hd-hem-clot-crusade-v1';
+let save={won:{},timer:false};
+try{const raw=localStorage.getItem(STORE); if(raw) save=Object.assign(save,JSON.parse(raw));}catch(e){}
+function persist(){try{localStorage.setItem(STORE,JSON.stringify(save));}catch(e){}}
+const reduce=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
+const LETTERS='ABCDEFG';
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+/* ---------- seeded random ---------- */
+function rng(seed){let s=0;for(const c of String(seed))s=(s*31+c.charCodeAt(0))>>>0;return()=>{s=(s+0x6D2B79F5)>>>0;let t=s;t=Math.imul(t^t>>>15,t|1);t^=t+Math.imul(t^t>>>7,t|61);return((t^t>>>14)>>>0)/4294967296;};}
+
+/* =========================================================
+   SMEAR ILLUSTRATIONS (stylized, generic cell drawings)
+   ========================================================= */
+const RBC_FILL='#D98591', RBC_EDGE='#C26C79', BG='#F2E8EC';
+function rbc(c,x,y,r,o={}){
+  const pal=o.pallor===undefined?0.38:o.pallor;
+  c.save();c.translate(x,y);if(o.rot)c.rotate(o.rot);
+  c.beginPath();
+  if(o.sx||o.sy)c.ellipse(0,0,r*(o.sx||1),r*(o.sy||1),0,0,Math.PI*2);else c.arc(0,0,r,0,Math.PI*2);
+  const g=c.createRadialGradient(0,0,r*pal*0.5,0,0,r);
+  const fill=o.fill||RBC_FILL;
+  if(pal>0){g.addColorStop(0,'#F4DDE1');g.addColorStop(Math.min(.95,pal+.12),fill);g.addColorStop(1,o.edge||RBC_EDGE);}
+  else{g.addColorStop(0,fill);g.addColorStop(1,o.edge||RBC_EDGE);}
+  c.fillStyle=g;c.fill();
+  if(o.target){c.beginPath();c.arc(0,0,r*.28,0,Math.PI*2);c.fillStyle=fill;c.fill();}
+  if(o.hj){c.beginPath();c.arc(r*.35,-r*.25,r*.16,0,Math.PI*2);c.fillStyle='#3B1F5C';c.fill();}
+  c.restore();
+}
+function sickle(c,x,y,r,rot){
+  c.save();c.translate(x,y);c.rotate(rot);c.beginPath();
+  c.moveTo(-r*1.6,r*.2);c.quadraticCurveTo(0,-r*1.6,r*1.6,r*.2);c.quadraticCurveTo(0,-r*.2,-r*1.6,r*.2);
+  c.fillStyle='#C9677A';c.fill();c.strokeStyle='#A84E61';c.lineWidth=1;c.stroke();c.restore();
+}
+function schisto(c,x,y,r,rot,kind){
+  c.save();c.translate(x,y);c.rotate(rot);c.beginPath();
+  if(kind===0){c.arc(0,0,r,Math.PI*1.05,Math.PI*1.95);c.lineTo(r*.55,r*.15);c.lineTo(-r*.55,r*.15);}
+  else if(kind===1){c.moveTo(-r,0);c.lineTo(-r*.2,-r*.8);c.lineTo(r*.9,-r*.3);c.lineTo(r*.3,r*.5);c.lineTo(-r*.6,r*.4);}
+  else{c.moveTo(-r*.9,-r*.2);c.quadraticCurveTo(0,-r,r*.9,-r*.2);c.lineTo(r*.2,r*.3);c.lineTo(-r*.3,r*.1);}
+  c.closePath();c.fillStyle='#CE7684';c.fill();c.restore();
+}
+function tear(c,x,y,r,rot){
+  c.save();c.translate(x,y);c.rotate(rot);c.beginPath();
+  c.arc(0,0,r,Math.PI*.25,Math.PI*1.75);c.quadraticCurveTo(r*1.4,-r*.3,r*2,0);c.quadraticCurveTo(r*1.4,r*.3,r*Math.cos(Math.PI*.25),r*Math.sin(Math.PI*.25));
+  const g=c.createRadialGradient(0,0,r*.2,0,0,r*1.2);g.addColorStop(0,'#F0D3D8');g.addColorStop(.55,RBC_FILL);g.addColorStop(1,RBC_EDGE);
+  c.fillStyle=g;c.fill();c.restore();
+}
+function bite(c,x,y,r,rot){
+  c.save();c.translate(x,y);c.rotate(rot);
+  c.beginPath();c.arc(0,0,r,0,Math.PI*2);c.arc(r*.95,0,r*.45,0,Math.PI*2,true);
+  const g=c.createRadialGradient(0,0,r*.2,0,0,r);g.addColorStop(0,'#F0D3D8');g.addColorStop(.5,RBC_FILL);g.addColorStop(1,RBC_EDGE);
+  c.fillStyle=g;c.fill('evenodd');c.restore();
+}
+function blob(c,x,y,r,col,R,lobes=7,amp=.18){
+  c.beginPath();
+  for(let i=0;i<=40;i++){const a=i/40*Math.PI*2;const rr=r*(1+amp*Math.sin(a*lobes+R*6)*.6+amp*(R*.5));const px=x+Math.cos(a)*rr,py=y+Math.sin(a)*rr;i?c.lineTo(px,py):c.moveTo(px,py);}
+  c.closePath();c.fillStyle=col;c.fill();
+}
+function nucleusDots(c,x,y,r,col,n,R){for(let i=0;i<n;i++){const a=R()*Math.PI*2,d=Math.sqrt(R())*r;c.beginPath();c.arc(x+Math.cos(a)*d,y+Math.sin(a)*d,1+R()*1.6,0,Math.PI*2);c.fillStyle=col;c.fill();}}
+function cytoplasm(c,x,y,r,col){c.beginPath();c.arc(x,y,r,0,Math.PI*2);c.fillStyle=col;c.fill();}
+function neutrophil(c,x,y,r,lobes,R,gran){
+  cytoplasm(c,x,y,r,'#E9D2E6');
+  if(gran)nucleusDots(c,x,y,r*.9,gran,40,R);
+  for(let i=0;i<lobes;i++){const a=-Math.PI*.9+i*(Math.PI*1.8/(lobes-1||1));const px=x+Math.cos(a)*r*.48,py=y+Math.sin(a)*r*.38;
+    c.beginPath();c.ellipse(px,py,r*.24,r*.2,a,0,Math.PI*2);c.fillStyle='#5A2D82';c.fill();
+    if(i){const pa=-Math.PI*.9+(i-1)*(Math.PI*1.8/(lobes-1));c.beginPath();c.moveTo(x+Math.cos(pa)*r*.48,y+Math.sin(pa)*r*.38);c.lineTo(px,py);c.strokeStyle='#5A2D82';c.lineWidth=2;c.stroke();}}
+}
+function lymph(c,x,y,r,R,dark){cytoplasm(c,x,y,r,'#9DB6E3');blob(c,x-r*.05,y,r*.84,dark||'#3E2C78',R(),5,.08);nucleusDots(c,x,y,r*.7,'#2A1B58',18,R);}
+function blast(c,x,y,r,R,opts={}){
+  cytoplasm(c,x,y,r,opts.cyto||'#8EA8DB');
+  if(opts.gran)nucleusDots(c,x,y,r*.92,opts.gran,70,R);
+  blob(c,x-r*.08,y+r*.02,r*.72,opts.nuc||'#6A4AA8',R(),4,.1);
+  nucleusDots(c,x-r*.08,y,r*.6,'#8C73C4',30,R);
+  for(let i=0;i<(opts.nucleoli||2);i++){c.beginPath();c.arc(x-r*.2+i*r*.3,y-r*.15+i*r*.1,r*.1,0,Math.PI*2);c.fillStyle='#B7A6DE';c.fill();}
+  if(opts.auer){c.strokeStyle='#C2185B';c.lineWidth=2;c.lineCap='round';
+    for(let i=0;i<opts.auer;i++){const a=.6+R()*.5,ox=x+r*.55+(R()-.5)*r*.2,oy=y-r*.25+i*3;c.beginPath();c.moveTo(ox-Math.cos(a)*r*.32,oy-Math.sin(a)*r*.32);c.lineTo(ox+Math.cos(a)*r*.32,oy+Math.sin(a)*r*.32);c.stroke();}}
+}
+function plt(c,x,y,r){c.beginPath();c.arc(x,y,r,0,Math.PI*2);c.fillStyle='#8A5DB8';c.fill();}
+function pack(R,W,H,n,rmin,rmax,avoid=[]){
+  const out=[];let tries=0;
+  while(out.length<n&&tries<n*60){tries++;const r=rmin+R()*(rmax-rmin);const x=r+R()*(W-2*r),y=r+R()*(H-2*r);
+    if(out.every(o=>Math.hypot(o.x-x,o.y-y)>(o.r+r)*.92)&&avoid.every(a=>Math.hypot(a.x-x,a.y-y)>a.r+r))out.push({x,y,r});}
+  return out;
+}
+function drawSmear(cv,kind,seed){
+  const c=cv.getContext('2d'),W=cv.width,H=cv.height,R=rng(kind+(seed||''));
+  c.clearRect(0,0,W,H);c.fillStyle=BG;c.fillRect(0,0,W,H);
+  const big=[];const P=(x,y,r)=>big.push({x,y,r});
+  const fill=(n,rmin,rmax,fn)=>pack(R,W,H,n,rmin,rmax,big).forEach((o,i)=>fn(o,i));
+  const normal=(o)=>rbc(c,o.x,o.y,o.r);
+  switch(kind){
+    case 'ida':fill(70,8,13,o=>rbc(c,o.x,o.y,o.r,{pallor:.62}));for(let i=0;i<4;i++){const o=pack(R,W,H,1,9,10,big)[0];if(o)rbc(c,o.x,o.y,o.r,{sx:1.9,sy:.55,pallor:.4,rot:R()*3})}
+      fill(8,2.5,3.5,o=>plt(c,o.x,o.y,o.r));break;
+    case 'target':fill(66,9,13,(o,i)=>rbc(c,o.x,o.y,o.r,i%3?{pallor:.6,target:true}:{pallor:.5}));break;
+    case 'sickle':{P(W*.62,H*.45,16);fill(30,11,14,(o,i)=>rbc(c,o.x,o.y,o.r,{target:i%7===0,hj:i%9===2}));
+      for(let i=0;i<14;i++){const o=pack(R,W,H,1,14,14,big)[0];if(o){sickle(c,o.x,o.y,o.r,R()*6);big.push(o);}}
+      rbc(c,W*.62,H*.45,15,{hj:true});break;}
+    case 'schisto':fill(40,11,14,normal);for(let i=0;i<20;i++){const o=pack(R,W,H,1,8,11,big)[0];if(o){schisto(c,o.x,o.y,o.r,R()*6,i%3);big.push(o);}}
+      fill(2,2.5,3,o=>plt(c,o.x,o.y,o.r));break;
+    case 'sphero':fill(40,12,15,normal);for(let i=0;i<22;i++){const o=pack(R,W,H,1,8,9.5,big)[0];if(o){rbc(c,o.x,o.y,o.r,{pallor:0,fill:'#C25366',edge:'#A43F52'});big.push(o);}}
+      for(let i=0;i<3;i++){const o=pack(R,W,H,1,15,16,big)[0];if(o){rbc(c,o.x,o.y,o.r,{pallor:.2,fill:'#B9A0CF',edge:'#9C82B8'});big.push(o);}}break;
+    case 'bite':fill(46,12,14,normal);for(let i=0;i<12;i++){const o=pack(R,W,H,1,12,13,big)[0];if(o){bite(c,o.x,o.y,o.r,R()*6);big.push(o);}}break;
+    case 'hyperseg':{P(W*.42,H*.5,40);fill(42,13,18,o=>rbc(c,o.x,o.y,o.r,{sx:1.15,sy:.95,rot:R()*3,pallor:.25}));neutrophil(c,W*.42,H*.5,36,6,R);break;}
+    case 'giantplt':{fill(60,11,14,normal);const g=pack(R,W,H,3,11,14,[]);g.forEach(o=>{c.beginPath();c.arc(o.x,o.y,o.r,0,Math.PI*2);c.fillStyle='#B997D6';c.fill();nucleusDots(c,o.x,o.y,o.r*.7,'#6E3FA0',14,R);});break;}
+    case 'cml':{const cells=[[.14,.32,'n',3],[.33,.62,'n',4],[.52,.3,'m'],[.72,.6,'b'],[.88,.3,'n',2],[.22,.8,'e'],[.6,.82,'m'],[.45,.6,'band']];
+      cells.forEach(k=>P(W*k[0],H*k[1],26));fill(26,10,13,normal);
+      cells.forEach(k=>{const x=W*k[0],y=H*k[1];
+        if(k[2]==='n')neutrophil(c,x,y,22,k[3],R);
+        else if(k[2]==='m'){cytoplasm(c,x,y,24,'#E7CFE0');nucleusDots(c,x,y,22,'#B5578F',30,R);c.beginPath();c.ellipse(x-4,y,13,11,0,0,Math.PI*2);c.fillStyle='#55307E';c.fill();}
+        else if(k[2]==='b'){cytoplasm(c,x,y,20,'#D9C3DD');c.beginPath();c.ellipse(x,y,11,9,0,0,Math.PI*2);c.fillStyle='#5A2D82';c.fill();nucleusDots(c,x,y,19,'#2A0F4A',55,R);}
+        else if(k[2]==='e'){cytoplasm(c,x,y,22,'#F2D1B8');nucleusDots(c,x,y,20,'#E2733B',70,R);c.beginPath();c.ellipse(x-7,y,8,7,0,0,Math.PI*2);c.ellipse(x+7,y,8,7,0,0,Math.PI*2);c.fillStyle='#5A2D82';c.fill();}
+        else{cytoplasm(c,x,y,22,'#E9D2E6');c.beginPath();c.lineWidth=8;c.lineCap='round';c.strokeStyle='#5A2D82';c.arc(x,y,10,Math.PI*.15,Math.PI*1.1);c.stroke();}
+      });fill(10,2.5,3.5,o=>plt(c,o.x,o.y,o.r));break;}
+    case 'teardrop':{P(W*.3,H*.62,14);P(W*.74,H*.38,22);fill(32,10,13,normal);for(let i=0;i<14;i++){const o=pack(R,W,H,1,9,10,big)[0];if(o){tear(c,o.x,o.y,o.r,R()*6);big.push(o);}}
+      cytoplasm(c,W*.3,H*.62,13,'#E0AFC0');c.beginPath();c.arc(W*.3,H*.62,7,0,Math.PI*2);c.fillStyle='#2D154F';c.fill();
+      cytoplasm(c,W*.74,H*.38,20,'#E7CFE0');nucleusDots(c,W*.74,H*.38,18,'#B5578F',22,R);c.beginPath();c.ellipse(W*.74-3,H*.38,11,9,0,0,Math.PI*2);c.fillStyle='#55307E';c.fill();break;}
+    case 'auer':{const B=[[.22,.42],[.52,.55],[.8,.36]];B.forEach(b=>P(W*b[0],H*b[1],42));fill(26,11,14,normal);
+      B.forEach((b,i)=>blast(c,W*b[0],H*b[1],i===1?40:34,R,{cyto:'#C9B3DE',gran:'#9C2C6E',nuc:'#5E3C98',auer:i===1?7:i?1:2,nucleoli:1}));break;}
+    case 'smudge':{const L=pack(R,W,H,9,15,17,[]);L.forEach(o=>P(o.x,o.y,o.r+2));
+      const S=pack(R,W,H,3,16,18,big);S.forEach(o=>{blob(c,o.x,o.y,o.r*1.25,'rgba(110,80,160,.55)',R(),9,.35);P(o.x,o.y,o.r*1.3);});
+      fill(28,11,13,normal);L.forEach(o=>lymph(c,o.x,o.y,o.r,R,'#33215F'));break;}
+    case 'hairy':{const H2=[[.3,.48],[.68,.52]];H2.forEach(h=>P(W*h[0],H*h[1],48));fill(30,11,14,normal);
+      H2.forEach(h=>{const x=W*h[0],y=H*h[1];c.strokeStyle='#A9BDE3';c.lineWidth=2;for(let i=0;i<60;i++){const a=i/60*Math.PI*2,r1=30,r2=r1+6+R()*10;c.beginPath();c.moveTo(x+Math.cos(a)*r1,y+Math.sin(a)*r1);c.lineTo(x+Math.cos(a+.05)*r2,y+Math.sin(a+.05)*r2);c.stroke();}
+        cytoplasm(c,x,y,32,'#B9CBEA');c.beginPath();c.ellipse(x,y,15,12,R(),0,Math.PI*2);c.fillStyle='#4F3A92';c.fill();nucleusDots(c,x,y,12,'#7E69BF',14,R);});break;}
+    case 'rouleaux':{for(let row=0;row<7;row++){let x=10+R()*40;const y=24+row*(H-48)/6+(R()-.5)*8;
+        while(x<W-10){const n=4+Math.floor(R()*6);for(let k=0;k<n&&x<W-10;k++){rbc(c,x,y,12.5,{sx:.62,sy:1,pallor:.15});x+=9+R()*2;}x+=40+R()*60;}}break;}
+    case 'starry':{c.fillStyle='#E3DDF0';c.fillRect(0,0,W,H);const M=pack(R,W,H,6,26,32,[]);
+      const cells=pack(R,W,H,260,7,9,M);cells.forEach(o=>{c.beginPath();c.arc(o.x,o.y,o.r,0,Math.PI*2);c.fillStyle='#5466B8';c.fill();nucleusDots(c,o.x,o.y,o.r*.7,'#3B3D8F',3,R);c.beginPath();c.arc(o.x+1,o.y-1,1.4,0,Math.PI*2);c.fillStyle='#9AA6E6';c.fill();});
+      M.forEach(o=>{c.beginPath();c.arc(o.x,o.y,o.r,0,Math.PI*2);c.fillStyle='#F4EEF3';c.fill();for(let k=0;k<4;k++){c.beginPath();c.arc(o.x+(R()-.5)*o.r,o.y+(R()-.5)*o.r,3+R()*3,0,Math.PI*2);c.fillStyle='#4A2C7A';c.fill();}});break;}
+    case 'rs':{c.fillStyle='#EADFEE';c.fillRect(0,0,W,H);
+      c.strokeStyle='rgba(222,140,170,.75)';c.lineWidth=16;c.beginPath();c.moveTo(0,H*.18);c.bezierCurveTo(W*.3,H*.05,W*.6,H*.32,W,H*.12);c.stroke();
+      const RS={x:W*.55,y:H*.56,r:40},LC=[{x:W*.2,y:H*.62,r:32},{x:W*.82,y:H*.7,r:30}];
+      const bg=pack(R,W,H,190,6,8,[RS,...LC]);bg.forEach((o,i)=>{if(i%9===0){c.beginPath();c.arc(o.x,o.y,o.r+1,0,Math.PI*2);c.fillStyle='#F2B48A';c.fill();nucleusDots(c,o.x,o.y,o.r,'#D9572E',6,R);}else{c.beginPath();c.arc(o.x,o.y,o.r,0,Math.PI*2);c.fillStyle='#4B3A8E';c.fill();}});
+      LC.forEach(o=>{c.beginPath();c.arc(o.x,o.y,o.r,0,Math.PI*2);c.fillStyle='#FBF7F9';c.fill();c.beginPath();c.arc(o.x,o.y,o.r*.55,0,Math.PI*2);c.fillStyle='#D6CBEA';c.fill();blob(c,o.x,o.y,o.r*.42,'#7B62B8',R(),5,.25);});
+      cytoplasm(c,RS.x,RS.y,RS.r,'#E2D2EC');[[-1],[1]].forEach(([s])=>{c.beginPath();c.ellipse(RS.x+s*15,RS.y,15,20,0,0,Math.PI*2);c.fillStyle='#8C77C8';c.fill();c.strokeStyle='#4A3593';c.lineWidth=2;c.stroke();c.beginPath();c.arc(RS.x+s*15,RS.y-2,6.5,0,Math.PI*2);c.fillStyle='#C2185B';c.fill();});break;}
+    case 'clot':{fill(70,11,14,normal);c.strokeStyle='rgba(236,226,200,.85)';c.lineWidth=2.2;for(let i=0;i<26;i++){let x=R()*W,y=R()*H,a=R()*6.28;c.beginPath();c.moveTo(x,y);for(let k=0;k<8;k++){a+=(R()-.5)*.8;x+=Math.cos(a)*26;y+=Math.sin(a)*26;c.lineTo(x,y);}c.stroke();}
+      for(let g=0;g<7;g++){const gx=R()*W,gy=R()*H;for(let k=0;k<9;k++)plt(c,gx+(R()-.5)*30,gy+(R()-.5)*30,3+R()*1.5);}break;}
+    case 'petechiae':{const g=c.createLinearGradient(0,0,W,H);g.addColorStop(0,'#B9705F');g.addColorStop(.5,'#A55B4D');g.addColorStop(1,'#8E4A3F');c.fillStyle=g;c.fillRect(0,0,W,H);
+      c.strokeStyle='rgba(240,206,120,.9)';c.lineWidth=46;c.lineCap='round';c.beginPath();c.moveTo(-20,H*.25);c.bezierCurveTo(W*.3,H*.05,W*.55,H*.55,W+20,H*.4);c.stroke();
+      c.strokeStyle='#7A2E2A';c.lineWidth=7;c.beginPath();c.moveTo(-20,H*.25);c.bezierCurveTo(W*.3,H*.05,W*.55,H*.55,W+20,H*.4);c.stroke();
+      for(let i=0;i<190;i++){const x=R()*W,y=R()*H,r=1.4+R()*2.2;c.beginPath();c.arc(x,y,r,0,Math.PI*2);c.fillStyle=R()<.5?'#5E0F14':'#7A1419';c.fill();}
+      c.fillStyle='rgba(255,255,255,.08)';c.beginPath();c.ellipse(W*.7,H*.75,120,40,-.3,0,Math.PI*2);c.fill();break;}
+    default:fill(60,11,14,normal);
+  }
+}
+
+/* =========================================================
+   BOSS SPRITES (drawn on an eyepiece field)
+   ========================================================= */
+function field(c,S){const g=c.createRadialGradient(S/2,S/2,S*.1,S/2,S/2,S*.5);g.addColorStop(0,'#F6EEF2');g.addColorStop(.78,'#E6D6E0');g.addColorStop(1,'#3A3046');c.fillStyle=g;c.fillRect(0,0,S,S);}
+function eyes(c,x,y,s,t,mood){
+  const bl=(Math.sin(t*1.7)>0.985)?.15:1;
+  [-1,1].forEach(d=>{const ex=x+d*s*.42;c.beginPath();c.ellipse(ex,y,s*.26,s*.26*bl,0,0,Math.PI*2);c.fillStyle='#fff';c.fill();c.lineWidth=s*.04;c.strokeStyle='#1B1030';c.stroke();
+    if(bl>.5){c.beginPath();c.arc(ex+Math.sin(t*.9)*s*.06,y+s*.04,s*.12,0,Math.PI*2);c.fillStyle='#1B1030';c.fill();}
+    c.beginPath();c.lineWidth=s*.09;c.lineCap='round';c.strokeStyle='#1B1030';const k=mood==='hurt'?-1:1;c.moveTo(ex-d*s*.3,y-s*.36-k*s*.06);c.lineTo(ex+d*s*.12,y-s*.28+k*s*.08);c.stroke();});
+  c.beginPath();c.lineWidth=s*.07;c.strokeStyle='#1B1030';if(mood==='hurt'){c.arc(x,y+s*.62,s*.18,Math.PI*1.1,Math.PI*1.9);}else{c.moveTo(x-s*.25,y+s*.5);c.quadraticCurveTo(x,y+s*.42,x+s*.25,y+s*.52);}c.stroke();
+}
+function drawBoss(cv,boss,t,state){
+  const c=cv.getContext('2d'),S=cv.width,R=rng(boss.id);c.clearRect(0,0,S,S);field(c,S);
+  const cx=S/2+(state.shake?Math.sin(t*60)*S*.02:0),cy=S/2+Math.sin(t*1.6)*S*.015,u=S/264;
+  c.save();
+  if(state.dead){c.globalAlpha=.35;}
+  switch(boss.sprite){
+    case 'rbc':{const r=88*u;const g=c.createRadialGradient(cx,cy,r*.15,cx,cy,r);g.addColorStop(0,'#FBF1F3');g.addColorStop(.62,'#F1C9D0');g.addColorStop(.85,'#DB8E9B');g.addColorStop(1,'#B9606F');c.beginPath();c.arc(cx,cy,r,0,Math.PI*2);c.fillStyle=g;c.fill();
+      for(let i=0;i<5;i++){const a=t*.4+i*1.25;rbc(c,cx+Math.cos(a)*110*u,cy+Math.sin(a)*110*u,14*u,{pallor:.6});}eyes(c,cx,cy-6*u,60*u,t,state.mood);break;}
+    case 'sphere':{const r=74*u;const g=c.createRadialGradient(cx-r*.3,cy-r*.3,r*.1,cx,cy,r);g.addColorStop(0,'#E77A8C');g.addColorStop(1,'#8E2236');c.beginPath();c.arc(cx,cy,r,0,Math.PI*2);c.fillStyle=g;c.fill();
+      for(let i=0;i<6;i++){const a=-t*.5+i*1.05;c.save();c.translate(cx+Math.cos(a)*102*u,cy+Math.sin(a)*102*u);bite(c,0,0,12*u,a);c.restore();}eyes(c,cx,cy-4*u,56*u,t,state.mood);break;}
+    case 'shards':{for(let i=0;i<9;i++){const a=t*.7+i*.7,d=(80+12*Math.sin(t*2+i))*u;schisto(c,cx+Math.cos(a)*d,cy+Math.sin(a)*d,15*u,a*2,i%3);}
+      c.beginPath();for(let i=0;i<12;i++){const a=i/12*Math.PI*2,rr=(i%2?52:74)*u;c.lineTo(cx+Math.cos(a+t*.2)*rr,cy+Math.sin(a+t*.2)*rr);}c.closePath();c.fillStyle='#9C6FD6';c.fill();c.strokeStyle='#6C44A8';c.lineWidth=3*u;c.stroke();
+      eyes(c,cx,cy-2*u,46*u,t,state.mood);break;}
+    case 'web':{c.strokeStyle='rgba(200,110,40,.6)';c.lineWidth=2*u;for(let i=0;i<14;i++){const a=i/14*Math.PI*2+t*.1;c.beginPath();c.moveTo(cx,cy);c.lineTo(cx+Math.cos(a)*120*u,cy+Math.sin(a)*120*u);c.stroke();}
+      for(let k=1;k<4;k++){c.beginPath();for(let i=0;i<=14;i++){const a=i/14*Math.PI*2+t*.1,rr=(k*30+Math.sin(i+t)*4)*u;c.lineTo(cx+Math.cos(a)*rr,cy+Math.sin(a)*rr);}c.stroke();}
+      c.beginPath();c.arc(cx,cy,60*u,0,Math.PI*2);c.fillStyle='#E8964A';c.fill();c.strokeStyle='#B1621F';c.lineWidth=4*u;c.stroke();
+      ['II','VII','IX','X'].forEach((f,i)=>{const a=-t*.6+i*1.57;c.font=`700 ${14*u}px Chakra Petch, monospace`;c.fillStyle='#7A3E0C';c.textAlign='center';c.fillText(f,cx+Math.cos(a)*92*u,cy+Math.sin(a)*92*u);});
+      eyes(c,cx,cy-4*u,44*u,t,state.mood);break;}
+    case 'granulocyte':{const r=86*u;cytoplasm(c,cx,cy,r,'#EBD3E4');nucleusDots(c,cx,cy,r*.92,'#C4709E',140,R);
+      [[-.45,.35],[0,.55],[.45,.35]].forEach(([dx,dy])=>{c.beginPath();c.ellipse(cx+dx*r,cy+dy*r,r*.24,r*.2,0,0,Math.PI*2);c.fillStyle='#5A2D82';c.fill();});
+      for(let i=0;i<4;i++){const a=t*.5+i*1.57;c.beginPath();c.arc(cx+Math.cos(a)*112*u,cy+Math.sin(a)*112*u,10*u,0,Math.PI*2);c.fillStyle='#3A1460';c.fill();}
+      eyes(c,cx,cy-24*u,52*u,t,state.mood);break;}
+    case 'blast':{const r=88*u;cytoplasm(c,cx,cy,r,'#8FA7DC');blob(c,cx,cy,r*.74,'#6A4AA8',.3,4,.08);nucleusDots(c,cx,cy,r*.6,'#8C73C4',90,R);
+      c.strokeStyle='#C2185B';c.lineWidth=5*u;c.lineCap='round';for(let i=0;i<5;i++){const a=.7+i*.08,ox=cx+60*u,oy=cy+30*u+i*5*u;c.beginPath();c.moveTo(ox-Math.cos(a)*24*u,oy-Math.sin(a)*24*u);c.lineTo(ox+Math.cos(a)*24*u,oy+Math.sin(a)*24*u);c.stroke();}
+      eyes(c,cx-6*u,cy-14*u,54*u,t,state.mood);break;}
+    case 'lymph':{for(let i=0;i<22;i++){const a=i*2.4+t*.15,d=(95+R()*25)*u;const tw=.5+.5*Math.sin(t*3+i);c.fillStyle=`rgba(255,250,235,${.5+.5*tw})`;c.beginPath();c.arc(cx+Math.cos(a)*d,cy+Math.sin(a)*d,(3+3*tw)*u,0,Math.PI*2);c.fill();}
+      const r=82*u;cytoplasm(c,cx,cy,r,'#7E9BE0');blob(c,cx,cy,r*.86,'#34237A',.4,5,.06);nucleusDots(c,cx,cy,r*.75,'#4C3AA0',80,R);eyes(c,cx,cy-6*u,54*u,t,state.mood);break;}
+    case 'plasma':{c.save();c.translate(cx,cy);c.rotate(-.3);c.beginPath();c.ellipse(0,0,98*u,74*u,0,0,Math.PI*2);c.fillStyle='#5876C8';c.fill();
+      c.beginPath();c.ellipse(26*u,0,52*u,52*u,0,0,Math.PI*2);c.fillStyle='#C9D4F0';c.fill();c.beginPath();c.arc(34*u,0,42*u,0,Math.PI*2);c.fillStyle='#3D2878';c.fill();
+      for(let i=0;i<8;i++){const a=i/8*Math.PI*2;c.beginPath();c.arc(34*u+Math.cos(a)*26*u,Math.sin(a)*26*u,6*u,0,Math.PI*2);c.fillStyle='#22114E';c.fill();}c.restore();
+      c.font=`900 ${26*u}px Big Shoulders Display, Impact, sans-serif`;c.fillStyle='#16352F';c.textAlign='center';const sp=Math.abs(Math.sin(t*1.2));c.fillText('M',cx-58*u,cy-(70+sp*16)*u);
+      eyes(c,cx+12*u,cy-8*u,42*u,t,state.mood);break;}
+    case 'platelet':{c.save();c.translate(cx,cy);c.fillStyle='#9C6FD6';for(let i=0;i<9;i++){const a=i/9*Math.PI*2+Math.sin(t+i)*.08;c.save();c.rotate(a);c.beginPath();c.ellipse(78*u,0,(30+6*Math.sin(t*2+i))*u,9*u,0,0,Math.PI*2);c.fill();c.restore();}
+      c.beginPath();c.ellipse(0,0,80*u,72*u,0,0,Math.PI*2);c.fillStyle='#B58AF0';c.fill();c.strokeStyle='#6C44A8';c.lineWidth=4*u;c.stroke();
+      for(let i=0;i<16;i++){const a=R()*6.28,d=R()*48*u;c.beginPath();c.arc(Math.cos(a)*d,Math.sin(a)*d+20*u,(i%3?4:6)*u,0,Math.PI*2);c.fillStyle=i%3?'#4B2A80':'#2A1150';c.fill();}c.restore();
+      eyes(c,cx,cy-14*u,50*u,t,state.mood);break;}
+    case 'clot':{c.save();c.translate(cx,cy);c.rotate(-.35);c.beginPath();c.ellipse(0,0,100*u,70*u,0,0,Math.PI*2);c.clip();
+      for(let i=-6;i<7;i++){c.fillStyle=i%2?'#B83246':'#EBD9C9';c.fillRect(i*16*u-8*u,-80*u,16*u,160*u);}
+      c.restore();c.save();c.translate(cx,cy);c.rotate(-.35);c.beginPath();c.ellipse(0,0,100*u,70*u,0,0,Math.PI*2);c.strokeStyle='#7E1A2B';c.lineWidth=5*u;c.stroke();c.restore();
+      c.strokeStyle='rgba(240,230,205,.8)';c.lineWidth=2*u;for(let i=0;i<8;i++){const a=i/8*Math.PI*2+t*.2;c.beginPath();c.moveTo(cx+Math.cos(a)*90*u,cy+Math.sin(a)*70*u);c.quadraticCurveTo(cx+Math.cos(a+.3)*130*u,cy+Math.sin(a+.3)*120*u,cx+Math.cos(a+.6)*112*u,cy+Math.sin(a+.6)*104*u);c.stroke();}
+      eyes(c,cx,cy-6*u,50*u,t,state.mood);break;}
+    case 'king':{for(let i=0;i<9;i++){const a=i/9*Math.PI*2+t*.1;c.beginPath();c.arc(cx+Math.cos(a)*92*u,cy+Math.sin(a)*92*u,22*u,0,Math.PI*2);c.fillStyle='#FFFDF8';c.fill();c.strokeStyle='#D9C9D5';c.lineWidth=2*u;c.stroke();}
+      const r=74*u;c.beginPath();c.arc(cx,cy,r,0,Math.PI*2);c.fillStyle='#F3ECE6';c.fill();c.strokeStyle='#C9B6A6';c.lineWidth=4*u;c.stroke();
+      c.beginPath();const by=cy-r-6*u;c.moveTo(cx-50*u,by+20*u);c.lineTo(cx-50*u,by-18*u);c.lineTo(cx-25*u,by+2*u);c.lineTo(cx,by-30*u);c.lineTo(cx+25*u,by+2*u);c.lineTo(cx+50*u,by-18*u);c.lineTo(cx+50*u,by+20*u);c.closePath();
+      c.fillStyle='#F2C14E';c.fill();c.strokeStyle='#9A7314';c.lineWidth=3*u;c.stroke();[[-25,-2],[0,-8],[25,-2]].forEach(([dx,dy])=>{c.beginPath();c.arc(cx+dx*u,by+dy*u+10*u,5*u,0,Math.PI*2);c.fillStyle='#C2185B';c.fill();});
+      eyes(c,cx,cy+2*u,52*u,t,state.mood);break;}
+  }
+  c.restore();
+  if(state.hit>0){c.fillStyle=`rgba(255,255,255,${state.hit})`;c.fillRect(0,0,S,S);}
+  const v=c.createRadialGradient(S/2,S/2,S*.38,S/2,S/2,S*.52);v.addColorStop(0,'rgba(0,0,0,0)');v.addColorStop(1,'rgba(5,8,15,.85)');c.fillStyle=v;c.fillRect(0,0,S,S);
+}
+
+/* ---------- title canvas ---------- */
+function titleLoop(){
+  const cv=$('#titleCanvas'),c=cv.getContext('2d'),S=cv.width;let t0=performance.now();
+  const off=document.createElement('canvas');off.width=S;off.height=S;drawSmear(off,'clot','title');
+  function frame(now){if(!$('#title').classList.contains('on'))return;const t=(now-t0)/1000;
+    c.save();c.clearRect(0,0,S,S);const dx=reduce?0:Math.sin(t*.12)*30,dy=reduce?0:Math.cos(t*.1)*20;c.drawImage(off,-40+dx,-40+dy,S+80,S+80);
+    const v=c.createRadialGradient(S/2,S/2,S*.3,S/2,S/2,S*.52);v.addColorStop(0,'rgba(0,0,0,0)');v.addColorStop(1,'rgba(5,8,15,.9)');c.fillStyle=v;c.fillRect(0,0,S,S);
+    c.strokeStyle='rgba(20,28,45,.55)';c.lineWidth=2;c.beginPath();c.moveTo(S/2,S*.12);c.lineTo(S/2,S*.36);c.stroke();c.restore();
+    if(!reduce)requestAnimationFrame(frame);}
+  requestAnimationFrame(frame);
+}
+
+/* =========================================================
+   GAME STATE
+   ========================================================= */
+const ALL=Object.values(QUESTIONS).flat();
+$('#stQ').textContent=ALL.length;
+const timerOpt=$('#timerOpt');timerOpt.checked=!!save.timer;
+timerOpt.addEventListener('change',()=>{save.timer=timerOpt.checked;persist();});
+function show(id){document.querySelectorAll('.screen').forEach(s=>s.classList.toggle('on',s.id===id));window.scrollTo(0,0);if(id==='title')titleLoop();}
+const lieutenants=BOSSES.filter(b=>!b.final);
+const wonCount=()=>lieutenants.filter(b=>save.won[b.id]).length;
+
+/* ---------- map ---------- */
+function starSVG(on){return `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5l2.9 6.1 6.6.8-4.9 4.6 1.3 6.6L12 17.3 6.1 20.6l1.3-6.6L2.5 9.4l6.6-.8z" fill="${on?'#F2C14E':'none'}" stroke="${on?'#C99A00':'#5A6785'}" stroke-width="1.5"/></svg>`;}
+function renderMap(){
+  const n=wonCount();$('#campN').textContent=`${n} of ${lieutenants.length}`;$('#campBar').style.width=(n/lieutenants.length*100)+'%';
+  const grid=$('#bossGrid');grid.innerHTML='';
+  BOSSES.forEach(b=>{
+    const locked=b.final&&n<lieutenants.length;const w=save.won[b.id];
+    const el=document.createElement('button');el.className='bcard'+(b.final?' final':'');el.style.setProperty('--bh',b.hue);if(locked)el.disabled=true;
+    const status=w?`<span class="bstatus won">Defeated ${'★'.repeat(w.stars)}${'☆'.repeat(3-w.stars)}</span>`:locked?`<span class="bstatus">Locked: defeat all ${lieutenants.length}</span>`:`<span class="bstatus">${QUESTIONS[b.id].length} items</span>`;
+    el.innerHTML=`<canvas width="152" height="152"></canvas><div style="min-width:0">${status}<div class="nm" style="padding-right:${w?110:70}px">${esc(b.name)}</div><div class="ep">${esc(b.epithet)}</div><div class="tp">${esc(b.topic)}</div><div class="chips">${b.lec.map(l=>`<span class="chip">${l}</span>`).join('')}${w?`<span class="chip" style="color:var(--gold)">Best ${w.best}</span>`:''}</div></div>`;
+    grid.appendChild(el);drawBoss(el.querySelector('canvas'),b,1.2,{mood:'calm',dead:!!w,hit:0});
+    if(!locked)el.addEventListener('click',()=>startBattle(b));
+  });
+}
+$('#startBtn').addEventListener('click',()=>{renderMap();show('map');});
+$('#titleBtn').addEventListener('click',()=>show('title'));
+function bindMapBtns(){
+  $('#titleBtn').onclick=()=>show('title');$('#labBtnMap').onclick=openDrawer;
+  $('#resetBtn').onclick=()=>{const w=$('#resetWrap');w.dataset.old=w.innerHTML;
+    w.innerHTML='<span>Erase all boss progress?</span><button class="btn small" id="rsYes" style="border-color:var(--eosin)">Erase</button><button class="btn ghost small" id="rsNo">Keep</button>';
+    $('#rsYes').onclick=()=>{save.won={};persist();w.innerHTML=w.dataset.old;bindMapBtns();renderMap();};
+    $('#rsNo').onclick=()=>{w.innerHTML=w.dataset.old;bindMapBtns();};};
+}
+bindMapBtns();
+
+/* ---------- battle ---------- */
+let B=null; // battle state
+let raf=0;
+function shuffle(a,R){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor((R?R():Math.random())*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+function startBattle(boss){
+  const qs=shuffle(QUESTIONS[boss.id]);
+  B={boss,queue:qs.slice(),total:qs.length,hp:qs.length,hearts:3,streak:0,best:0,score:0,log:{},idx:0,answered:false,sel:null,anim:{hit:0,shake:0,mood:'calm',dead:false},timer:null,tleft:90,attempt:{}};
+  $('#bName').textContent=boss.name;$('#bEp').textContent=boss.epithet;$('#arena').style.setProperty('--bh',boss.hue);
+  $('#timerWrap').hidden=!save.timer;
+  show('battle');renderHud();nextQ();
+  cancelAnimationFrame(raf);const cv=$('#bossCanvas');const t0=performance.now();
+  (function loop(now){if(!$('#battle').classList.contains('on'))return;const t=(now-t0)/1000;
+    B.anim.hit=Math.max(0,B.anim.hit-.05);if(B.anim.shake>0)B.anim.shake--;
+    drawBoss(cv,boss,reduce?0:t,{mood:B.anim.mood,dead:B.anim.dead,hit:B.anim.hit,shake:B.anim.shake>0});raf=requestAnimationFrame(loop);})(t0);
+}
+function heartSVG(on){return `<svg viewBox="0 0 24 22" aria-hidden="true"><path d="M12 21s-9-5.6-9-12.2C3 5.5 5.4 3 8.3 3c1.7 0 3 .8 3.7 2.1C12.7 3.8 14 3 15.7 3 18.6 3 21 5.5 21 8.8 21 15.4 12 21 12 21z" fill="${on?'#EE6F93':'none'}" stroke="${on?'#EE6F93':'#4A5672'}" stroke-width="1.8"/></svg>`;}
+function renderHud(){
+  $('#hp').innerHTML=Array.from({length:B.total},(_,i)=>`<i class="${i<B.hp?'':'gone'}"></i>`).join('');
+  $('#hearts').innerHTML=[0,1,2].map(i=>heartSVG(i<B.hearts)).join('');
+  $('#streak').textContent=B.streak;$('#score').textContent=B.score;
+}
+function taunt(text){const el=$('#taunt');el.textContent=text;el.classList.add('on');clearTimeout(taunt._t);taunt._t=setTimeout(()=>el.classList.remove('on'),2600);}
+
+function exhibitHTML(ex,q){
+  if(!ex)return '';
+  let h='';
+  if(ex.type==='labs'){
+    h+=`<div class="exhibit"><div class="cap"><span>Laboratory studies</span></div><div class="labs"><table><tbody>${ex.rows.map(r=>`<tr><td>${esc(r[0])}</td><td>${esc(r[1])}</td><td>${esc(r[2]||'')}</td></tr>`).join('')}</tbody></table></div></div>`;
+  }
+  const kind=ex.type==='smear'?ex.kind:ex.smear;
+  if(kind){
+    const desc=ex.type==='smear'?ex.desc:SMEAR_DESC[kind];
+    const cap=ex.cap||((kind==='starry'||kind==='rs')?'Lymph node biopsy (stylized)':'Peripheral blood smear (stylized)');
+    h+=`<div class="exhibit smearbox"><div class="cap"><span>${cap}</span><button class="linkbtn" data-desc>Describe the image</button></div><canvas width="640" height="300" data-smear="${kind}" data-seed="${q.id}"></canvas><div class="desc" hidden>${esc(desc)}</div></div>`;
+  }
+  return h;
+}
+const SMEAR_DESC={target:'Small hypochromic red cells, many with a central dot of hemoglobin surrounded by a pale ring (target cells).',rouleaux:'Red cells stacked in rows like coins (rouleaux).'};
+
+function nextQ(){
+  clearInterval(B.timer);
+  if(!B.queue.length)return finish(true);
+  const q=B.queue[0];B.cur=q;B.answered=false;B.sel=null;B.struck=new Set();B.attempt[q.id]=(B.attempt[q.id]||0)+1;
+  const order=q.ch.map((c,i)=>({t:c[0],n:c[1],k:i===q.a})).sort((a,b)=>a.t.localeCompare(b.t));B.order=order;
+  const done=B.total-B.hp;
+  $('#qcard').innerHTML=`
+    <div class="itemline"><span>Item ${done+1} of ${B.total}${B.attempt[q.id]>1?' &middot; returned':''}</span><span>${q.lec}</span></div>
+    <div class="stem"><p>${esc(q.stem)}</p></div>
+    ${exhibitHTML(q.ex,q)}
+    <div class="ask">${esc(q.ask)}</div>
+    <div class="choices" role="radiogroup" aria-label="Answer choices">${order.map((o,i)=>`<div class="choice" role="radio" aria-checked="false" tabindex="0" data-i="${i}"><span class="lt">${LETTERS[i]}</span><span class="tx">${esc(o.t)}</span><button class="strike" data-strike="${i}" aria-label="Cross out choice ${LETTERS[i]}" title="Cross out">ab</button></div>`).join('')}</div>
+    <div class="actions"><button class="btn primary" id="submit" disabled>Submit</button><span class="keyhint">Keys: letters to choose, Enter to submit</span></div>
+    <div id="explain"></div>`;
+  $('#qcard').querySelectorAll('canvas[data-smear]').forEach(cv=>drawSmear(cv,cv.dataset.smear,cv.dataset.seed));
+  $('#qcard').querySelectorAll('[data-desc]').forEach(b=>b.addEventListener('click',()=>{const d=b.closest('.exhibit').querySelector('.desc');d.hidden=!d.hidden;b.textContent=d.hidden?'Describe the image':'Hide description';}));
+  $('#qcard').querySelectorAll('.choice').forEach(el=>{
+    el.addEventListener('click',e=>{if(e.target.closest('[data-strike]'))return;pick(+el.dataset.i);});
+    el.addEventListener('keydown',e=>{if(e.key===' '){e.preventDefault();pick(+el.dataset.i);}});
+  });
+  $('#qcard').querySelectorAll('[data-strike]').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();if(B.answered)return;const i=+b.dataset.strike;const el=b.closest('.choice');
+    if(B.struck.has(i)){B.struck.delete(i);el.classList.remove('struck');}else{B.struck.add(i);el.classList.add('struck');if(B.sel===i){B.sel=null;el.classList.remove('sel');$('#submit').disabled=true;}}}));
+  $('#submit').addEventListener('click',submit);
+  if(save.timer){B.tleft=90;$('#timer').textContent=B.tleft;$('#timer').classList.remove('low');
+    B.timer=setInterval(()=>{B.tleft--;$('#timer').textContent=Math.max(0,B.tleft);$('#timer').classList.toggle('low',B.tleft<=15);if(B.tleft<=0){clearInterval(B.timer);submit(true);}},1000);}
+  window.scrollTo({top:0,behavior:reduce?'auto':'smooth'});
+}
+function pick(i){if(B.answered||B.struck.has(i))return;B.sel=i;$('#qcard').querySelectorAll('.choice').forEach(el=>{const on=+el.dataset.i===i;el.classList.toggle('sel',on);el.setAttribute('aria-checked',on);});$('#submit').disabled=false;}
+function submit(timeout){
+  if(B.answered)return;if(B.sel===null&&timeout!==true)return;
+  clearInterval(B.timer);B.answered=true;const q=B.cur;const ki=B.order.findIndex(o=>o.k);const ok=B.sel===ki;
+  B.log[q.id]=B.log[q.id]||{q,tries:[]};B.log[q.id].tries.push(ok?'ok':(timeout===true&&B.sel===null?'time':'miss'));
+  $('#qcard').querySelectorAll('.choice').forEach(el=>{const i=+el.dataset.i;el.classList.add('locked');el.classList.remove('sel');if(i===ki)el.classList.add('right');else if(i===B.sel)el.classList.add('wrong');});
+  if(ok){B.queue.shift();B.hp--;B.streak++;B.best=Math.max(B.best,B.streak);
+    const gain=100+Math.min(B.streak-1,5)*20+(save.timer?Math.max(0,B.tleft):0);B.score+=gain;B.anim.hit=.8;B.anim.mood='hurt';setTimeout(()=>B&&(B.anim.mood='calm'),700);
+  }else{B.queue.push(B.queue.shift());B.hearts--;B.streak=0;B.anim.mood='calm';
+    const ar=$('#arena');ar.classList.remove('shake');void ar.offsetWidth;ar.classList.add('shake');const f=$('#flash');f.classList.remove('on');void f.offsetWidth;f.classList.add('on');
+    taunt(B.boss.taunts[Math.floor(Math.random()*B.boss.taunts.length)]);}
+  renderHud();
+  const verdict=ok?(B.streak>=3?`Critical hit &middot; streak ${B.streak}`:'Direct hit'):(B.sel===null?'Time expired':'Missed');
+  const keyL=LETTERS[ki];
+  const over=B.hearts<=0||B.hp<=0;
+  $('#explain').innerHTML=`<div class="explain">${explainHTML(q,ki,B.sel,verdict,ok)}</div>
+    <div class="actions"><button class="btn primary" id="nextBtn">${over?(B.hp<=0?'Finish the boss':'See the damage'):'Next item'}</button>${ok?'':'<span class="keyhint">This item returns later in the fight.</span>'}</div>`;
+  $('#submit').remove();
+  $('#nextBtn').addEventListener('click',()=>{if(B.hp<=0)finish(true);else if(B.hearts<=0)finish(false);else nextQ();});
+  $('#nextBtn').focus({preventScroll:true});
+  setTimeout(()=>{const ex=$('#explain');if(ex)ex.scrollIntoView({behavior:reduce?'auto':'smooth',block:'start'});},60);
+}
+function explainHTML(q,ki,sel,verdict,ok){
+  const order=q.ch.map((c,i)=>({t:c[0],n:c[1],k:i===q.a})).sort((a,b)=>a.t.localeCompare(b.t));
+  return `<div class="verdict ${ok?'ok':'no'}">${verdict}</div>
+  <div class="ans">Correct answer: <b>${LETTERS[ki]}. ${esc(order[ki].t)}</b>${sel!=null&&sel!==ki?` &middot; You chose ${LETTERS[sel]}.`:''}</div>
+  <div class="sec"><h4>Decode the vignette</h4><ul class="clues">${q.clues.map(c=>`<li>${esc(c)}</li>`).join('')}</ul></div>
+  <div class="sec"><h4>Why this is the answer</h4><p>${esc(q.why)}</p></div>
+  <div class="sec"><h4>Every choice</h4><ul class="whynot">${order.map((o,i)=>`<li class="${o.k?'k':''}"><span class="l">${LETTERS[i]}</span><span><em>${esc(o.t)}.</em> ${esc(o.n)}</span></li>`).join('')}</ul></div>
+  <div class="call hy"><span class="h">USMLE high yield</span>${esc(q.hy)}</div>
+  ${q.ih?`<div class="call ih"><span class="h">In-house note</span>${esc(q.ih)}</div>`:''}`;
+}
+document.addEventListener('keydown',e=>{
+  if(!B||!$('#battle').classList.contains('on')||$('#drawer').classList.contains('on'))return;
+  if(e.target.matches('input,textarea'))return;
+  const i=LETTERS.indexOf(e.key.toUpperCase());
+  if(i>=0&&i<B.order.length&&!B.answered&&!e.metaKey&&!e.ctrlKey){pick(i);return;}
+  if(e.key==='Enter'){if(!B.answered&&B.sel!==null){e.preventDefault();submit();}}
+});
+$('#retreat').addEventListener('click',()=>{clearInterval(B.timer);renderMap();show('map');});
+
+/* ---------- finish ---------- */
+function finish(win){
+  clearInterval(B.timer);const boss=B.boss;
+  const lost=3-B.hearts;const stars=win?Math.max(1,3-lost):0;
+  if(win){const prev=save.won[boss.id];save.won[boss.id]={stars:Math.max(stars,prev?prev.stars:0),best:Math.max(B.score,prev?prev.best:0)};persist();}
+  const first=Object.values(B.log).filter(l=>l.tries[0]==='ok').length;
+  $('#rEyebrow').textContent=win?(boss.final?'Campaign complete':'Boss defeated'):'You fell';
+  $('#rTitle').textContent=win?boss.name+' falls':boss.name+' stands';
+  $('#rSub').textContent=win?boss.defeat:`${B.hp} of ${B.total} items still standing. Read the explanations below, then fight again; the items reshuffle.`;
+  $('#rStars').innerHTML=win?[0,1,2].map(i=>starSVG(i<stars)).join(''):'';
+  $('#rStats').innerHTML=`<div><b>${B.score}</b><span>Score</span></div><div><b>${first}/${Object.keys(B.log).length}</b><span>Right first try</span></div><div><b>${B.best}</b><span>Best streak</span></div>`;
+  const rc=$('#resCanvas');drawBoss(rc,boss,2,{mood:win?'hurt':'calm',dead:win,hit:0});
+  const items=Object.values(B.log);
+  $('#recap').innerHTML=`<h3>Item review</h3>`+items.map(l=>{const q=l.q;const ki=[...q.ch.map(c=>c[0])].sort((a,b)=>a.localeCompare(b)).indexOf(q.ch[q.a][0]);
+    const col=l.tries[0]==='ok'?'var(--good)':l.tries.includes('ok')?'var(--gold)':'var(--bad)';
+    const lab=l.tries[0]==='ok'?'First try':l.tries.includes('ok')?`Took ${l.tries.indexOf('ok')+1} tries`:'Not cleared';
+    return `<details><summary><span class="dot" style="background:${col}"></span><span>${esc(q.stem.split(/(?<=[a-z]\.) /)[0].slice(0,110))}… <span style="color:var(--mist-2)">(${q.lec})</span></span><span class="rk">${lab}</span></summary><div class="inner"><div class="slide"><div class="stem"><p>${esc(q.stem)}</p></div>${exhibitHTML(q.ex,q)}<div class="ask">${esc(q.ask)}</div><div class="explain" style="margin-top:8px;border-top:0;padding-top:0">${explainHTML(q,ki,null,'Answer: '+LETTERS[ki],true)}</div></div></div></details>`;}).join('');
+  $('#recap').querySelectorAll('details').forEach(d=>d.addEventListener('toggle',()=>{if(d.open){d.querySelectorAll('canvas[data-smear]').forEach(cv=>drawSmear(cv,cv.dataset.smear,cv.dataset.seed));d.querySelectorAll('[data-desc]').forEach(b=>b.onclick=()=>{const x=b.closest('.exhibit').querySelector('.desc');x.hidden=!x.hidden;b.textContent=x.hidden?'Describe the image':'Hide description';});}}));
+  B.anim.dead=win;show('result');
+  $('#rMap').onclick=()=>{renderMap();show('map');};$('#rRetry').onclick=()=>startBattle(boss);
+}
+
+/* ---------- lab drawer ---------- */
+const LABS=[
+ ['Complete blood count',[['Hemoglobin (male / female)','13.5–17.5 / 12.0–16.0 g/dL'],['Hematocrit (male / female)','41–53% / 36–46%'],['MCV','80–100 µm³'],['MCHC','31–36 g/dL'],['RDW','11.5–14.5%'],['Leukocyte count','4,500–11,000/mm³'],['Platelet count','150,000–400,000/mm³'],['Reticulocyte count','0.5–1.5%']]],
+ ['Iron studies',[['Serum iron','50–170 µg/dL'],['Total iron-binding capacity','250–400 µg/dL'],['Ferritin (male / female)','20–250 / 15–200 ng/mL'],['Transferrin saturation','20–50%']]],
+ ['Hemolysis',[['LDH','45–200 U/L'],['Haptoglobin','30–200 mg/dL'],['Total bilirubin','0.1–1.0 mg/dL'],['Direct bilirubin','0.0–0.3 mg/dL']]],
+ ['Coagulation',[['Prothrombin time','11–15 sec'],['INR','0.8–1.2'],['aPTT','25–40 sec'],['Fibrinogen','200–400 mg/dL'],['D-dimer','< 0.5 µg/mL FEU'],['Bleeding time','2–7 min']]],
+ ['Chemistry',[['Calcium','8.5–10.5 mg/dL'],['Creatinine','0.7–1.3 mg/dL'],['Total protein','6.0–8.3 g/dL'],['Albumin','3.5–5.0 g/dL'],['Potassium','3.5–5.0 mEq/L'],['Phosphate','3.0–4.5 mg/dL'],['Uric acid','3.0–8.2 mg/dL']]],
+ ['Vitamins',[['Vitamin B12','200–900 pg/mL'],['Folate (serum)','> 4 ng/mL'],['Methylmalonic acid','< 0.4 µmol/L'],['Homocysteine','5–15 µmol/L']]]
+];
+$('#drawerBody').innerHTML=LABS.map(([h,rows])=>`<h5>${h}</h5><table><tbody>${rows.map(r=>`<tr><td>${r[0]}</td><td>${r[1]}</td></tr>`).join('')}</tbody></table>`).join('');
+function openDrawer(){$('#drawer').classList.add('on');$('#drawerX').focus();}
+$('#labBtn').addEventListener('click',openDrawer);
+$('#drawerX').addEventListener('click',()=>$('#drawer').classList.remove('on'));
+document.addEventListener('keydown',e=>{if(e.key==='Escape')$('#drawer').classList.remove('on');});
+
+titleLoop();
+})();
+</script>
+
+</body>
+</html>
