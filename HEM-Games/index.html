@@ -276,6 +276,9 @@ html{scroll-behavior:smooth}
   .menu .lec{max-width:none;text-align:left}
   .menu a.all{align-items:center}
 }
+:root{--hst:#B83B72}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--hst:#E77BAA}}
+:root[data-theme="dark"]{--hst:#E77BAA}
 </style>
 </head>
 <body>
@@ -312,14 +315,13 @@ html{scroll-behavior:smooth}
       <details class="dd" style="--c:var(--pat)">
         <summary class="btn sec"><i style="background:var(--pat)"></i>Pathology<svg class="chev" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6l4 4 4-4"/></svg></summary>
         <div class="menu">
-          <div class="mh">Pathology &middot; 19 games</div>
+          <div class="mh">Pathology &middot; 18 games</div>
           <a href="HoyaDocs_HEM02_Anemia_Builder.html"><span class="mt"><strong>HEM02 Anemia Builder</strong><small>Structure Builder</small></span><span class="lec">HEM02</span></a>
           <a href="HoyaDocs_HEM03_Anemia_II_Builder.html"><span class="mt"><strong>HEM03 Anemia II Builder</strong><small>Structure Builder</small></span><span class="lec">HEM03</span></a>
           <a href="HoyaDocs_HEM05_RBC_Case_Review_Builder.html"><span class="mt"><strong>HEM05 RBC Case Review Builder</strong><small>Structure Builder</small></span><span class="lec">HEM05</span></a>
           <a href="HoyaDocs_HEM06_RBC_Lab_Builder.html"><span class="mt"><strong>HEM06 RBC Lab Builder</strong><small>Structure Builder</small></span><span class="lec">HEM06</span></a>
           <a href="HoyaDocs_HEM07_Platelet_Builder.html"><span class="mt"><strong>HEM07 Platelet Builder</strong><small>Structure Builder</small></span><span class="lec">HEM07</span></a>
           <a href="HoyaDocs_HEM08_Coagulation_Builder.html"><span class="mt"><strong>HEM08 Coagulation Builder</strong><small>Structure Builder</small></span><span class="lec">HEM08</span></a>
-          <a href="HoyaDocs_HEM10_Coagulation_Evaluation_Builder.html"><span class="mt"><strong>HEM10 Coagulation Evaluation Builder</strong><small>Structure Builder</small></span><span class="lec">HEM10</span></a>
           <a href="HoyaDocs_HEM13_MPN_Builder.html"><span class="mt"><strong>HEM13 MPN Builder</strong><small>Structure Builder</small></span><span class="lec">HEM13</span></a>
           <a href="HoyaDocs_HEM14_Acute_Leukemia_Builder.html"><span class="mt"><strong>HEM14 MDS &amp; Acute Leukemia Builder</strong><small>Structure Builder</small></span><span class="lec">HEM14</span></a>
           <a href="HoyaDocs_HEM19_Lymphoma_Builder.html"><span class="mt"><strong>HEM19 Lymphoma Builder</strong><small>Structure Builder</small></span><span class="lec">HEM19</span></a>
@@ -348,6 +350,22 @@ html{scroll-behavior:smooth}
           <a class="all showall" href="#games" data-d="gen">Show all Genetics games below &darr;</a>
         </div>
       </details>
+      <details class="dd" style="--c:var(--s)">
+        <summary class="btn sec"><i style="background:var(--s)"></i>DRT<svg class="chev" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6l4 4 4-4"/></svg></summary>
+        <div class="menu">
+          <div class="mh">DRT &middot; 1 game</div>
+          <a href="HoyaDocs_HEM10_Coagulation_Evaluation_Builder.html"><span class="mt"><strong>HEM10 Coagulation Evaluation Builder</strong><small>Structure Builder</small></span><span class="lec">HEM10</span></a>
+          <a class="all showall" href="#games" data-d="drt">Show all DRT games below &darr;</a>
+        </div>
+      </details>
+      <details class="dd" style="--c:var(--hst)">
+        <summary class="btn sec"><i style="background:var(--hst)"></i>Histology<svg class="chev" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6l4 4 4-4"/></svg></summary>
+        <div class="menu">
+          <div class="mh">Histology &middot; 1 game</div>
+          <a href="HoyaDocs_HEM01_Hematopoiesis_Builder.html"><span class="mt"><strong>HEM01 Hematopoiesis Builder</strong><small>Structure Builder</small></span><span class="lec">HEM01</span></a>
+          <a class="all showall" href="#games" data-d="his">Show all Histology games below &darr;</a>
+        </div>
+      </details>
     </nav>
   
   </section>
@@ -369,7 +387,7 @@ html{scroll-behavior:smooth}
         <summary><i></i><span class="fl">Pathology</span><svg class="chev" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6l4 4 4-4"/></svg></summary>
         <div class="fmenu">
           <button type="button" data-d="pat" data-l="">All Pathology</button>
-          <button type="button" data-d="pat" data-l="02"><b>HEM02</b>Anemia I</button><button type="button" data-d="pat" data-l="03"><b>HEM03</b>Anemia II</button><button type="button" data-d="pat" data-l="05"><b>HEM05</b>RBC Disorders Case Review</button><button type="button" data-d="pat" data-l="06"><b>HEM06</b>RBC Disorders Lab</button><button type="button" data-d="pat" data-l="07"><b>HEM07</b>Platelet Disorders</button><button type="button" data-d="pat" data-l="08"><b>HEM08</b>Coagulation Disorders</button><button type="button" data-d="pat" data-l="10"><b>HEM10</b>Clinical Evaluation of Coagulation</button><button type="button" data-d="pat" data-l="13"><b>HEM13</b>WBC Intro &amp; Myeloproliferative Disease</button><button type="button" data-d="pat" data-l="14"><b>HEM14</b>Acute Leukemias</button><button type="button" data-d="pat" data-l="19"><b>HEM19</b>Hodgkin / Non-Hodgkin Lymphoma</button><button type="button" data-d="pat" data-l="23"><b>HEM23</b>Childhood Cancer Survivorship</button><button type="button" data-d="pat" data-l="26"><b>HEM26</b>Plasma Cell Disorders</button><button type="button" data-d="pat" data-l="27"><b>HEM27</b>WBC Disorders Lab</button>
+          <button type="button" data-d="pat" data-l="02"><b>HEM02</b>Anemia I</button><button type="button" data-d="pat" data-l="03"><b>HEM03</b>Anemia II</button><button type="button" data-d="pat" data-l="05"><b>HEM05</b>RBC Disorders Case Review</button><button type="button" data-d="pat" data-l="06"><b>HEM06</b>RBC Disorders Lab</button><button type="button" data-d="pat" data-l="07"><b>HEM07</b>Platelet Disorders</button><button type="button" data-d="pat" data-l="08"><b>HEM08</b>Coagulation Disorders</button><button type="button" data-d="pat" data-l="13"><b>HEM13</b>WBC Intro &amp; Myeloproliferative Disease</button><button type="button" data-d="pat" data-l="14"><b>HEM14</b>Acute Leukemias</button><button type="button" data-d="pat" data-l="19"><b>HEM19</b>Hodgkin / Non-Hodgkin Lymphoma</button><button type="button" data-d="pat" data-l="23"><b>HEM23</b>Childhood Cancer Survivorship</button><button type="button" data-d="pat" data-l="26"><b>HEM26</b>Plasma Cell Disorders</button><button type="button" data-d="pat" data-l="27"><b>HEM27</b>WBC Disorders Lab</button>
         </div>
       </details>
       <details class="fdd" data-d="gen" style="--c:var(--emb)">
@@ -384,6 +402,20 @@ html{scroll-behavior:smooth}
           <button type="button" data-d="gen" data-l="17"><b>HEM17</b>Mendelian Inheritance &amp; Pedigrees</button>
         </div>
       </details>
+      <details class="fdd" data-d="drt" style="--c:var(--s)">
+        <summary><i></i><span class="fl">DRT</span><svg class="chev" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6l4 4 4-4"/></svg></summary>
+        <div class="fmenu">
+          <button type="button" data-d="drt" data-l="">All DRT</button>
+          <button type="button" data-d="drt" data-l="10"><b>HEM10</b>Clinical Evaluation of Coagulation</button>
+        </div>
+      </details>
+      <details class="fdd" data-d="his" style="--c:var(--hst)">
+        <summary><i></i><span class="fl">Histology</span><svg class="chev" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6l4 4 4-4"/></svg></summary>
+        <div class="fmenu">
+          <button type="button" data-d="his" data-l="">All Histology</button>
+          <button type="button" data-d="his" data-l="01"><b>HEM01</b>Hematopoiesis</button>
+        </div>
+      </details>
     </div>
     <label class="search">
       <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><circle cx="7" cy="7" r="4.8"/><path d="m10.6 10.6 3.6 3.6"/></svg>
@@ -394,6 +426,14 @@ html{scroll-behavior:smooth}
 
   <div class="list" role="list">
     <div class="lhead" aria-hidden="true"><span>Game</span><span>Category</span><span>Game type</span><span>Questions</span><span>Lectures covered</span><span></span></div>
+    <a class="row" href="HoyaDocs_HEM01_Hematopoiesis_Builder.html" data-d="his" data-l="01" style="--c:var(--hst)">
+      <span class="c-name"><span class="disc-l"><i></i>Histology</span><strong>HEM01 Hematopoiesis Builder</strong></span>
+      <span class="c-type"><span class="type tg">Structure Builder</span></span>
+      <span class="c-mode">Build + Drill &middot; Rapid Review focus &middot; Review</span>
+      <span class="c-q"><b>145</b><small>Questions</small></span>
+      <span class="c-lec"><span><b>HEM01</b>Hematopoiesis</span></span>
+      <span class="c-go" aria-hidden="true"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M2 8h11M9 4l4 4-4 4"/></svg></span>
+    </a>
     <a class="row" href="HoyaDocs_HEM02_Anemia_Builder.html" data-d="pat" data-l="02" style="--c:var(--pat)">
       <span class="c-name"><span class="disc-l"><i></i>Pathology</span><strong>HEM02 Anemia Builder</strong></span>
       <span class="c-type"><span class="type tg">Structure Builder</span></span>
@@ -450,8 +490,8 @@ html{scroll-behavior:smooth}
       <span class="c-lec"><span><b>HEM08</b>Coagulation Disorders</span></span>
       <span class="c-go" aria-hidden="true"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M2 8h11M9 4l4 4-4 4"/></svg></span>
     </a>
-    <a class="row" href="HoyaDocs_HEM10_Coagulation_Evaluation_Builder.html" data-d="pat" data-l="10" style="--c:var(--pat)">
-      <span class="c-name"><span class="disc-l"><i></i>Pathology</span><strong>HEM10 Coagulation Evaluation Builder</strong></span>
+    <a class="row" href="HoyaDocs_HEM10_Coagulation_Evaluation_Builder.html" data-d="drt" data-l="10" style="--c:var(--s)">
+      <span class="c-name"><span class="disc-l"><i></i>DRT</span><strong>HEM10 Coagulation Evaluation Builder</strong></span>
       <span class="c-type"><span class="type tg">Structure Builder</span></span>
       <span class="c-mode">Build + Drill &middot; Rapid Review focus &middot; Review</span>
       <span class="c-q"><b>67</b><small>Questions</small></span>
@@ -649,7 +689,7 @@ html{scroll-behavior:smooth}
       dds=[].slice.call(document.querySelectorAll('.dd')), all=dds.concat(fdds),
       count=document.getElementById('count'), empty=document.getElementById('empty'),
       pick=document.getElementById('pick'), lhead=document.querySelector('.lhead');
-  var LABEL={pat:'Pathology',gen:'Genetics'};
+  var LABEL={pat:'Pathology',gen:'Genetics',drt:'DRT',his:'Histology'};
   var st={d:null,l:''};
   function apply(){
     var term=q.value.trim().toLowerCase(), n=0;

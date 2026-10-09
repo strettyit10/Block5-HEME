@@ -1,0 +1,556 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HEM01 Hematopoiesis Builder</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,600;8..60,700&family=Public+Sans:wght@400;600;700&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+/* Layout: toolbar + stats on top; structure list | question card | LO mastery map. Stacks to one column on phones. */
+:root{
+  --bg:#f3f5f6; --surface:#ffffff; --ink:#18212b; --muted:#5a6570; --line:#dbe0e5; --chip:#eceff2;
+  --arch:#b8641a; --face:#2c55a0; --eye:#2c55a0; --accent:#b8641a;
+  --ok:#1d7a3e; --ok-bg:#e3f4e8; --bad:#b3261e; --bad-bg:#fbe7e5; --once:#b7791f; --once-bg:#fdf1dc; --mem:#c2621a;
+  --hy-bg:#fff6cc; --hy-line:#c9a227; --hy-ink:#4a3a00;
+  --f-display:"Source Serif 4", Georgia, serif; --f-body:"Public Sans", Arial, sans-serif; --f-mono:"IBM Plex Mono", ui-monospace, monospace;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#11161c; --surface:#19212a; --ink:#e6eaee; --muted:#9aa6b2; --line:#2c3642; --chip:#232c36;
+  --arch:#f0a65a; --face:#8fb1f0; --eye:#8fb1f0; --accent:#f0a65a;
+  --ok:#6fd08f; --ok-bg:#16301f; --bad:#f28b82; --bad-bg:#3a1b19; --once:#f0c070; --once-bg:#3a2e12; --mem:#f0a05c;
+  --hy-bg:#3a3110; --hy-line:#b8952a; --hy-ink:#f5e6a8; color-scheme:dark }}
+:root[data-theme="dark"]{
+  --bg:#11161c; --surface:#19212a; --ink:#e6eaee; --muted:#9aa6b2; --line:#2c3642; --chip:#232c36;
+  --arch:#f0a65a; --face:#8fb1f0; --eye:#8fb1f0; --accent:#f0a65a;
+  --ok:#6fd08f; --ok-bg:#16301f; --bad:#f28b82; --bad-bg:#3a1b19; --once:#f0c070; --once-bg:#3a2e12; --mem:#f0a05c;
+  --hy-bg:#3a3110; --hy-line:#b8952a; --hy-ink:#f5e6a8; color-scheme:dark }
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font:15px/1.5 var(--f-body);margin:0}
+.wrap{max-width:1180px;margin:0 auto;padding-inline:16px;padding-block:22px 48px;display:grid;gap:16px}
+h1,h2,h3{font-family:var(--f-display);margin:0;text-wrap:balance;line-height:1.2}
+.meta{font:500 .74rem var(--f-mono);letter-spacing:.07em;text-transform:uppercase;color:var(--muted);margin:0}
+header{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:end;gap:12px}
+header h1{font-size:1.9rem}
+header p.lede{margin:4px 0 0;color:var(--muted);max-width:62ch}
+.btn{font:600 .85rem var(--f-body);background:var(--chip);color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:7px 12px;cursor:pointer}
+.btn:hover{border-color:var(--ink)}
+.btn:focus-visible,.opt:focus-visible,.seg button:focus-visible,.ent:focus-visible,.lo-tile:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.btn.primary{background:var(--accent);color:var(--surface);border-color:var(--accent)}
+.btn[disabled]{opacity:.45;cursor:default}
+.hdr-actions{display:flex;gap:8px;flex-wrap:wrap}
+.wrap{grid-template-columns:minmax(0,1fr)} .rvw{min-width:0}
+
+.bar{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 12px}
+.seg{display:inline-flex;background:var(--chip);border-radius:10px;padding:3px;gap:2px;flex-wrap:wrap}
+.seg button{font:600 .82rem var(--f-body);border:0;background:transparent;color:var(--ink);padding:6px 11px;border-radius:8px;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--surface);box-shadow:0 1px 2px rgba(0,0,0,.12)}
+.seg .lab{font:500 .7rem var(--f-mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);align-self:center;padding:0 6px}
+.stats{display:flex;gap:18px;flex-wrap:wrap}
+.stat b{display:block;font:700 1.15rem var(--f-body);font-variant-numeric:tabular-nums}
+.stat span{font:500 .68rem var(--f-mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+
+.main{display:grid;grid-template-columns:250px minmax(0,1fr) 270px;gap:16px;align-items:start}
+@media (max-width:1000px){ .main{grid-template-columns:minmax(0,1fr)} .side{order:2} .map{order:3} }
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px;display:grid;gap:8px;min-width:0}
+.panel h2{font-size:1rem}
+.lec-h{font:700 .72rem var(--f-body);letter-spacing:.07em;text-transform:uppercase;margin-top:6px}
+.ent{display:grid;grid-template-columns:1fr auto;gap:2px 8px;text-align:left;width:100%;background:transparent;border:1px solid transparent;border-radius:8px;padding:7px 8px;cursor:pointer;color:var(--ink);font:inherit}
+.ent:hover{background:var(--chip)}
+.ent[aria-current="true"]{border-color:var(--lc);background:var(--chip)}
+.ent .n{font-weight:600;font-size:.9rem}
+.ent .s{grid-column:1;font-size:.75rem;color:var(--muted)}
+.ent .pct{grid-row:1/3;grid-column:2;align-self:center;font:500 .75rem var(--f-mono);color:var(--muted);font-variant-numeric:tabular-nums}
+.ent .mini{grid-column:1/3;height:4px;border-radius:2px;background:var(--line);overflow:hidden}
+.ent .mini i{display:block;height:100%;background:var(--lc)}
+.lF{--lc:var(--arch)} .lD{--lc:var(--face)} .lT{--lc:var(--tcol)}
+:root{--tcol:#1d7a5f} @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--tcol:#6fd0b0}} :root[data-theme="dark"]{--tcol:#6fd0b0}
+.tag.rr{background:var(--chip);color:var(--ink);border:1px solid var(--line)}
+
+.card{background:var(--surface);border:1px solid var(--line);border-top:5px solid var(--lc);border-radius:12px;padding:18px;display:grid;gap:14px;min-width:0}
+.card-top{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px;align-items:baseline}
+.card-top h2{font-size:1.35rem}
+.tag{font:500 .7rem var(--f-mono);letter-spacing:.06em;text-transform:uppercase;padding:3px 8px;border-radius:999px;background:var(--chip);color:var(--muted)}
+.tag.lo{color:var(--lc)}
+.tag.hy{background:var(--hy-bg);color:var(--hy-ink);border:1px solid var(--hy-line)}
+.boxes{display:flex;gap:4px;flex-wrap:wrap}
+.boxes i{width:18px;height:6px;border-radius:3px;background:var(--line)}
+.boxes i.done-ok{background:var(--ok)} .boxes i.done-bad{background:var(--bad)} .boxes i.cur{background:var(--lc)}
+.q{font:600 1.08rem/1.45 var(--f-body);margin:0}
+.hint{font-size:.8rem;color:var(--muted);margin:0}
+.opts{display:grid;gap:8px}
+.opt{display:grid;grid-template-columns:auto 1fr;gap:10px;align-items:start;text-align:left;width:100%;font:inherit;color:var(--ink);background:var(--bg);border:1.5px solid var(--line);border-radius:10px;padding:10px 12px;cursor:pointer}
+.opt:hover:not([disabled]){border-color:var(--lc)}
+.opt .k{font:500 .75rem var(--f-mono);color:var(--muted);border:1px solid var(--line);border-radius:5px;padding:1px 6px;margin-top:1px}
+.opt.sel{border-color:var(--lc);background:var(--chip)}
+.opt.right{border-color:var(--ok);background:var(--ok-bg)}
+.opt.wrong{border-color:var(--bad);background:var(--bad-bg)}
+.opt.missed{border-color:var(--ok);border-style:dashed}
+.opt[disabled]{cursor:default}
+.ordered{display:grid;gap:6px;counter-reset:ord;padding:0;margin:0;list-style:none;min-height:44px;border:1.5px dashed var(--line);border-radius:10px;padding:8px}
+.ordered li{counter-increment:ord;display:grid;grid-template-columns:auto 1fr;gap:8px;align-items:center;background:var(--chip);border-radius:8px;padding:7px 10px;cursor:pointer}
+.ordered li::before{content:counter(ord);font:500 .78rem var(--f-mono);color:var(--lc)}
+.ordered li.right{background:var(--ok-bg)} .ordered li.wrong{background:var(--bad-bg)}
+.ordered .empty{color:var(--muted);font-size:.85rem;padding:4px}
+/* ---------- Review ---------- */
+.rvw{margin-top:14px}
+.rvw-bar{position:sticky;top:0;z-index:8;background:var(--bg);border-bottom:1px solid var(--line);padding:10px 0;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.rvw-bar .seg{display:flex;gap:2px;background:var(--chip);border:1px solid var(--line);border-radius:9px;padding:3px}
+.rvw-bar .seg button{background:transparent;border:0;border-radius:7px;padding:6px 12px;font:inherit;font-size:13.5px;color:var(--muted);cursor:pointer}
+.rvw-bar .seg button[aria-pressed="true"]{background:var(--surface);color:var(--ink);font-weight:600;box-shadow:0 1px 2px rgba(0,0,0,.08)}
+#rvwQ{flex:1 1 180px;min-width:140px;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:7px 10px;font:inherit;font-size:14px;color:inherit}
+#rvwCount{font-family:var(--f-mono);font-size:11px;color:var(--muted);white-space:nowrap}
+.rvw-toc{display:flex;flex-wrap:wrap;gap:6px;margin:12px 0 2px}
+.rvw-toc a{font-size:12.5px;text-decoration:none;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:4px 10px}
+.rvw-toc a:hover{color:var(--ink);border-color:var(--muted)}
+.rvw-body{max-width:none}
+.rsec{padding:6px 0 10px;scroll-margin-top:64px}
+.rsec.hide{display:none}
+.rh{font-family:var(--f-display);font-size:1.5rem;font-weight:650;margin:26px 0 4px;padding-bottom:6px;border-bottom:2px solid var(--acc)}
+.rsh{font-family:var(--f-display);font-size:1.12rem;font-weight:650;margin:18px 0 4px}
+.rvw-body p{margin:8px 0;line-height:1.62}
+ul.rlist{margin:8px 0;padding-left:1.15em;display:grid;gap:5px}
+ul.rlist li{line-height:1.55}
+.rtbl{overflow-x:auto;margin:12px 0;border:1px solid var(--line);border-radius:10px;background:var(--surface)}
+.rtbl table{border-collapse:collapse;width:100%;font-size:14px}
+.rtbl th,.rtbl td{text-align:left;vertical-align:top;padding:8px 11px;border-bottom:1px solid var(--line)}
+.rtbl thead th{background:var(--chip);font-family:var(--f-mono);font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);white-space:nowrap}
+.rtbl tbody tr:last-child td{border-bottom:0}
+.rtbl td b{font-weight:600}
+.rseq{margin:12px 0;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 14px 12px 10px}
+.rseq ol{margin:0;padding-left:1.3em;display:grid;gap:7px}
+.rseq li{line-height:1.55;padding-left:2px}
+.rseq li b{color:var(--acc)}
+.cgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(330px,1fr));gap:10px;margin:12px 0;align-items:start}
+.cgrid>details{margin:0}
+details.cx{margin:11px 0;border-radius:9px;border:1px solid var(--line);background:var(--surface);overflow:hidden}
+details.cx>summary{list-style:none;cursor:pointer;display:flex;align-items:baseline;gap:9px;padding:9px 12px;border-left:3px solid var(--line);font-size:14px}
+details.cx>summary::-webkit-details-marker{display:none}
+details.cx>summary::after{content:"+";margin-left:auto;font-family:var(--f-mono);font-size:14px;color:var(--muted);line-height:1}
+details.cx[open]>summary::after{content:"\2013"}
+details.cx>summary .lbl{font-family:var(--f-mono);font-size:10px;letter-spacing:.11em;text-transform:uppercase;font-weight:700;white-space:nowrap}
+details.cx>summary .pk{color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1}
+details.cx[open]>summary .pk{display:none}
+details.cx .cbody{padding:2px 13px 12px;line-height:1.56;font-size:14.6px;border-left:3px solid var(--line)}
+details.cx .cbody b{font-weight:600}
+details.rrule>summary,details.rrule .cbody{border-left-color:var(--acc)}
+details.rtrap>summary,details.rtrap .cbody{border-left-color:var(--bad)}
+details.rmem>summary,details.rmem .cbody{border-left-color:var(--mem)}
+details.rrule>summary .lbl{color:var(--acc)} details.rtrap>summary .lbl{color:var(--bad)} details.rmem>summary .lbl{color:var(--mem)}
+details.rhy{background:var(--hy-bg);border-color:var(--hy-line);color:var(--hy-ink)}
+details.rhy>summary,details.rhy .cbody{border-left-color:var(--hy-line)}
+details.rhy>summary .lbl{color:var(--hy-ink);opacity:.9}
+details.rhy>summary .pk,details.rhy>summary::after{color:var(--hy-ink);opacity:.75}
+.rvw-empty{display:none;text-align:center;color:var(--muted);border:1px dashed var(--line);border-radius:10px;padding:28px;margin-top:16px}
+.rvw-empty.on{display:block}
+.rvw[data-lec="F"]{--acc:var(--arch)} .rvw[data-lec="D"]{--acc:var(--face)} .rvw[data-lec="T"]{--acc:var(--tcol)}
+@media print{
+  header,.bar,.main,.rvw-bar,.rvw-toc,.rvw-empty{display:none!important}
+  .rvw{margin:0}
+  body{background:#fff}
+  .rsec{break-before:page;break-inside:auto}
+  .rsec:first-of-type{break-before:auto}
+  .rtbl,.rseq,details.cx{break-inside:avoid}
+  details.cx>summary::after{display:none}
+  .cgrid{grid-template-columns:1fr 1fr}
+}
+.fb .ans{font-size:.95rem}
+.fbexp{display:grid;gap:8px}
+.fbexp p{margin:0;line-height:1.6}
+.fbnotes{list-style:none;margin:2px 0 0;padding:0;display:grid;gap:6px}
+.fbnotes li{font-size:.9rem;line-height:1.5;color:var(--muted);padding-left:10px;border-left:2px solid var(--line)}
+.fbnotes li b{color:var(--ink);font-weight:600}
+.fbpearl{margin-top:2px;background:var(--hy-bg);border:1px solid var(--hy-line);border-left-width:3px;border-radius:9px;padding:9px 12px;font-size:.92rem;line-height:1.5;color:var(--hy-ink)}
+.fbpearl b{display:block;font:700 .66rem var(--f-mono);letter-spacing:.14em;text-transform:uppercase;color:var(--hy-line);margin-bottom:3px}
+.fb{border-radius:10px;padding:12px 14px;display:grid;gap:6px}
+.fb.ok{background:var(--ok-bg)} .fb.bad{background:var(--bad-bg)}
+.fb .v{font-weight:700}
+.fb.ok .v{color:var(--ok)} .fb.bad .v{color:var(--bad)}
+.fb ol{margin:0;padding-left:1.2em}
+.actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:space-between;align-items:center}
+.timer{font:500 .8rem var(--f-mono);color:var(--muted);font-variant-numeric:tabular-nums}
+.done{display:grid;gap:10px;text-align:left}
+
+.lo-grid{display:grid;gap:6px}
+.lo-tile{display:grid;grid-template-columns:auto 1fr auto;gap:8px;align-items:center;text-align:left;width:100%;background:transparent;border:1px solid var(--line);border-radius:8px;padding:6px 8px;cursor:pointer;color:var(--ink);font:inherit}
+.lo-tile:hover{border-color:var(--lc)}
+.lo-tile .id{font:500 .72rem var(--f-mono);color:var(--lc);white-space:nowrap}
+.lo-tile .t{font-size:.78rem;line-height:1.3}
+.lo-tile .dot{width:12px;height:12px;border-radius:50%;background:var(--line)}
+.dot.s-o{background:var(--once)} .dot.s-m{background:var(--bad)} .dot.s-M{background:var(--ok)}
+.legend{display:flex;flex-wrap:wrap;gap:10px;font-size:.72rem;color:var(--muted)}
+.legend span{display:inline-flex;gap:5px;align-items:center}
+.legend i{width:10px;height:10px;border-radius:50%;display:inline-block;background:var(--line)}
+.legend i.o{background:var(--once)} .legend i.m{background:var(--bad)} .legend i.M{background:var(--ok)}
+footer{color:var(--muted);font-size:.8rem;border-top:1px solid var(--line);padding-top:12px}
+@media (prefers-reduced-motion: no-preference){ .opt,.ent,.lo-tile{transition:border-color .12s, background .12s} }
+</style>
+
+<div class="wrap">
+<header>
+  <div>
+    <p class="meta">HoyaDocs · Block 5 · Histology · HEM01</p>
+    <h1>HEM01 Hematopoiesis Builder</h1>
+    <p class="lede">Hematopoiesis and blood histology, LO by LO: cell types and the differential count, the myeloid vs lymphoid tree, and every maturation stage: build each structure box by box, then drill what you miss. Boxes tagged Rapid Review test the LO Rapid Review and Master Review checklists.</p>
+  </div>
+  <div class="hdr-actions">
+    <button class="btn primary" id="reviewBtn" type="button" aria-pressed="false">Review</button>
+    <button class="btn" id="themeBtn" type="button">Theme: auto</button>
+    <button class="btn" id="resetBtn" type="button">Reset progress</button>
+  </div>
+</header>
+
+<div class="bar">
+  <div class="seg" role="group" aria-label="Mode">
+    <span class="lab">Mode</span>
+    <button type="button" data-mode="build" aria-pressed="true">Build</button>
+    <button type="button" data-mode="drill" aria-pressed="false">Drill</button>
+  </div>
+  <div class="seg" role="group" aria-label="Section scope" id="scopeSeg">
+    <span class="lab">Scope</span>
+    <button type="button" data-scope="all" aria-pressed="true">All</button>
+    <button type="button" data-scope="F" aria-pressed="false">LO1 Blood cells</button>
+    <button type="button" data-scope="D" aria-pressed="false">LO2 Myeloid vs lymphoid</button>
+    <button type="button" data-scope="T" aria-pressed="false">LO3 Maturation stages</button>
+  </div>
+  <div class="seg" role="group" aria-label="Focus" id="focusSeg">
+    <span class="lab">Focus</span>
+    <button type="button" data-rr="0" aria-pressed="true">All boxes</button>
+    <button type="button" data-rr="1" aria-pressed="false">Rapid Review only</button>
+  </div>
+  <div class="stats" aria-live="polite">
+    <div class="stat"><b id="sScore">0</b><span>Score</span></div>
+    <div class="stat"><b id="sStreak">0</b><span>Streak</span></div>
+    <div class="stat"><b id="sAcc">—</b><span>Accuracy</span></div>
+    <div class="stat"><b id="sBoxes">0</b><span>Boxes mastered</span></div>
+    <div class="stat"><b id="sLos">0/3</b><span>LOs mastered</span></div>
+  </div>
+</div>
+
+<div class="main">
+  <aside class="panel side" aria-label="Structures">
+    <h2>Structures</h2>
+    <div id="entList"></div>
+  </aside>
+  <section class="card" id="card" aria-live="polite"></section>
+  <aside class="panel map" aria-label="Learning objective mastery map">
+    <h2>LO mastery map</h2>
+    <div class="legend"><span><i></i>untested</span><span><i class="m"></i>missed</span><span><i class="o"></i>got it once</span><span><i class="M"></i>mastered</span></div>
+
+    <p class="hint">Tap an LO to drill just that objective. Mastered = right twice in a row.</p>
+    <div class="lo-grid" id="loGrid"></div>
+  </aside>
+</div>
+
+<div class="rvw" id="rvw" data-lec="F" hidden>
+  <div class="rvw-bar">
+    <div class="seg" id="rvwTabs" role="group" aria-label="Section">
+      <button type="button" data-l="F" aria-pressed="true">LO1 Blood cells</button>
+      <button type="button" data-l="D" aria-pressed="false">LO2 Myeloid vs lymphoid</button>
+      <button type="button" data-l="T" aria-pressed="false">LO3 Maturation stages</button>
+    </div>
+    <input id="rvwQ" type="search" placeholder="Search this review" autocomplete="off" aria-label="Search the review">
+    <span id="rvwCount"></span>
+    <button class="btn" type="button" id="rvwAll" aria-pressed="false">Expand all</button>
+    <button class="btn" type="button" id="rvwPrint">Print</button>
+    <button class="btn primary" type="button" id="rvwClose">Back to the game</button>
+  </div>
+  <nav class="rvw-toc" id="rvwToc" aria-label="Contents"></nav>
+  <div class="rvw-body" id="rvwBody"></div>
+  <div class="rvw-empty" id="rvwEmpty">Nothing in this section matches that search.</div>
+</div>
+
+
+<footer>HoyaDocs · HEM01 Hematopoiesis Builder · Updated October 9, 2026 · Revision 1.0. Yellow “HY” tags mark high-yield points, including Step 1. “Rapid Review” tags mark boxes built from the LO Rapid Review checklists.</footer>
+</div>
+
+<script>
+/* ================= LEARNING OBJECTIVES ================= */
+var LOS = {"1": "Cell types and their frequency in normal blood", "2": "The split of hematopoiesis into myeloid vs lymphoid lineages", "3": "Steps of hematopoiesis: telling specific cell types apart and how their features differ"};
+var LOLEC = {"1": "F", "2": "D", "3": "T"};
+var LECS = [{"k": "F", "n": "LO1 Blood cells", "c": "arch"}, {"k": "D", "n": "LO2 Myeloid vs lymphoid", "c": "face"}, {"k": "T", "n": "LO3 Maturation stages", "c": "eye"}];
+var E = [{"id": "tube", "lec": "F", "name": "Spun tube of blood", "sub": "Plasma · buffy coat · RBCs", "b": [{"lo": "1", "rr": true, "hy": true, "t": "o", "q": "Order the layers of a spun tube of anticoagulated blood from TOP to BOTTOM.", "a": ["Plasma (≈55%)", "Buffy coat (≈1%)", "Erythrocytes (≈40–50% ♂ / 35–45% ♀)"], "w": "WBCs and platelets are denser than plasma but less dense than packed RBCs, so they sit in the middle.", "p": "Light on top, heavy on the bottom."}, {"lo": "1", "rr": true, "q": "What does the thin buffy coat contain?", "a": "WBCs and platelets", "o": ["Reticulocytes only", "Fibrinogen and albumin", "Plasma cells and megakaryocytes"], "n": ["Reticulocytes pack with the RBCs.", "Those are plasma proteins.", "Megakaryocytes stay in the marrow; plasma cells are tissue cells."], "w": "It's thin (≈1%) because RBCs vastly outnumber WBCs and platelets.", "p": "The white middle layer."}, {"lo": "1", "q": "The percentage of blood volume taken up by packed RBCs is called the:", "a": "Hematocrit (packed cell volume)", "o": ["Mean corpuscular volume", "Reticulocyte count", "Plasma fraction"], "n": ["MCV is the size of one RBC.", "Retics are young RBCs, ≈1%.", "Plasma is the top ≈55%."], "w": "Bottom layer % = hematocrit.", "p": "Packed cell volume."}, {"lo": "1", "hy": true, "q": "What separates serum from plasma?", "a": "Serum = plasma minus fibrinogen (clotting factors used up in the clot)", "o": ["Serum has more albumin than plasma", "Serum contains the buffy coat", "Plasma is what remains after blood clots"], "n": ["Albumin is unchanged.", "Neither contains cells.", "Backwards: that's serum."], "w": "\"Plasma minus fibrinogen = serum.\"", "p": "Let blood clot, and what's left?"}, {"lo": "1", "q": "Blood is classified as which kind of tissue, and what is its main job?", "a": "A specialized connective tissue whose main job is transport (gases, nutrients, waste, cells, hormones, heat)", "o": ["An epithelial tissue whose main job is secretion", "A muscle tissue whose main job is contraction", "A nervous tissue whose main job is signaling"], "n": ["Not epithelium.", "Not muscle.", "Not nervous tissue."], "w": "Cells floating in a liquid matrix (plasma).", "p": "Cells in a liquid matrix."}]}, {"id": "family", "lec": "F", "name": "Formed elements family tree", "sub": "Granulocytes vs agranulocytes", "b": [{"lo": "1", "rr": true, "hy": true, "t": "m", "q": "Select ALL the granulocytes (\"BEN\" cells).", "a": ["Basophil", "Eosinophil", "Neutrophil"], "o": ["Lymphocyte", "Monocyte", "Platelet"], "n": ["Agranulocyte.", "Agranulocyte.", "A cytoplasm fragment, not a WBC."], "w": "Granulocytes have specific granules and a segmented (lobed) nucleus.", "p": "BEN."}, {"lo": "1", "rr": true, "q": "What two features define a granulocyte?", "a": "Specific granules plus a segmented (lobed) nucleus", "o": ["No granules plus a round nucleus", "Azurophilic granules only plus a kidney-shaped nucleus", "No nucleus plus purple granules"], "n": ["That's an agranulocyte.", "That describes a monocyte.", "That describes a platelet."], "w": "Agranulocytes still have a few non-specific azurophilic granules.", "p": "Specific granules + lobes."}, {"lo": "1", "q": "Why are lymphocytes and monocytes also called \"mononuclear cells\"?", "a": "Their nucleus is one piece (round or indented), not lobed", "o": ["They have only one granule type", "They have a single chromosome set", "They are the only WBCs with one nucleolus"], "n": ["They lack specific granules altogether.", "All WBCs are diploid.", "Not the reason."], "w": "Agranulocytes = no specific granules + round/indented nucleus.", "p": "One-piece nucleus."}, {"lo": "1", "q": "Which formed elements lack a nucleus?", "a": "Erythrocytes and platelets", "o": ["Neutrophils and basophils", "Lymphocytes and monocytes", "Eosinophils and platelets"], "n": ["Lobed nuclei.", "Round/indented nuclei.", "Eosinophils have a bilobed nucleus."], "w": "All WBCs have a nucleus.", "p": "The non-WBC elements."}]}, {"id": "norms", "lec": "F", "name": "Normal values", "sub": "WBC · platelets · Hb · Hct · retics", "b": [{"lo": "1", "rr": true, "hy": true, "q": "What is the normal WBC count?", "a": "4,500–11,000 /mm³", "o": ["1,500–4,500 /mm³", "11,000–20,000 /mm³", "150,000–450,000 /mm³"], "n": ["Too low (leukopenia).", "Leukocytosis.", "That's platelets."], "w": "Think \"4.5 to 11.\"", "p": "4.5 to 11."}, {"lo": "1", "rr": true, "hy": true, "q": "What is the normal platelet count?", "a": "150,000–450,000 /mm³", "o": ["4,500–11,000 /mm³", "50,000–100,000 /mm³", "500,000–1,000,000 /mm³"], "n": ["That's WBCs.", "Thrombocytopenia.", "Thrombocytosis."], "w": "Think \"150 to 450.\"", "p": "150 to 450."}, {"lo": "1", "rr": true, "q": "What fraction of circulating RBCs are normally reticulocytes?", "a": "≈1%", "o": ["≈10%", "≈0.01%", "≈25%"], "n": ["Far too high.", "Far too low.", "Far too high."], "w": "The reticulocyte count reflects marrow RBC output.", "p": "About one in a hundred."}, {"lo": "1", "hy": true, "q": "A vignette gives Hb 10 g/dL. What hematocrit fits?", "a": "≈30% (Hct ≈ 3 × Hb)", "o": ["≈10%", "≈50%", "≈20%"], "n": ["Hct isn't equal to Hb.", "Too high for Hb 10.", "That would be ≈2 × Hb."], "w": "Rule of 3: if the numbers don't fit, look again.", "p": "Multiply by 3."}, {"lo": "1", "hy": true, "q": "An anemic patient has a LOW reticulocyte count. What does that suggest?", "a": "A marrow production problem (e.g., aplastic anemia, iron/B12/folate deficiency, CKD with low EPO)", "o": ["Hemolysis", "Blood loss a week ago with a normal marrow", "A normal marrow response"], "n": ["Hemolysis raises retics.", "A responding marrow raises retics within 3–5 days.", "A responding marrow raises retics."], "w": "↑ retics = marrow responding; ↓ retics = marrow problem.", "p": "Is the marrow keeping up?"}, {"lo": "1", "q": "Why do men have a higher normal hemoglobin than women?", "a": "Testosterone stimulates EPO production", "o": ["Men have larger spleens", "Women have more plasma proteins", "Estrogen destroys RBCs"], "n": ["Not the reason.", "Not the reason.", "Not the reason."], "w": "♀ 12.1–15.1 g/dL · ♂ 13.8–17.2 g/dL.", "p": "Androgen → EPO."}]}, {"id": "diff", "lec": "F", "name": "The differential count", "sub": "Never Let Monkeys Eat Bananas", "b": [{"lo": "1", "rr": true, "hy": true, "t": "o", "q": "Rank the WBCs from MOST to LEAST common.", "a": ["Neutrophil", "Lymphocyte", "Monocyte", "Eosinophil", "Basophil"], "w": "\"Never Let Monkeys Eat Bananas.\"", "p": "N > L > M > E > B."}, {"lo": "1", "rr": true, "hy": true, "q": "What percentage of WBCs are neutrophils?", "a": "60–70%", "o": ["≈28%", "≈5%", "2–4%"], "n": ["Lymphocytes.", "Monocytes.", "Eosinophils."], "w": "Neutrophils are the #1 WBC.", "p": "Most common WBC."}, {"lo": "1", "rr": true, "t": "m", "q": "Select ALL correct differential percentages.", "a": ["Lymphocytes ≈28%", "Monocytes ≈5%", "Eosinophils 2–4%", "Basophils ≈0.5%"], "o": ["Monocytes ≈28%", "Basophils 2–4%"], "n": ["That's lymphocytes.", "That's eosinophils."], "w": "60–70 / 28 / 5 / 2–4 / 0.5.", "p": "Follow the monkey."}, {"lo": "1", "q": "What is a \"differential count\"?", "a": "The share of each WBC type, given as % of total WBCs or as an absolute number per volume", "o": ["The ratio of RBCs to WBCs", "The difference between plasma and serum volume", "The number of reticulocytes per 100 RBCs"], "n": ["Not the definition.", "Not the definition.", "That's the reticulocyte count."], "w": "Core of LO1.", "p": "Breakdown of WBC types."}, {"lo": "1", "hy": true, "q": "\"Most common cell in blood\" — which is it?", "a": "Erythrocyte (RBC)", "o": ["Neutrophil", "Platelet", "Lymphocyte"], "n": ["Most common WBC, not cell.", "Fewer than RBCs.", "#2 WBC."], "w": "Trap: most common WBC = neutrophil; most common cell = RBC.", "p": "Read the question carefully."}, {"lo": "1", "t": "m", "q": "Select ALL correct lifespans.", "a": ["RBC ≈120 days", "Platelet ≈10 days", "Neutrophil ≈6 h in blood (1–4 days in tissue)", "Monocyte ≈40 h in blood (months as macrophage)"], "o": ["RBC ≈10 days", "Lymphocyte ≈6 h only"], "n": ["That's platelets.", "Some lymphocytes live years (memory cells)."], "w": "Finite lifespans are why hematopoiesis never stops.", "p": "120 · 10 · 6 h · 40 h."}]}, {"id": "stain", "lec": "F", "name": "Romanovsky stains", "sub": "Four color patterns", "b": [{"lo": "1", "q": "Blood smears are stained with which type of stain, and what is special about it?", "a": "Romanovsky-type (Wright's, Giemsa), which fix and stain at the same time", "o": ["H&E, which needs separate fixation", "Prussian blue, which stains only iron", "PAS, which stains only glycogen"], "n": ["Not the smear stain.", "Iron stain.", "Glycogen stain."], "w": "These stains give 4 color patterns that help name cells.", "p": "Wright's or Giemsa."}, {"lo": "1", "t": "m", "q": "Select ALL correct Romanovsky color patterns.", "a": ["Basophilic → blue (basophil granules, lymphocyte cytoplasm)", "Azurophilic → purple (non-specific granules in all WBCs)", "Eosinophilic → orange (eosinophil granules, RBCs)", "Neutrophilic → salmon pink (neutrophil specific granules)"], "o": ["Azurophilic → orange (eosinophil granules)", "Neutrophilic → deep blue (basophil granules)"], "n": ["That's eosinophilic.", "That's basophilic."], "w": "Color pattern helps ID each cell.", "p": "Blue, purple, orange, salmon."}, {"lo": "1", "q": "Which granule type is found in ALL WBCs?", "a": "Azurophilic (non-specific) granules", "o": ["Specific neutrophilic granules", "Eosinophilic crystalloid granules", "Basophilic histamine granules"], "n": ["Neutrophil-line only.", "Eosinophils only.", "Basophils only."], "w": "Even agranulocytes have a few azurophilic granules.", "p": "Purple, non-specific."}]}, {"id": "rbc", "lec": "F", "name": "Erythrocyte ID card", "sub": "Structure · skeleton · energy", "b": [{"lo": "1", "rr": true, "q": "Which structures does a mature RBC lack?", "a": "Nucleus, mitochondria and ribosomes (so it can't make protein)", "o": ["Only the nucleus", "Only mitochondria", "A plasma membrane skeleton"], "n": ["It also lacks mitochondria and ribosomes.", "It also lacks a nucleus and ribosomes.", "It has spectrin–actin skeleton."], "w": "Biconcave ≈8 µm disc that squeezes through 3–4 µm capillaries.", "p": "Nothing inside but Hb."}, {"lo": "1", "hy": true, "q": "Defects in spectrin, ankyrin or band 3 cause:", "a": "Hereditary spherocytosis", "o": ["Sickle cell disease", "Pyruvate kinase deficiency", "Glanzmann thrombasthenia"], "n": ["β-globin point mutation.", "Glycolytic enzyme defect.", "Platelet GpIIb/IIIa defect."], "w": "Spherocytes with no central pallor, ↑ MCHC, splenomegaly, + osmotic fragility / EMA test.", "p": "Membrane skeleton."}, {"lo": "1", "hy": true, "q": "Why does pyruvate kinase deficiency cause hemolysis?", "a": "RBCs lack mitochondria and depend entirely on anaerobic glycolysis for ATP", "o": ["RBCs depend on oxidative phosphorylation", "PK is a membrane skeleton protein", "PK makes hemoglobin"], "n": ["No mitochondria.", "It's a glycolytic enzyme.", "It doesn't."], "w": "No mitochondria → glycolysis only.", "p": "Only one energy source."}, {"lo": "1", "q": "What is the normal adult hemoglobin composition?", "a": "HbA ≈97%, HbA2 2–3%, HbF <1%", "o": ["HbF ≈97%, HbA <1%", "HbA2 ≈50%, HbA ≈50%", "HbA 70%, HbF 30%"], "n": ["That's a fetus.", "Not normal.", "Not normal."], "w": "4 heme groups (Fe²⁺) + globin tetramer.", "p": "Mostly HbA."}, {"lo": "1", "q": "Old RBCs are removed by ___ and hemoglobin is broken down into ___.", "a": "Splenic macrophages; iron + bilirubin", "o": ["Kupffer cells only; urea", "Neutrophils; amino acids only", "The kidney; urobilinogen only"], "n": ["Spleen is the main site.", "Not neutrophils.", "Not the kidney."], "w": "Lifespan ≈120 days.", "p": "Spleen."}]}, {"id": "neut", "lec": "F", "name": "Neutrophil ID card", "sub": "Lobes · granules · pools", "b": [{"lo": "1", "rr": true, "hy": true, "q": "How many nuclear lobes does a normal neutrophil have?", "a": "2–5", "o": ["Always 2", "More than 5", "None (round nucleus)"], "n": ["That's an eosinophil.", "Hypersegmented = abnormal.", "That's a lymphocyte."], "w": "Band = unsegmented young neutrophil.", "p": "Two to five."}, {"lo": "1", "hy": true, "q": "Neutrophils with more than 5 lobes point to:", "a": "Vitamin B12 or folate deficiency (megaloblastic anemia)", "o": ["Acute bacterial infection", "Iron deficiency", "Pelger-Huët anomaly"], "n": ["That gives bands (left shift).", "Microcytic, no hypersegmentation.", "Bilobed neutrophils."], "w": "Hypersegmentation = impaired DNA synthesis.", "p": "Hypersegmented."}, {"lo": "1", "t": "m", "q": "Select ALL contents of neutrophil SPECIFIC granules.", "a": ["Lactoferrin", "Lysozyme", "NADPH oxidase", "Alkaline phosphatase"], "o": ["Myeloperoxidase", "Major basic protein"], "n": ["Azurophilic granule.", "Eosinophil granule."], "w": "Specific granules are 80–90% of neutrophil granules, salmon pink.", "p": "Not MPO."}, {"lo": "1", "hy": true, "q": "Prednisone raises the neutrophil count within days without infection. Why?", "a": "Demargination: the marginated pool (≈50%) detaches from vessel walls into the circulating pool", "o": ["Marrow stem cells divide faster", "Neutrophils live 10× longer", "Steroids directly kill lymphocytes, freeing space"], "n": ["Too fast for that.", "Not the main effect.", "Not the mechanism."], "w": "Steroids/epinephrine → ↑ neutrophils; ↓ eosinophils and lymphocytes.", "p": "Half are stuck to walls."}, {"lo": "1", "hy": true, "t": "m", "q": "Match neutrophil defects to diseases. Select ALL correct pairs.", "a": ["NADPH oxidase defect → chronic granulomatous disease", "Integrin (CD18) defect → leukocyte adhesion deficiency", "MPO deficiency → mostly asymptomatic, ↑ Candida"], "o": ["NADPH oxidase defect → leukocyte adhesion deficiency", "CD18 defect → chronic granulomatous disease"], "n": ["Swapped.", "Swapped."], "w": "LAD: delayed umbilical cord separation, no pus. CGD: catalase+ infections, abnormal DHR test.", "p": "Burst vs adhesion."}, {"lo": "1", "q": "A drumstick appendage on ≈3% of a woman's neutrophils represents:", "a": "The inactivated X chromosome (Barr body)", "o": ["A band cell", "A Howell-Jolly body", "A Döhle body"], "n": ["Bands are unsegmented.", "RBC nuclear remnant.", "Not covered."], "w": "Seen only in female neutrophils.", "p": "Inactive X."}, {"lo": "1", "q": "Neutrophil reserve in the marrow is roughly how large compared with blood?", "a": "≈10× the circulating pool", "o": ["Equal to blood", "Half of blood", "None (no reserve)"], "n": ["Much larger.", "Much larger.", "There is a large reserve."], "w": "Released in infection → left shift.", "p": "Huge reserve."}]}, {"id": "eos", "lec": "F", "name": "Eosinophil ID card", "sub": "Parasites · allergy damage control", "b": [{"lo": "1", "rr": true, "hy": true, "q": "Bilobed nucleus with large orange-red granules. Name the cell and its key granule protein.", "a": "Eosinophil; major basic protein (crystal core) kills parasites", "o": ["Neutrophil; myeloperoxidase", "Basophil; histamine", "Monocyte; lysozyme"], "n": ["2–5 lobes, pink granules.", "Dark blue granules.", "Kidney nucleus, no big granules."], "w": "\"Sunglasses\" nucleus.", "p": "Orange + two lobes."}, {"lo": "1", "hy": true, "q": "Which mnemonic lists the causes of eosinophilia?", "a": "NAACP: Neoplasia, Asthma, Allergy, Chronic adrenal insufficiency, Parasites", "o": ["BEN: bacteria, enteroviruses, neoplasia", "CRAB: calcium, renal, anemia, bone", "MUDPILES"], "n": ["BEN = granulocytes.", "Myeloma criteria.", "Anion gap acidosis."], "w": "Corticosteroids ↓ eosinophils.", "p": "NAACP."}, {"lo": "1", "q": "Eosinophils prefer tissues that:", "a": "Face the outside world: respiratory, GI and lower GU tracts", "o": ["Are inside the CNS", "Are inside the marrow only", "Are in the bone matrix"], "n": ["Not their location.", "They leave the marrow.", "Not their location."], "w": "Drawn in by eosinophil chemotactic factor from mast cells/basophils.", "p": "Mucosal surfaces."}, {"lo": "1", "q": "Besides killing parasites, what is the eosinophil's other main role?", "a": "\"Damage control\" in allergy: phagocytose antigen–antibody complexes and break down histamine and mast cell mediators", "o": ["Release histamine to start allergic reactions", "Make antibodies", "Present antigen on MHC II as its main job"], "n": ["That's basophils/mast cells.", "That's plasma cells.", "That's macrophages."], "w": "They dampen allergic reactions.", "p": "They clean up."}]}, {"id": "baso", "lec": "F", "name": "Basophil ID card", "sub": "Rarest WBC · IgE · histamine", "b": [{"lo": "1", "rr": true, "q": "Which WBC has dark blue-purple granules that hide its nucleus?", "a": "Basophil", "o": ["Eosinophil", "Neutrophil", "Lymphocyte"], "n": ["Orange granules.", "Pale pink granules.", "No specific granules."], "w": "Granules hold histamine and heparin (heparin makes them basophilic).", "p": "Hidden nucleus."}, {"lo": "1", "hy": true, "q": "Basophilia is uncommon. Which condition should it make you think of?", "a": "CML (and other myeloproliferative neoplasms)", "o": ["Acute viral infection", "Bacterial pneumonia", "Helminth infection"], "n": ["Lymphocytosis.", "Neutrophilia.", "Eosinophilia."], "w": "Basophils + mast cells = effectors of type I hypersensitivity.", "p": "Myeloproliferative."}, {"lo": "1", "q": "How is a basophil activated?", "a": "Antigen cross-links IgE bound to its surface receptors → degranulation", "o": ["Complement C3b binding", "Direct bacterial phagocytosis", "TPO binding"], "n": ["Not the main route.", "Not their role.", "Platelet line."], "w": "Immediate (type I) hypersensitivity.", "p": "IgE."}, {"lo": "1", "q": "How does a mast cell differ from a basophil?", "a": "Mast cells live in tissue and have a round/oval nucleus; basophils circulate and have a lobed nucleus", "o": ["Mast cells lack histamine", "Basophils live in tissue; mast cells circulate", "Mast cells are lymphoid"], "n": ["Similar contents.", "Backwards.", "They're myeloid."], "w": "Similar granule contents.", "p": "Where and what nucleus."}, {"lo": "1", "q": "Which basophil mediator is made on demand after activation rather than stored?", "a": "Leukotrienes", "o": ["Histamine", "Heparin", "Eosinophil chemotactic factor"], "n": ["Preformed.", "Preformed.", "Preformed."], "w": "Granules store histamine, heparin, proteases, ECF.", "p": "Lipid mediators."}]}, {"id": "lymph", "lec": "F", "name": "Lymphocyte ID card", "sub": "RBC-sized ruler · recirculation", "b": [{"lo": "1", "rr": true, "hy": true, "q": "Small cell about RBC size, round dark nucleus filling the cell, thin rim of pale blue cytoplasm. Name it.", "a": "Small lymphocyte", "o": ["Monocyte", "Basophil", "Reticulocyte"], "n": ["Largest WBC, kidney nucleus.", "Dark granules.", "No nucleus."], "w": "Use the RBC (≈8 µm) as a ruler.", "p": "RBC-sized, all nucleus."}, {"lo": "1", "rr": true, "hy": true, "q": "Which property is UNIQUE to lymphocytes among WBCs?", "a": "They can re-enter the blood from tissue via lymphatics (recirculate)", "o": ["Diapedesis", "Phagocytosis", "Azurophilic granules"], "n": ["All WBCs.", "Granulocytes + monocytes.", "All WBCs have some."], "w": "They can also still divide and some live years.", "p": "Round trip."}, {"lo": "1", "hy": true, "t": "m", "q": "Select ALL classic causes of lymphocytosis.", "a": ["Viral infection (e.g., EBV)", "Bordetella pertussis", "CLL (smudge cells)"], "o": ["Acute bacterial pneumonia", "Helminth infection"], "n": ["Neutrophilia.", "Eosinophilia."], "w": "Pertussis toxin blocks lymphocyte exit from blood.", "p": "Viral, pertussis, CLL."}, {"lo": "1", "q": "B cells provide ___ immunity; T cells provide ___ immunity.", "a": "Humoral (antibodies); cell-mediated", "o": ["Cell-mediated; humoral", "Innate; innate", "Humoral; humoral"], "n": ["Swapped.", "Both adaptive.", "T cells are cellular."], "w": "B cells become plasma cells.", "p": "Antibodies vs cells."}, {"lo": "1", "q": "A large lymphocyte (≈16 µm) on a smear usually represents:", "a": "An activated lymphocyte responding to antigen", "o": ["A monocyte", "A blast in every case", "A plasma cell"], "n": ["Different nucleus.", "Not necessarily.", "Eccentric nucleus."], "w": "Most lymphocytes are small (8–9 µm).", "p": "Activated."}]}, {"id": "mono", "lec": "F", "name": "Monocyte ID card", "sub": "Largest WBC · macrophage precursor", "b": [{"lo": "1", "rr": true, "hy": true, "q": "Largest WBC, off-center kidney/horseshoe nucleus, grey-blue \"ground glass\" cytoplasm with vacuoles. Name it.", "a": "Monocyte", "o": ["Neutrophil", "Lymphocyte", "Megakaryocyte"], "n": ["Lobed nucleus.", "Small, round nucleus.", "Stays in the marrow; not a blood cell."], "w": "Trap: largest WBC = monocyte, not megakaryocyte.", "p": "Largest WBC."}, {"lo": "1", "t": "m", "q": "Select ALL monocyte/macrophage functions.", "a": ["Phagocytosis", "Secrete IL-1 and TNF-α", "Antigen presentation (MHC II)"], "o": ["Antibody production", "Recirculation back into blood"], "n": ["Plasma cells.", "Only lymphocytes return to blood."], "w": "Mononuclear phagocyte system.", "p": "Eat, signal, present."}, {"lo": "1", "hy": true, "t": "m", "q": "Select ALL correct tissue macrophage names.", "a": ["Kupffer cells → liver", "Microglia → CNS", "Osteoclasts → bone", "Alveolar macrophages → lung"], "o": ["Langerhans cells → liver", "Kupffer cells → CNS"], "n": ["Skin dendritic cells.", "Liver."], "w": "Monocyte → macrophage once it leaves blood.", "p": "Named by tissue."}]}, {"id": "plt", "lec": "F", "name": "Platelet ID card", "sub": "Zones · granules · glycoproteins", "b": [{"lo": "1", "rr": true, "q": "What is a platelet?", "a": "A 2–3 µm cytoplasm fragment of a megakaryocyte; no nucleus but has mitochondria", "o": ["A small nucleated cell from CFU-GM", "A red cell remnant", "A lymphocyte fragment"], "n": ["CFU-Meg; no nucleus.", "Not an RBC.", "Not lymphoid."], "w": "Lifespan ≈10 days; up to ⅓ stored in the spleen.", "p": "Megakaryocyte piece."}, {"lo": "1", "t": "m", "q": "Select ALL correct platelet granule contents.", "a": ["Dense (δ) → ADP, Ca²⁺, serotonin", "Alpha (α) → vWF, fibrinogen, PF4, PDGF", "Lambda → lysosomal hydrolases"], "o": ["Dense → vWF, fibrinogen", "Alpha → ADP, serotonin"], "n": ["Those are alpha.", "Those are dense."], "w": "Granules sit in the granulomere (purple center).", "p": "Dense = small molecules."}, {"lo": "1", "q": "Which platelet zone contains the actin/myosin and microtubule ring?", "a": "Hyalomere (outer, pale blue)", "o": ["Granulomere (center, purple)", "Nucleus", "Demarcation channel"], "n": ["Holds the granules.", "No nucleus.", "That's in megakaryocytes."], "w": "Microtubule ring keeps the disc shape.", "p": "Outer pale rim."}, {"lo": "1", "hy": true, "t": "m", "q": "Select ALL correct platelet glycoprotein defects.", "a": ["GpIb defect → Bernard-Soulier (big platelets, poor adhesion)", "GpIIb/IIIa defect → Glanzmann thrombasthenia (no aggregation)"], "o": ["GpIb defect → Glanzmann thrombasthenia", "GpIIb/IIIa defect → hereditary spherocytosis"], "n": ["Swapped.", "RBC membrane."], "w": "GpIb binds vWF; GpIIb/IIIa binds fibrinogen.", "p": "Ib adhesion, IIb/IIIa aggregation."}, {"lo": "1", "hy": true, "q": "Cirrhosis with portal hypertension: platelets 70,000, normal marrow megakaryocytes. Best explanation?", "a": "Splenic sequestration (hypersplenism)", "o": ["Aplastic anemia", "ITP", "Essential thrombocythemia"], "n": ["Pancytopenia, empty marrow.", "↑ megakaryocytes.", "High platelets."], "w": "Normally up to ⅓ of platelets sit in the spleen. After splenectomy → ↑ platelets + Howell-Jolly bodies.", "p": "Big spleen holds more."}]}, {"id": "shared", "lec": "F", "name": "Shared features & smear ID", "sub": "Who does what · decision path", "b": [{"lo": "1", "t": "m", "q": "Select ALL correct statements about shared features.", "a": ["All leukocytes perform diapedesis", "Granulocytes and monocytes phagocytose", "All WBCs have a nucleus", "Only lymphocytes re-enter blood from tissue"], "o": ["RBCs perform diapedesis", "Lymphocytes are the main phagocytes"], "n": ["RBCs and platelets stay in vessels.", "Not their role."], "w": "Diapedesis increases in inflammation.", "p": "Diapedesis, phagocytosis, nucleus, recirculation."}, {"lo": "1", "rr": true, "hy": true, "t": "o", "q": "Order the smear ID decision path for a lobed cell with bright orange granules.", "a": ["Has a nucleus?", "Lobed nucleus → granulocyte", "Check granule color", "Bright orange, 2 lobes → eosinophil"], "w": "Nucleus? → lobed? → granule color.", "p": "Nucleus, lobes, color."}, {"lo": "1", "q": "No nucleus, 2–3 µm purple fragment that clumps on smears. Name it.", "a": "Platelet", "o": ["RBC", "Reticulocyte", "Lymphocyte"], "n": ["≈8 µm with central pallor.", "Slightly bigger than an RBC.", "Has a nucleus."], "w": "No nucleus → check size.", "p": "Tiny purple fragment."}]}, {"id": "counts", "lec": "F", "name": "Abnormal counts", "sub": "Which cell is up → cause", "b": [{"lo": "1", "rr": true, "hy": true, "t": "m", "q": "Select ALL correct \"cell up → cause\" pairs.", "a": ["↑ Neutrophils + bands → bacterial infection", "↑ Lymphocytes → viral infection, pertussis, CLL", "↑ Monocytes → chronic infection (TB), CMML", "↑ Eosinophils → NAACP", "↑ Basophils → CML"], "o": ["↑ Basophils → acute viral infection", "↑ Eosinophils → bacterial pneumonia"], "n": ["Lymphocytosis.", "Neutrophilia."], "w": "Classic Step 1 pattern recognition.", "p": "One cell, one cause."}, {"lo": "1", "hy": true, "t": "m", "q": "Glucocorticoids LOWER which cells? Select ALL.", "a": ["Eosinophils", "Lymphocytes", "Basophils", "Monocytes"], "o": ["Neutrophils", "Platelets"], "n": ["Neutrophils rise (demargination).", "Not the classic steroid effect."], "w": "Steroids: ↑ neutrophils; ↓ everything else in the differential.", "p": "Only one goes up."}, {"lo": "1", "q": "A child from an endemic area has abdominal pain, WBC 12,500 with 18% bilobed cells with orange granules. Most likely cause?", "a": "Helminth (parasitic) infection", "o": ["Bacterial infection", "Viral infection", "CML"], "n": ["Neutrophilia.", "Lymphocytosis.", "Basophilia, very high WBC."], "w": "18% eosinophils (normal 2–4%).", "p": "Orange granules."}, {"lo": "1", "q": "Fever, cough, consolidation; WBC 18,000, 85% neutrophils, many U-shaped unsegmented nuclei. What are these cells?", "a": "Band neutrophils → \"left shift\" from acute bacterial infection", "o": ["Hypersegmented neutrophils", "Atypical lymphocytes", "Monocytes"], "n": ["More than 5 lobes.", "Viral.", "Kidney nucleus, not U."], "w": "Marrow releases immature neutrophils from its reserve.", "p": "Bands."}]}, {"id": "phsc", "lec": "D", "name": "Pluripotent stem cell", "sub": "CD34+ · c-kit · quiescent", "b": [{"lo": "2", "rr": true, "hy": true, "q": "How is the pluripotent hematopoietic stem cell (PHSC) identified?", "a": "By surface markers: CD34+ and c-kit (CD117, the stem cell factor receptor)", "o": ["By its distinctive lobed nucleus", "By azurophilic granules", "By its large size on a smear"], "n": ["It looks like nothing special.", "No distinctive granules.", "Can't be identified by morphology."], "w": "Proof experiment: donor cells rescue lethally irradiated mice and form spleen colonies.", "p": "Markers, not morphology."}, {"lo": "2", "rr": true, "t": "m", "q": "Select ALL true statements about PHSCs.", "a": ["Pluripotent: can become any blood cell", "Self-renewing", "≈0.01% of nucleated marrow cells", "Mostly quiescent (not dividing)", "Rich in umbilical cord blood"], "o": ["Make up ≈10% of marrow cells", "Divide constantly to supply daily output"], "n": ["Far rarer.", "Daily output comes from committed progenitors."], "w": "Only ≈5% of normal stem cells are needed to repopulate the marrow.", "p": "Rare, quiet, powerful."}, {"lo": "2", "q": "If stem cells mostly don't divide, where do billions of new cells per day come from?", "a": "Committed progenitors (CFUs) and early dividing precursors amplify the output", "o": ["Mature cells divide in blood", "The spleen makes most cells", "The liver makes most cells in adults"], "n": ["Mature cells are postmitotic.", "Not in health.", "Fetal site only."], "w": "The PHSC divides only now and then to keep the pool topped up.", "p": "Middle of the tree."}, {"lo": "2", "hy": true, "q": "A sibling donor gets 5 days of injections, then stem cells are collected from blood and purified by flow cytometry. Which drug and marker?", "a": "G-CSF (filgrastim) to mobilize; select CD34+ cells", "o": ["EPO; select CD3+ cells", "TPO; select CD41+ cells", "GM-CSF; select CD19+ cells"], "n": ["Wrong drug and marker.", "Wrong drug and marker.", "Not the stem-cell marker."], "w": "CD34 is also a marker on blasts in AML/ALL.", "p": "Mobilize, then select."}]}, {"id": "tree", "lec": "D", "name": "The tree: myeloid vs lymphoid", "sub": "BTNK club vs everyone else", "b": [{"lo": "2", "rr": true, "hy": true, "t": "m", "q": "Select ALL cells from the LYMPHOID lineage.", "a": ["B cell", "T cell", "NK cell", "Plasma cell"], "o": ["Monocyte", "Basophil", "Platelet"], "n": ["Myeloid (CFU-GM).", "Myeloid.", "Myeloid (CFU-Meg)."], "w": "Lymphoid = the BTNK club; myeloid = everyone else.", "p": "BTNK."}, {"lo": "2", "rr": true, "t": "m", "q": "Select ALL cells from the MYELOID lineage.", "a": ["Erythrocyte", "Platelet", "Eosinophil", "Macrophage", "Mast cell"], "o": ["NK cell", "Plasma cell"], "n": ["Lymphoid.", "Lymphoid (from B cell)."], "w": "Everything in blood except B, T and NK cells.", "p": "Everyone else."}, {"lo": "2", "rr": true, "hy": true, "q": "Which pair of mature cells shares the same committed progenitor?", "a": "Neutrophil and monocyte (both from CFU-GM)", "o": ["Neutrophil and lymphocyte", "Monocyte and NK cell", "Platelet and eosinophil"], "n": ["Different branches.", "Different branches.", "CFU-Meg vs CFU-Eo."], "w": "That's why monocytic leukemias are classed as AML.", "p": "G + M."}, {"lo": "2", "hy": true, "q": "Trap: monocytes are \"mononuclear\" agranulocytes like lymphocytes. Which lineage are they?", "a": "Myeloid", "o": ["Lymphoid", "Both lineages equally", "Neither: they come from the spleen"], "n": ["Agranulocyte (smear term) ≠ lymphoid (lineage term).", "CFU-GM only.", "Marrow-derived."], "w": "A monoblast looks almost the same as a myeloblast.", "p": "CFU-GM."}, {"lo": "2", "q": "Where do T cells and B cells mature?", "a": "B cells in the bone marrow; T cells in the thymus", "o": ["Both in the thymus", "Both in lymph nodes", "B cells in the spleen; T cells in the marrow"], "n": ["B cells stay in marrow.", "Not where they mature.", "Not correct."], "w": "Myeloid cells mature fully in the marrow.", "p": "B = bone marrow, T = thymus."}, {"lo": "2", "t": "m", "q": "Sort the leukemias. Select ALL correctly labeled.", "a": ["AML → myeloid", "CML → myeloid", "ALL → lymphoid", "CLL → lymphoid", "Multiple myeloma → lymphoid (plasma cell)"], "o": ["CML → lymphoid", "AML → lymphoid"], "n": ["Myeloproliferative.", "Myeloid."], "w": "The blocked branch names the leukemia.", "p": "M vs L in the name."}]}, {"id": "cfu", "lec": "D", "name": "The five -poieses", "sub": "Progenitor + growth factor", "b": [{"lo": "2", "rr": true, "hy": true, "t": "m", "q": "Match each process to its progenitor and growth factor. Select ALL correct.", "a": ["Erythropoiesis → BFU-E → CFU-E → EPO", "Thrombopoiesis → CFU-Meg → TPO", "Granulopoiesis (neutrophil) → CFU-GM → G-CSF / GM-CSF", "Monopoiesis → CFU-GM → M-CSF / GM-CSF", "Lymphopoiesis → lymphoid progenitors → interleukins (IL-7)"], "o": ["Thrombopoiesis → CFU-GM → EPO", "Erythropoiesis → CFU-Meg → TPO"], "n": ["CFU-Meg + TPO.", "BFU-E/CFU-E + EPO."], "w": "CFU = colony-forming unit.", "p": "One factor per line."}, {"lo": "2", "hy": true, "q": "Which erythroid progenitor responds to LOW EPO levels and divides faster?", "a": "CFU-E", "o": ["BFU-E", "CFU-GM", "CFU-Meg"], "n": ["Needs high EPO.", "Granulocyte/monocyte.", "Megakaryocyte."], "w": "BFU-E need high EPO for extensive proliferation.", "p": "The later one."}, {"lo": "2", "rr": true, "q": "Where are EPO and TPO mainly made?", "a": "EPO ≈90% kidney (≈10% liver); TPO mainly liver", "o": ["EPO liver; TPO kidney", "Both in the marrow", "EPO spleen; TPO thymus"], "n": ["Swapped.", "Not the main sources.", "Not the sources."], "w": "CKD → ↓ EPO; liver failure → ↓ TPO.", "p": "Kidney and liver."}, {"lo": "2", "q": "Which interleukin drives eosinophil production?", "a": "IL-5", "o": ["IL-7", "IL-1", "IL-2"], "n": ["Lymphoid.", "Fever/inflammation.", "T-cell growth."], "w": "Acts on CFU-Eo.", "p": "Eosinophils: five."}, {"lo": "2", "t": "o", "q": "Order maturation time, SHORTEST to LONGEST.", "a": ["Erythroid line (≈7 days)", "Granulocyte line (≈11 days)"], "w": "Neutrophils then wait ≈4 days in the marrow reserve pool.", "p": "7 vs 11."}]}, {"id": "gf", "lec": "D", "name": "Growth factors", "sub": "How they work · drugs", "b": [{"lo": "2", "rr": true, "hy": true, "q": "What happens to a developing blood cell with no growth factor signal?", "a": "Apoptosis", "o": ["It becomes a stem cell again", "It divides faster", "It matures normally"], "n": ["Not possible.", "No signal, no growth.", "It needs the signal."], "w": "Stem cells need stem cell factor (c-kit ligand) from stromal cells just to survive.", "p": "No signal → die."}, {"lo": "2", "t": "m", "q": "Select ALL true statements about hematopoietic growth factors.", "a": ["Made by many cell types", "Act as hormones (endocrine) or locally (paracrine)", "Bind specific receptors on developing cells", "Control proliferation, differentiation and activation"], "o": ["Are made only by the liver", "Act only on mature cells"], "n": ["Many sources.", "They act on precursors."], "w": "Families: EPO, TPO, CSFs, interleukins.", "p": "Many sources, many effects."}, {"lo": "2", "hy": true, "t": "m", "q": "Match the drug to its use. Select ALL correct.", "a": ["Epoetin alfa → anemia of CKD", "Filgrastim (G-CSF) → chemo neutropenia, stem cell mobilization", "Sargramostim (GM-CSF) → marrow recovery after transplant", "Romiplostim / eltrombopag (TPO-R agonists) → ITP", "Oprelvekin (IL-11) → thrombocytopenia"], "o": ["Filgrastim → anemia of CKD", "Romiplostim → neutropenia"], "n": ["That's EPO.", "That's G-CSF."], "w": "G-CSF side effect: bone pain. EPO: hypertension, thrombosis.", "p": "Factor matches lineage."}, {"lo": "2", "hy": true, "q": "An athlete abusing EPO will show:", "a": "Polycythemia with LOW endogenous EPO", "o": ["Anemia with high EPO", "Polycythemia with high endogenous EPO", "Neutropenia"], "n": ["Opposite.", "Exogenous EPO suppresses the kidney's own.", "Not the effect."], "w": "Same pattern as polycythemia vera (low EPO).", "p": "Feedback suppression."}, {"lo": "2", "hy": true, "t": "m", "q": "Select ALL causes of APPROPRIATE (hypoxia-driven) secondary polycythemia.", "a": ["High altitude", "COPD", "Right-to-left shunt"], "o": ["Renal cell carcinoma", "Hepatocellular carcinoma"], "n": ["EPO-secreting tumor → inappropriate.", "EPO-secreting tumor → inappropriate."], "w": "Hypoxia → ↑ EPO. Tumors (RCC, HCC, hemangioblastoma) → inappropriate EPO.", "p": "Low O₂."}]}, {"id": "sites", "lec": "D", "name": "Sites across life", "sub": "Young Liver Synthesizes Blood", "b": [{"lo": "2", "rr": true, "hy": true, "t": "o", "q": "Order the main sites of hematopoiesis across life.", "a": ["Yolk sac (weeks 3–8)", "Liver (+ spleen, thymus), 2nd trimester", "Bone marrow (3rd trimester → life)"], "w": "\"Young Liver Synthesizes Blood.\"", "p": "Yolk, Liver, Spleen, Bone."}, {"lo": "2", "t": "m", "q": "Match each stage name. Select ALL correct.", "a": ["Yolk sac → primordial stage (big nucleated RBCs)", "Liver → hepato-spleno-thymic stage", "Marrow → medullo-lymphatic stage"], "o": ["Liver → primordial stage", "Marrow → hepato-spleno-thymic stage"], "n": ["That's yolk sac.", "That's liver."], "w": "At birth, marrow is the only site.", "p": "Named for the organs."}, {"lo": "2", "hy": true, "q": "A child with β-thalassemia major has frontal bossing, hepatomegaly and nucleated red precursors on liver biopsy. When was the liver normally the main site of blood formation?", "a": "The 2nd trimester", "o": ["Weeks 3–8", "The 3rd trimester", "Never; this is abnormal tissue"], "n": ["Yolk sac.", "Marrow takes over.", "It's a reactivated fetal site."], "w": "Extramedullary hematopoiesis restarts in old fetal sites.", "p": "Hepato-spleno-thymic."}, {"lo": "2", "hy": true, "t": "m", "q": "Select ALL conditions classically causing extramedullary hematopoiesis.", "a": ["β-thalassemia major", "Severe hemolytic anemia", "Primary myelofibrosis"], "o": ["Iron deficiency anemia", "Anemia of CKD"], "n": ["Not severe marrow demand.", "Low EPO, low drive."], "w": "Findings: hepatosplenomegaly, crew-cut skull, chipmunk facies; teardrop cells in myelofibrosis.", "p": "Severe demand or scarred marrow."}]}, {"id": "marrow", "lec": "D", "name": "Inside the marrow", "sub": "Red vs yellow · HIM · neighborhoods", "b": [{"lo": "2", "rr": true, "t": "m", "q": "Select ALL adult red marrow sites.", "a": ["Ribs", "Sternum", "Pelvis", "Vertebrae", "Skull", "Proximal humerus and femur"], "o": ["Shafts of long bones", "Distal tibia"], "n": ["Yellow marrow.", "Yellow marrow in adults."], "w": "≈50% of adult marrow is red.", "p": "Axial skeleton."}, {"lo": "2", "q": "Can yellow marrow become active again?", "a": "Yes: it converts back to red marrow when demand rises", "o": ["No, the change is permanent", "Only after splenectomy", "Only in children"], "n": ["They're interconvertible.", "Not required.", "Adults too."], "w": "Yellow marrow is mostly fat.", "p": "Interconvertible."}, {"lo": "2", "rr": true, "q": "Where is marrow sampled?", "a": "Adults: iliac crest (pelvis) or sternum; young children: tibia", "o": ["Adults: femoral shaft", "Adults: skull", "Children: sternum only"], "n": ["Yellow marrow.", "Not used.", "Tibia in young kids."], "w": "Sample where red marrow is.", "p": "Iliac crest."}, {"lo": "2", "q": "What is the Hematopoietic Inductive Microenvironment (HIM)?", "a": "The \"soil\": stromal cells + reticular fibers, adhesion molecules and growth factors that stem cells need", "o": ["The circulating blood pool", "The spleen's red pulp", "The thymic cortex"], "n": ["Not marrow.", "Not marrow.", "T-cell site."], "w": "Adhesion molecules let IV-infused transplant cells home to marrow.", "p": "Seeds in the soil."}, {"lo": "2", "rr": true, "hy": true, "t": "m", "q": "Select ALL correct marrow neighborhoods.", "a": ["RBC precursors → erythroblastic island around a nurse macrophage, near sinusoids", "Granulocytes → away from sinusoids", "Megakaryocytes → right on the outer wall of sinusoids"], "o": ["Megakaryocytes → deep in the marrow far from sinusoids", "Granulocytes → inside the sinusoid lumen"], "n": ["They push proplatelets into the sinus.", "They develop away, then crawl in."], "w": "Granulocytes become motile at the metamyelocyte stage.", "p": "Who needs to be near the exit?"}, {"lo": "2", "q": "Marrow sinusoids have which structure?", "a": "Thin-walled venous sinusoids: continuous endothelium, discontinuous basement membrane", "o": ["Fenestrated capillaries with a thick basement membrane", "Arteries with smooth muscle", "Lymphatic channels"], "n": ["Not the structure.", "Not sinusoids.", "Not blood vessels."], "w": "New cells cross the endothelium to enter blood.", "p": "Thin and leaky."}, {"lo": "2", "t": "m", "q": "Select ALL functions of bone marrow.", "a": ["Make blood cells", "Destroy old RBCs", "Store iron", "Central organ for B-cell development"], "o": ["T-cell maturation", "Make EPO"], "n": ["Thymus.", "Kidney."], "w": "Four marrow functions.", "p": "Make, destroy, store, B cells."}]}, {"id": "trends2", "lec": "D", "name": "Down the tree", "sub": "Lose options, gain function", "b": [{"lo": "2", "rr": true, "t": "m", "q": "Going DOWN the tree (stem cell → mature cell), select ALL correct trends.", "a": ["Mitotic → postmitotic", "Broad growth-factor sensitivity → lineage-specific", "No function → full function", "Pluripotent → unipotent"], "o": ["Gains more options", "Becomes more responsive to SCF and IL-3"], "n": ["Loses options.", "Broad factors act early."], "w": "Cells lose options and divisions but gain function.", "p": "One-line rule."}]}, {"id": "localize", "lec": "D", "name": "Using the tree to localize disease", "sub": "How many lineages?", "b": [{"lo": "2", "rr": true, "hy": true, "q": "Pancytopenia points to a problem at which level?", "a": "Stem cell or whole-marrow level", "o": ["A committed progenitor", "Peripheral destruction of one line", "A single growth factor"], "n": ["One line only.", "One line only.", "One line only."], "w": "Count the lineages affected → how high up the tree.", "p": "All lines low."}, {"lo": "2", "hy": true, "q": "After chloramphenicol: Hb 7.5, WBC 1,800, platelets 22,000. Marrow biopsy most likely shows:", "a": "Hypocellular marrow replaced by fat (aplastic anemia)", "o": ["Hypercellular marrow full of blasts", "Fibrotic marrow with teardrop cells", "Increased megakaryocytes"], "n": ["Acute leukemia.", "Myelofibrosis.", "ITP."], "w": "Causes: drugs (chloramphenicol, benzene), viruses, radiation, Fanconi anemia.", "p": "Empty marrow."}, {"lo": "2", "hy": true, "q": "CML with t(9;22) can transform into a LYMPHOID blast crisis. What does that say about where the mutation arose?", "a": "In the pluripotent stem cell, above the myeloid/lymphoid split", "o": ["In CFU-GM", "In a mature neutrophil", "In a T cell"], "n": ["Couldn't give lymphoid blasts.", "Postmitotic.", "Couldn't give myeloid disease."], "w": "CML: BCR-ABL, ↑ basophils, all myeloid stages in blood.", "p": "Above the fork."}, {"lo": "2", "t": "m", "q": "Select ALL single-lineage disorders.", "a": ["Pure red cell aplasia (thymoma, parvovirus B19)", "Anemia of CKD (no EPO)"], "o": ["Aplastic anemia", "Acute leukemia replacing marrow"], "n": ["All lines.", "Multiple lines."], "w": "One line abnormal → committed progenitor, growth factor or periphery.", "p": "Only one line falls."}, {"lo": "2", "hy": true, "q": "Myeloproliferative neoplasms (JAK2 V617F) arise at which level, and give which diseases?", "a": "Myeloid stem cell overproduces: PV (RBCs), ET (platelets), myelofibrosis", "o": ["Lymphoid stem cell: CLL, ALL", "Committed CFU-E only: pure red cell aplasia", "Mature RBC: hereditary spherocytosis"], "n": ["Wrong branch.", "Underproduction.", "Membrane defect."], "w": "Only myeloid lines abnormal → myeloid stem cell level.", "p": "Too much myeloid."}]}, {"id": "rules", "lec": "T", "name": "Universal rules of maturation", "sub": "Shrink, condense, lose the blue", "b": [{"lo": "3", "rr": true, "hy": true, "t": "m", "q": "As a precursor matures (blast → mature), select ALL correct trends.", "a": ["Cell gets smaller (except the megakaryocyte)", "N:C ratio falls", "Chromatin condenses and darkens", "Nucleoli disappear", "Cytoplasm loses its blue", "Mitotic → postmitotic"], "o": ["Chromatin becomes finer and paler", "Nucleoli become more prominent"], "n": ["Opposite.", "Opposite."], "w": "\"Shrink, Condense, Lose the Blue.\"", "p": "Six trends."}, {"lo": "3", "rr": true, "q": "Why is a young precursor's cytoplasm deep blue?", "a": "Lots of ribosomes / RNA (basophilic)", "o": ["Lots of hemoglobin", "Azurophilic granules", "Iron deposits"], "n": ["Hb makes it pink.", "Purple granules, not diffuse blue.", "Not the cause."], "w": "Product (Hb, granules) replaces the ribosomes.", "p": "RNA stains blue."}, {"lo": "3", "hy": true, "q": "Which cell line breaks the \"cells shrink as they mature\" rule?", "a": "Megakaryocyte: gets bigger via endomitosis", "o": ["Erythroid line", "Granulocyte line", "Monocyte line"], "n": ["Shrinks.", "Shrinks after the promyelocyte.", "Not the exception."], "w": "DNA keeps copying without the cell dividing.", "p": "Endomitosis."}]}, {"id": "ery", "lec": "T", "name": "Erythropoiesis", "sub": "Please Be Polite, Or Run Early", "b": [{"lo": "3", "rr": true, "hy": true, "t": "o", "q": "Order the erythroid line.", "a": ["Proerythroblast", "Basophilic erythroblast", "Polychromatophilic erythroblast", "Orthochromatophilic erythroblast (normoblast)", "Reticulocyte", "Erythrocyte"], "w": "\"Please Be Polite, Or Run Early.\" ≈7 days pro → retic.", "p": "Pro, Baso, Poly, Ortho, Retic, RBC."}, {"lo": "3", "rr": true, "hy": true, "q": "Nucleated erythroid cell, 12–17 µm, intensely blue cytoplasm, coarse checkerboard chromatin, no nucleoli. Name it.", "a": "Basophilic erythroblast", "o": ["Proerythroblast", "Polychromatophilic erythroblast", "Orthochromatophilic erythroblast"], "n": ["Still has nucleoli, finer chromatin.", "Grey-lilac cytoplasm.", "Pyknotic nucleus, pink cytoplasm."], "w": "Checkerboard chromatin is its in-house signature, plus the intensely blue cytoplasm. (Some histology texts emphasize the checkerboard most at the polychromatophilic stage.)", "p": "Checkerboard."}, {"lo": "3", "rr": true, "q": "What is the first recognizable RBC precursor, and its key feature?", "a": "Proerythroblast: basophilic (blue) cytoplasm, fine chromatin, several nucleoli", "o": ["Basophilic erythroblast: checkerboard chromatin", "Reticulocyte: blue web", "Normoblast: pyknotic nucleus"], "n": ["Second stage.", "No nucleus.", "Fourth stage."], "w": "12–20 µm, mitotic.", "p": "First in line."}, {"lo": "3", "rr": true, "hy": true, "q": "Which is the LAST erythroid stage that divides?", "a": "Polychromatophilic erythroblast", "o": ["Basophilic erythroblast", "Orthochromatophilic erythroblast", "Reticulocyte"], "n": ["Divides but isn't last.", "Postmitotic.", "Postmitotic."], "w": "Grey-lilac = blue (ribosomes) + pink (rising Hb).", "p": "Many colors, last split."}, {"lo": "3", "rr": true, "q": "About RBC-sized, pink cytoplasm, small very dark off-center nucleus being ejected. Name it.", "a": "Orthochromatophilic erythroblast (normoblast)", "o": ["Reticulocyte", "Polychromatophilic erythroblast", "Basophilic erythroblast"], "n": ["No nucleus.", "Grey-lilac, coarse chromatin.", "Blue, checkerboard."], "w": "Pyknotic nucleus ejected; the nurse macrophage eats it.", "p": "Correct color + leaving nucleus."}, {"lo": "3", "q": "Grey-lilac (blue + pink) erythroid cell with coarse chromatin. Which cell came immediately BEFORE it?", "a": "Basophilic erythroblast", "o": ["Proerythroblast", "Orthochromatophilic erythroblast", "Reticulocyte"], "n": ["Two steps back.", "Comes after.", "Comes after."], "w": "This is the polychromatophilic erythroblast.", "p": "One step back."}, {"lo": "3", "rr": true, "hy": true, "q": "How is a reticulocyte identified?", "a": "No nucleus; leftover rRNA forms a blue web with supravital stain (brilliant cresyl blue); bluish (polychromatophilic) on Wright stain", "o": ["Pyknotic nucleus on Wright stain", "Checkerboard chromatin", "Orange granules"], "n": ["Normoblast.", "Basophilic erythroblast.", "Eosinophil."], "w": "Makes the final 20% of Hb; 1–2 days in blood.", "p": "The reticulum."}, {"lo": "3", "q": "Where does the extruded erythroblast nucleus go?", "a": "It's phagocytosed by the nurse macrophage of the erythroblastic island", "o": ["It's released into blood", "It becomes a platelet", "It's excreted by the kidney"], "n": ["Removed in marrow.", "Platelets come from megakaryocytes.", "No."], "w": "Remnants left in RBCs = Howell-Jolly bodies.", "p": "Nurse cell."}, {"lo": "3", "hy": true, "t": "m", "q": "Match the RBC finding to its cause. Select ALL correct.", "a": ["Howell-Jolly bodies → asplenia (nuclear remnants not removed)", "Basophilic stippling → lead poisoning (clumped ribosomes)", "Nucleated RBCs in blood → marrow stress or replacement (myelophthisis, thalassemia)"], "o": ["Howell-Jolly bodies → lead poisoning", "Basophilic stippling → asplenia"], "n": ["Swapped.", "Swapped."], "w": "Lead inhibits pyrimidine 5'-nucleotidase so rRNA isn't broken down.", "p": "Nucleus bits vs ribosome bits."}, {"lo": "3", "hy": true, "q": "Large erythroid precursors with immature chromatin but pink, Hb-filled cytoplasm. Which process is impaired?", "a": "DNA synthesis (B12/folate deficiency) → nuclear–cytoplasmic asynchrony", "o": ["Hemoglobin synthesis", "Iron absorption only", "Ribosome breakdown"], "n": ["Hb is on schedule.", "Iron deficiency gives small pale cells.", "That's lead."], "w": "Same defect makes hypersegmented neutrophils.", "p": "Nucleus lags."}, {"lo": "3", "hy": true, "q": "Sickle cell patient: Hb drops 8 → 4 after a febrile illness with a slapped-cheek rash; retics 0.1%. Which cells does the virus target?", "a": "Erythroid progenitors / pronormoblasts (parvovirus B19, via P antigen)", "o": ["Megakaryocytes", "Myeloblasts", "Mature RBCs"], "n": ["Not its target.", "Not its target.", "Mature cells don't support replication."], "w": "Aplastic crisis when RBC lifespan is already short; giant pronormoblasts in marrow.", "p": "Parvovirus B19."}, {"lo": "3", "q": "Why does iron deficiency make RBCs small and pale?", "a": "Hb fills the cytoplasm slowly → extra divisions → microcytic, hypochromic cells", "o": ["DNA synthesis is blocked", "The spleen trims them", "Membrane proteins are missing"], "n": ["That's megaloblastic.", "Not the mechanism.", "That's spherocytosis."], "w": "Division stops when enough Hb accumulates.", "p": "Extra divisions."}]}, {"id": "gran", "lec": "T", "name": "Granulopoiesis", "sub": "My Parents Made Me Be Smart", "b": [{"lo": "3", "rr": true, "hy": true, "t": "o", "q": "Order the granulocyte (neutrophil) line.", "a": ["Myeloblast", "Promyelocyte", "Myelocyte", "Metamyelocyte", "Band (stab)", "Segmented neutrophil"], "w": "\"My Parents Made Me Be Smart.\" ≈11 days.", "p": "M, P, M, M, B, S."}, {"lo": "3", "rr": true, "hy": true, "q": "Largest cell of the granulocyte line (17–26 µm), oval nucleus, cytoplasm packed with purple granules. Name it and its granule type.", "a": "Promyelocyte; azurophilic (primary) granules (MPO, acid hydrolases)", "o": ["Myelocyte; specific granules", "Myeloblast; no granules", "Metamyelocyte; specific granules"], "n": ["Smaller; specific granules appear.", "No granules.", "Kidney-bean nucleus."], "w": "\"Primary granules appear in the Promyelocyte.\"", "p": "Big and purple."}, {"lo": "3", "rr": true, "hy": true, "q": "Which is the first stage where you can tell neutrophil vs eosinophil vs basophil?", "a": "Myelocyte (specific granules appear)", "o": ["Promyelocyte", "Myeloblast", "Band"], "n": ["Azurophilic granules only.", "No granules.", "Already identifiable earlier."], "w": "Myelocyte is also the last mitotic stage.", "p": "Specific granules."}, {"lo": "3", "rr": true, "hy": true, "t": "m", "q": "Select ALL correct granulocyte stage facts.", "a": ["Myelocyte = last stage that divides", "Metamyelocyte = first motile stage", "Metamyelocyte = kidney-bean nucleus", "Band = horseshoe/U nucleus of even width"], "o": ["Promyelocyte = first motile stage", "Band = last stage that divides"], "n": ["Not motile.", "Postmitotic."], "w": "Once it's \"meta-\" (\"after\"), it's done dividing.", "p": "Meta = after."}, {"lo": "3", "q": "Kidney-bean nucleus, no nucleoli, granulocyte precursor. Which cell PRECEDES it and which FOLLOWS?", "a": "Preceded by the myelocyte; followed by the band", "o": ["Preceded by the promyelocyte; followed by the segmented neutrophil", "Preceded by the band; followed by the myelocyte", "Preceded by the myeloblast; followed by the promyelocyte"], "n": ["Skips a stage.", "Backwards.", "Wrong cell."], "w": "This is a metamyelocyte.", "p": "Neighbors of the meta."}, {"lo": "3", "t": "o", "q": "Order the neutrophil nucleus shape story.", "a": ["Round", "Oval", "Slightly flattened", "Kidney bean (indented)", "Horseshoe / U", "Lobes"], "w": "The nucleus progressively indents, then pinches into lobes.", "p": "Indent then pinch."}, {"lo": "3", "t": "o", "q": "Order the granule story in granulopoiesis.", "a": ["No granules (myeloblast)", "Azurophilic / primary granules (promyelocyte)", "Specific / secondary granules (myelocyte)"], "w": "Primary first, specific next.", "p": "Purple before pink."}, {"lo": "3", "hy": true, "q": "Bands normally make up up to ≈3% of the differential. What does >10% suggest?", "a": "Infection or inflammation (left shift)", "o": ["B12 deficiency", "Pelger-Huët anomaly", "CML in every case"], "n": ["Hypersegmentation.", "Bilobed cells.", "Not necessarily."], "w": "Marrow pulling from its reserve pool.", "p": "Left shift."}, {"lo": "3", "hy": true, "q": "Bleeding, ↓ fibrinogen, ↑ D-dimer; marrow full of large cells with purple granules and multiple rod-shaped inclusions. Cytogenetics?", "a": "t(15;17) PML-RARα: acute promyelocytic leukemia", "o": ["t(9;22)", "t(8;14)", "JAK2 V617F"], "n": ["CML.", "Burkitt.", "MPNs."], "w": "Cells stuck at promyelocyte; Auer rods; DIC. Treat with ATRA + arsenic trioxide.", "p": "Stuck promyelocytes."}, {"lo": "3", "hy": true, "q": "WBC 32,000 with bands, metamyelocytes and myelocytes; HIGH LAP; no basophilia; no BCR-ABL. Diagnosis?", "a": "Leukemoid reaction", "o": ["CML", "AML", "APL"], "n": ["Low LAP, basophilia, t(9;22).", "Blasts, Auer rods.", "Promyelocytes, t(15;17)."], "w": "Reactive left shift from severe infection.", "p": "High LAP = reactive."}, {"lo": "3", "t": "m", "q": "Select ALL correct granulocyte-line disorders.", "a": ["Auer rods = fused azurophilic (MPO+) granules → AML", "Pelger-Huët → neutrophils stuck bilobed (\"pince-nez\")", "Chediak-Higashi (LYST) → giant granules"], "o": ["Auer rods = fused specific granules", "Chediak-Higashi → hypersegmented neutrophils"], "n": ["Azurophilic.", "Giant granules."], "w": "Auer rods mark myeloid blasts.", "p": "Granule and nucleus defects."}, {"lo": "3", "hy": true, "q": "Trap: \"largest cell in granulopoiesis\" vs \"largest cell in marrow\"?", "a": "Promyelocyte vs megakaryocyte", "o": ["Myeloblast vs promyelocyte", "Myelocyte vs monocyte", "Promyelocyte vs promyelocyte"], "n": ["Not correct.", "Not correct.", "Megakaryocyte is biggest in marrow."], "w": "Read which pool the question asks about.", "p": "Two different 'largest.'"}]}, {"id": "mono3", "lec": "T", "name": "Monopoiesis", "sub": "Monoblast → promonocyte → monocyte", "b": [{"lo": "3", "rr": true, "t": "o", "q": "Order the monocyte line.", "a": ["Monoblast", "Promonocyte", "Monocyte", "Macrophage"], "w": "From CFU-GM, driven by M-CSF / GM-CSF.", "p": "Blast, pro, cyte, tissue."}, {"lo": "3", "rr": true, "hy": true, "q": "Which is the FIRST morphologically identifiable monocyte precursor?", "a": "Promonocyte (folded nucleus with delicate creases and an indent)", "o": ["Monoblast", "Monocyte", "Macrophage"], "n": ["Looks almost identical to a myeloblast.", "Later.", "Tissue stage."], "w": "Monoblast ≈ myeloblast.", "p": "Creased nucleus."}, {"lo": "3", "t": "m", "q": "Select ALL members of the mononuclear phagocyte system.", "a": ["Macrophages", "Their precursors (monocytes)", "Multinucleated giant cells"], "o": ["Neutrophils", "Plasma cells"], "n": ["Granulocytes.", "Lymphoid."], "w": "Giant cells form in granulomas (TB, sarcoid).", "p": "Macrophage family."}, {"lo": "3", "hy": true, "q": "Langerhans cell histiocytosis is marked by:", "a": "CD1a+, S-100+, Birbeck granules (\"tennis rackets\"), lytic bone lesions", "o": ["Auer rods, MPO+", "Smudge cells", "Russell bodies"], "n": ["AML.", "CLL.", "Myeloma."], "w": "Langerhans cells = skin dendritic cells. Acute monocytic leukemia → gum infiltration.", "p": "Tennis rackets."}]}, {"id": "thrombo", "lec": "T", "name": "Thrombopoiesis", "sub": "Endomitosis · proplatelets", "b": [{"lo": "3", "rr": true, "t": "o", "q": "Order the platelet line.", "a": ["Megakaryoblast", "Promegakaryocyte", "Megakaryocyte", "Platelets"], "w": "TPO controls number, size and maturation.", "p": "Blast, pro, mega, fragments."}, {"lo": "3", "rr": true, "hy": true, "q": "What is endomitosis?", "a": "DNA copies without the cell dividing → one huge polyploid nucleus (up to 64n)", "o": ["Division without DNA copying", "Normal mitosis inside the sinusoid", "Fusion of several cells"], "n": ["Opposite.", "Not the process.", "That's an osteoclast/giant cell."], "w": "Why megakaryocytes get bigger as they mature.", "p": "Copy, don't split."}, {"lo": "3", "rr": true, "q": "How do megakaryocytes release platelets?", "a": "They sit on the outside of sinusoids and push proplatelets into the lumen; cytoplasm sheds via demarcation channels", "o": ["They migrate into blood and fragment there", "They phagocytose RBCs", "They secrete platelets from the spleen"], "n": ["They can't move.", "Not their role.", "Marrow."], "w": "Some proplatelets finish shedding in the lungs.", "p": "Shed through the wall."}, {"lo": "3", "hy": true, "q": "A giant marrow cell with multiple separate nuclei sitting on the bone surface is most likely:", "a": "An osteoclast (a megakaryocyte has ONE lobulated nucleus and sits on sinusoids)", "o": ["A megakaryocyte", "A plasma cell", "A promyelocyte"], "n": ["One lobulated nucleus.", "Eccentric single nucleus.", "Single oval nucleus."], "w": "Trap alert.", "p": "Count the nuclei and check the location."}, {"lo": "3", "rr": true, "hy": true, "t": "m", "q": "Match the marrow biopsy pattern. Select ALL correct.", "a": ["↑ megakaryocytes + ↓ platelets → peripheral destruction (ITP)", "↓ megakaryocytes + ↓ platelets → production failure", "↑ atypical megakaryocytes + very high platelets → essential thrombocythemia"], "o": ["↑ megakaryocytes + ↓ platelets → aplastic anemia", "↓ megakaryocytes + ↓ platelets → ITP"], "n": ["Aplastic has ↓ megakaryocytes.", "ITP has ↑ megakaryocytes."], "w": "ITP: anti-GpIIb/IIIa antibodies; marrow compensates. Liver failure → ↓ TPO.", "p": "Is the marrow trying?"}]}, {"id": "lympho3", "lec": "T", "name": "Lymphopoiesis", "sub": "Lymphoblast → plasma cell · NK", "b": [{"lo": "3", "rr": true, "t": "o", "q": "Order the B-lymphoid line.", "a": ["Lymphoblast", "Prolymphocyte", "Lymphocyte", "Plasma cell"], "w": "B cells mature in marrow; T cells in thymus.", "p": "Blast, pro, cyte, plasma."}, {"lo": "3", "rr": true, "hy": true, "q": "Eccentric \"clock-face\" nucleus, abundant blue cytoplasm and a pale perinuclear halo. Name it.", "a": "Plasma cell (halo = Golgi zone; blue = RER)", "o": ["Lymphoblast", "NK cell", "Monocyte"], "n": ["No granules, high N:C.", "Granular cytoplasm.", "Kidney nucleus."], "w": "Myeloma: malignant plasma cells, M-spike, CRAB, Russell bodies.", "p": "Clock face."}, {"lo": "3", "q": "Which lymphoid stage has prominent nucleoli, condensing chromatin and MODERATE pale, weakly blue cytoplasm?", "a": "Prolymphocyte", "o": ["Lymphoblast", "Mature lymphocyte", "Plasma cell"], "n": ["Blast: high N:C with scant cytoplasm and no granules.", "Thin rim, no nucleoli.", "Eccentric nucleus."], "w": "B and T lymphocytes look the same on a smear.", "p": "Pro = nucleoli."}, {"lo": "3", "hy": true, "q": "A larger lymphocyte with granular cytoplasm that kills cells with ↓ MHC I. Name it and its weapons.", "a": "NK cell (large granular lymphocyte); perforin + granzymes", "o": ["Plasma cell; antibodies", "Basophil; histamine", "Monocyte; IL-1"], "n": ["No granules.", "Myeloid.", "Myeloid."], "w": "NK cells come from the lymphoid progenitor (in-house tree: lymphoblast → NK cell).", "p": "Large granular lymphocyte."}, {"lo": "3", "hy": true, "q": "Lymphoblasts that are TdT+ and CD10+ in a child indicate:", "a": "ALL", "o": ["AML", "CLL", "CML"], "n": ["Myeloblasts, MPO+.", "Older adults, smudge cells.", "Myeloid, BCR-ABL."], "w": "TdT marks immature lymphoblasts.", "p": "TdT."}]}, {"id": "firsts", "lec": "T", "name": "First, last & largest", "sub": "Master comparison", "b": [{"lo": "3", "rr": true, "hy": true, "t": "m", "q": "Select ALL correct \"first/last/largest\" answers.", "a": ["First recognizable RBC precursor → proerythroblast", "First stage with no nucleus → reticulocyte", "First granulocyte stage with azurophilic granules → promyelocyte", "First motile granulocyte → metamyelocyte", "First identifiable monocyte precursor → promonocyte", "Largest cell in marrow → megakaryocyte"], "o": ["Last granulocyte stage that divides → metamyelocyte", "Erythroid stage that ejects its nucleus → reticulocyte"], "n": ["Myelocyte.", "Orthochromatophilic erythroblast."], "w": "Master comparison table.", "p": "Firsts and lasts."}, {"lo": "3", "rr": true, "q": "Which line grows by endomitosis, and what are the maturation times?", "a": "Megakaryocyte; RBC line ≈7 days, granulocyte line ≈11 days", "o": ["Erythroid; 11 days and 7 days", "Lymphoid; 2 days each", "Monocyte; 30 days"], "n": ["Wrong line and swapped.", "Wrong.", "Wrong."], "w": "Neutrophils then wait ≈4 days in reserve.", "p": "7 vs 11."}]}];
+
+
+(function(){
+"use strict";
+var KEY="hd-hem01-hematopoiesis-builder-v1";
+var S={box:{},score:0,streak:0,best:0,tot:0,right:0,theme:"auto"};
+function load(){try{var j=JSON.parse(localStorage.getItem(KEY)||"null");if(j&&j.box)S=Object.assign(S,j);}catch(e){}}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}}
+load();
+
+var ALL=[]; E.forEach(function(e){e.b.forEach(function(b,i){b.id=e.id+"."+i;b.ent=e;ALL.push(b);});});
+function st(b){var r=S.box[b.id];return r?r.s:"u";}
+var rrOnly=false, mode="build", scope="all", loFilter=null, curEnt=null, idx=0, cur=null, answered=false, results={}, lastId=null, t0=0, tick=null;
+
+function shuffle(a){a=a.slice();for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=a[i];a[i]=a[j];a[j]=t;}return a;}
+function esc(s){return String(s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];});}
+function inScope(b){return (scope==="all"||b.ent.lec===scope)&&(!loFilter||b.lo===loFilter)&&(!rrOnly||b.rr);}
+
+/* ---------- theme ---------- */
+var themeBtn=document.getElementById("themeBtn");
+function applyTheme(){var r=document.documentElement;if(S.theme==="auto")r.removeAttribute("data-theme");else r.setAttribute("data-theme",S.theme);themeBtn.textContent="Theme: "+S.theme;}
+themeBtn.onclick=function(){S.theme={auto:"light",light:"dark",dark:"auto"}[S.theme];applyTheme();save();};
+applyTheme();
+document.getElementById("resetBtn").onclick=function(){
+  var b=this; if(b.dataset.confirm){S.box={};S.score=S.streak=S.tot=S.right=0;save();b.textContent="Reset progress";delete b.dataset.confirm;renderAll();next();return;}
+  b.dataset.confirm="1";b.textContent="Tap again to reset";setTimeout(function(){if(b.dataset.confirm){delete b.dataset.confirm;b.textContent="Reset progress";}},3000);
+};
+
+/* ---------- stats / side / map ---------- */
+function loStatus(lo){var bs=ALL.filter(function(b){return b.lo===lo;});var ss=bs.map(st);
+  var m=ss.filter(function(x){return x==="M";}).length;
+  if(m===bs.length)return{s:"M",m:m,n:bs.length};
+  if(ss.indexOf("m")>=0)return{s:"m",m:m,n:bs.length};
+  if(ss.some(function(x){return x!=="u";}))return{s:"o",m:m,n:bs.length};
+  return{s:"u",m:m,n:bs.length};}
+function renderStats(){
+  document.getElementById("sScore").textContent=S.score;
+  document.getElementById("sStreak").textContent=S.streak;
+  document.getElementById("sAcc").textContent=S.tot?Math.round(100*S.right/S.tot)+"%":"—";
+  document.getElementById("sBoxes").textContent=ALL.filter(function(b){return st(b)==="M";}).length+"/"+ALL.length;
+  var los=Object.keys(LOS);document.getElementById("sLos").textContent=los.filter(function(l){return loStatus(l).s==="M";}).length+"/"+los.length;
+}
+function renderSide(){
+  var h="";LECS.forEach(function(L){if(scope!=="all"&&scope!==L.k)return;
+    h+='<p class="lec-h l'+L.k+'" style="color:var(--lc)">HEM01 · '+esc(L.n)+'</p>';
+    E.filter(function(e){return e.lec===L.k;}).forEach(function(e){
+      var m=e.b.filter(function(b){return st(b)==="M";}).length,p=Math.round(100*m/e.b.length);
+      h+='<button type="button" class="ent l'+e.lec+'" data-ent="'+e.id+'"'+(curEnt===e&&mode==="build"?' aria-current="true"':'')+'><span class="n">'+esc(e.name)+'</span><span class="pct">'+m+'/'+e.b.length+'</span><span class="s">'+esc(e.sub)+'</span><span class="mini"><i style="width:'+p+'%"></i></span></button>';
+    });});
+  var el=document.getElementById("entList");el.innerHTML=h;
+  el.querySelectorAll(".ent").forEach(function(b){b.onclick=function(){setMode("build");startEnt(E.filter(function(e){return e.id===b.dataset.ent;})[0]);};});
+}
+function renderMap(){
+  var h="";Object.keys(LOS).forEach(function(lo){var lec=LOLEC[lo];if(scope!=="all"&&scope!==lec)return;var s=loStatus(lo);
+    h+='<button type="button" class="lo-tile l'+lec+'" data-lo="'+lo+'"'+(loFilter===lo?' style="border-color:var(--lc)"':'')+'><span class="id">'+(lo.slice(-1)==="X"?"Extra":"LO "+lo)+'</span><span class="t">'+esc(LOS[lo])+'</span><span class="dot s-'+s.s+'" title="'+s.m+'/'+s.n+' mastered"></span></button>';});
+  var g=document.getElementById("loGrid");g.innerHTML=h;
+  g.querySelectorAll(".lo-tile").forEach(function(b){b.onclick=function(){loFilter=(loFilter===b.dataset.lo?null:b.dataset.lo);setMode("drill");};});
+}
+function renderAll(){renderStats();renderSide();renderMap();}
+
+/* ---------- flow ---------- */
+function setMode(m){mode=m;document.querySelectorAll("[data-mode]").forEach(function(b){b.setAttribute("aria-pressed",String(b.dataset.mode===m));});
+  if(m==="build"){loFilter=null;if(rrOnly){rrOnly=false;setRR();}renderAll();if(!curEnt||!inScope(curEnt.b[0]))startEnt(firstEnt());else show();}
+  else{renderAll();next();}}
+function firstEnt(){var es=E.filter(function(e){return scope==="all"||e.lec===scope;});
+  for(var i=0;i<es.length;i++){if(es[i].b.some(function(b){return st(b)!=="M";}))return es[i];}return es[0];}
+document.querySelectorAll("[data-mode]").forEach(function(b){b.onclick=function(){setMode(b.dataset.mode);};});
+function setRR(){document.querySelectorAll("[data-rr]").forEach(function(x){x.setAttribute("aria-pressed",String((x.dataset.rr==="1")===rrOnly));});}
+document.querySelectorAll("[data-rr]").forEach(function(b){b.onclick=function(){rrOnly=b.dataset.rr==="1";setRR();setMode(rrOnly?"drill":mode);};});
+document.querySelectorAll("[data-scope]").forEach(function(b){b.onclick=function(){scope=b.dataset.scope;loFilter=null;
+  document.querySelectorAll("[data-scope]").forEach(function(x){x.setAttribute("aria-pressed",String(x===b));});
+  if(mode==="build"){curEnt=null;setMode("build");}else setMode("drill");};});
+
+function startEnt(e){curEnt=e;idx=0;results={};renderSide();cur=e.b[0];show();}
+function next(){
+  if(mode==="build"){idx++;if(idx>=curEnt.b.length){finishEnt();return;}cur=curEnt.b[idx];show();return;}
+  var pool=ALL.filter(inScope);if(!pool.length){cur=null;show();return;}
+  var rank={m:0,u:1,o:2,M:3};
+  pool=shuffle(pool).sort(function(a,b){return rank[st(a)]-rank[st(b)];});
+  var best=rank[st(pool[0])];var top=pool.filter(function(b){return rank[st(b)]===best&&b.id!==lastId;});
+  if(best===3)top=pool.filter(function(b){return b.id!==lastId;});
+  cur=(top.length?top:pool)[0];show();
+}
+function finishEnt(){
+  var ok=Object.keys(results).filter(function(k){return results[k];}).length,n=curEnt.b.length;
+  var i=E.indexOf(curEnt),nxt=null;for(var j=1;j<=E.length;j++){var c=E[(i+j)%E.length];if(scope==="all"||c.lec===scope){nxt=c;break;}}
+  var card=document.getElementById("card");card.className="card l"+curEnt.lec;
+  card.innerHTML='<div class="done"><p class="meta">Structure complete</p><h2>'+esc(curEnt.name)+': '+ok+' / '+n+' first try</h2>'+
+   '<p class="hint">'+(ok===n?"Clean build. It will count as mastered after one more clean pass.":"Missed boxes are queued first in Drill mode.")+'</p>'+
+   '<div class="actions"><button class="btn" type="button" id="again">Rebuild '+esc(curEnt.name)+'</button>'+(nxt?'<button class="btn primary" type="button" id="nextEnt">Next: '+esc(nxt.name)+' →</button>':'')+'</div></div>';
+  document.getElementById("again").onclick=function(){startEnt(curEnt);};
+  if(nxt)document.getElementById("nextEnt").onclick=function(){startEnt(nxt);};
+  var ne=document.getElementById("nextEnt");if(ne)ne.focus();
+}
+
+var picks=[];
+function show(){
+  answered=false;picks=[];clearInterval(tick);
+  var card=document.getElementById("card");
+  if(!cur){card.className="card";card.innerHTML='<p class="q">Nothing in this scope yet.</p>';return;}
+  var b=cur,e=b.ent;card.className="card l"+e.lec;
+  var head='<div class="card-top"><div><p class="meta">'+(mode==="build"?"Build · box "+(idx+1)+" of "+e.b.length:"Drill"+(rrOnly?" · Rapid Review":"")+(loFilter?" · LO "+loFilter:""))+'</p><h2>'+esc(e.name)+'</h2></div>'+
+    '<div style="display:flex;gap:6px;flex-wrap:wrap"><span class="tag lo">'+(b.lo.slice(-1)==="X"?"Extra":"LO "+b.lo)+'</span>'+(b.rr?'<span class="tag rr">Rapid Review</span>':'')+(b.hy?'<span class="tag hy">HY</span>':'')+'<span class="timer" id="timer">0.0s</span></div></div>';
+  if(mode==="build"){head+='<div class="boxes" aria-hidden="true">'+e.b.map(function(x,i){var c=i===idx?"cur":(x.id in results?(results[x.id]?"done-ok":"done-bad"):"");return '<i class="'+c+'"></i>';}).join("")+'</div>';}
+  var body='<p class="q">'+esc(b.q)+'</p>';
+  if(!b.t){b._opts=shuffle([b.a].concat(b.o));
+    body+='<div class="opts">'+b._opts.map(function(o,i){return '<button type="button" class="opt" data-i="'+i+'"><span class="k">'+(i+1)+'</span><span>'+esc(o)+'</span></button>';}).join("")+'</div>';}
+  else if(b.t==="m"){b._opts=shuffle(b.a.concat(b.o));
+    body+='<p class="hint">Select all that apply, then check.</p><div class="opts">'+b._opts.map(function(o,i){return '<button type="button" class="opt" aria-pressed="false" data-i="'+i+'"><span class="k">'+(i+1)+'</span><span>'+esc(o)+'</span></button>';}).join("")+'</div>';}
+  else{b._opts=shuffle(b.a);
+    body+='<p class="hint">Tap items in order. Tap a placed item to remove it.</p><ol class="ordered" id="ordList"><li class="empty" style="cursor:default">Your order appears here</li></ol><div class="opts">'+b._opts.map(function(o,i){return '<button type="button" class="opt" data-i="'+i+'"><span class="k">+</span><span>'+esc(o)+'</span></button>';}).join("")+'</div>';}
+  var act='<div id="fb"></div><div class="actions"><span class="hint">'+(b.t?"Enter to check":"Keys 1–"+b._opts.length+" to answer")+'</span><div style="display:flex;gap:8px">'+
+    (mode==="build"?'<button class="btn" type="button" id="skipBtn">Skip structure</button>':'')+
+    (b.t?'<button class="btn primary" type="button" id="checkBtn"'+(b.t==="o"?" disabled":"")+'>Check</button>':'')+
+    '<button class="btn primary" type="button" id="nextBtn" hidden>Next box →</button></div></div>';
+  card.innerHTML=head+body+act;
+  t0=Date.now();tick=setInterval(function(){var t=document.getElementById("timer");if(t)t.textContent=((Date.now()-t0)/1000).toFixed(1)+"s";},100);
+  var opts=card.querySelectorAll(".opt");
+  if(!b.t)opts.forEach(function(o){o.onclick=function(){if(!answered)grade([+o.dataset.i]);};});
+  else if(b.t==="m")opts.forEach(function(o){o.onclick=function(){if(answered)return;var on=o.getAttribute("aria-pressed")!=="true";o.setAttribute("aria-pressed",String(on));o.classList.toggle("sel",on);};});
+  else opts.forEach(function(o){o.onclick=function(){if(answered||o.disabled)return;picks.push(+o.dataset.i);o.disabled=true;o.style.opacity=".4";drawOrd();};});
+  var cb=document.getElementById("checkBtn");if(cb)cb.onclick=function(){if(answered)return;
+    if(b.t==="m"){var sel=[];opts.forEach(function(o){if(o.getAttribute("aria-pressed")==="true")sel.push(+o.dataset.i);});grade(sel);}else grade(picks);};
+  var sk=document.getElementById("skipBtn");if(sk)sk.onclick=function(){var i=E.indexOf(curEnt);for(var j=1;j<=E.length;j++){var c=E[(i+j)%E.length];if(scope==="all"||c.lec===scope){startEnt(c);return;}}};
+  document.getElementById("nextBtn").onclick=function(){lastId=cur.id;next();};
+}
+function drawOrd(){var b=cur,ol=document.getElementById("ordList");
+  ol.innerHTML=picks.length?picks.map(function(i,k){return '<li data-k="'+k+'">'+esc(b._opts[i])+'</li>';}).join(""):'<li class="empty" style="cursor:default">Your order appears here</li>';
+  ol.querySelectorAll("li[data-k]").forEach(function(li){li.onclick=function(){if(answered)return;var k=+li.dataset.k,i=picks[k];picks.splice(k,1);
+    var o=document.querySelector('.opt[data-i="'+i+'"]');o.disabled=false;o.style.opacity="";drawOrd();};});
+  document.getElementById("checkBtn").disabled=picks.length!==b.a.length;}
+
+function grade(sel){
+  answered=true;clearInterval(tick);var b=cur,ok,card=document.getElementById("card"),opts=card.querySelectorAll(".opt");
+  if(!b.t){ok=b._opts[sel[0]]===b.a;opts.forEach(function(o){var t=b._opts[+o.dataset.i];o.disabled=true;if(t===b.a)o.classList.add("right");else if(+o.dataset.i===sel[0])o.classList.add("wrong");});}
+  else if(b.t==="m"){var chosen=sel.map(function(i){return b._opts[i];});ok=chosen.length===b.a.length&&chosen.every(function(c){return b.a.indexOf(c)>=0;});
+    opts.forEach(function(o){var t=b._opts[+o.dataset.i],isA=b.a.indexOf(t)>=0,isS=chosen.indexOf(t)>=0;o.disabled=true;o.classList.remove("sel");
+      if(isA&&isS)o.classList.add("right");else if(isA)o.classList.add("missed");else if(isS)o.classList.add("wrong");});}
+  else{var got=sel.map(function(i){return b._opts[i];});ok=got.every(function(g,k){return g===b.a[k];});
+    document.querySelectorAll("#ordList li[data-k]").forEach(function(li,k){li.classList.add(got[k]===b.a[k]?"right":"wrong");});
+    opts.forEach(function(o){o.disabled=true;});}
+  var r=S.box[b.id]||{n:0,c:0,s:"u"};r.n++;
+  if(ok){r.c++;r.s=r.c>=2?"M":"o";S.streak++;S.best=Math.max(S.best,S.streak);S.right++;S.score+=10+Math.min(S.streak,10);}
+  else{r.c=0;r.s="m";S.streak=0;}
+  S.tot++;S.box[b.id]=r;if(!(b.id in results))results[b.id]=ok;save();
+  var fb='<div class="fb '+(ok?"ok":"bad")+'"><span class="v">'+(ok?"Correct":"Not quite")+'</span>';
+  if(!b.t)fb+='<span class="ans">Answer: <b>'+esc(b.a)+'</b></span>';
+  else if(b.t==="m")fb+='<span class="ans">Answer: <b>'+b.a.map(esc).join(" · ")+'</b></span>';
+  else fb+='<span class="ans">Correct order:</span><ol>'+b.a.map(function(x){return "<li>"+esc(x)+"</li>";}).join("")+'</ol>';
+  fb+='<div class="fbexp">'+String(b.w||"").split(/\n\n+/).filter(Boolean).map(function(t){return '<p>'+esc(t)+'</p>';}).join("")+'</div>';
+  if(b.n&&b.n.length&&b.o&&b.o.length){
+    var rows=b.o.map(function(x,i){return b.n[i]?'<li><b>'+esc(x)+'</b> — '+esc(b.n[i])+'</li>':"";}).join("");
+    if(rows)fb+='<ul class="fbnotes">'+rows+'</ul>';
+  }
+  if(b.p)fb+='<div class="fbpearl"><b>High-yield</b>'+esc(b.p)+'</div>';
+  fb+='</div>';
+  document.getElementById("fb").innerHTML=fb;
+  var cb=document.getElementById("checkBtn");if(cb)cb.hidden=true;
+  var nb=document.getElementById("nextBtn");nb.hidden=false;nb.textContent=(mode==="build"&&idx===curEnt.b.length-1)?"Finish structure →":"Next box →";nb.focus();
+  renderAll();
+}
+document.addEventListener("keydown",function(ev){
+  if(ev.target.tagName==="INPUT"||ev.metaKey||ev.ctrlKey||ev.altKey)return;
+  if(ev.key==="Enter"){var nb=document.getElementById("nextBtn"),cb=document.getElementById("checkBtn");
+    if(nb&&!nb.hidden){ev.preventDefault();nb.click();}else if(cb&&!cb.hidden&&!cb.disabled){ev.preventDefault();cb.click();}return;}
+  var n=parseInt(ev.key,10);if(!cur||answered||isNaN(n))return;var o=document.querySelector('.opt[data-i="'+(n-1)+'"]');if(o&&!o.disabled)o.click();
+});
+
+renderAll();startEnt(firstEnt());
+})();
+
+/* ---------- Review: the compiled version of everything the answers teach ---------- */
+var REVIEW = {"F": "<h3 class=\"rh\">Spun tube &amp; formed elements</h3>\n<p>Plasma <b>≈55%</b> (top) · buffy coat <b>≈1%</b> (WBCs + platelets) · RBCs <b>≈40–50% ♂ / 35–45% ♀</b> = hematocrit. Plasma minus fibrinogen = <b>serum</b>.</p>\n<p><b>Granulocytes</b> (specific granules + lobed nucleus) = <b>BEN</b>: basophil, eosinophil, neutrophil. <b>Agranulocytes</b> (\"mononuclear\") = lymphocyte, monocyte. RBCs and platelets have no nucleus.</p>\n<div class=\"rtbl\"><table><thead><tr><th>Value</th><th>Normal</th></tr></thead><tbody>\n<tr><td>WBC</td><td>4,500–11,000 /mm³</td></tr>\n<tr><td>Platelets</td><td>150,000–450,000 /mm³</td></tr>\n<tr><td>Hb</td><td>♀ 12.1–15.1 · ♂ 13.8–17.2 g/dL</td></tr>\n<tr><td>Hct</td><td>≈ 3 × Hb</td></tr>\n<tr><td>Reticulocytes</td><td>≈1% of RBCs</td></tr></tbody></table></div>\n<h3 class=\"rh\">Differential count</h3>\n<div class=\"rmem\"><b>Never Let Monkeys Eat Bananas</b>Neutrophil 60–70% → Lymphocyte ≈28% → Monocyte ≈5% → Eosinophil 2–4% → Basophil ≈0.5%</div>\n<div class=\"rtbl\"><table><thead><tr><th>Cell</th><th>Smear clue</th><th>Job</th><th>Lifespan</th></tr></thead><tbody>\n<tr><td>Neutrophil</td><td>2–5 lobes, salmon granules</td><td>Bacteria, fungi; acute inflammation</td><td>≈6 h blood; 1–4 d tissue</td></tr>\n<tr><td>Lymphocyte</td><td>RBC-sized, round dark nucleus, thin blue rim</td><td>B humoral · T cell-mediated</td><td>Days to years</td></tr>\n<tr><td>Monocyte</td><td>Largest WBC, kidney/horseshoe nucleus, grey-blue</td><td>→ macrophage; IL-1, TNF-α, MHC II</td><td>≈40 h blood</td></tr>\n<tr><td>Eosinophil</td><td>Bilobed, orange-red granules (MBP)</td><td>Parasites; allergy damage control</td><td>—</td></tr>\n<tr><td>Basophil</td><td>Dark granules hide nucleus</td><td>IgE, histamine, heparin; type I</td><td>—</td></tr>\n<tr><td>Platelet</td><td>2–3 µm purple fragment</td><td>Hemostasis</td><td>≈10 d (⅓ in spleen)</td></tr>\n<tr><td>RBC</td><td>Biconcave, ≈8 µm, central pallor</td><td>O₂/CO₂</td><td>≈120 d</td></tr></tbody></table></div>\n<h3 class=\"rh\">Stains &amp; ID cards</h3>\n<p>Romanovsky (Wright's, Giemsa) fix + stain: basophilic blue · azurophilic purple (all WBCs) · eosinophilic orange · neutrophilic salmon.</p>\n<p><b>RBC:</b> no nucleus, mitochondria or ribosomes; spectrin–actin–ankyrin skeleton; band 3; glycolysis only; HbA ≈97%. <b>Neutrophil:</b> specific granules (lactoferrin, lysozyme, NADPH oxidase, ALP) vs azurophilic (MPO); 50% marginated; marrow reserve 10×; Barr body drumstick. <b>Platelet:</b> hyalomere / granulomere; dense (ADP, Ca²⁺, serotonin) · α (vWF, fibrinogen, PF4, PDGF); GpIb, GpIIb/IIIa.</p>\n<p>Diapedesis = all WBCs · phagocytosis = granulocytes + monocytes · <b>only lymphocytes</b> re-enter blood.</p>\n<div class=\"rhy\"><b>USMLE: which cell is up?</b>↑ Neutrophils/bands → bacterial · ↑ lymphocytes → viral, pertussis, CLL · ↑ monocytes → TB, CMML · ↑ eosinophils → NAACP · ↑ basophils → CML. Steroids ↑ neutrophils, ↓ the rest. Hypersegmented → B12/folate. Spectrin/ankyrin/band 3 → spherocytosis. NADPH oxidase → CGD; CD18 → LAD. GpIb → Bernard-Soulier; GpIIb/IIIa → Glanzmann.</div>\n<div class=\"rrule\"><b>Traps</b>Most common WBC = neutrophil; most common cell = RBC. Largest WBC = monocyte (megakaryocytes aren't blood cells). Rarest = basophil.</div>\n", "D": "<h3 class=\"rh\">Pluripotent stem cell</h3>\n<p>Pluripotent, self-renewing, <b>CD34+ / c-kit (CD117)</b>, ≈0.01% of marrow cells, mostly quiescent, rich in cord blood. Daily output comes from committed progenitors.</p>\n<div class=\"rhy\"><b>USMLE: transplant</b>G-CSF (filgrastim) mobilizes CD34+ cells into blood for collection. CD34 also marks AML/ALL blasts.</div>\n<h3 class=\"rh\">The tree</h3>\n<div class=\"rmem\"><b>BTNK club vs everyone else</b>Lymphoid → B (→ plasma cell), T, NK. Myeloid → RBCs, platelets, neutrophils, eosinophils, basophils, monocytes/macrophages, mast cells, dendritic cells.</div>\n<div class=\"rtbl\"><table><thead><tr><th>Process</th><th>Progenitor</th><th>Factor</th></tr></thead><tbody>\n<tr><td>Erythropoiesis</td><td>BFU-E (high EPO) → CFU-E (low EPO)</td><td>EPO (≈90% kidney)</td></tr>\n<tr><td>Granulopoiesis</td><td>CFU-GM, CFU-Eo, CFU-Bas</td><td>G-CSF, GM-CSF; IL-5 (eos)</td></tr>\n<tr><td>Monopoiesis</td><td>CFU-GM (shared)</td><td>M-CSF, GM-CSF</td></tr>\n<tr><td>Thrombopoiesis</td><td>CFU-Meg</td><td>TPO (liver)</td></tr>\n<tr><td>Lymphopoiesis</td><td>Lymphoid progenitors</td><td>IL-7</td></tr></tbody></table></div>\n<div class=\"rrule\"><b>Trap</b>Monocytes are myeloid (CFU-GM with neutrophils). Agranulocyte ≠ lymphoid.</div>\n<p>No growth factor → <b>apoptosis</b>. Drugs: epoetin (CKD), filgrastim (neutropenia, mobilization), sargramostim (post-transplant), romiplostim/eltrombopag (ITP), oprelvekin (IL-11).</p>\n<h3 class=\"rh\">Where blood is made</h3>\n<div class=\"rmem\"><b>Young Liver Synthesizes Blood</b>Yolk sac (wk 3–8) → liver/spleen/thymus (2nd trimester) → marrow (3rd trimester → life).</div>\n<p>Red marrow (adult): ribs, sternum, pelvis, vertebrae, skull, proximal humerus/femur (≈50%). Yellow ↔ red interconvert. Biopsy: iliac crest/sternum (adults), tibia (young kids).</p>\n<p><b>HIM</b> = stromal cells + reticular fibers + adhesion molecules + growth factors. RBC islands around a nurse macrophage near sinusoids · granulocytes far away (motile at metamyelocyte) · megakaryocytes on the sinusoid wall.</p>\n<h3 class=\"rh\">Localize the lesion</h3>\n<p>Down the tree: lose options and divisions, gain function. Count lineages affected → level.</p>\n<div class=\"rhy\"><b>USMLE: disease by level</b>Aplastic anemia → pancytopenia + fatty marrow (chloramphenicol, benzene, viruses, Fanconi). CML t(9;22) arose in the stem cell → lymphoid or myeloid blast crisis. MPNs (JAK2) → PV, ET, myelofibrosis. Pure red cell aplasia, CKD → one line. Extramedullary hematopoiesis: β-thal major, hemolysis, myelofibrosis.</div>\n", "T": "<h3 class=\"rh\">Universal rules</h3>\n<div class=\"rmem\"><b>Shrink, Condense, Lose the Blue</b>Smaller (except megakaryocyte) · ↓ N:C · chromatin condenses · nucleoli vanish · blue (ribosomes) → product · mitotic → postmitotic.</div>\n<h3 class=\"rh\">Erythroid line (≈7 days)</h3>\n<div class=\"rmem\"><b>Please Be Polite, Or Run Early</b>Proerythroblast → Basophilic → Polychromatophilic → Orthochromatophilic (normoblast) → Reticulocyte → Erythrocyte</div>\n<div class=\"rtbl\"><table><thead><tr><th>Stage</th><th>Signature</th><th>Divides?</th></tr></thead><tbody>\n<tr><td>Proerythroblast</td><td>Blue cytoplasm, nucleoli</td><td>Yes</td></tr>\n<tr><td>Basophilic</td><td>Checkerboard chromatin, no nucleoli</td><td>Yes</td></tr>\n<tr><td>Polychromatophilic</td><td>Blue + pink (grey-lilac)</td><td>Yes (last)</td></tr>\n<tr><td>Orthochromatophilic</td><td>Pyknotic nucleus being ejected</td><td>No</td></tr>\n<tr><td>Reticulocyte</td><td>No nucleus; reticulum on supravital stain</td><td>No</td></tr></tbody></table></div>\n<div class=\"rhy\"><b>USMLE: erythroid</b>Howell-Jolly → asplenia · stippling → lead · nucleated RBCs → marrow stress · megaloblastic → nuclear–cytoplasmic asynchrony · iron deficiency → extra divisions, microcytic · parvovirus B19 → erythroid progenitors, aplastic crisis.</div>\n<h3 class=\"rh\">Granulocyte line (≈11 days)</h3>\n<div class=\"rmem\"><b>My Parents Made Me Be Smart</b>Myeloblast → Promyelocyte → Myelocyte → Metamyelocyte → Band → Segmented</div>\n<div class=\"rtbl\"><table><thead><tr><th>Stage</th><th>Signature</th></tr></thead><tbody>\n<tr><td>Myeloblast</td><td>No granules, nucleoli</td></tr>\n<tr><td>Promyelocyte</td><td>Largest of line; azurophilic (1°) granules</td></tr>\n<tr><td>Myelocyte</td><td>Specific (2°) granules; N vs E vs B; last to divide</td></tr>\n<tr><td>Metamyelocyte</td><td>Kidney bean; first motile</td></tr>\n<tr><td>Band</td><td>Horseshoe/U; normal ≤3%, &gt;10% infection</td></tr></tbody></table></div>\n<div class=\"rhy\"><b>USMLE: granulocytic</b>APL t(15;17) → promyelocytes, Auer rods, DIC, ATRA. Leukemoid (high LAP) vs CML (low LAP, basophilia, BCR-ABL). Pelger-Huët bilobed. Chediak-Higashi giant granules.</div>\n<h3 class=\"rh\">Monocyte, platelet &amp; lymphoid lines</h3>\n<p><b>Monoblast</b> (≈ myeloblast) → <b>promonocyte</b> (first identifiable, creased nucleus) → monocyte → macrophage. LCH: CD1a, S-100, Birbeck granules.</p>\n<p><b>Megakaryoblast</b> → promegakaryocyte → <b>megakaryocyte</b> (≈100 µm, endomitosis to 64n, sits on sinusoid, proplatelets) → platelets. One lobulated nucleus (osteoclast = many nuclei on bone).</p>\n<div class=\"rrule\"><b>Megakaryocytes on biopsy</b>↑ megs + ↓ platelets → ITP · ↓ megs + ↓ platelets → production failure · ↑ atypical megs + ↑↑ platelets → ET</div>\n<p>Lymphoblast → prolymphocyte (nucleoli) → lymphocyte → <b>plasma cell</b> (clock-face eccentric nucleus, perinuclear halo). NK = large granular lymphocyte (perforin, granzymes). ALL: TdT+, CD10+.</p>\n<h3 class=\"rh\">Firsts &amp; lasts</h3>\n<p>First RBC precursor: proerythroblast · last erythroid to divide: polychromatophilic · ejects nucleus: orthochromatophilic · first anucleate: reticulocyte · first azurophilic: promyelocyte · first specific / last to divide: myelocyte · first motile: metamyelocyte · largest in marrow: megakaryocyte · first monocyte precursor: promonocyte.</p>\n"};
+var RVW_NAME = {"F":"LO1 Blood cells","D":"LO2 Myeloid vs lymphoid","T":"LO3 Maturation stages"};
+(function(){
+  var panel=document.getElementById("rvw"), body=document.getElementById("rvwBody"),
+      toc=document.getElementById("rvwToc"), q=document.getElementById("rvwQ"),
+      cnt=document.getElementById("rvwCount"), empty=document.getElementById("rvwEmpty"),
+      btn=document.getElementById("reviewBtn"), lec="F", secs=[];
+  var TYPES={rrule:1,rtrap:1,rmem:1,rhy:1};
+  function collapse(sec){
+    [].slice.call(sec.querySelectorAll(".rrule,.rtrap,.rmem,.rhy")).forEach(function(d){
+      var type=d.className.trim(); if(!TYPES[type])return;
+      var lbl=d.querySelector("b"), label=lbl?lbl.textContent:"Note";
+      if(lbl)lbl.parentNode.removeChild(lbl);
+      var det=document.createElement("details"); det.className="cx "+type;
+      var sum=document.createElement("summary");
+      sum.innerHTML='<span class="lbl"></span><span class="pk"></span>';
+      sum.querySelector(".lbl").textContent=label;
+      sum.querySelector(".pk").textContent=d.textContent.replace(/\s+/g," ").trim().slice(0,110);
+      var cb=document.createElement("div"); cb.className="cbody";
+      while(d.firstChild)cb.appendChild(d.firstChild);
+      det.appendChild(sum); det.appendChild(cb);
+      d.parentNode.replaceChild(det,d);
+    });
+    var h=sec.querySelector(".rh"), hys=[].slice.call(sec.querySelectorAll("details.rhy"));
+    if(h&&hys.length){ var ref=h.nextSibling; hys.forEach(function(x){ sec.insertBefore(x,ref); }); }
+    var kids=[].slice.call(sec.children), i=0;
+    while(i<kids.length){
+      if(kids[i].tagName==="DETAILS"){
+        var run=[kids[i]], cls=kids[i].className, j=i+1;
+        while(j<kids.length&&kids[j].tagName==="DETAILS"&&kids[j].className===cls){run.push(kids[j]);j++;}
+        if(run.length>1){
+          var g=document.createElement("div"); g.className="cgrid";
+          sec.insertBefore(g,run[0]); run.forEach(function(x){g.appendChild(x);});
+        }
+        i=j;
+      } else i++;
+    }
+  }
+  function group(){
+    var kids=[].slice.call(body.childNodes), out=[], cur=null;
+    kids.forEach(function(n){
+      if(n.nodeType===1&&n.tagName==="H3"){cur=document.createElement("section");cur.className="rsec";out.push(cur);}
+      if(!cur){cur=document.createElement("section");cur.className="rsec";out.push(cur);}
+      cur.appendChild(n);
+    });
+    body.innerHTML="";
+    out.forEach(function(s,i){ s.id="rs"+i; collapse(s); s._t=s.textContent.toLowerCase(); body.appendChild(s); });
+    return out;
+  }
+  function setAll(open){
+    [].slice.call(body.querySelectorAll("details.cx")).forEach(function(d){d.open=open;});
+    var t=document.getElementById("rvwAll");
+    if(t){t.textContent=open?"Collapse all":"Expand all";t.setAttribute("aria-pressed",String(open));}
+  }
+  function buildToc(){
+    toc.innerHTML=secs.map(function(s){
+      var h=s.querySelector(".rh"); return h?'<a href="#'+s.id+'">'+h.textContent+'</a>':'';
+    }).join("");
+  }
+  function filter(){
+    var terms=q.value.toLowerCase().split(/\s+/).filter(Boolean), n=0;
+    secs.forEach(function(s){
+      var on=terms.every(function(t){return s._t.indexOf(t)!==-1;});
+      s.classList.toggle("hide",!on); if(on)n++;
+    });
+    empty.classList.toggle("on",n===0);
+    cnt.textContent = n===secs.length ? secs.length+" sections" : n+" of "+secs.length;
+    toc.style.display = q.value ? "none" : "";
+  }
+  function load(l){
+    lec=l; panel.setAttribute("data-lec",l);
+    body.innerHTML=REVIEW[l]||"";
+    secs=group(); buildToc(); q.value=""; filter();
+    var t=document.getElementById("rvwAll"); if(t){t.textContent="Expand all";t.setAttribute("aria-pressed","false");}
+  }
+  function open(){
+    document.querySelector(".bar").style.display="none";
+    document.querySelector(".main").style.display="none";
+    panel.hidden=false; if(!secs.length)load(lec);
+    btn.setAttribute("aria-pressed","true");
+    window.scrollTo(0,0); q.focus({preventScroll:true});
+  }
+  function close(){
+    panel.hidden=true;
+    document.querySelector(".bar").style.display="";
+    document.querySelector(".main").style.display="";
+    btn.setAttribute("aria-pressed","false");
+    window.scrollTo(0,0);
+  }
+  btn.onclick=function(){ panel.hidden?open():close(); };
+  document.getElementById("rvwClose").onclick=close;
+  document.getElementById("rvwPrint").onclick=function(){window.print();};
+  var allBtn=document.getElementById("rvwAll");
+  if(allBtn)allBtn.onclick=function(){ setAll(this.getAttribute("aria-pressed")!=="true"); };
+  var reclose=[];
+  window.addEventListener("beforeprint",function(){
+    reclose=[];
+    [].slice.call(body.querySelectorAll("details.cx")).forEach(function(d){ if(!d.open){reclose.push(d);d.open=true;} });
+  });
+  window.addEventListener("afterprint",function(){ reclose.forEach(function(d){d.open=false;}); reclose=[]; });
+  document.getElementById("rvwTabs").onclick=function(e){
+    var b=e.target.closest("button"); if(!b)return;
+    [].forEach.call(this.children,function(c){c.setAttribute("aria-pressed",String(c===b));});
+    load(b.dataset.l); window.scrollTo(0,0);
+  };
+  q.addEventListener("input",filter);
+  document.addEventListener("keydown",function(e){
+    if(e.key==="Escape"&&!panel.hidden){ if(document.activeElement===q&&q.value){q.value="";filter();} else close(); }
+  });
+})();
+
+</script>
