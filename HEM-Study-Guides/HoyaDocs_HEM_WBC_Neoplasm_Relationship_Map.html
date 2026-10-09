@@ -1,0 +1,895 @@
+<title>HEM WBC Neoplasm Map</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,500;8..60,700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one column of study sections; the MCV × reticulocyte map is the anchor, with a detail panel beside it on wide screens */
+:root{
+  --bg:#f6f5f3; --surface:#ffffff; --surface2:#efedea; --fg:#1d1a1a; --muted:#5e5857; --line:#dcd7d3;
+  --accent:#9b1c2c; --accent-soft:#f6e3e5;
+  --hy-bg:#fff4c2; --hy-bd:#c99a06; --ih-bg:#e7f0fb; --ih-bd:#4a7fc0;
+  --f-tk:#b42f3c; --f-dys:#a5650f; --f-mbl:#86391c; --f-lbl:#6650a6; --f-bdr:#2f67ad; --f-xl:#1b7f80; --f-ts:#a0306c; --f-vir:#4d7a1f; --f-hd:#6b5b3e; --f-re:#56666e;
+
+  --font-display:"Source Serif 4", Georgia, "Times New Roman", serif;
+  --font-body:"IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono:"IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#151213; --surface:#1e1a1b; --surface2:#272223; --fg:#efe9e7; --muted:#ada3a1; --line:#3a3335;
+  --accent:#ec7a86; --accent-soft:#3a2125;
+  --hy-bg:#3a3008; --hy-bd:#d9a90f; --ih-bg:#1b2a3d; --ih-bd:#6f9fd8;
+  --f-tk:#ee7480; --f-dys:#e0a24f; --f-mbl:#e08a63; --f-lbl:#a895e6; --f-bdr:#7aa9e6; --f-xl:#5cc3c2; --f-ts:#e27bb0; --f-vir:#9ccc65; --f-hd:#c4b28a; --f-re:#9fb1ba;
+
+  color-scheme:dark }}
+:root[data-theme="dark"]{
+  --bg:#151213; --surface:#1e1a1b; --surface2:#272223; --fg:#efe9e7; --muted:#ada3a1; --line:#3a3335;
+  --accent:#ec7a86; --accent-soft:#3a2125;
+  --hy-bg:#3a3008; --hy-bd:#d9a90f; --ih-bg:#1b2a3d; --ih-bd:#6f9fd8;
+  --f-tk:#ee7480; --f-dys:#e0a24f; --f-mbl:#e08a63; --f-lbl:#a895e6; --f-bdr:#7aa9e6; --f-xl:#5cc3c2; --f-ts:#e27bb0; --f-vir:#9ccc65; --f-hd:#c4b28a; --f-re:#9fb1ba;
+
+  color-scheme:dark }
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{background:var(--bg);color:var(--fg);font:15px/1.55 var(--font-body);margin:0}
+.wrap{max-width:1180px;margin:0 auto;padding-inline:20px;padding-block:28px 60px}
+h1,h2,h3{font-family:var(--font-display);text-wrap:balance;margin:0;line-height:1.2}
+h1{font-size:clamp(28px,4.4vw,42px);font-weight:700;letter-spacing:-.01em}
+h2{font-size:clamp(22px,2.8vw,28px);font-weight:700}
+h3{font-size:18px;font-weight:700}
+p{margin:0}
+.mono{font-family:var(--font-mono)}
+.eyebrow{font:500 12px/1 var(--font-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}
+.meta{display:flex;flex-wrap:wrap;gap:8px 18px;color:var(--muted);font-size:13px;margin-top:10px}
+.meta b{color:var(--fg);font-weight:600}
+header.top{display:grid;gap:12px;padding-bottom:22px;border-bottom:2px solid var(--fg)}
+.lede{max-width:72ch;color:var(--muted)}
+section{margin-top:44px;display:grid;gap:16px}
+.sec-head{display:grid;gap:6px}
+.sec-head p{color:var(--muted);max-width:75ch}
+
+/* filter bar */
+.filter{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);padding-block:12px;border-bottom:1px solid var(--line);display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.filter span.lbl{font:500 12px var(--font-mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-right:4px}
+.fbtn{font:500 13px var(--font-body);border:1px solid var(--line);background:var(--surface);color:var(--fg);border-radius:999px;padding:6px 12px;cursor:pointer}
+.fbtn[aria-pressed="true"]{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+.fbtn:focus-visible,.chip:focus-visible,.lnk:focus-visible,summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+/* legend */
+.legend{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:12.5px;color:var(--muted)}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:6px;vertical-align:-1px}
+
+/* map */
+.mapwrap{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);gap:18px;align-items:start}
+@media (max-width:900px){.mapwrap{grid-template-columns:minmax(0,1fr)}}
+.mapwrap>*{min-width:0}
+.grid-scroll{overflow-x:auto}
+.mgrid{display:grid;grid-template-columns:96px minmax(0,1fr) minmax(0,1fr);gap:6px;min-width:520px}
+.mgrid .hd{font:600 12.5px var(--font-body);padding:8px 10px;background:var(--surface2);border-radius:6px}
+.mgrid .hd small{display:block;font:400 11.5px var(--font-body);color:var(--muted)}
+.mgrid .rowhd{font:600 13px var(--font-body);padding:10px;background:var(--surface2);border-radius:6px;display:flex;flex-direction:column;justify-content:center}
+.mgrid .rowhd small{font:400 11.5px var(--font-mono);color:var(--muted)}
+.cell{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:8px;display:flex;flex-wrap:wrap;gap:6px;align-content:flex-start;min-height:84px}
+.chip{--c:var(--f-loss);font:500 12.5px/1.25 var(--font-body);border:1px solid var(--c);background:color-mix(in srgb,var(--c) 12%,var(--surface));color:var(--fg);border-radius:5px;padding:5px 8px;cursor:pointer;text-align:left}
+.chip.cross{border-style:dashed}
+.chip.sel{background:var(--c);color:var(--surface)}
+.chip.dim{opacity:.22}
+.chip.rel{box-shadow:0 0 0 2px var(--c)}
+.nonanemia{font-size:12.5px;color:var(--muted);display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:8px}
+
+.detail{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:18px;display:grid;gap:12px;position:sticky;top:calc(env(safe-area-inset-top,0px) + 70px)}
+@media (max-width:900px){.detail{position:static}}
+.detail .fam{font:500 11.5px var(--font-mono);letter-spacing:.06em;text-transform:uppercase}
+.detail .nick{color:var(--muted);font-style:italic;font-size:13.5px}
+.tags{display:flex;flex-wrap:wrap;gap:5px}
+.ltag{font:500 11px var(--font-mono);border:1px solid var(--line);border-radius:999px;padding:2px 7px;color:var(--muted)}
+.kv{display:grid;grid-template-columns:92px minmax(0,1fr);gap:6px 10px;font-size:13.5px}
+.kv dt{font:500 11.5px var(--font-mono);letter-spacing:.04em;text-transform:uppercase;color:var(--muted);padding-top:2px}
+.kv dd{margin:0}
+.buzz{display:flex;flex-wrap:wrap;gap:5px}
+.buzz span{font-size:12px;background:var(--surface2);border-radius:4px;padding:2px 7px}
+.links{display:grid;gap:6px}
+.lnk{display:grid;grid-template-columns:auto minmax(0,1fr);gap:8px;text-align:left;background:var(--surface2);border:0;border-radius:6px;padding:8px 10px;cursor:pointer;color:var(--fg);font:13px/1.4 var(--font-body)}
+.lnk b{font-weight:600}
+.lnk .ty{font:500 10.5px var(--font-mono);text-transform:uppercase;letter-spacing:.05em;color:var(--muted);white-space:nowrap;padding-top:2px}
+
+/* callouts */
+.hy{background:var(--hy-bg);border:1.5px solid var(--hy-bd);border-radius:6px;padding:10px 12px;font-size:13.5px}
+.hy::before{content:"USMLE high yield";display:block;font:600 11px var(--font-mono);letter-spacing:.06em;text-transform:uppercase;margin-bottom:3px}
+.ih{background:var(--ih-bg);border:1.5px solid var(--ih-bd);border-radius:6px;padding:10px 12px;font-size:13.5px}
+.ih::before{content:"In-house note";display:block;font:600 11px var(--font-mono);letter-spacing:.06em;text-transform:uppercase;margin-bottom:3px}
+
+/* family tree */
+.tree{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+@media (max-width:900px){.tree{grid-template-columns:1fr}}
+.branch{background:var(--surface);border:1px solid var(--line);border-top:4px solid var(--bc);border-radius:8px;padding:14px;display:grid;gap:12px;align-content:start}
+.branch>h3 small{display:block;font:400 12.5px var(--font-body);color:var(--muted);margin-top:4px}
+.twig{display:grid;gap:6px;padding-left:12px;border-left:2px solid var(--line)}
+.twig h4{margin:0;font:600 12.5px var(--font-body);color:var(--muted)}
+.twig .row{display:flex;flex-wrap:wrap;gap:6px}
+.bridge{background:var(--surface);border:1px dashed var(--f-glob);border-top:4px solid var(--f-glob);border-radius:8px;padding:14px;display:grid;gap:12px}
+.brows{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;align-items:start}
+@media (max-width:900px){.brows{grid-template-columns:1fr}}
+.trow{display:grid;gap:4px;justify-items:start;align-content:start}
+.trow .fcs{justify-self:stretch;margin-top:4px}
+.tp{display:grid;gap:1px;font-size:12.5px;line-height:1.4}
+.tp b{font-weight:600;color:var(--fg)}
+.tp span{color:var(--muted)}
+.tq{all:unset;cursor:pointer;font:500 11px var(--font-mono);letter-spacing:.05em;text-transform:uppercase;color:var(--fg);justify-self:start}
+.tq::after{content:" ▸";color:var(--muted)}
+.tq[aria-expanded="true"]::after{content:" ▾"}
+.tq:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.tbody{display:grid;gap:8px}
+#treeEl .chip::after,#bridge .chip::after{content:" ▸";opacity:.6}
+#treeEl .chip.open::after,#bridge .chip.open::after{content:" ▾"}
+.treebar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;font-size:13px;color:var(--muted)}
+.td{font-size:12.5px;color:var(--muted)}
+.twig{gap:10px}
+
+/* workup */
+.flow{display:grid;gap:10px}
+.step{display:grid;grid-template-columns:minmax(0,1fr);gap:8px;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:14px}
+.step .q{font:600 14px var(--font-body)}
+.forks{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+@media (max-width:820px){.forks{grid-template-columns:1fr}}
+.fork{background:var(--surface2);border-radius:6px;padding:10px 12px;display:grid;gap:6px;font-size:13.5px;align-content:start}
+.fork .h{font:600 12px var(--font-mono);letter-spacing:.04em;text-transform:uppercase}
+.fork ul{margin:0;padding-left:18px;display:grid;gap:4px}
+.arrow{font-family:var(--font-mono);color:var(--accent);font-weight:500}
+.down{text-align:center;color:var(--muted);font:500 18px var(--font-mono);line-height:1}
+
+/* connections */
+.conn-groups{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+@media (max-width:820px){.conn-groups{grid-template-columns:1fr}}
+.cg{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:14px;display:grid;gap:8px;align-content:start}
+.cg h3 small{display:block;font:400 12.5px var(--font-body);color:var(--muted);margin-top:3px}
+.edge{display:grid;gap:3px;padding:8px 0;border-top:1px solid var(--line);font-size:13.5px}
+.edge:first-of-type{border-top:0}
+.edge .pair{font-weight:600}
+.edge .pair button{all:unset;cursor:pointer;border-bottom:1px dotted var(--muted)}
+.edge .pair button:focus-visible{outline:2px solid var(--accent)}
+.edge.dim{display:none}
+
+/* relationship tabs */
+.ctools{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center;justify-content:space-between}
+.tabs{display:flex;flex-wrap:wrap;gap:4px;border-bottom:1px solid var(--line)}
+.tab{all:unset;cursor:pointer;padding:8px 12px;font:500 13.5px var(--font-body);color:var(--muted);border-bottom:2px solid transparent;margin-bottom:-1px;display:flex;gap:6px;align-items:center}
+.tab .n{font:500 11px var(--font-mono);background:var(--surface2);border-radius:999px;padding:1px 7px;color:var(--fg)}
+.tab[aria-selected="true"]{color:var(--fg);border-bottom-color:var(--accent)}
+.tab:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.focus{font-size:13px;color:var(--muted);display:flex;gap:8px;align-items:center}
+.focus select{font:500 13px var(--font-body);color:var(--fg);background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:6px 8px;max-width:60vw}
+.cpanel{display:grid;gap:14px}
+.cdesc{font-size:13.5px;color:var(--muted)}
+.cmap{background:var(--surface);border:1px solid var(--line);border-radius:8px}
+.cmap .cap{padding:10px 12px;border-bottom:1px solid var(--line);font:600 13px var(--font-body);display:flex;flex-wrap:wrap;gap:4px 10px;align-items:baseline}
+.cmap .cap span{font:400 12.5px var(--font-body);color:var(--muted)}
+.cmap .fc{border-top:0}
+.egrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:10px}
+.ecard{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:12px;display:grid;gap:8px;align-content:start;font-size:13.5px}
+.ecard .pair{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.ecard .glyph{font:500 14px var(--font-mono);color:var(--muted)}
+.ecard p{color:var(--fg)}
+.cempty{font-size:13.5px;color:var(--muted);padding:12px;border:1px dashed var(--line);border-radius:8px}
+table.cmp{min-width:820px}
+table.cmp td{font-size:13px}
+table.cmp td.sh{color:var(--muted)}
+table.cmp .chip{white-space:nowrap}
+.hide{display:none!important}
+/* traps */
+.ttools{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between}
+.tcats{display:flex;flex-wrap:wrap;gap:6px}
+.tgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:10px}
+.tcard{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:14px;display:grid;gap:10px;align-content:start}
+.tcard .tmeta{display:flex;flex-wrap:wrap;gap:5px;align-items:center}
+.tcard .cat{font:600 10.5px var(--font-mono);letter-spacing:.06em;text-transform:uppercase;color:var(--surface);background:var(--accent);border-radius:3px;padding:2px 6px}
+.tcard .tempt{font:500 16px/1.35 var(--font-display);}
+.tcard .tempt::before{content:"Tempting: ";font:600 11px var(--font-mono);letter-spacing:.05em;text-transform:uppercase;color:var(--accent);display:block;margin-bottom:3px}
+.tcard .catch{font-size:13.5px;border-top:1px solid var(--line);padding-top:10px}
+.tcard .catch b{color:var(--accent)}
+.treveal{justify-self:start;font:500 12.5px var(--font-body);border:1px solid var(--line);background:var(--surface2);color:var(--fg);border-radius:999px;padding:5px 11px;cursor:pointer}
+.treveal:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+table.ivb{min-width:720px}
+/* tables */
+.tbl-scroll{overflow-x:auto;border:1px solid var(--line);border-radius:8px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:13px;min-width:860px}
+th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font:600 11.5px var(--font-mono);letter-spacing:.05em;text-transform:uppercase;color:var(--muted);background:var(--surface2);position:sticky;top:0}
+tr:last-child td{border-bottom:0}
+td .dot{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:6px}
+td button.nm{all:unset;cursor:pointer;font-weight:600}
+td button.nm:focus-visible{outline:2px solid var(--accent)}
+tr.dim{display:none}
+
+/* traps */
+.traps{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+@media (max-width:820px){.traps{grid-template-columns:1fr}}
+.trap{background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--accent);border-radius:6px;padding:12px 14px;display:grid;gap:4px;font-size:13.5px}
+.trap b{font-weight:600}
+
+/* quiz */
+.quiz{display:grid;gap:10px}
+details.qa{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:12px 14px}
+details.qa summary{cursor:pointer;font-weight:500;list-style:none}
+details.qa summary::-webkit-details-marker{display:none}
+details.qa summary::before{content:"Q" counter(q) " ";counter-increment:q;font:600 12px var(--font-mono);color:var(--accent);margin-right:6px}
+.quiz{counter-reset:q}
+details.qa .ans{margin-top:10px;padding-top:10px;border-top:1px solid var(--line);font-size:13.5px;display:grid;gap:6px}
+details.qa .ans b{color:var(--accent)}
+
+.fcs{display:grid;gap:8px}
+.fcd{border:1px solid var(--line);border-radius:6px;background:var(--surface)}
+.fcd>summary{cursor:pointer;list-style:none;padding:7px 10px;font:500 12.5px/1.35 var(--font-body);display:flex;gap:4px 8px;align-items:baseline;flex-wrap:wrap}
+.fcd>summary::-webkit-details-marker{display:none}
+.fcd>summary::before{content:"▸";color:var(--accent)}
+.fcd[open]>summary::before{content:"▾"}
+.fcd>summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.fcd .fl{font:500 10.5px var(--font-mono);letter-spacing:.05em;text-transform:uppercase;color:var(--accent)}
+.fc{overflow-x:auto;padding:10px;border-top:1px solid var(--line);min-height:40px}
+.fc svg{display:block;margin:0 auto;height:auto}
+.fcbar{display:flex;justify-content:flex-end;margin-top:6px}
+.fcbig{font:500 12px var(--font-body);border:1px solid var(--line);background:var(--surface2);color:var(--fg);border-radius:999px;padding:4px 10px;cursor:pointer}
+.fcbig:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+#fcModal{position:fixed;inset:0;z-index:50;background:color-mix(in srgb,var(--bg) 70%,transparent);display:grid;place-items:center;padding:calc(env(safe-area-inset-top,0px) + 16px) 16px calc(env(safe-area-inset-bottom,0px) + 16px)}
+#fcModal .box{background:var(--surface);border:1px solid var(--line);border-radius:10px;max-width:min(1200px,100%);max-height:100%;display:grid;grid-template-rows:auto minmax(0,1fr);box-shadow:0 12px 40px rgba(0,0,0,.25);width:100%}
+#fcModal .hd{display:flex;gap:10px;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid var(--line)}
+#fcModal .hd b{font:600 15px var(--font-body)}
+#fcModal .bd{overflow:auto;padding:16px}
+#fcModal .bd svg{max-width:none!important;display:block;margin:0 auto}
+.fc .fail{font-size:12.5px;color:var(--muted);margin:0}
+.step .fcs,.branch>.fcs{margin-top:2px}
+footer{margin-top:50px;padding-top:14px;border-top:1px solid var(--line);font-size:12.5px;color:var(--muted);display:flex;flex-wrap:wrap;gap:6px 18px;justify-content:space-between}
+@media (prefers-reduced-motion:no-preference){.chip,.lnk,.fbtn{transition:background .15s,opacity .15s,box-shadow .15s}}
+
+.mgrid{grid-template-columns:96px repeat(3,minmax(0,1fr));min-width:620px}
+.mapwrap{grid-template-columns:minmax(0,1.75fr) minmax(0,1fr)}
+@media (max-width:900px){.mapwrap{grid-template-columns:minmax(0,1fr)}}
+.cell .empty{color:var(--muted);font-size:13px}
+.tree{grid-template-columns:repeat(auto-fit,minmax(260px,1fr))}
+.brows{grid-template-columns:repeat(auto-fill,minmax(240px,1fr))}
+.kv{grid-template-columns:84px minmax(0,1fr)}
+</style>
+
+<div class="wrap">
+<header class="top">
+  <div class="eyebrow">HoyaDocs · HEM · White Cell Pathology</div>
+  <h1>WBC Neoplasm Relationship Map</h1>
+  <p class="lede">Every white cell disorder from HEM13 (MPNs), HEM14 (MDS and acute leukemia), HEM19 (lymphoma) and HEM27 (WBC lab) on one page: where each sits by lineage and tempo, the driver lesion behind it, how to work it up, and how the diseases transform into, mimic and complicate each other.</p>
+  <div class="meta"><span><b>HoyaDocs</b></span><span>Date updated: <b>October 8, 2026</b></span><span>Revision: <b>1.0</b></span><span>Lectures: <b>HEM13 · HEM14 · HEM19 · HEM27</b></span></div>
+</header>
+
+<div class="filter" role="group" aria-label="Filter by lecture">
+  <span class="lbl">Highlight lecture</span>
+  <button class="fbtn" data-l="all" aria-pressed="true">All</button>
+  <button class="fbtn" data-l="13" aria-pressed="false">HEM13 MPNs</button>
+  <button class="fbtn" data-l="14" aria-pressed="false">HEM14 MDS &amp; Acute Leukemia</button>
+  <button class="fbtn" data-l="19" aria-pressed="false">HEM19 Lymphoma</button>
+  <button class="fbtn" data-l="27" aria-pressed="false">HEM27 WBC Lab</button>
+</div>
+
+<!-- 1. MAP -->
+<section id="map">
+  <div class="sec-head">
+    <div class="eyebrow">1 · The map</div>
+    <h2>Two questions place every white cell disorder</h2>
+    <p>Rows are the lineage (decided by flow cytometry markers). Columns are the tempo: mature cells growing slowly, mature cells growing fast, or blasts piling up behind a maturation block. Dashed chips sit in more than one box, usually because the disease changes over time. Select any disorder to see its essentials and everything it connects to; connected disorders light up on the map.</p>
+  </div>
+  <div class="legend" id="legend"></div>
+  <div class="mapwrap">
+    <div>
+      <div class="grid-scroll"><div class="mgrid" id="mgrid"></div></div>
+      <div class="nonanemia" id="reactStrip"></div>
+    </div>
+    <aside class="detail" id="detail" aria-live="polite"></aside>
+  </div>
+  <div class="hy">The two-question sort: (1) <b>Which lineage?</b> Myeloid (MPO, CD13, CD33, CD117) vs B (CD19, CD20) vs T (CD3) by flow cytometry. (2) <b>How mature?</b> ≥20% blasts (TdT+ or CD34+) = acute leukemia; blasts increased but &lt;20% with dysplasia = MDS; mature cells = chronic leukemia, MPN or mature lymphoma.</div>
+  <div class="ih">Hodgkin lymphoma is graded by subtype, not by indolent vs aggressive biology. Its placement here follows stage at presentation and prognosis: lymphocyte-rich, nodular sclerosis and NLPHL usually present early with excellent outcomes; mixed cellularity and lymphocyte-depleted present later with B symptoms.</div>
+</section>
+
+<!-- 2. FAMILY TREE -->
+<section id="tree">
+  <div class="sec-head">
+    <div class="eyebrow">2 · Driver family tree</div>
+    <h2>Which cell, which hit?</h2>
+    <p>Every white cell neoplasm is one cell that took one kind of hit. Select a disorder to reveal its driver lesion, how that lesion produces the disease, and its flowchart from the lecture notes. Select a group question to reveal the group summary.</p>
+    <div class="fcs" data-fcs="who" data-open="1"></div>
+  </div>
+  <div class="treebar"><button class="fbtn" id="treeAll" aria-pressed="false">Show all details</button><span>Quiz yourself: name the driver before you open it.</span></div>
+  <div class="tree" id="treeEl"></div>
+  <div class="bridge" id="bridge"></div>
+</section>
+
+<!-- 3. WORKUP -->
+<section id="workup">
+  <div class="sec-head">
+    <div class="eyebrow">3 · Workup path</div>
+    <h2>From "high WBC" or "big node" to a WHO diagnosis</h2>
+    <p>The same routine runs through all four lectures: reactive or neoplastic, then lineage and maturity, then the specific entity, then the specimen and tests that prove it. Each step has the matching flowcharts from the lecture notes.</p>
+  </div>
+  <div class="fcs" data-fcs="workup"></div>
+  <div class="flow">
+    <div class="step"><div class="q">1 · Reactive or neoplastic?</div>
+      <div class="forks">
+        <div class="fork"><div class="h" style="color:var(--f-re)">Points to reactive</div>
+          <ul><li>Fever, infection, steroids or epinephrine (demargination)</li><li>WBC usually &lt;30k with bands, <b>toxic granulation, Döhle bodies</b>, high LAP</li><li><b>Tender</b>, rapidly enlarging nodes in a febrile young patient</li><li>High platelets with low ferritin or high CRP; high Hct with high EPO</li></ul></div>
+        <div class="fork"><div class="h" style="color:var(--f-tk)">Points to neoplastic</div>
+          <ul><li>WBC &gt;50k with <b>all stages</b> and <b>basophilia</b>; splenomegaly; no fever</li><li>Blasts in the blood (never normal)</li><li><b>Painless, rubbery, persistent</b> nodes (&gt;2 cm, supraclavicular, &gt;4–6 weeks)</li><li>Unexplained cytopenias with dysplasia; B symptoms</li></ul></div>
+        <div class="fork"><div class="h" style="color:var(--f-hd)">The A-B-C of marrow failure</div>
+          <ul><li><b>A</b>nemia → fatigue, pallor</li><li><b>B</b>leeding → petechiae (low platelets)</li><li><b>C</b>ontagion → infection (low neutrophils)</li><li>Seen in acute leukemia, MDS, hairy cell, marrow-involving lymphoma</li></ul></div>
+      </div></div>
+    <div class="down" aria-hidden="true">↓</div>
+    <div class="step"><div class="q">2 · Which lineage, and how mature?</div>
+      <div class="forks">
+        <div class="fork"><div class="h" style="color:var(--f-mbl)">Myeloid</div>
+          <ul><li>MPO, CD13, CD33, CD117; <b>Auer rods</b> only here</li><li>≥20% blasts → <b>AML</b></li><li>&lt;20% blasts + dysplasia + cytopenias → <b>MDS</b></li><li>Mature cells, high counts, big spleen → <b>MPN</b></li></ul></div>
+        <div class="fork"><div class="h" style="color:var(--f-bdr)">B cell</div>
+          <ul><li>CD19, CD20, CD22, CD79a; κ or λ restriction = clonal</li><li>TdT+, CD10+ blasts → <b>B-ALL</b></li><li>Small mature cells → indolent lymphoma / CLL</li><li>Large cells in sheets → <b>DLBCL</b> or <b>Burkitt</b></li></ul></div>
+        <div class="fork"><div class="h" style="color:var(--f-ts)">T cell · Hodgkin</div>
+          <ul><li>CD2, CD3, CD5, CD7: TdT+ → <b>T-ALL</b>; CD4+ mature → <b>MF/Sézary</b> or <b>ATLL</b></li><li>Few large cells in a reactive crowd: CD15+ CD30+ → <b>classic Hodgkin</b>; CD20+ popcorn → <b>NLPHL</b></li></ul></div>
+      </div><div class="fcs" data-fcs="hsc"></div></div>
+    <div class="down" aria-hidden="true">↓</div>
+    <div class="step"><div class="q">3 · Name the entity</div>
+      <div class="forks">
+        <div class="fork"><div class="h" style="color:var(--f-tk)">Myeloid</div>
+          <ul><li>BCR-ABL + → <b>CML</b></li><li>BCR-ABL −, JAK2/CALR/MPL: high Hct + low EPO → <b>PV</b> · platelets &gt;600k (in-house) → <b>ET</b> · fibrosis + teardrops → <b>PMF</b></li><li>AML: t(15;17) + DIC → <b>APL</b> · gum hypertrophy → <b>monocytic</b> · Down syndrome &lt;5 → <b>M7</b></li></ul></div>
+        <div class="fork"><div class="h" style="color:var(--f-xl)">Small B cells</div>
+          <ul><li><b>CD5+</b>: CD23+ → <b>CLL</b> · cyclin D1+ → <b>mantle cell</b></li><li><b>CD10+</b>, BCL2+ follicles → <b>follicular</b></li><li>Neither: mucosal site → <b>MALT</b> · IgM spike → <b>LPL</b> · CD103 + huge spleen → <b>hairy cell</b></li></ul></div>
+        <div class="fork"><div class="h" style="color:var(--f-hd)">Large B · T · Hodgkin</div>
+          <ul><li>Starry sky, t(8;14), Ki-67 ≈100% → <b>Burkitt</b>; otherwise <b>DLBCL</b></li><li>HTLV-1 + hypercalcemia → <b>ATLL</b>; skin rash + Pautrier → <b>MF</b></li><li>Lacunar cells → NS · eosinophils + EBV → MC · HIV + few lymphocytes → LD</li></ul></div>
+      </div>
+      <div class="hy">The big four lymphoma translocations all involve IGH on chromosome 14: <b>t(8;14)</b> MYC → Burkitt · <b>t(14;18)</b> BCL2 → follicular · <b>t(11;14)</b> cyclin D1 → mantle cell · <b>t(11;18)</b> API2-MALT1 → MALT (no response to H. pylori eradication).</div></div>
+    <div class="down" aria-hidden="true">↓</div>
+    <div class="step"><div class="q">4 · Get the right specimen, then treat</div>
+      <div style="font-size:13.5px">Blood or marrow disease → <b>marrow aspirate</b> (morphology, flow, cytogenetics) + <b>core biopsy</b> (cellularity, fibrosis, paratrabecular aggregates). Mass → <b>excisional node biopsy</b> (architecture), not FNA. Then flow, IHC, cytogenetics/FISH and PCR/NGS → WHO diagnosis → staging (CT/PET, LDH) → therapy: TKIs for CML, phlebotomy + aspirin for PV, ATRA for APL, H. pylori eradication for gastric MALT, R-CHOP for DLBCL, ABVD for Hodgkin, LP and CNS prophylaxis for every ALL.</div>
+      <div class="hy">LDH and uric acid track tumor turnover. Burkitt and other fast tumors → <b>tumor lysis syndrome</b> with chemo (↑ K⁺, ↑ phosphate, ↑ uric acid, ↓ Ca²⁺, AKI): prevent with fluids plus allopurinol or rasburicase.</div></div>
+  </div>
+</section>
+
+<!-- 4. CONNECTIONS -->
+<section id="connections">
+  <div class="sec-head">
+    <div class="eyebrow">4 · Relationships</div>
+    <h2>How the disorders connect</h2>
+    <p>Pick a kind of relationship. Use <b>Focus on</b> to see only the links for one disorder. Select any name to jump to it on the map.</p>
+  </div>
+  <div class="ctools">
+    <div class="tabs" role="tablist" aria-label="Relationship type" id="ctabs"></div>
+    <label class="focus" for="cfocus">Focus on <select id="cfocus"></select></label>
+  </div>
+  <div id="cpanels"></div>
+</section>
+
+<!-- 5. TRAPS -->
+<section id="traps">
+  <div class="sec-head">
+    <div class="eyebrow">5 · Look-alikes and traps</div>
+    <h2>Where questions hide the answer</h2>
+    <p>Each card shows the answer a question wants you to jump to. Decide why it's wrong, then reveal the catch.</p>
+  </div>
+  <div class="ttools">
+    <div class="tcats" role="group" aria-label="Trap type" id="tcats"></div>
+    <button class="fbtn" id="tAll" aria-pressed="false">Reveal all</button>
+  </div>
+  <div class="tgrid" id="trapEl"></div>
+  <h3 style="margin-top:8px">In-house vs boards</h3>
+  <div class="tbl-scroll"><table class="ivb">
+    <thead><tr><th>Topic</th><th>In-house</th><th>Boards / standard</th><th>On the exam</th></tr></thead>
+    <tbody>
+      <tr><td><b>ET platelet threshold</b></td><td>&gt;600 × 10⁹/L (HEM13)</td><td>≥450 × 10⁹/L (WHO)</td><td>600k on in-house items; 450k on boards</td></tr>
+      <tr><td><b>CALR gene name</b></td><td>"Calretinin" (HEM13)</td><td>Calreticulin (calretinin is a mesothelioma marker)</td><td>Use calreticulin</td></tr>
+      <tr><td><b>Most common NHL</b></td><td>Follicular, "in the U.S." (HEM19)</td><td>DLBCL overall; follicular = most common indolent</td><td>Match the wording of the question</td></tr>
+      <tr><td><b>ALL hypodiploidy</b></td><td>"Intermediate" in one place, "unfavorable" in another (HEM14)</td><td>Near-haploid/&lt;44 chromosomes = unfavorable</td><td>Hyperdiploid good, hypodiploid bad</td></tr>
+      <tr><td><b>Hodgkin PD-L1 gene</b></td><td>"Chromosome 2" (HEM19 slide)</td><td>9p24.1 amplification</td><td>Know the concept: PD-L1 ↑ → immune evasion</td></tr>
+      <tr><td><b>Marginal zone CD43</b></td><td>Negative (HEM27 grid) vs weak (HEM19)</td><td>Positive in a subset</td><td>Key on CD5− and CD10−</td></tr>
+      <tr><td><b>PV survival</b></td><td>≈10 years with treatment</td><td>Often longer today</td><td>Answer ≈10 y in-house</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<!-- 6. TABLE -->
+<section id="table">
+  <div class="sec-head">
+    <div class="eyebrow">6 · Master table</div>
+    <h2>Every disorder, one line each</h2>
+    <p>Filtered by the lecture highlight above.</p>
+  </div>
+  <div class="tbl-scroll"><table>
+    <thead><tr><th>Disorder</th><th>Lectures</th><th>Markers / look</th><th>Genetics</th><th>Course</th><th>Clinches it</th></tr></thead>
+    <tbody id="tbody"></tbody>
+  </table></div>
+</section>
+
+<!-- 7. QUIZ -->
+<section id="quiz">
+  <div class="sec-head">
+    <div class="eyebrow">7 · Check yourself</div>
+    <h2>Application questions on the relationships</h2>
+    <p>Answer before you open each one.</p>
+  </div>
+  <div class="quiz">
+    <details class="qa"><summary>A CML patient stable on imatinib for 5 years now has 30% blasts that are CD10+, CD19+ and TdT+. What happened, and why is a lymphoid outcome possible in a "myeloid" disease?</summary>
+      <div class="ans"><p><b>Lymphoid blast crisis</b> (≈30% of blast crises; ≈60% are myeloid). The BCR-ABL translocation arose in a <b>pluripotent stem cell</b> above the myeloid/lymphoid split.</p></div></details>
+    <details class="qa"><summary>A 74-year-old has pancytopenia, MCV 108, normal B12 and folate, bilobed hypogranular neutrophils and 9% marrow blasts with monosomy 7. Eighteen months later blasts are 34%. Name both stages and the prognosis.</summary>
+      <div class="ans"><p><b>MDS → AML arising from MDS.</b> Blasts &lt;20% with dysplasia, then ≥20%. Monosomy 7 in an older patient = <b>unfavorable</b>, worse than de novo AML with a balanced translocation.</p></div></details>
+    <details class="qa"><summary>A 62-year-old with fever and pneumonia has WBC 28,000 with bands, toxic granulation and Döhle bodies. Another 59-year-old has WBC 180,000 with all stages, 8% basophils and a spleen 10 cm below the costal margin. Which single test separates them, and what does each show?</summary>
+      <div class="ans"><p><b>BCR-ABL (FISH/PCR)</b>: negative in the leukemoid reaction, positive in CML. The LAP score is high in the reactive patient and low in CML.</p></div></details>
+    <details class="qa"><summary>A 69-year-old with known CLL for 10 years develops rapid splenic enlargement, rising LDH and B symptoms. What happened, and which other indolent lymphomas do the same thing?</summary>
+      <div class="ans"><p><b>Richter transformation to DLBCL</b> (≈10% of CLL). Follicular lymphoma (30–50%, often with MYC), MALT lymphoma and NLPHL can also transform to DLBCL.</p></div></details>
+    <details class="qa"><summary>A small-B-cell lymphoma is CD5+. Which two stains split the possibilities, and how do the two diseases differ in outcome?</summary>
+      <div class="ans"><p><b>CD23</b> (CLL+, mantle−) and <b>cyclin D1</b> (mantle+, CLL−). CLL/SLL survives a median of 4–6 years and is often watched; mantle cell (t(11;14)) is the worst of the small-cell lymphomas at 3–5 years.</p></div></details>
+    <details class="qa"><summary>A 54-year-old woman has a gastric lymphoma with H. pylori and dense CD5−, CD10− small B cells invading glands. First treatment, and which genetic finding predicts it won't work?</summary>
+      <div class="ans"><p><b>MALT lymphoma → H. pylori eradication</b> (antigen-driven, can regress). <b>t(11;18) API2-MALT1</b> predicts resistance.</p></div></details>
+    <details class="qa"><summary>A 58-year-old Japanese man has hypercalcemia, lytic lesions, skin nodules and WBC 60,000 with clover-leaf lymphocytes. Which plasma cell disorder must you not jump to, and what is the cause instead?</summary>
+      <div class="ans"><p>Not <b>multiple myeloma</b>. CD4+ T cells with clover-leaf nuclei = <b>ATLL</b> from <b>HTLV-1</b> (Tax). Both cause hypercalcemia with lytic lesions.</p></div></details>
+    <details class="qa"><summary>A 45-year-old woman treated at 17 with mantle radiation and ABVD for nodular sclerosis Hodgkin now has pancytopenia with dysplasia and −5/−7. Connect the two diseases.</summary>
+      <div class="ans"><p><b>Therapy-related MDS/AML</b>: alkylating agents → −5/−7 after 5–10 years (topoisomerase II inhibitors → 11q23 after 1–3 years). It progresses to AML faster and has a poor prognosis. Other late effects: breast cancer, cardiac disease, pulmonary fibrosis.</p></div></details>
+  </div>
+</section>
+
+<div id="fcModal" hidden role="dialog" aria-modal="true" aria-labelledby="fcModalT"><div class="box"><div class="hd"><b id="fcModalT"></b><button class="fcbig" id="fcClose">Close</button></div><div class="bd" id="fcModalB"></div></div></div>
+<footer><span><b>HoyaDocs</b> · HEM WBC Neoplasm Relationship Map</span><span>Date updated: October 8, 2026 · Revision 1.0</span></footer>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10.9.1/dist/mermaid.min.js"></script>
+<script>
+const FAM={
+ tk:{n:"Myeloid · tyrosine kinase stuck on",s:"tyrosine kinase stuck on",c:"--f-tk"},
+ dys:{n:"Myeloid · disorderly maturation",s:"disorderly maturation",c:"--f-dys"},
+ mbl:{n:"Myeloid · maturation block",s:"maturation block (AML)",c:"--f-mbl"},
+ lbl:{n:"Lymphoid · maturation block",s:"lymphoblasts (ALL)",c:"--f-lbl"},
+ bdr:{n:"Mature B · survival and signaling",s:"survival and signaling",c:"--f-bdr"},
+ xl:{n:"Mature B · oncogene moved next to IGH",s:"oncogene moved next to IGH",c:"--f-xl"},
+ ts:{n:"Mature T · skin-homing CD4 cells",s:"skin-homing CD4 T cells",c:"--f-ts"},
+ vir:{n:"Virus-driven lymphoma",s:"virus-driven",c:"--f-vir"},
+ hd:{n:"Hodgkin · crippled B cell and its crowd",s:"RS cell and its crowd",c:"--f-hd"},
+ re:{n:"Reactive or non-hematologic mimic",s:"reactive mimics",c:"--f-re"}
+};
+const D={
+ cml:{n:"Chronic myeloid leukemia (CML)",nick:"Philadelphia cream cheese",L:["13","14","27"],cells:["my-slow","my-acute"],fam:"tk",mk:"Granulocytes at every stage; basophilia; low LAP",gen:"t(9;22) BCR-ABL (≈95%)",r:"Chronic (3–4 y untreated) → accelerated → blast crisis",
+  mech:"t(9;22) fuses BCR (chr 22) with ABL (chr 9) → an always-on tyrosine kinase → granulocytes proliferate, live longer and leave the marrow early. Maturation still works.",
+  buzz:["WBC 50–400k, all stages","Basophilia","Splenomegaly → early satiety","Low LAP score","Median age 55","Most common MPN"],
+  test:"FISH/cytogenetics for t(9;22) or PCR for BCR-ABL (also monitors therapy).",tx:"TKIs (imatinib; dasatinib, nilotinib for resistance), usually lifelong; allogeneic transplant can cure.",
+  hy:"Imatinib blocks the ATP site of BCR-ABL (also c-KIT → GIST). Blast crisis can be lymphoid because the clone sits in a pluripotent stem cell.",key:"t(9;22) + basophilia + big spleen"},
+ pv:{n:"Polycythemia vera (PV)",nick:"Thick blood, low EPO",L:["13","27"],cells:["my-slow"],fam:"tk",mk:"Erythroid-dominant panmyelosis",gen:"JAK2 V617F (>97%)",r:"Indolent; spent phase; AML ≈2%",
+  mech:"JAK2 V617F switches on JAK/STAT under the EPO receptor → RBCs (plus WBCs and platelets) are made without EPO → high red cell mass and viscosity; EPO falls by feedback.",
+  buzz:["Headache, dizziness, HTN","Pruritus after a hot shower","Facial plethora","Budd-Chiari / portal vein clot","Erythromelalgia","Hct >60%"],
+  test:"Low serum EPO + normal O₂ saturation + JAK2 V617F.",tx:"Phlebotomy (Hct <45%) + low-dose aspirin; hydroxyurea or ruxolitinib for high risk.",
+  hy:"PV is the only polycythemia with low EPO. An unusual-site clot (Budd-Chiari, portal vein) → test JAK2.",ih:"In-house survival ≈10 years with treatment (often longer today).",key:"↑ Hct + ↓ EPO + JAK2"},
+ et:{n:"Essential thrombocythemia (ET)",nick:"Burning toes",L:["13"],cells:["my-slow"],fam:"tk",mk:"Clusters of large atypical megakaryocytes",gen:"JAK2 50–60% · CALR 30% · MPL 5–10%",r:"Indolent; 10–15 y; <5% transform",
+  mech:"JAK2, CALR or MPL mutations turn on thrombopoietin-receptor signaling → too many large, dysfunctional platelets → clots and, at very high counts, bleeding.",
+  buzz:["Platelets >600k (in-house)","Erythromelalgia (aspirin-responsive)","MI, stroke","Bleeding (acquired vWF loss)","Diagnosis of exclusion"],
+  test:"Sustained thrombocytosis; BCR-ABL negative; JAK2/CALR/MPL; reactive causes excluded.",tx:"Low-dose aspirin; hydroxyurea or anagrelide if high risk.",
+  ih:"In-house threshold >600 × 10⁹/L (WHO ≥450). In-house calls CALR \"calretinin\"; the gene is calreticulin.",key:"Sustained platelets >600k, reactive causes excluded"},
+ pmf:{n:"Primary myelofibrosis (PMF)",nick:"The scarred marrow",L:["13","27"],cells:["my-slow","my-fast"],fam:"tk",mk:"Fibrosis, dry tap, teardrops",gen:"JAK2 / CALR / MPL (≈90%)",r:"Worst MPN: 3–5 y; AML 5–20%",
+  mech:"Clonal megakaryocytes release PDGF and TGF-β → reactive fibroblasts lay down collagen → the marrow scars → blood production moves to spleen and liver (EMH); RBCs are squeezed into teardrops.",
+  buzz:["Massive splenomegaly","Teardrop cells (dacrocytes)","Leukoerythroblastosis","Dry tap","Gout","Age >60"],
+  test:"Marrow biopsy: reticulin/collagen fibrosis; JAK2/CALR/MPL; BCR-ABL negative.",tx:"Ruxolitinib, transfusions, hydroxyurea; allogeneic transplant is the only cure.",
+  hy:"The fibroblasts are not part of the clone. The neoplastic megakaryocytes are the culprit.",key:"Teardrops + dry tap + huge spleen"},
+ mds:{n:"Myelodysplastic syndrome (MDS)",nick:"The sloppy assembly line",L:["14","27"],cells:["my-slow","my-fast"],fam:"dys",mk:"Dysplasia in ≥1 lineage; blasts <20%",gen:"del(5q) good · −7, TP53, complex bad; SF3B1, TET2, DNMT3A",r:"Weeks to years; AML 10–40%",
+  mech:"A clonal stem cell matures in a disorderly way: the marrow is busy (hypercellular) but its cells die before release (ineffective hematopoiesis) → cytopenias with dysplastic cells.",
+  buzz:["Age ≈70, men > women","Macrocytic anemia","Pseudo-Pelger-Huët neutrophils","Hypogranular neutrophils","Ringed sideroblasts (SF3B1)","Hypercellular marrow"],
+  test:"Marrow: dysplasia, blasts <20%, clonal cytogenetics; B12 and folate normal.",tx:"Supportive (transfusion, growth factors); azacitidine or decitabine; lenalidomide for del(5q); transplant in younger patients.",
+  hy:"5q– syndrome: older women, macrocytic anemia, normal/↑ platelets, good prognosis, lenalidomide.",key:"Cytopenias + dysplasia + blasts <20%"},
+ tmds:{n:"Therapy-related MDS/AML",nick:"The price of past chemo",L:["14","19"],cells:["my-fast"],fam:"dys",mk:"Multilineage dysplasia",gen:"Alkylators: −5/−7 (5–10 y) · topo II inhibitors: 11q23/KMT2A (1–3 y)",r:"Faster to AML; poor",
+  mech:"Genotoxic chemotherapy or radiation damages stem cells → a dysplastic clone that turns into AML more often and faster than primary MDS.",
+  buzz:["2–8 y after chemo/radiation","Alkylating agents → −5/−7","Etoposide → 11q23","Hodgkin survivors"],
+  test:"History of genotoxic therapy + dysplasia + unbalanced karyotype.",tx:"Transplant if fit; otherwise supportive care or hypomethylating agents.",
+  hy:"A late effect of Hodgkin therapy: alkylating agents → MDS/AML 5–10 years later.",key:"Prior chemo + −5/−7 or 11q23"},
+ aml:{n:"Acute myeloid leukemia (AML)",nick:"The stopped assembly line",L:["14","27"],cells:["my-acute"],fam:"mbl",mk:"MPO+, CD13, CD33, CD117; Auer rods",gen:"Good: t(8;21), inv(16), t(15;17) · bad: −5/−7, 11q23, complex, TP53",r:"Remission 60–70%; transplant can cure",
+  mech:"Acquired mutations (transcription-factor fusions, FLT3, epigenetic regulators, TP53) block differentiation → myeloblasts ≥20% replace the marrow → rapid marrow failure.",
+  buzz:["Adults ≈65","Auer rods","WBC 20–100k (mostly blasts)","Anemia, bleeding, infection","Radiation, benzene, smoking","Down, Bloom, Fanconi, NF"],
+  test:"≥20% blasts + flow (CD13/CD33, MPO) + cytogenetics.",tx:"Induction chemotherapy; stem cell transplant; gemtuzumab (anti-CD33), FLT3 and IDH inhibitors.",
+  hy:"Favorable AML = 8, 15, 16: t(8;21), t(15;17), inv(16). Lost chromosomes (−5, −7) = poor.",key:"≥20% myeloblasts, Auer rods"},
+ apl:{n:"Acute promyelocytic leukemia (APL, M3)",nick:"Bleeding and Auer-rod bundles",L:["14","27"],cells:["my-acute"],fam:"mbl",mk:"Abnormal promyelocytes; faggot cells",gen:"t(15;17) PML-RARα",r:"Best AML outcome with ATRA + arsenic",
+  mech:"PML-RARα freezes maturation at the promyelocyte; the granules release procoagulants → DIC.",
+  buzz:["DIC, oozing IV sites","Bundles of Auer rods","Median age 35–40","ATRA","Differentiation syndrome"],
+  test:"t(15;17) / PML-RARα; low fibrinogen, high D-dimer.",tx:"ATRA + arsenic trioxide, started urgently; support the coagulopathy.",
+  hy:"ATRA can cause differentiation syndrome (fever, dyspnea, infiltrates, edema) → steroids.",key:"DIC + Auer rods + t(15;17)"},
+ amono:{n:"Acute monocytic leukemia (M5/M4)",nick:"Swollen gums",L:["14"],cells:["my-acute"],fam:"mbl",mk:"Monoblasts; nonspecific esterase+",gen:"11q23 (M5) · inv(16) with eosinophils (M4eo)",r:"Depends on genetics",
+  mech:"Leukemic monocytes leave the blood and infiltrate tissues, especially gums and skin.",
+  buzz:["Gingival hyperplasia","Skin nodules","Nonspecific esterase"],test:"Flow + nonspecific esterase cytochemistry.",tx:"AML induction.",key:"AML + gum hypertrophy"},
+ amk:{n:"Acute megakaryoblastic leukemia (M7)",nick:"The Down syndrome AML",L:["14"],cells:["my-acute"],fam:"mbl",mk:"CD41/CD61+ blasts with blebs",gen:"Trisomy 21",r:"Children <5 with Down syndrome",
+  mech:"Megakaryoblasts fill a fibrotic marrow in young children with Down syndrome.",
+  buzz:["Down syndrome, age <5","Marrow fibrosis","CD41 / CD61"],test:"Flow: CD41/CD61.",tx:"AML-directed chemotherapy.",key:"Down syndrome + CD41/CD61 blasts"},
+ ball:{n:"B-lymphoblastic leukemia (B-ALL)",nick:"The limping child",L:["14","27"],cells:["b-acute"],fam:"lbl",mk:"TdT+, CD10, CD19, CD20, CD22",gen:"Good: hyperdiploidy, t(12;21) · bad: t(9;22), t(1;19), t(4;11), hypodiploidy",r:"Children ≈90% cured; adults worse",
+  mech:"PAX5/E2A disruption stalls B-cell development → TdT+ lymphoblasts ≥20% pack the marrow → marrow failure and bone pain.",
+  buzz:["Age 2–10","Bone pain, refuses to walk","Petechiae, fever, pallor","CNS and testes (sanctuary sites)","Down syndrome, ataxia-telangiectasia"],
+  test:"Marrow ≥20% blasts; flow TdT/CD10/CD19; cytogenetics; lumbar puncture for every patient.",tx:"Induction → CNS prophylaxis → consolidation → maintenance (2–3 y); blinatumomab, CAR-T; TKI if Ph+.",
+  hy:"Poor risk: age <1 or >10, WBC >50k, t(9;22), KMT2A, CNS disease, slow response.",key:"TdT+ CD10+ blasts in a child"},
+ tall:{n:"T-lymphoblastic leukemia/lymphoma (T-ALL)",nick:"The teen with a mediastinal mass",L:["14"],cells:["t-acute"],fam:"lbl",mk:"TdT+, CD2, CD3, CD5, CD7",gen:"NOTCH1; 14q11 (TCR) unfavorable",r:"Aggressive; high WBC",
+  mech:"NOTCH1-driven thymic T-cell precursors stall → lymphoblasts in the marrow or a thymic mass.",
+  buzz:["Adolescent boy","Anterior mediastinal mass","Stridor, SVC syndrome","Very high WBC"],test:"Flow: TdT + CD3/CD7.",tx:"ALL-type chemotherapy with CNS prophylaxis.",key:"Teen + mediastinal mass + TdT/CD3"},
+ cll:{n:"CLL / small lymphocytic lymphoma",nick:"Smudge cells on a routine CBC",L:["19","27"],cells:["b-slow"],fam:"bdr",mk:"CD5, CD23, CD19, CD20 (dim)",gen:"del13q (most common), +12, del11q, del17p/TP53, NOTCH1",r:"Median 4–6 y; Richter → DLBCL",
+  mech:"Naïve or memory B cells accumulate in blood, marrow, nodes and spleen and crowd out normal B cells → hypogammaglobulinemia and autoimmunity.",
+  buzz:["Most common adult leukemia (West)","Smudge cells","Proliferation centers","Warm AIHA / ITP","Hypogammaglobulinemia → infections"],
+  test:"Flow: CD5+ CD23+ B cells, cyclin D1 negative.",tx:"Observe early; BTK inhibitor (ibrutinib) or anti-CD20 when symptomatic.",
+  hy:"Bad markers: del(17p)/TP53, unmutated IGHV, ZAP-70, NOTCH1. CLL = SLL (same cells; location decides the name).",key:"CD5+ CD23+ small B cells"},
+ hcl:{n:"Hairy cell leukemia",nick:"HAIRy: huge spleen, aspirate dry",L:["19","27"],cells:["b-slow"],fam:"bdr",mk:"CD11c, CD25, CD103; TRAP+",gen:"BRAF V600E (≈90%)",r:"Indolent; long remissions",
+  mech:"BRAF V600E keeps RAF-MEK-ERK signaling on in memory B cells, which fill the marrow (with reticulin fibrosis) and the splenic red pulp.",
+  buzz:["Older men","Massive splenomegaly","Pancytopenia + monocytopenia","No lymphadenopathy","Dry tap","Fried-egg cells"],
+  test:"Flow: CD11c/CD25/CD103; BRAF V600E.",tx:"Cladribine (purine analog).",key:"Huge spleen + pancytopenia + CD103"},
+ fl:{n:"Follicular lymphoma",nick:"The B cell that won't die",L:["19","27"],cells:["b-slow"],fam:"xl",mk:"CD10, BCL2, BCL6; CD5−",gen:"t(14;18) IGH-BCL2",r:"Indolent, incurable; 7–9 y; 30–50% → DLBCL",
+  mech:"BCL2 moved next to IGH stays switched on → germinal-center B cells escape apoptosis → crowded, back-to-back follicles.",
+  buzz:["Waxing-waning painless nodes","Cleaved centrocytes + centroblasts","BCL2+ follicles","Marrow ≈85% (paratrabecular)"],
+  test:"Excisional node: BCL2+ follicles, CD10+, t(14;18).",tx:"Watch; rituximab ± low-dose chemotherapy.",
+  ih:"In-house: most common NHL in the U.S. Boards: DLBCL is most common overall; follicular is the most common indolent NHL.",key:"t(14;18), BCL2+ follicles"},
+ mzl:{n:"Marginal zone / MALT lymphoma",nick:"Inflammation that turned clonal",L:["19","27"],cells:["b-slow"],fam:"bdr",mk:"CD20, CD79a; CD5−, CD10−, CD23−",gen:"t(11;18) API2-MALT1, t(1;14), t(14;18) MALT1, +18",r:"Localized; may regress; can → DLBCL",
+  mech:"Chronic antigen drive (H. pylori, Sjögren, Hashimoto) expands memory B cells that become clonal and destroy glands (lymphoepithelial lesions).",
+  buzz:["Stomach most common","H. pylori","Sjögren (salivary)","Hashimoto (thyroid)","Lymphoepithelial lesions","Monocytoid cells"],
+  test:"Biopsy: small B cells invading glands; CD5− CD10−.",tx:"Gastric, H. pylori+: antibiotics first; local therapy.",
+  hy:"t(11;18) MALT lymphoma does not respond to H. pylori eradication.",key:"Mucosal site + H. pylori / Sjögren / Hashimoto"},
+ mcl:{n:"Mantle cell lymphoma",nick:"Man of 11 hits 14",L:["19","27"],cells:["b-slow","b-fast"],fam:"xl",mk:"CD5, cyclin D1; CD23−",gen:"t(11;14) IGH-CCND1",r:"Incurable; 3–5 y (worst small-cell)",
+  mech:"Cyclin D1 next to IGH pushes naïve mantle-zone B cells from G1 into S unchecked.",
+  buzz:["Older men","Lymphomatoid polyposis (GI)","Marrow + blood","Diffuse or vaguely nodular"],
+  test:"Cyclin D1 IHC or FISH for t(11;14).",tx:"Chemo-immunotherapy; BTK inhibitors.",key:"CD5+ CD23− cyclin D1+"},
+ lpl:{n:"Lymphoplasmacytic lymphoma (Waldenström)",nick:"Thick IgM blood",L:["19","27"],cells:["b-slow"],fam:"bdr",mk:"CD20, surface IgM; Dutcher bodies",gen:"MYD88 L265P (>90%)",r:"Indolent, incurable",
+  mech:"Post-germinal-center B cells maturing toward plasma cells secrete monoclonal IgM → hyperviscosity, cryoglobulins and cold agglutinins.",
+  buzz:["IgM spike","Blurred vision, sausage-link retinal veins","Mucosal bleeding","No lytic lesions or hypercalcemia","Dutcher bodies"],
+  test:"SPEP/immunofixation (IgM); MYD88.",tx:"Plasmapheresis for hyperviscosity; chemo-immunotherapy.",
+  ih:"In the HEM19 objectives but covered in detail with plasma cell disorders.",key:"IgM spike + hyperviscosity"},
+ myeloma:{n:"Plasma cell myeloma",nick:"CRAB",L:["27"],cells:["b-slow"],fam:"bdr",mk:"CD138; κ or λ restricted",gen:"(plasma cell lecture)",r:"Incurable (in-house median ≈3 y)",
+  mech:"Clonal plasma cells fill the marrow and secrete M protein; osteoclast activation (RANKL, IL-6) punches holes in bone.",
+  buzz:["Punched-out skull lesions","Rouleaux","Hypercalcemia, renal failure","Russell bodies","Perinuclear hof"],
+  test:"SPEP/UPEP, free light chains, marrow plasma cells.",tx:"See the plasma cell lecture.",
+  ih:"Seen on the HEM27 lab slides; full coverage is in the plasma cell lecture.",key:"M spike + CRAB"},
+ dlbcl:{n:"Diffuse large B-cell lymphoma (DLBCL)",nick:"The fast mass you can cure",L:["19","27"],cells:["b-fast"],fam:"bdr",mk:"CD19, CD20, BCL6 (± CD10)",gen:"BCL6 (30%), BCL2 (10%), MYC (5%, worse)",r:"Aggressive; ≈50% cured with R-CHOP",
+  mech:"Large germinal-center or post-GC B cells grow in destructive sheets, de novo or transformed from CLL, follicular or MALT. Immunodeficiency forms are EBV-driven.",
+  buzz:["Single rapidly enlarging mass","Extranodal: Waldeyer ring, GI, CNS, testis","Large cells, prominent nucleoli","Post-transplant / HIV (EBV)"],
+  test:"Biopsy + IHC (CD45/CD20 vs keratin for carcinoma).",tx:"R-CHOP chemo-immunotherapy.",
+  hy:"Primary CNS lymphoma in AIDS: EBV+, ring-enhancing lesion (vs toxoplasmosis).",key:"Sheets of large CD20+ cells"},
+ burkitt:{n:"Burkitt lymphoma",nick:"Starry sky",L:["19"],cells:["b-fast"],fam:"xl",mk:"CD10, CD20, sIgM; BCL2−; Ki-67 ≈100%",gen:"t(8;14) IGH-MYC (also t(2;8), t(8;22))",r:"Fastest-growing tumor; curable",
+  mech:"MYC next to IGH drives nonstop division; macrophages eating apoptotic tumor cells make the starry sky.",
+  buzz:["Endemic: jaw, EBV ≈100%","Sporadic: ileocecal mass","HIV-associated","Starry sky","Tumor lysis syndrome"],
+  test:"t(8;14); Ki-67 ≈100%.",tx:"Intensive chemotherapy + tumor lysis prevention (fluids, allopurinol or rasburicase).",key:"t(8;14) + starry sky"},
+ pel:{n:"Primary effusion lymphoma",nick:"Lymphoma with no mass",L:["19"],cells:["b-fast"],fam:"vir",mk:"Lacks B/T markers; clonal IGH",gen:"HHV-8 (KSHV) in every case",r:"Aggressive",
+  mech:"HHV-8-infected B cells grow in body cavities as a malignant effusion.",
+  buzz:["Advanced HIV","Pleural or peritoneal effusion","No mass","HHV-8"],test:"Effusion cytology + HHV-8.",tx:"Chemotherapy + HIV control.",key:"HIV + effusion + HHV-8"},
+ mf:{n:"Mycosis fungoides",nick:"Eczema that won't heal",L:["19","27"],cells:["t-slow"],fam:"ts",mk:"CD2, CD3, CD4, CD5; CD8−",gen:"Clonal TCR rearrangement",r:"Indolent early (8–9 y); advanced = poor",
+  mech:"Skin-homing CD4 T cells with cerebriform nuclei infiltrate the epidermis; patch → plaque → tumor.",
+  buzz:["Scaly eczema/psoriasis-like rash","Cerebriform nuclei","Pautrier microabscesses","Epidermotropism"],test:"Skin biopsy + clonal TCR.",tx:"Skin-directed therapy early.",key:"CD4+ cerebriform cells in the epidermis"},
+ sezary:{n:"Sézary syndrome",nick:"Mycosis fungoides in the blood",L:["19","27"],cells:["t-fast"],fam:"ts",mk:"Circulating CD4+ cerebriform cells",gen:"Clonal TCR rearrangement",r:"Poor",
+  mech:"The leukemic form of MF: cerebriform T cells circulate and redden the whole skin.",
+  buzz:["Exfoliative erythroderma","Circulating Sézary cells","Lymphadenopathy"],test:"Blood flow cytometry.",tx:"Systemic therapy.",key:"Erythroderma + circulating cerebriform cells"},
+ atll:{n:"Adult T-cell leukemia/lymphoma (ATLL)",nick:"CLOVER",L:["19","27"],cells:["t-fast"],fam:"vir",mk:"CD4, CD25",gen:"HTLV-1 (Tax)",r:"Aggressive; poor",
+  mech:"HTLV-1 Tax switches on NF-κB and IL-2 growth pathways in CD4 T cells → clonal ATLL decades after infection.",
+  buzz:["Southern Japan, Caribbean, West Africa","Clover-leaf (flower) cells","Hypercalcemia, lytic lesions","Skin lesions","Hepatosplenomegaly"],
+  test:"Flow (CD4/CD25) + HTLV-1 serology.",tx:"Chemotherapy; poor prognosis.",
+  hy:"HTLV-1 also causes HTLV-1-associated myelopathy / tropical spastic paraparesis.",key:"HTLV-1 + hypercalcemia + clover-leaf cells"},
+ ns:{n:"Nodular sclerosis Hodgkin",nick:"Neck, Sternum, Sisters",L:["19","27"],cells:["h-slow"],fam:"hd",mk:"Lacunar cells: CD15+ CD30+ CD20−",gen:"EBV uncommon",r:"Excellent",
+  mech:"RS cells secrete TGF-β → collagen bands divide the node; lacunar cells sit in retraction spaces.",
+  buzz:["Most common HL (65–70%)","Young adults; women ≈ men","Anterior mediastinal mass","Collagen bands","Lacunar cells"],
+  test:"Excisional node + CD15/CD30; CT/PET staging.",tx:"ABVD ± radiation.",key:"Young woman + mediastinum + lacunar cells"},
+ mc:{n:"Mixed cellularity Hodgkin",nick:"Mixed men, many symptoms",L:["19","27"],cells:["h-fast"],fam:"hd",mk:"Classic RS: CD15+ CD30+",gen:"EBV often positive",r:"Good; often advanced stage",
+  mech:"RS cells secrete IL-5 → eosinophils, in a mixed background of lymphocytes, plasma cells and histiocytes.",
+  buzz:["Older men","B symptoms","Abdominal nodes, spleen","Eosinophils","EBV"],test:"Node + CD15/CD30.",tx:"ABVD.",key:"Older man + eosinophils + EBV"},
+ lr:{n:"Lymphocyte-rich classic Hodgkin",nick:"Classic cells, T-cell crowd",L:["19"],cells:["h-slow"],fam:"hd",mk:"Classic RS: CD15+ CD30+",gen:"EBV ≈40%",r:"Very good; early stage",
+  mech:"Classic RS cells in a background of reactive T lymphocytes.",buzz:["Older patients","Early stage","T-cell background"],test:"CD15/CD30 on RS cells.",tx:"Stage-based therapy.",key:"Classic RS + T-cell background"},
+ ld:{n:"Lymphocyte-depleted Hodgkin",nick:"Lost defense",L:["19","27"],cells:["h-fast"],fam:"hd",mk:"Pleomorphic RS: CD15+ CD30+",gen:"EBV common",r:"Worst HL",
+  mech:"Many bizarre RS cells and few lymphocytes, with fibrosis and necrosis.",buzz:["Rarest","Older men, HIV","Advanced stage"],test:"IHC often needed.",tx:"Intensive therapy.",key:"HIV + bizarre RS cells, few lymphocytes"},
+ nlphl:{n:"Nodular lymphocyte-predominant Hodgkin",nick:"Popcorn at the movie",L:["19","27"],cells:["h-slow"],fam:"hd",mk:"Popcorn (L&H) cells: CD20+ CD45+; CD15− CD30−",gen:"EBV negative",r:"Excellent; rarely → DLBCL",
+  mech:"The tumor cells keep their B-cell program and grow in expanded B-cell nodules.",
+  buzz:["Men, young to middle-aged","Cervical/axillary node for years","Mediastinum rare","Popcorn cells"],test:"CD20+, CD15−/CD30−.",tx:"Often local therapy.",key:"CD20+ popcorn cells"},
+ leukemoid:{n:"Leukemoid reaction / reactive neutrophilia",nick:"Infection, not leukemia",L:["13","27"],cells:[],fam:"re",mk:"Bands, toxic granulation, Döhle bodies",gen:"Normal",r:"Resolves with the cause",
+  mech:"A normal marrow answers infection, inflammation or stress with polyclonal neutrophils.",
+  buzz:["WBC usually <30k","Fever","High LAP","No basophilia","No splenomegaly"],test:"Treat the cause; BCR-ABL negative if checked.",tx:"Treat the infection.",
+  hy:"Glucocorticoids and epinephrine raise neutrophils within hours by demargination, not new production.",key:"High LAP + toxic granulation"},
+ reactthromb:{n:"Reactive thrombocytosis",nick:"Iron deficiency's platelets",L:["13"],cells:[],fam:"re",mk:"Normal-looking platelets",gen:"None",r:"Resolves",
+  mech:"IL-6 from inflammation, iron deficiency, splenectomy, bleeding or surgery drives platelet production.",
+  buzz:["Iron deficiency","Inflammation (↑ CRP)","Post-splenectomy"],test:"Ferritin, CRP.",tx:"Treat the cause.",key:"Low ferritin or high CRP"},
+ secpoly:{n:"Secondary polycythemia",nick:"Hypoxia or tumor EPO",L:["13"],cells:[],fam:"re",mk:"Isolated ↑ RBCs",gen:"None",r:"Treat the cause",
+  mech:"Appropriate: hypoxia (COPD, altitude, sleep apnea, smoking) raises EPO. Inappropriate: EPO-secreting tumors (renal cell, hepatocellular, hemangioblastoma, leiomyoma) or exogenous EPO/testosterone. Relative: dehydration.",
+  buzz:["↑ EPO","↓ O₂ sat if hypoxic","Renal cell carcinoma + hematuria"],test:"EPO + O₂ saturation.",tx:"Treat the hypoxia or tumor.",key:"↑ EPO"},
+ reactfoll:{n:"Reactive follicular hyperplasia",nick:"Busy but polite follicles",L:["27"],cells:[],fam:"re",mk:"BCL2− germinal centers; polyclonal",gen:"None",r:"Benign",
+  mech:"The B-cell zone expands in response to antigen (rheumatoid arthritis, early HIV).",
+  buzz:["Varied follicles","Polarized germinal centers","Tingible-body macrophages","Intact mantle"],test:"BCL2 negative; κ and λ both present.",tx:"Treat the cause.",key:"BCL2− polarized follicles"},
+ paracort:{n:"Paracortical hyperplasia (EBV mono)",nick:"The RS-cell impostor",L:["27"],cells:[],fam:"re",mk:"T-zone expansion, immunoblasts",gen:"None",r:"Benign",
+  mech:"Viral infection (EBV) or drugs (phenytoin) expand the T-cell zone; immunoblasts can mimic RS cells.",
+  buzz:["Young, febrile, sore throat","Tender nodes","Immunoblasts"],test:"EBV serology; no clonality.",tx:"Supportive.",key:"Tender nodes in a febrile young patient"},
+ chip:{n:"Clonal hematopoiesis (CHIP)",nick:"The clone before the cancer",L:["14"],cells:[],fam:"re",mk:"Normal counts",gen:"TET2, DNMT3A",r:"≈1%/yr to blood cancer",
+  mech:"A blood-cell clone carries an acquired cancer-gene mutation, but counts stay normal; about 10% of people by age 70.",
+  buzz:["Normal CBC","↑ RDW","Pro-inflammatory: atherosclerosis","10% by age 70"],test:"Sequencing finds a clone with normal counts.",tx:"Observation.",key:"Mutation with normal counts"},
+ mets:{n:"Metastatic carcinoma in marrow or node",nick:"Cells that stick together",L:["13","27"],cells:[],fam:"re",mk:"Keratin+, cohesive clusters",gen:"—",r:"Depends on the primary",
+  mech:"Carcinoma replaces marrow (myelophthisis) → teardrops and leukoerythroblastosis; in a node it can mimic large-cell lymphoma.",
+  buzz:["Cohesive clusters","Breast, prostate, lung","Teardrops, nucleated RBCs","Firm, white, necrotic nodes"],test:"IHC: keratin vs CD45/CD20.",tx:"Treat the cancer.",key:"Cohesive keratin+ clusters"}
+};
+const E=[
+ ["cml","aml","cause","Blast crisis: myeloid in ≈60%."],
+ ["cml","ball","cause","Lymphoid blast crisis in ≈30%: the Ph clone sits in a pluripotent stem cell."],
+ ["pv","pmf","cause","Spent phase: post-polycythemic myelofibrosis with cytopenias and teardrops."],
+ ["pv","aml","cause","About 2% transform to AML."],
+ ["et","pmf","cause","Fewer than 5% progress to myelofibrosis or blast crisis."],
+ ["pmf","aml","cause","AML in 5–20%."],
+ ["chip","mds","cause","About 1% per year develop a blood cancer (TET2, DNMT3A)."],
+ ["mds","aml","cause","10–40% transform; prognosis worse than de novo AML."],
+ ["tmds","aml","cause","Therapy-related MDS progresses to AML more often and faster."],
+ ["ns","tmds","cause","Alkylating-agent therapy for Hodgkin → MDS/AML 5–10 years later (−5/−7)."],
+ ["cll","dlbcl","cause","Richter transformation (≈10%): a rapidly enlarging node or spleen."],
+ ["fl","dlbcl","cause","30–50% transform, often with MYC; survival <1 year after."],
+ ["mzl","dlbcl","cause","MALT lymphoma can transform to DLBCL."],
+ ["nlphl","dlbcl","cause","Rarely transforms to DLBCL."],
+ ["mf","sezary","cause","Leukemic spread: erythroderma + circulating cerebriform cells."],
+ ["leukemoid","cml","mimic",""],["secpoly","pv","mimic",""],["reactthromb","et","mimic",""],["mets","pmf","mimic",""],["hcl","pmf","mimic",""],
+ ["mds","aml","mimic",""],["mds","pv","mimic",""],["aml","ball","mimic",""],["cll","mcl","mimic",""],["reactfoll","fl","mimic",""],
+ ["burkitt","dlbcl","mimic",""],["lr","nlphl","mimic",""],["lpl","myeloma","mimic",""],["atll","myeloma","mimic",""],["paracort","mc","mimic",""],["mets","dlbcl","mimic",""],
+ ["cml","ball","shared","t(9;22) defines CML and is found in ≈25% of adult ALL, where it is unfavorable; both get BCR-ABL TKIs."],
+ ["pv","et","shared","JAK2 V617F; thrombosis and erythromelalgia; low-dose aspirin."],
+ ["et","pmf","shared","JAK2/CALR/MPL in both; early prefibrotic PMF can look like ET."],
+ ["ball","tall","shared","TdT+ lymphoblasts that look identical; flow cytometry decides the lineage."],
+ ["fl","mzl","shared","t(14;18) appears twice: IGH-BCL2 in follicular, IGH-MALT1 in MALT."],
+ ["fl","burkitt","shared","CD10+ germinal-center tumors (IGH partners BCL2 vs MYC)."],
+ ["hcl","mzl","shared","Both arise from post-germinal-center memory B cells."],
+ ["mf","atll","shared","Mature CD4+ helper T-cell neoplasms with skin lesions."],
+ ["ns","mc","shared","Classic Reed-Sternberg cells: CD15+ CD30+ CD20−."],
+ ["ns","tall","shared","Anterior mediastinal mass in a young patient."],
+ ["mc","ld","shared","The EBV-rich classic Hodgkin subtypes."],
+ ["pel","dlbcl","shared","HIV-associated aggressive B lymphomas (HHV-8 vs EBV)."],
+ ["mds","tmds","shared","Same dysplastic biology; therapy-related cases carry worse karyotypes."],
+ ["apl","aml","comp","APL brings DIC and needs ATRA, not just standard induction."],
+ ["burkitt","ball","comp","Very fast tumors: tumor lysis syndrome with chemo and CNS spread."],
+ ["amk","ball","comp","Down syndrome raises the risk of both AML (M7, age <5) and ALL."],
+ ["ld","pel","comp","HIV: lymphocyte-depleted Hodgkin, primary effusion lymphoma, Burkitt and primary CNS lymphoma."],
+ ["cll","lpl","comp","Autoimmune hemolysis: warm IgG AIHA in CLL; IgM cold agglutinins in Waldenström."],
+ ["mzl","lpl","comp","Hepatitis C drives splenic marginal zone and lymphoplasmacytic lymphoma (cryoglobulins)."]
+];
+const MIM={
+ "leukemoid|cml":["High WBC with a left shift","WBC usually <30k, bands, toxic granulation, Döhle bodies, fever, no spleen, high LAP","WBC >50k, all stages, basophilia, splenomegaly, low LAP, t(9;22)"],
+ "secpoly|pv":["High hematocrit","Hypoxia or EPO-secreting tumor → ↑ EPO","Normal O₂ sat, ↓ EPO, JAK2, splenomegaly, ↑ WBC/platelets"],
+ "reactthromb|et":["High platelets","Iron deficiency, inflammation, post-splenectomy; normal platelets; resolves","Sustained >600k (in-house), giant clumped platelets, JAK2/CALR/MPL"],
+ "mets|pmf":["Teardrops + leukoerythroblastosis","Cohesive keratin+ clusters; cancer history","Collagen fibrosis, dry tap, JAK2/CALR/MPL, massive spleen"],
+ "hcl|pmf":["Dry tap + big spleen","Pancytopenia from the start, CD103, BRAF, TRAP+, no nodes","Early ↑ counts, teardrops, leukoerythroblastosis"],
+ "mds|aml":["Cytopenias with increased blasts","Blasts <20% with dysplasia","Blasts ≥20%"],
+ "mds|pv":["Hypercellular marrow","Ineffective: cytopenias, dysplasia, no organomegaly","Effective: high counts, splenomegaly"],
+ "aml|ball":["Blasts ≥20%, marrow failure","Adults ≈65; Auer rods; MPO, CD13, CD33","Children 2–10; TdT, CD10, CD19; bone pain, CNS/testes"],
+ "cll|mcl":["Small CD5+ B cells","CD23+, cyclin D1−; smudge cells; indolent","CD23−, cyclin D1+, t(11;14); 3–5 years"],
+ "reactfoll|fl":["Follicles in a lymph node","Varied follicles, polarized germinal centers, tingible-body macrophages, BCL2−, polyclonal","Back-to-back uniform follicles, BCL2+, light-chain restricted, t(14;18)"],
+ "burkitt|dlbcl":["Aggressive B cells in sheets","Intermediate cells, starry sky, t(8;14) MYC, BCL2−, Ki-67 ≈100%, children","Large cells, BCL6, adults, ≈50% cured"],
+ "lr|nlphl":["Many lymphocytes; can be nodular","Classic RS CD15+/CD30+ in a T-cell background","Popcorn cells CD20+ in a B-cell background"],
+ "lpl|myeloma":["Monoclonal M spike","IgM, hyperviscosity, nodes/spleen, no lytic lesions, MYD88","IgG/IgA, CRAB, lytic lesions"],
+ "atll|myeloma":["Hypercalcemia + lytic lesions","CD4+ T cells, clover-leaf nuclei, HTLV-1","Plasma cells, M spike"],
+ "paracort|mc":["Large cells that look like RS cells","Young, febrile, tender nodes, EBV mono, T-zone immunoblasts","Classic RS CD15/CD30 in a mixed background; older men, B symptoms"],
+ "mets|dlbcl":["Sheets of large cells in a node","Keratin+","CD45+, CD20+"]
+};
+const ETYPE={cause:{n:"Leads to"},mimic:{n:"Look-alikes"},shared:{n:"Shared ground"},comp:{n:"Complications and risk"}};
+const CHARTS={"bdev": {"t": "Where each B-cell lymphoma comes from", "L": "19", "s": "flowchart LR\nA[\"Naïve B cell<br/>(mantle zone)\"] --> B[\"Germinal center B cell<br/>(centrocytes / centroblasts)\"]\nB --> C[\"Memory B cell<br/>(marginal zone)\"]\nB --> D[\"Plasma cell\"]\nA -.-> MCL[\"Mantle cell lymphoma<br/>CLL/SLL\"]\nB -.-> FL[\"Follicular · Burkitt · DLBCL<br/>Hodgkin (RS cell)\"]\nC -.-> MZL[\"Marginal zone/MALT<br/>Hairy cell · some CLL\"]\nD -.-> PC[\"Myeloma<br/>Lymphoplasmacytic lymphoma\"]"}, "hlwho": {"t": "Hodgkin lymphoma: WHO classification", "L": "19", "s": "flowchart TD\nHL[\"Hodgkin lymphoma\"] --> C[\"Classic HL<br/>RS cells CD15+ CD30+ CD20−\"]\nHL --> N[\"Nodular lymphocyte predominant HL<br/>(non-classic)<br/>Popcorn (L&H) cells CD20+ CD15− CD30−\"]\nC --> NS[\"Nodular sclerosis<br/>(most common)\"]\nC --> MC[\"Mixed cellularity\"]\nC --> LR[\"Lymphocyte-rich\"]\nC --> LD[\"Lymphocyte-depleted<br/>(rarest, worst)\"]"}, "rsbirth": {"t": "How a Reed-Sternberg cell is born", "L": "19", "s": "flowchart TD\nA[\"Germinal center B cell\"] --> B[\"Crippling IGH mutation<br/>(no functional BCR)\"]\nB -->|\"normally\"| X[\"Apoptosis\"]\nB -->|\"EBV LMP-1 or mutations\"| C[\"NF-κB activation<br/>→ survival & growth\"]\nC --> D[\"Reed-Sternberg cell<br/>(loses B-cell markers; CD15+ CD30+)\"]\nD --> E[\"Cytokines: IL-5, TGF-β, TNF, IL-6\"]\nE --> F[\"Reactive background<br/>eosinophils, fibrosis, lymphocytes\"]\nE --> G[\"B symptoms, anemia\"]\nF -->|\"growth signals\"| D\nD --> H[\"PD-L1 ↑ → immune evasion\"]"}, "mpn4": {"t": "The four MPNs at a glance", "L": "13", "s": "flowchart TD\n    M[\"Myeloproliferative neoplasms<br>(constitutive tyrosine kinase)\"] --> C[\"CML<br>too many GRANULOCYTES<br>BCR-ABL t(9;22)\"]\n    M --> P[\"Polycythemia vera<br>too many RBCs<br>JAK2 (over 97%)\"]\n    M --> E[\"Essential thrombocythemia<br>too many PLATELETS<br>JAK2, CALR, MPL\"]\n    M --> F[\"Primary myelofibrosis<br>FIBROSIS + extramedullary hematopoiesis<br>JAK2, CALR, MPL\"]"}, "cmlt": {"t": "CML: the Philadelphia chromosome", "L": "13", "s": "flowchart LR\n    A[\"Chromosome 9: ABL\"] --> T[\"t(9;22)<br>Philadelphia chromosome\"]\n    B[\"Chromosome 22: BCR\"] --> T\n    T --> F[\"BCR-ABL fusion<br>always-on tyrosine kinase\"]\n    F --> G[\"Granulocytes proliferate,<br>survive longer, released early\"]\n    G --> H[\"Very high WBC with all stages,<br>basophilia, splenomegaly\"]"}, "cmlph": {"t": "CML natural history", "L": "13", "s": "flowchart LR\n    C[\"CHRONIC phase<br>median 3-4 years untreated\"] --> A[\"ACCELERATED phase<br>(about 50%): treatment failure,<br>cytopenias, new chromosome changes,<br>marrow fibrosis\"]\n    A --> B[\"BLAST CRISIS<br>acute leukemia:<br>myeloid 60%, lymphoid 30%\"]"}, "pvjak": {"t": "Polycythemia vera: JAK2 to symptoms", "L": "13", "s": "flowchart LR\n    J[\"JAK2 V617F\"] --> S[\"JAK/STAT on<br>without EPO\"]\n    S --> R[\"RBCs (+ WBCs, platelets)<br>overproduced\"]\n    R --> V[\"High red cell mass, thick blood\"]\n    V --> X[\"Headache, dizziness, HTN,<br>thrombosis, pruritus\"]\n    R -.->|\"negative feedback\"| E[\"Serum EPO LOW\"]"}, "pmffib": {"t": "Primary myelofibrosis: how the marrow scars", "L": "13", "s": "flowchart TD\n    A[\"Clonal neoplastic megakaryocytes<br>(JAK2 / CALR / MPL)\"] --> B[\"Release fibrogenic growth factors<br>PDGF and TGF-beta\"]\n    B --> C[\"Fibroblasts lay down collagen<br>= MARROW FIBROSIS\"]\n    C --> D[\"Hematopoietic cells forced out of marrow\"]\n    D --> E[\"Precursors circulate and seed spleen, liver<br>= EXTRAMEDULLARY HEMATOPOIESIS\"]\n    E --> F[\"Massive splenomegaly, hepatomegaly\"]\n    C --> G[\"Distorted marrow squeezes RBCs<br>= TEARDROP cells; immature cells leak out<br>= LEUKOERYTHROBLASTOSIS\"]"}, "hsc": {"t": "The blood cell family tree", "L": "27", "s": "flowchart TD\nHSC[\"Hematopoietic stem cell (CD34+)\"] --> CMP[\"Common myeloid progenitor\"]\nHSC --> CLP[\"Common lymphoid progenitor\"]\nCMP --> GM[\"Granulocyte-monocyte progenitor\"]\nCMP --> MEP[\"Megakaryocyte-erythroid progenitor\"]\nGM --> N[\"Myeloblast → promyelocyte → myelocyte → metamyelocyte → band → neutrophil\"]\nGM --> E[\"Eosinophil, basophil\"]\nGM --> Mo[\"Monoblast → monocyte → macrophage\"]\nMEP --> RBC[\"Erythroblast → reticulocyte → RBC\"]\nMEP --> Mk[\"Megakaryocyte → platelets\"]\nCLP --> B[\"B cell (marrow) → plasma cell\"]\nCLP --> T[\"T cell (thymus)\"]\nCLP --> NK[\"NK cell\"]"}, "who": {"t": "The WHO map of WBC disorders", "L": "27", "s": "flowchart TD\nW[\"WBC disorders\"] --> R[\"Reactive / non-neoplastic<br/>(leukocytosis, reactive lymph node hyperplasia)\"]\nW --> NEO[\"Neoplastic (WHO)\"]\nNEO --> MY[\"Myeloid neoplasms\"]\nNEO --> LY[\"Lymphoid neoplasms\"]\nNEO --> HI[\"Histiocytic / dendritic cell neoplasms<br/>(e.g., Langerhans cell histiocytosis)\"]\nMY --> AML[\"Acute myeloid leukemia\"]\nMY --> MDS[\"Myelodysplastic neoplasms\"]\nMY --> MPN[\"Myeloproliferative neoplasms<br/>CML, PV, ET, PMF\"]\nMY --> MM[\"MDS/MPN overlap (e.g., CMML)\"]\nLY --> PRE[\"Precursor: B- and T-lymphoblastic<br/>leukemia/lymphoma (ALL)\"]\nLY --> MB[\"Mature B-cell neoplasms<br/>CLL/SLL, follicular, mantle, MZL, DLBCL, Burkitt,<br/>hairy cell, LPL, plasma cell myeloma\"]\nLY --> MT[\"Mature T/NK neoplasms<br/>mycosis fungoides/Sézary, ATLL, ALCL\"]\nLY --> HL[\"Hodgkin lymphoma<br/>classic and NLPHL\"]"}, "workup": {"t": "Step-by-step workup", "L": "27", "s": "flowchart TD\nA[\"History & exam<br/>nodes, spleen, liver, B symptoms, bleeding, infections, bone pain\"] --> B[\"CBC with differential<br/>+ peripheral smear review\"]\nB --> C{\"Where is the disease?\"}\nC -->|\"Blood/marrow abnormal\"| D[\"Bone marrow aspirate + core biopsy\"]\nC -->|\"Mass / lymphadenopathy\"| E[\"Excisional lymph node or tissue biopsy<br/>(preserves architecture)\"]\nC -->|\"M spike suspected\"| F[\"SPEP + immunofixation, UPEP, free light chains\"]\nD --> G[\"Ancillary studies\"]\nE --> G\nF --> D\nG --> H[\"Flow cytometry · immunohistochemistry<br/>cytogenetics/FISH · molecular (PCR, NGS)\"]\nH --> I[\"WHO diagnosis → staging (imaging, LDH) → risk → treatment\"]"}};
+CHARTS.causemap={t:"Cause map",L:"13–27",s:()=>{const c=f=>tok(FAM[f].c);return `flowchart LR
+ chip["Clonal hematopoiesis"] -->|"1%/yr"| mds["MDS"]
+ mds -->|"10–40%"| aml["AML"]
+ chemo["Prior chemo / radiation<br>(e.g., Hodgkin therapy)"] --> tmds["Therapy-related MDS"]
+ tmds -->|"faster"| aml
+ cml["CML"] -->|"blast crisis 60%"| aml
+ cml -->|"blast crisis 30%"| ball["B-ALL"]
+ pv["Polycythemia vera"] -->|"spent phase"| pmf["Myelofibrosis"]
+ et["Essential thrombocythemia"] -->|"under 5%"| pmf
+ pv -->|"≈2%"| aml
+ pmf -->|"5–20%"| aml
+ cll["CLL/SLL"] -->|"Richter ≈10%"| dlbcl["DLBCL"]
+ fl["Follicular"] -->|"30–50%"| dlbcl
+ mzl["MALT"] --> dlbcl
+ nlphl["NLPHL"] -->|"rare"| dlbcl
+ hp["H. pylori · Sjögren · Hashimoto"] --> mzl
+ mf["Mycosis fungoides"] -->|"blood spread"| sez["Sézary syndrome"]
+ htlv["HTLV-1"] --> atll["ATLL"]
+ hhv8["HHV-8 + HIV"] --> pel["Primary effusion lymphoma"]
+ ebv["EBV"] --> bl["Burkitt (endemic)"]
+ ebv --> dlbcl
+ ebv --> mc["Mixed cellularity HL"]
+ down["Down syndrome"] --> amk["AML M7"]
+ down --> ball
+ classDef tk stroke:${c("tk")},stroke-width:2px
+ classDef dys stroke:${c("dys")},stroke-width:2px
+ classDef mbl stroke:${c("mbl")},stroke-width:2px
+ classDef lbl stroke:${c("lbl")},stroke-width:2px
+ classDef bdr stroke:${c("bdr")},stroke-width:2px
+ classDef xl stroke:${c("xl")},stroke-width:2px
+ classDef ts stroke:${c("ts")},stroke-width:2px
+ classDef vir stroke:${c("vir")},stroke-width:2px
+ classDef hd stroke:${c("hd")},stroke-width:2px
+ classDef trig stroke-dasharray:4 3
+ class cml,pv,et,pmf tk
+ class mds,tmds dys
+ class aml,amk mbl
+ class ball lbl
+ class cll,mzl,dlbcl bdr
+ class fl,bl xl
+ class mf,sez ts
+ class atll,pel vir
+ class nlphl,mc hd
+ class chip,chemo,hp,htlv,hhv8,ebv,down trig`}};
+const TPF={cml:["cmlt","cmlph"],pv:["pvjak"],et:["mpn4"],pmf:["pmffib"]};
+const AF={cml:["cmlt","cmlph"],pv:["pvjak","mpn4"],et:["mpn4"],pmf:["pmffib","mpn4"],mds:["who"],tmds:["who"],aml:["hsc","who"],apl:["hsc"],ball:["hsc","who"],tall:["hsc"],cll:["bdev"],hcl:["bdev"],fl:["bdev"],mzl:["bdev"],mcl:["bdev"],lpl:["bdev"],myeloma:["bdev"],dlbcl:["bdev"],burkitt:["bdev"],ns:["hlwho","rsbirth"],mc:["hlwho","rsbirth"],lr:["hlwho"],ld:["hlwho"],nlphl:["hlwho"],leukemoid:["workup"],reactfoll:["workup"],paracort:["workup"],mets:["workup"]};
+const BRF={"Myeloid":[],"Mature B cell":["bdev"],"Hodgkin":["hlwho"]};
+const GRF={tk:["mpn4"],hd:["rsbirth"]};
+const TW={
+ tk:{q:"Which kinase is stuck on?",d:"A mutated tyrosine kinase signals without a growth factor. Maturation still works, so the blood fills with too many finished cells, the spleen enlarges (extramedullary hematopoiesis), and late disease can burn out into fibrosis or turn acute.",hy:"CML = BCR-ABL t(9;22) (imatinib). PV, ET and PMF = JAK2 / CALR / MPL (\"Philadelphia-negative\" MPNs). One cell line each, plus scar: white cells, red cells, platelets, fibrosis."},
+ dys:{q:"Why is a busy marrow sending out empty blood?",d:"A clonal stem cell matures in a disorderly way. Its defective cells die in the marrow, so the marrow is hypercellular while the blood is cytopenic and the surviving cells look dysplastic. Blasts stay below 20% until it becomes AML."},
+ mbl:{q:"Where is maturation blocked, and by what?",d:"Transcription-factor fusions and other hits freeze myeloid differentiation. Myeloblasts reach ≥20% and crowd out normal cells → anemia, bleeding, infection. The WHO classification is built on the genetics because each group behaves differently."},
+ lbl:{q:"B or T lymphoblast?",d:"Lymphoid precursors stall (PAX5/E2A in B, NOTCH1 in T). TdT+ blasts look the same in both, so flow cytometry decides: CD10/CD19 for B, CD3/CD7 for T."},
+ bdr:{q:"What keeps the B cell alive or growing?",d:"Mature B cells frozen at a normal stage of development. Growth comes from antigen or receptor signaling (CLL, MALT), point mutations (BRAF in hairy cell, MYD88 in Waldenström), BCL6 (DLBCL), or plasma-cell differentiation (myeloma)."},
+ xl:{q:"Which oncogene landed next to IGH?",d:"Errors during antigen-receptor rearrangement move an oncogene next to the immunoglobulin heavy-chain locus on chromosome 14, whose enhancer then drives it: MYC (nonstop growth), BCL2 (no apoptosis) or cyclin D1 (unchecked cell cycle).",hy:"t(8;14) MYC → Burkitt · t(14;18) BCL2 → follicular · t(11;14) cyclin D1 → mantle cell."},
+ ts:{q:"Where do the T cells live?",d:"Mature CD4 helper T cells home to the skin and enter the epidermis (Pautrier microabscesses). When they circulate, mycosis fungoides becomes Sézary syndrome."},
+ vir:{q:"Which virus is driving it?",d:"Viral proteins switch on growth programs in lymphocytes: HTLV-1 Tax in CD4 T cells (ATLL), HHV-8 in effusion B cells, EBV in endemic Burkitt and immunodeficiency DLBCL."},
+ hd:{q:"What crowd did the RS cell gather?",d:"A germinal-center B cell with a crippled immunoglobulin gene should die, but NF-κB (often via EBV LMP-1) rescues it. The Reed-Sternberg cell then secretes cytokines that recruit the reactive crowd, and the crowd names the subtype: TGF-β → collagen bands (nodular sclerosis), IL-5 → eosinophils (mixed cellularity)."},
+ re:{q:"Reactive or neoplastic?",d:"These look like white cell neoplasms but are polyclonal responses to a cause, an early clone with normal counts, or a carcinoma. Find the cause, check clonality, and use the stain that settles it."}
+};
+const TP={
+ cml:["BCR-ABL tyrosine kinase","t(9;22) → ABL kinase always on → granulocytes overproduced at every stage"],
+ pv:["JAK2 V617F under the EPO receptor","EPO-independent RBC production → high Hct; EPO falls"],
+ et:["JAK2 / CALR / MPL at the TPO receptor","Megakaryocytes overproduce large, dysfunctional platelets"],
+ pmf:["Megakaryocyte PDGF + TGF-β","Clonal megakaryocytes → fibroblasts lay down collagen → marrow scars → EMH, teardrops"],
+ mds:["Disorderly stem cell maturation","Epigenetic, splicing or TP53 hits → cells die in the marrow → cytopenias + dysplasia"],
+ tmds:["DNA damage from prior therapy","Alkylators (−5/−7) or topoisomerase II inhibitors (11q23) → dysplastic clone → AML"],
+ aml:["Transcription-factor fusion blocks maturation","t(8;21) or inv(16) (core-binding factor) and other hits → myeloblasts ≥20%"],
+ apl:["PML-RARα","The retinoic-acid receptor fusion freezes promyelocytes; granules trigger DIC; ATRA releases the block"],
+ amono:["Monocytic blasts","Often 11q23; monocytes infiltrate gums and skin"],
+ amk:["Trisomy 21","Megakaryoblasts in young children with Down syndrome; marrow fibrosis"],
+ ball:["PAX5 / E2A (B-cell program)","B precursors stall → TdT+ CD10+ CD19+ lymphoblasts"],
+ tall:["NOTCH1 (T-cell program)","Thymic precursors stall → TdT+ CD3+ CD7+ lymphoblasts and a mediastinal mass"],
+ cll:["Survival of naïve or memory B cells","Small CD5+ CD23+ cells accumulate; normal B cells crowded out → infections, AIHA"],
+ hcl:["BRAF V600E","Constant RAF-MEK-ERK signaling → splenic red pulp + marrow fibrosis"],
+ fl:["BCL2 switched on (t(14;18))","Apoptosis off in germinal-center cells → crowded BCL2+ follicles"],
+ mzl:["Chronic antigen drive","H. pylori / Sjögren / Hashimoto → polyclonal → clonal memory B cells (t(11;18))"],
+ mcl:["Cyclin D1 switched on (t(11;14))","G1 → S unchecked in naïve mantle-zone B cells"],
+ lpl:["MYD88 L265P","B cells maturing toward plasma cells pour out IgM → hyperviscosity"],
+ myeloma:["Clonal plasma cell","M protein + osteoclast activation → CRAB"],
+ dlbcl:["BCL6 (± BCL2, MYC)","Large germinal-center B cells, de novo or transformed; EBV in immunodeficiency"],
+ burkitt:["MYC switched on (t(8;14))","Nonstop division (Ki-67 ≈100%); apoptosis → starry sky"],
+ pel:["HHV-8","Virus-infected B cells grow in body cavities as an effusion"],
+ atll:["HTLV-1 Tax","The viral protein switches on NF-κB and IL-2 growth in CD4 T cells → hypercalcemia, clover-leaf cells"],
+ mf:["Skin-homing CD4 T cells","Cerebriform cells enter the epidermis (Pautrier); patch → plaque → tumor"],
+ sezary:["The same T cells in the blood","MF cells circulate → erythroderma"],
+ ns:["TGF-β from RS cells","Collagen bands; lacunar cells; young adults, mediastinum"],
+ mc:["IL-5 from RS cells","Eosinophil-rich mixed background; EBV often positive"],
+ lr:["T-cell-rich background","Classic RS cells among reactive T cells; early stage"],
+ ld:["Few lymphocytes left","Bizarre RS cells dominate; HIV, advanced stage"],
+ nlphl:["B-cell program kept","Popcorn cells CD20+ in B-cell nodules; EBV negative"],
+ leukemoid:["Normal marrow response","Infection or inflammation → polyclonal neutrophils"],
+ reactthromb:["IL-6 or iron deficiency","Cause-driven platelet production that resolves"],
+ secpoly:["EPO from hypoxia or tumor","High EPO drives a normal marrow"],
+ reactfoll:["Antigen-stimulated B zone","Polyclonal, BCL2− germinal centers"],
+ paracort:["Virus-stimulated T zone","EBV immunoblasts that mimic RS cells"],
+ chip:["TET2 / DNMT3A clone","Normal counts; the first step toward MDS/AML"],
+ mets:["Carcinoma, not blood cells","Cohesive keratin+ clusters crowd out marrow"]
+};
+const order=Object.keys(D);
+let sel="cml", lec="all";
+const $=s=>document.querySelector(s);
+const col=f=>`var(${FAM[f].c})`;
+const inLec=id=>lec==="all"||D[id].L.includes(lec);
+function chip(id,cross){return `<button class="chip${cross?" cross":""}" data-id="${id}" style="--c:${col(D[id].fam)}">${D[id].n}</button>`}
+function fcd(k,open){const c=CHARTS[k];return `<details class="fcd"${open?" open":""}><summary><span class="fl">Flowchart · HEM${c.L}</span><span>${c.t}</span></summary><div class="fc" data-fc="${k}"></div></details>`}
+const fcs=(ks)=>ks&&ks.length?`<div class="fcs">${ks.map(k=>fcd(k)).join("")}</div>`:"";
+let mid=0,mq=Promise.resolve();
+function tok(n){return getComputedStyle(document.documentElement).getPropertyValue(n).trim()}
+function initM(){mermaid.initialize({startOnLoad:false,securityLevel:"strict",theme:"base",fontFamily:'"IBM Plex Sans", system-ui, sans-serif',
+ themeVariables:{background:tok("--surface"),mainBkg:tok("--surface2"),primaryColor:tok("--surface2"),primaryTextColor:tok("--fg"),primaryBorderColor:tok("--muted"),nodeBorder:tok("--muted"),lineColor:tok("--muted"),textColor:tok("--fg"),secondaryColor:tok("--accent-soft"),tertiaryColor:tok("--surface"),clusterBkg:tok("--bg"),clusterBorder:tok("--line"),titleColor:tok("--fg"),edgeLabelBackground:tok("--surface"),fontSize:"13px"},
+ flowchart:{curve:"basis",htmlLabels:true,useMaxWidth:true,padding:10}})}
+async function renderFC(el){if(el.dataset.done)return;
+ if(!window.mermaid){el.innerHTML='<p class="fail">The flowchart viewer could not load. Reload the page to try again.</p>';return}
+ try{initM();const cs=CHARTS[el.dataset.fc].s;const r=await mermaid.render("fcsvg"+(++mid),typeof cs==="function"?cs():cs);el.innerHTML=r.svg+`<div class="fcbar"><button class="fcbig" data-big="${el.dataset.fc}">Enlarge</button></div>`;el.dataset.done="1"}catch(e){el.innerHTML='<p class="fail">This flowchart could not be drawn.</p>'}}
+function queueFC(el){mq=mq.then(()=>renderFC(el))}
+document.addEventListener("toggle",e=>{const d=e.target;if(d.classList&&d.classList.contains("fcd")&&d.open)d.querySelectorAll(".fc").forEach(queueFC)},true);
+function rerenderFC(){document.querySelectorAll(".fc[data-done]").forEach(el=>{delete el.dataset.done;queueFC(el)})}
+try{matchMedia("(prefers-color-scheme: dark)").addEventListener("change",rerenderFC)}catch(e){}
+new MutationObserver(rerenderFC).observe(document.documentElement,{attributes:true,attributeFilter:["data-theme"]});
+document.querySelectorAll("[data-fcs]").forEach(el=>{el.innerHTML=el.dataset.fcs.split(" ").map(k=>fcd(k,el.dataset.open==="1")).join("")});
+
+// legend
+$("#legend").innerHTML=Object.entries(FAM).filter(([k])=>k!=="re").map(([k,f])=>`<span><i style="background:var(${f.c})"></i>${f.n}</span>`).join("")+`<span><i style="border:1px dashed var(--muted);background:transparent"></i>Dashed = sits in more than one box</span>`;
+
+// grid
+const rows=[["my","Myeloid","MPO · CD13 · CD33"],["b","B cell","CD19 · CD20"],["t","T cell","CD3 · CD4"],["h","Hodgkin","RS cell · CD15 · CD30"]];
+let g=`<div></div><div class="hd">Slow · chronic / indolent<small>Mature cells; years</small></div><div class="hd">Fast · aggressive<small>Months; lymphomas often curable</small></div><div class="hd">Acute · blasts ≥20%<small>Weeks; maturation block</small></div>`;
+rows.forEach(([k,lab,mk])=>{g+=`<div class="rowhd">${lab}<small>${mk}</small></div>`;
+ ["slow","fast","acute"].forEach(r=>{const ids=order.filter(id=>D[id].cells.includes(k+"-"+r));g+=`<div class="cell">${ids.length?ids.map(id=>chip(id,D[id].cells.length>1)).join(""):'<span class="empty">—</span>'}</div>`});});
+$("#mgrid").innerHTML=g;
+$("#reactStrip").innerHTML=`<span>Look-alikes that aren't white cell cancers:</span>${order.filter(id=>D[id].fam==="re").map(id=>chip(id,false)).join("")}`;
+
+// tree
+const branches=[["Myeloid",["tk","dys","mbl"],"--f-tk","Marrow-based. Too many good cells (MPN), too few ugly cells (MDS), or a wall of blasts (AML)."],
+ ["Lymphoid precursors · T cell",["lbl","ts","vir"],"--f-lbl","Lymphoblasts in children and teens; mature CD4 T cells in the skin or driven by virus."],
+ ["Mature B cell",["bdr","xl"],"--f-bdr","Most lymphomas. Each freezes a normal stage of B-cell development."],
+ ["Hodgkin",["hd"],"--f-hd","A few malignant cells in a large reactive crowd. Contiguous spread; staging drives therapy."]];
+function trow(id){return `<div class="trow">${chip(id,false)}<div class="tp" hidden><b>${TP[id][0]}</b><span>${TP[id][1]}</span>${fcs(TPF[id])}</div></div>`}
+function twig(f){const t=TW[f];return `<div class="twig"><h4 style="color:var(${FAM[f].c})">${FAM[f].s}</h4><button class="tq" aria-expanded="false">${t.q}</button><div class="tbody" hidden><p class="td">${t.d}</p>${t.hy?`<div class="hy">${t.hy}</div>`:""}${fcs(GRF[f])}</div>${order.filter(id=>D[id].fam===f).map(trow).join("")}</div>`}
+$("#treeEl").innerHTML=branches.map(([t,fs,c,d])=>`<div class="branch" style="--bc:var(${c})"><h3>${t}<small>${d}</small></h3>${fcs(BRF[t])}${fs.map(twig).join("")}</div>`).join("");
+$("#bridge").innerHTML=`<h3>Not cancer, but built to fool you · reactive mimics</h3><button class="tq" aria-expanded="false">${TW.re.q}</button><div class="tbody" hidden><p class="td">${TW.re.d}</p></div><div class="brows">${order.filter(id=>D[id].fam==="re").map(trow).join("")}</div>`;
+
+// connections
+const CT=["cause","mimic","shared","comp"];
+const CDESC={cause:"One disorder becomes another, or a trigger produces it. Solid borders are disorders colored by family; dashed boxes are triggers.",mimic:"Two disorders that share a finding. Read across: what they share, then what points to each one.",shared:"Same gene, cell of origin, marker or presentation.",comp:"Complications, syndromes and infections that link disorders."};
+let ctab="cause",cfocus="all";
+const ttl=t=>ETYPE[t].n;
+$("#ctabs").innerHTML=CT.map(t=>`<button class="tab" role="tab" data-ct="${t}" aria-selected="${t===ctab}">${ttl(t)}<span class="n" data-cn="${t}"></span></button>`).join("");
+$("#cfocus").innerHTML=`<option value="all">All disorders</option>`+order.filter(id=>E.some(e=>e[0]===id||e[1]===id)).sort((a,b)=>D[a].n.localeCompare(D[b].n)).map(id=>`<option value="${id}">${D[id].n}</option>`).join("");
+const glyph={cause:"→",shared:"↔",comp:"↔"};
+function etext(e){if(e[2]!=="mimic")return e[3];const m=MIM[e[0]+"|"+e[1]];return m?`Both: ${m[0]}. ${D[e[0]].n}: ${m[1]}. ${D[e[1]].n}: ${m[2]}.`:""}
+function ecard(e){return `<div class="ecard" data-a="${e[0]}" data-b="${e[1]}"><div class="pair">${chip(e[0],false)}<span class="glyph">${glyph[e[2]]}</span>${chip(e[1],false)}</div><p>${e[3]}</p></div>`}
+function mrow(e){const m=MIM[e[0]+"|"+e[1]]||["","",""];return `<tr data-a="${e[0]}" data-b="${e[1]}"><td>${chip(e[0],false)}<div style="margin:4px 0;color:var(--muted)">vs</div>${chip(e[1],false)}</td><td class="sh">${m[0]}</td><td>${m[1]}</td><td>${m[2]}</td></tr>`}
+$("#cpanels").innerHTML=CT.map(t=>{const es=E.filter(e=>e[2]===t);let body="";
+ if(t==="mimic")body=`<div class="tbl-scroll"><table class="cmp"><thead><tr><th>Pair</th><th>They share</th><th>Points to the first</th><th>Points to the second</th></tr></thead><tbody>${es.map(mrow).join("")}</tbody></table></div>`;
+ else body=`<div class="egrid">${es.map(ecard).join("")}</div>`;
+ const map=t==="cause"?`<div class="cmap"><div class="cap">Cause map<span>Arrows read "leads to." Select Enlarge for full size.</span></div><div class="fc" data-fc="causemap"></div></div>`:"";
+ return `<div class="cpanel" data-cp="${t}" ${t===ctab?"":"hidden"}><p class="cdesc">${CDESC[t]}</p>${map}${body}<p class="cempty hide">No ${ttl(t).toLowerCase()} links match this lecture and focus. Try All.</p></div>`}).join("");
+function applyConn(){CT.forEach(t=>{const pn=document.querySelector(`[data-cp="${t}"]`);let n=0;
+ pn.querySelectorAll("[data-a]").forEach(el=>{const a=el.dataset.a,b=el.dataset.b;const ok=(inLec(a)||inLec(b))&&(cfocus==="all"||a===cfocus||b===cfocus);el.classList.toggle("hide",!ok);if(ok)n++});
+ pn.querySelector(".cempty").classList.toggle("hide",n>0);document.querySelector(`[data-cn="${t}"]`).textContent=n})}
+$("#cfocus").addEventListener("change",e=>{cfocus=e.target.value;applyConn()});
+
+// traps
+const TR=[
+ ["Labs",["13","27"],"WBC 50,000 with a left shift → CML.","Check for a <b>leukemoid reaction</b>: bands, toxic granulation, Döhle bodies, fever, high LAP, no basophilia, no spleen. CML has all stages, basophilia, low LAP and BCR-ABL."],
+ ["Markers & genetics",["13","14"],"t(9;22) → CML.","Also ≈25% of <b>adult ALL</b> (unfavorable) and lymphoid blast crisis. Count the blasts: &lt;20% = chronic phase CML; ≥20% = acute leukemia."],
+ ["Labs",["13"],"High hematocrit → polycythemia vera.","Check <b>EPO and O₂ saturation</b>. PV is the only polycythemia with low EPO; hypoxia and EPO tumors raise it; dehydration is relative."],
+ ["Labs",["13"],"Platelets 620,000 → essential thrombocythemia.","Rule out <b>reactive thrombocytosis</b> first (iron deficiency, inflammation, post-splenectomy). ET is a sustained diagnosis of exclusion."],
+ ["Smear",["13","27"],"Teardrops + nucleated RBCs → primary myelofibrosis.","Any marrow infiltration does this. <b>Cohesive clusters</b> on biopsy = metastatic carcinoma; CD103 + pancytopenia = hairy cell."],
+ ["Smear",["14"],"Macrocytic anemia with odd neutrophils → B12 deficiency.","<b>MDS</b> mimics it: hypogranular, bilobed (pseudo-Pelger-Huët) neutrophils. B12/folate are normal, vitamins don't fix it, and cytogenetics are clonal."],
+ ["Labs",["14"],"15% marrow blasts → acute leukemia.","Acute leukemia needs <b>≥20% blasts</b>. Increased blasts below 20% with dysplasia = MDS."],
+ ["Smear",["14","27"],"Blasts in a child → ALL; blasts in an adult → AML.","Age only shifts the odds. <b>Flow cytometry</b> decides (MPO/CD13/CD33 vs TdT/CD10/CD19 or CD3/CD7), and Auer rods are myeloid only."],
+ ["Markers & genetics",["19"],"t(14;18) → follicular lymphoma.","Usually, but IGH-<b>MALT1</b> t(14;18) occurs in MALT lymphoma. A mucosal story points to MALT; BCL2+ follicles point to follicular."],
+ ["Markers & genetics",["19","27"],"CD5+ B cells → CLL.","<b>Mantle cell</b> is CD5+ too. CD23+ = CLL; cyclin D1+ with t(11;14) = mantle cell."],
+ ["Labs",["19","27"],"Hypercalcemia + lytic lesions → myeloma.","<b>ATLL</b> does this too: CD4+ T cells with clover-leaf nuclei, HTLV-1, skin lesions."],
+ ["Smear",["19","27"],"A Reed-Sternberg-like cell → Hodgkin.","RS-like cells appear in <b>EBV mononucleosis</b> and some NHLs. Hodgkin needs the right reactive background plus CD15/CD30 (or CD20+ popcorn cells in NLPHL)."],
+ ["Labs",["19"],"A small M spike → myeloma.","<b>CLL</b> can carry a tiny spike. An <b>IgM</b> spike with hyperviscosity and no lytic lesions = Waldenström."],
+ ["Treatment & course",["19"],"Gastric lymphoma → chemotherapy.","H. pylori MALT lymphoma gets <b>antibiotics first</b> and can regress. t(11;18) predicts no response."],
+ ["Treatment & course",["19"],"The indolent lymphoma is the \"good\" one.","Indolent = long survival but <b>incurable</b> and prone to transform. Aggressive DLBCL and Burkitt are <b>curable</b> because chemo kills dividing cells."],
+ ["Treatment & course",["14"],"Fever and lung infiltrates on ATRA → infection.","Think <b>differentiation syndrome</b> (fever, dyspnea, infiltrates, edema) → steroids."]
+];
+const TCATS=["All","Labs","Smear","Markers & genetics","Treatment & course"];
+let tcat="All";
+$("#tcats").innerHTML=TCATS.map(c=>`<button class="fbtn" data-tc="${c}" aria-pressed="${c===tcat}">${c}${c==="All"?"":` <span class="mono" style="opacity:.7">${TR.filter(t=>t[0]===c).length}</span>`}</button>`).join("");
+$("#trapEl").innerHTML=TR.map((t,i)=>`<div class="tcard" data-tcat="${t[0]}" data-tl="${t[1].join(" ")}"><div class="tmeta"><span class="cat">${t[0]}</span>${t[1].map(l=>`<span class="ltag">HEM${l}</span>`).join("")}</div><div class="tempt">${t[2]}</div><button class="treveal" aria-expanded="false" aria-controls="tc${i}">Show the catch</button><div class="catch" id="tc${i}" hidden>${t[3]}</div></div>`).join("");
+function applyTraps(){document.querySelectorAll(".tcard").forEach(c=>{const ok=(tcat==="All"||c.dataset.tcat===tcat)&&(lec==="all"||c.dataset.tl.split(" ").includes(lec));c.classList.toggle("hide",!ok)})}
+
+// table
+$("#tbody").innerHTML=order.map(id=>{const d=D[id];return `<tr data-id="${id}"><td><span class="dot" style="background:${col(d.fam)}"></span><button class="nm" data-id="${id}">${d.n}</button></td><td class="mono">${d.L.map(l=>"HEM"+l).join(", ")}</td><td>${d.mk}</td><td>${d.gen}</td><td>${d.r}</td><td>${d.key}</td></tr>`}).join("");
+
+function related(id){return E.filter(e=>e[0]===id||e[1]===id).map(e=>({o:e[0]===id?e[1]:e[0],t:e[2],x:etext(e)}))}
+function renderDetail(){
+ const d=D[sel];const rel=related(sel);
+ $("#detail").innerHTML=`<div class="fam" style="color:${col(d.fam)}">${FAM[d.fam].n}</div>
+ <h3 style="font-size:22px">${d.n}</h3><div class="nick">${d.nick}</div>
+ <div class="tags">${d.L.map(l=>`<span class="ltag">HEM${l}</span>`).join("")}</div>
+ <dl class="kv"><dt>Markers</dt><dd>${d.mk}</dd><dt>Genetics</dt><dd>${d.gen}</dd><dt>Mechanism</dt><dd>${d.mech}</dd><dt>Key test</dt><dd>${d.test}</dd><dt>Treat</dt><dd>${d.tx}</dd><dt>Course</dt><dd>${d.r}</dd></dl>
+ <div class="buzz">${d.buzz.map(b=>`<span>${b}</span>`).join("")}</div>
+ ${d.hy?`<div class="hy">${d.hy}</div>`:""}${d.ih?`<div class="ih">${d.ih}</div>`:""}
+ ${AF[sel]?`<div><div class="fam" style="color:var(--muted);margin-bottom:6px">Flowcharts from the notes</div>${fcs(AF[sel])}</div>`:""}
+ ${rel.length?`<div><div class="fam" style="color:var(--muted);margin-bottom:6px">Connected to (${rel.length})</div><div class="links">${rel.map(r=>`<button class="lnk" data-id="${r.o}"><span class="ty">${ETYPE[r.t].n}</span><span><b>${D[r.o].n}</b>: ${r.x}</span></button>`).join("")}</div></div>`:""}`;
+ const relIds=new Set(rel.map(r=>r.o));
+ document.querySelectorAll("#mgrid .chip, #reactStrip .chip").forEach(c=>{c.classList.toggle("sel",c.dataset.id===sel);c.classList.toggle("rel",relIds.has(c.dataset.id))});
+}
+function applyFilter(){
+ document.querySelectorAll(".chip").forEach(c=>c.classList.toggle("dim",!inLec(c.dataset.id)));
+ document.querySelectorAll("#tbody tr").forEach(r=>r.classList.toggle("dim",!inLec(r.dataset.id)));
+ applyConn();applyTraps();
+}
+document.addEventListener("click",ev=>{
+ const f=ev.target.closest(".fbtn[data-l]");
+ if(f){lec=f.dataset.l;document.querySelectorAll(".fbtn[data-l]").forEach(b=>b.setAttribute("aria-pressed",b===f));applyFilter();try{localStorage.setItem("hd-wbc-map-lec",lec)}catch(e){}return}
+ const big=ev.target.closest("[data-big]");
+ if(big){const src=big.closest(".fc").querySelector("svg");const m=$("#fcModal");$("#fcModalT").textContent=CHARTS[big.dataset.big].t;const c=src.cloneNode(true);const vb=(c.getAttribute("viewBox")||"").split(/\s+/).map(Number);c.removeAttribute("style");if(vb[2]){c.setAttribute("width",Math.round(vb[2]*1.25));c.setAttribute("height",Math.round(vb[3]*1.25))}$("#fcModalB").replaceChildren(c);m.hidden=false;$("#fcClose").focus();return}
+ if(ev.target.id==="fcClose"||ev.target.id==="fcModal"){$("#fcModal").hidden=true;return}
+ const tb=ev.target.closest(".tab[data-ct]");
+ if(tb){ctab=tb.dataset.ct;document.querySelectorAll(".tab[data-ct]").forEach(x=>x.setAttribute("aria-selected",x===tb));document.querySelectorAll("[data-cp]").forEach(p=>p.hidden=p.dataset.cp!==ctab);document.querySelectorAll(`[data-cp="${ctab}"] .fc`).forEach(queueFC);return}
+ const tr=ev.target.closest(".treveal");
+ if(tr){const c=document.getElementById(tr.getAttribute("aria-controls"));c.hidden=!c.hidden;tr.setAttribute("aria-expanded",!c.hidden);tr.textContent=c.hidden?"Show the catch":"Hide the catch";return}
+ const tcb=ev.target.closest("[data-tc]");
+ if(tcb){tcat=tcb.dataset.tc;document.querySelectorAll("[data-tc]").forEach(x=>x.setAttribute("aria-pressed",x===tcb));applyTraps();return}
+ if(ev.target.closest("#tAll")){const b=$("#tAll");const open=b.getAttribute("aria-pressed")!=="true";b.setAttribute("aria-pressed",open);b.textContent=open?"Hide all":"Reveal all";document.querySelectorAll(".treveal").forEach(x=>{const c=document.getElementById(x.getAttribute("aria-controls"));c.hidden=!open;x.setAttribute("aria-expanded",open);x.textContent=open?"Hide the catch":"Show the catch"});return}
+ const tq=ev.target.closest(".tq");
+ if(tq){const b=tq.nextElementSibling;const o=b.hidden;b.hidden=!o;tq.setAttribute("aria-expanded",o);return}
+ if(ev.target.closest("#treeAll")){const btn=ev.target.closest("#treeAll");const open=btn.getAttribute("aria-pressed")!=="true";btn.setAttribute("aria-pressed",open);btn.textContent=open?"Hide all details":"Show all details";
+  document.querySelectorAll("#tree .tp, #tree .tbody").forEach(x=>x.hidden=!open);document.querySelectorAll("#tree .tq").forEach(x=>x.setAttribute("aria-expanded",open));document.querySelectorAll("#tree .chip").forEach(x=>{x.classList.toggle("open",open);x.setAttribute("aria-expanded",open)});document.querySelectorAll("#treeEl details.fcd, #bridge details.fcd").forEach(x=>x.open=open);return}
+ const tc=ev.target.closest("#tree .chip");
+ if(tc){const tp=tc.nextElementSibling;if(tp){tp.hidden=!tp.hidden;tc.classList.toggle("open",!tp.hidden);tc.setAttribute("aria-expanded",!tp.hidden)}return}
+ const t=ev.target.closest("button[data-id]");
+ if(t&&D[t.dataset.id]){
+  sel=t.dataset.id;renderDetail();
+  if(!t.closest("#map")){document.getElementById("map").scrollIntoView({behavior:matchMedia("(prefers-reduced-motion: reduce)").matches?"auto":"smooth"})}
+ }
+});
+try{const s=localStorage.getItem("hd-wbc-map-lec");if(s){const b=document.querySelector(`.fbtn[data-l="${s}"]`);if(b){lec=s;document.querySelectorAll(".fbtn[data-l]").forEach(x=>x.setAttribute("aria-pressed",x===b))}}}catch(e){}
+renderDetail();applyFilter();
+document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!$("#fcModal").hidden)$("#fcModal").hidden=true});
+document.querySelectorAll("details.fcd[open] .fc").forEach(queueFC);
+document.querySelectorAll(`[data-cp="${ctab}"] .fc`).forEach(queueFC);
+
+</script>

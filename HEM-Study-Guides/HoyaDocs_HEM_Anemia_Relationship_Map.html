@@ -243,7 +243,7 @@ footer{margin-top:50px;padding-top:14px;border-top:1px solid var(--line);font-si
   <div class="eyebrow">HoyaDocs · HEM · Red Cell Pathology</div>
   <h1>Anemia Relationship Map</h1>
   <p class="lede">Every anemia from HEM02 (Anemia I), HEM03 (Anemia II), HEM05 (RBC Case Review) and HEM06 (RBC Lab) on one page: where each one sits by size and marrow response, which mechanism family it belongs to, and how the anemias connect to, mimic, cause or protect against each other.</p>
-  <div class="meta"><span><b>HoyaDocs</b></span><span>Date updated: <b>October 8, 2026</b></span><span>Revision: <b>1.4</b></span><span>Lectures: <b>HEM02 · HEM03 · HEM05 · HEM06</b></span></div>
+  <div class="meta"><span><b>HoyaDocs</b></span><span>Date updated: <b>October 8, 2026</b></span><span>Revision: <b>1.5</b></span><span>Lectures: <b>HEM02 · HEM03 · HEM05 · HEM06</b></span></div>
 </header>
 
 <div class="filter" role="group" aria-label="Filter by lecture">
@@ -425,7 +425,7 @@ footer{margin-top:50px;padding-top:14px;border-top:1px solid var(--line);font-si
 </section>
 
 <div id="fcModal" hidden role="dialog" aria-modal="true" aria-labelledby="fcModalT"><div class="box"><div class="hd"><b id="fcModalT"></b><button class="fcbig" id="fcClose">Close</button></div><div class="bd" id="fcModalB"></div></div></div>
-<footer><span><b>HoyaDocs</b> · HEM Anemia Relationship Map</span><span>Date updated: October 8, 2026 · Revision 1.4</span></footer>
+<footer><span><b>HoyaDocs</b> · HEM Anemia Relationship Map</span><span>Date updated: October 8, 2026 · Revision 1.5</span></footer>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/mermaid@10.9.1/dist/mermaid.min.js"></script>
@@ -833,7 +833,7 @@ function applyFilter(){
  applyConn();applyTraps();
 }
 document.addEventListener("click",ev=>{
- const f=ev.target.closest(".fbtn");
+ const f=ev.target.closest(".fbtn[data-l]");
  if(f){lec=f.dataset.l;document.querySelectorAll(".fbtn").forEach(b=>b.setAttribute("aria-pressed",b===f));applyFilter();try{localStorage.setItem("hd-anemia-map-lec",lec)}catch(e){}return}
  const big=ev.target.closest("[data-big]");
  if(big){const src=big.closest(".fc").querySelector("svg");const m=$("#fcModal");$("#fcModalT").textContent=CHARTS[big.dataset.big].t;const c=src.cloneNode(true);const vb=(c.getAttribute("viewBox")||"").split(/\s+/).map(Number);c.removeAttribute("style");if(vb[2]){c.setAttribute("width",Math.round(vb[2]*1.25));c.setAttribute("height",Math.round(vb[3]*1.25))}$("#fcModalB").replaceChildren(c);m.hidden=false;$("#fcClose").focus();return}
